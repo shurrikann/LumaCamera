@@ -2676,12 +2676,9 @@ final class CameraViewModel: ObservableObject {
     @Published var nightHDRPhotoEnabled = UserDefaults.standard.bool(forKey: "camera.nightHDRPhoto") {
         didSet { UserDefaults.standard.set(nightHDRPhotoEnabled, forKey: "camera.nightHDRPhoto") }
     }
-    /// 实验用：跳过环境触发，开启夜景就进入独立夜景，便于逐项试拍。
-    @Published var forceIndependentNightEnabled = UserDefaults.standard.bool(forKey: "camera.forceIndependentNight") {
-        didSet {
-            UserDefaults.standard.set(forceIndependentNightEnabled, forKey: "camera.forceIndependentNight")
-            syncIndependentNightRoute()
-        }
+    /// 实验用：跳过环境触发，开启夜景就进入独立夜景，便于逐项试拍；不持久化，重启自动关闭。
+    @Published var forceIndependentNightEnabled = false {
+        didSet { syncIndependentNightRoute() }
     }
     @Published private(set) var nightEnvironmentTriggered = false
     private var nightEnvironmentGate = NightCaptureEnvironmentGate()

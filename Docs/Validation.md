@@ -1,6 +1,6 @@
 # 2026-11-06 夜景触发、A挡约束与逐帧曝光
 
-- 独立夜景：`syncIndependentNightRoute` 改为仅在 `nightModeEnabled && captureKind == .photo && mode == .auto && nightEnvironmentTriggered` 时启用；环境触发前保持普通夜景/预览路线。实验设置新增默认关闭的“强制独立夜景（测试）”，打开后跳过环境触发，方便逐项试拍。
+- 独立夜景：`syncIndependentNightRoute` 改为仅在 `nightModeEnabled && captureKind == .photo && mode == .auto && nightEnvironmentTriggered` 时启用；环境触发前保持普通夜景/预览路线。实验设置新增默认关闭且不持久化的“强制独立夜景（测试）”，打开后跳过环境触发，方便逐项试拍；重启自动关闭。
 - 夜景与M挡互斥：`toggleNightMode` 在M挡先切A；`setMode(.manual)` 在夜景开启时先退出夜景并清理环境触发/独立路线；状态恢复也强制A。
 - 移除“亮度优先影调”：删除设置开关、`PhotoOptions.nightBrightTone`、合并器/影调规划中的brightTone分支；保留自适应基础影调。
 - 独立夜景逐帧：`setExposureModeCustom` completion 后才 `capturePhoto`；settings/prepared priority 由 `.quality` 改为 `.speed`；每帧读取文件 EXIF 的 exposureTime/ISO，与计划超出容差则失败，不把错误曝光送进合成。
