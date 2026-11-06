@@ -25,8 +25,6 @@ private struct CameraSettingsPanel: View {
                     Text(model.independentNightProfile.detail)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                    Toggle("亮度优先影调", isOn: $model.nightBrightToneEnabled)
-                        .accessibilityIdentifier("settings.nightBrightTone")
                     Toggle("HDR 成片（HEIF 10-bit PQ）", isOn: $model.nightHDRPhotoEnabled)
                         .accessibilityIdentifier("settings.nightHDRPhoto")
                     Text("HDR 成片仅在选择 HEIF 时生效；当前实现为 10-bit PQ，不是 Apple 增益图。取景 HDR 需要 EDR 渲染层，暂未接入。")
@@ -85,10 +83,6 @@ private struct CameraSettingsPanel: View {
                         settingTitleWithInfo("流畅预览", message: "开启后，仅优化 M 挡手动曝光时的实时取景流畅度；实际照片仍按已设置的 ISO 和快门拍摄。视频拍摄不受影响。")
                     }
                     .accessibilityIdentifier("settings.smoothPreview")
-                    Toggle(isOn: $model.preferences.filterDialPad) {
-                        settingTitleWithInfo("调色盘", message: "开启后，滤镜参数的色彩/明暗/质感页使用调色盘与左右竖轨；关闭后保留原来的滑条样式。亮度并入曝光，旧配方仍按原值渲染。")
-                    }
-                    .accessibilityIdentifier("settings.filterDialPad")
                     Toggle(isOn: Binding(
                         get: { model.preferences.dockKitTrackingEnabled },
                         set: { model.setDockKitTrackingEnabled($0) }
@@ -124,6 +118,10 @@ private struct CameraSettingsPanel: View {
                     Button("恢复自动参数") { model.setMode(.auto); model.resetParameters() }
                 } header: { Text("拍摄设置") }
                 Section {
+                    Toggle(isOn: $model.preferences.filterDialPad) {
+                        settingTitleWithInfo("调色盘", message: "开启后，滤镜参数的色彩/明暗/质感页使用调色盘与左右竖轨；关闭后保留原来的滑条样式。亮度并入曝光，旧配方仍按原值渲染。")
+                    }
+                    .accessibilityIdentifier("settings.filterDialPad")
                     Toggle(isOn: $model.preferences.saveCaptureSettings) {
                         settingTitleWithInfo("保存拍摄设置", message: "开启后，下次启动恢复上次的模式、格式、参数、滤镜与焦段。关闭后，照片默认 JPG、4:3、A 挡、闪光灯与 Live 关闭；视频默认 1080p30、16:9、SDR、HEVC、A 挡，均不套滤镜。辅助开关独立保存。")
                     }

@@ -116,7 +116,7 @@ PhotoEncoder在已定向的developed源图上，对原生matte或软件portraitM
 
 ## 夜景静态曝光规划与临时输入（2026-10-28）
 
-NightAdaptiveCapturePolicy为A挡夜景生成受硬件限制的曝光基准，保存到CaptureContext，后续批次不重新读取AE。首批自动曝光使用−1/0/0EV相对基准，追加0/0/0EV；显式M挡继续逐帧使用请求值。虚拟输入不公开custom时，CameraEngine保存原AVCaptureDeviceInput，并临时使用activePrimaryConstituent物理输入，按原显示倍率换算变焦、传递对焦和白平衡状态；不修改普通取景的系统切镜决策。首批提交前等待新预览帧和两次稳定AF/AWB（最多0.8秒），不附加一次重新对焦。hardwareFinished统一归还原输入，覆盖完成、取消和失败清理。旧输入测光与快门token绑定，避免切到物理输入后的未收敛读数重设曝光需求。
+NightAdaptiveCapturePolicy为A挡夜景生成受硬件限制的曝光基准，保存到CaptureContext，后续批次不重新读取AE。首批自动曝光使用−1/0/0EV相对基准，追加0/0/0EV；夜景仅支持A挡；开启夜景会先切A，切M立即退出夜景。虚拟输入不公开custom时，CameraEngine保存原AVCaptureDeviceInput，并临时使用activePrimaryConstituent物理输入，按原显示倍率换算变焦、传递对焦和白平衡状态；不修改普通取景的系统切镜决策。首批提交前等待新预览帧和两次稳定AF/AWB（最多0.8秒），不附加一次重新对焦。hardwareFinished统一归还原输入，覆盖完成、取消和失败清理。旧输入测光与快门token绑定，避免切到物理输入后的未收敛读数重设曝光需求。
 
 NightPhotoMerger只有自动计划曝光且实际融合成功时，才启用64×64亮度探针决定暗部曲线强度；显式M挡、默认融合及单帧后备不变。相机会话队列只处理输入/请求，配准融合和影调仍在处理队列；没有额外常驻预览计算。内部曝光/路线诊断保留在rows，详情仍只展示既有有效合成帧数，避免重复参数行。[实测与尚未验收范围](Test-Reports/2026-10-28-Night-Exposure.md)。
 
@@ -279,9 +279,9 @@ ViewModel暂存普通视频规格，双拍基础档锁定HEVC SDR 1080p30/16:9�
 
 `PreviewRevision.current`线程安全读取生命周期代次；在配置排队之前获取，停机或重启意图使旧恢复失效。无新增循环计时或永久高频采样；既有1.5秒读数快传窗口继续使用。DEBUG旧路径开关/次数仅用于同场景A/B，正常运行默认优化，不接入产品设置。[验证报告](Test-Reports/2026-10-26-SlowestShutterAuto-Recovery.md)。
 
-## M挡夜景曝光（2026-10-25）
+## 夜景A挡与现代曝光（2026-11-06）
 
-`NightManualExposurePolicy`统一夜景M挡ISO100–3200与1/30–1秒的应用范围，再与硬件相交；屏幕参数和`hardwareControlSpecs`共用，实际提交前再次夹取。M自动与A保持`AVCaptureAutoExposureBracketedStillImageSettings`；M手动用快门上下文中的曝光快照生成`AVCaptureManualExposureBracketedStillImageSettings`，每批各帧相同参数，追加批仍用该快照。手动夜景按原生自定义曝光要求使用speed优先级，提交前统一HDR策略，最终收尾才恢复流畅预览，避免预览曝光污染成片。
+夜景不再支持M挡：开启夜景时若当前为M会先切A；夜景下切M立即退出夜景并清理环境触发/独立路线。独立夜景必须同时满足“用户开启夜景”“环境已触发”“照片A挡”，仅在环境触发后才切48MP独立会话，避免一亮起夜景就进入重负载路线。
 
 读数增加`customExposure`/`exposureTargetOffsetEV`。环境触发及采集帧数估算共用偏差修正，缺少有效偏差时不伪造测光。3/6/9分批、运动停止追加、取消释放和合成信息沿用现有管线；固定手动曝光融合不宣称实现不同曝光HDR。DEBUG源帧回调仅供逐张EXIF验收，不写相册。[验证记录](Test-Reports/2026-10-25-NightManual.md)。
 
@@ -963,9 +963,9 @@ M挡手动WB/焦点保留，否则拍前锁定读数；结束、失败、取消�
 
 `NightAdaptiveCapturePolicy.automaticExposure` 负责 A 挡暗光静态基准，不复用预览短曝光作为最终上限。它从冻结的测光 ISO×时长计算需求，在硬件范围内最多增加 2 EV，优先延长到最多 1 秒后再确定 ISO。首批三张仍由 `AVCapturePhotoBracketSettings` 提交：高光保护帧使用负偏移，两张基准帧优先提供可配准降噪样本；追加批次继续沿用冻结基准，不重新读取 AE。M 挡不经过该规划器。
 
-`CameraEngine` 在首次会话配置、加入 `AVCapturePhotoOutput` 后且启动前设置 `maxPhotoQualityPrioritization = .quality`。`NightCapturePolicy.qualityPriority` 将 A 挡夜景逐请求设为最高已准备质量，普通手动/RAW路线仍使用既有速度策略，并在输出只允许较低优先级时安全降级。这个设置只使用 AVFoundation 公共能力，不代表接入系统相机未公开的 Night mode。
+`CameraEngine` 在首次会话配置、加入 `AVCapturePhotoOutput` 后且启动前设置 `maxPhotoQualityPrioritization = .quality`。`NightCapturePolicy.qualityPriority` 对夜景和手动/RAW路线统一使用 `.speed`，避免质量优先采集改变逐帧曝光时序；独立夜景在收到每帧后核对文件EXIF的快门/ISO，超出容差则停止合成。这个设置只使用 AVFoundation 公共能力，不代表接入系统相机未公开的 Night mode。
 
-`NightPhotoMerger` 保留既有曝光归一、运动区域保护与暗部降噪。只有 A 挡自适应夜景至少两帧真实融合后，`automaticTonePlan` 才渲染 64×64 sRGB 探针，使用中位数和 95% 分位共同约束 `CIExposureAdjust`，上限 1.25 EV；随后应用按暗度调整的 `CIToneCurve`。高光余量不足时不做全局曝光补偿。单帧后备直接保留参考帧，M 挡与非自适应调用不增加全局 EV，避免把单帧拉亮误记为多帧夜景。
+`NightPhotoMerger` 保留既有曝光归一、运动区域保护与暗部降噪；已移除“亮度优先影调”实验开关，自适应影调不再有独立的高亮分支。只有 A 挡自适应夜景至少两帧真实融合后，`automaticTonePlan` 才渲染 64×64 sRGB 探针，使用中位数和 95% 分位共同约束 `CIExposureAdjust`；随后应用按暗度调整的 `CIToneCurve`。高光余量不足时不做全局曝光补偿。单帧后备直接保留参考帧，非自适应调用不增加全局 EV。
 
 ## 2026-10-29 HEIF Pro 的底片基准与 HDR 高光分层
 

@@ -1528,7 +1528,6 @@ final class CameraViewModel: ObservableObject {
                      // 普通 M 挡也把曝光绑定到静态请求，避免视频往返后系统照片处理采用旧 AE。
                      prefersManualExposureBracket: slowShutterEnabled || (mode == .manual && manualExposure),
                      nightProfile: independentNightProfile,
-                     nightBrightTone: nightBrightToneEnabled,
                      nightHDRPhoto: nightHDRPhotoEnabled)
     }
 
@@ -1903,10 +1902,11 @@ final class CameraViewModel: ObservableObject {
                 if toolbarPanel == .slowShutterDuration { toolbarPanel = nil }
             }
         case .night:
+            if enabled, self.mode == .manual { setMode(.auto) }
+            guard !enabled || self.mode == .auto else { return }
             nightModeEnabled = enabled
             nightCaptureRuntimeUnavailable = false
             resetNightEnvironmentGate()
-            if enabled && self.mode == .manual { applyExposure() }
         case .portrait: portraitModeEnabled = enabled
         case .burst:
             if !enabled { stopBurstCapture() }
@@ -2673,9 +2673,6 @@ final class CameraViewModel: ObservableObject {
     ) ?? .balanced {
         didSet { UserDefaults.standard.set(independentNightProfile.rawValue, forKey: "camera.independentNightProfile") }
     }
-    @Published var nightBrightToneEnabled = UserDefaults.standard.bool(forKey: "camera.nightBrightTone") {
-        didSet { UserDefaults.standard.set(nightBrightToneEnabled, forKey: "camera.nightBrightTone") }
-    }
     @Published var nightHDRPhotoEnabled = UserDefaults.standard.bool(forKey: "camera.nightHDRPhoto") {
         didSet { UserDefaults.standard.set(nightHDRPhotoEnabled, forKey: "camera.nightHDRPhoto") }
     }
@@ -2815,6 +2812,8 @@ final class CameraViewModel: ObservableObject {
     }
 
     func toggleNightMode() {
+        if !nightModeEnabled, mode != .auto { setMode(.auto) }
+        guard !nightModeEnabled || mode == .auto else { return }
         togglePhotoSubmode(.night)
     }
 
@@ -2864,10 +2863,10 @@ final class CameraViewModel: ObservableObject {
         syncIndependentNightRoute()
     }
 
-    /// 当前临时策略：用户开启夜景模式就切到 48MP 独立会话；
-    /// 环境触发状态只用于指示灯，不再决定采集线路。
+    /// 独立夜景必须同时满足：用户开启夜景、环境已触发、照片模式且A挡。
     private func syncIndependentNightRoute() {
-        camera.setIndependentNightModeActive(nightModeEnabled && captureKind == .photo)
+        camera.setIndependentNightModeActive(nightModeEnabled && captureKind == .photo
+            && mode == .auto && nightEnvironmentTriggered)
     }
 
     private func exitNightModeBecauseCaptureBecameUnavailable() {
@@ -4070,6 +4069,7 @@ final class CameraViewModel: ObservableObject {
         sliderEVRequest = UUID()
         guard slowShutterSequence == nil else { return }
         guard !camera.capturing, !camera.videoBusy, countdown == nil, !isPreparingSubmode else { return }
+        if next == .manual, nightModeEnabled { setPhotoSubmode(.night, enabled: false) }
         if next != mode {
             camera.endSmartFocusHold()
             if smartCaptureEnabled {
@@ -5356,6 +5356,7 @@ final class CameraViewModel: ObservableObject {
         if restoringPortrait { livePhotoEnabled = false }
         nightModeEnabled = state.nightMode ?? false
         if restoringPortrait { nightModeEnabled = false }
+        if nightModeEnabled && mode == .manual { mode = .auto }
         slowShutterEnabled = captureKind == .photo && (state.slowShutter ?? false)
         selectedSlowShutterPreset = slowShutterEnabled
             ? state.slowShutterPreset.flatMap(SlowShutterPreset.init(rawValue:))

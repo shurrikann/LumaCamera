@@ -39,7 +39,7 @@ enum NightPhotoMerger {
 
     /// 缩小的探针只用于配准/运动判断，最终融合保持照片分辨率。
     /// 参考曝光始终保留：其他帧的运动区域退回参考，避免手持或主体移动产生重影。
-    static func merge(_ sources: [CIImage], context: CIContext, maximumRegistrationDimension: CGFloat = 1600, referenceIndex requestedReference: Int? = nil, adaptiveTone: Bool = false, brightTone: Bool = false) throws -> NightPhotoMergeResult {
+    static func merge(_ sources: [CIImage], context: CIContext, maximumRegistrationDimension: CGFloat = 1600, referenceIndex requestedReference: Int? = nil, adaptiveTone: Bool = false) throws -> NightPhotoMergeResult {
         guard !sources.isEmpty else { throw MergeError.noUsableFrame }
         let referenceIndex = min(max(requestedReference ?? sources.count / 2, 0), sources.count - 1)
         let reference = normalized(sources[referenceIndex])
@@ -94,7 +94,6 @@ enum NightPhotoMerger {
         let extent = CGRect(origin: .zero, size: commonExtent.size)
         guard let referenceInAccepted = acceptedIndices.firstIndex(of: referenceIndex),
               let composite = fuseAlignedFrames(cropped, referenceIndex: referenceInAccepted, context: context,
-                                               brightTone: brightTone,
                                                maximumDimension: min(maximumRegistrationDimension, 900), adaptiveTone: adaptiveTone) else {
             return NightPhotoMergeResult(image: reference, alignedFrameCount: 1, croppedFraction: 0)
         }
@@ -354,7 +353,6 @@ enum NightPhotoMerger {
 
     /// 分开处理运动保护与暗部降噪，避免用整体模糊掩盖噪声。此入口也用于确定性的图像测试。
     static func fuseAlignedFrames(_ images: [CIImage], referenceIndex: Int, context: CIContext,
-                                  brightTone: Bool = false,
                                   maximumDimension: CGFloat = 900, adaptiveTone: Bool = false) -> CIImage? {
         guard images.indices.contains(referenceIndex), images.count > 1 else { return nil }
         let extent = images[referenceIndex].extent
@@ -391,7 +389,7 @@ enum NightPhotoMerger {
             ]).applyingFilter("CIColorClamp").cropped(to: extent)
         // 自动提亮会同时放大残余噪声；按即将应用的影调增益调整暗部处理，避免继续锐化颗粒。
         // 不延长手持曝光，也不把运动区域强行平均进来。手动曝光夜景沿用原处理配方。
-        let tone = adaptiveTone ? automaticTonePlan(composite, context: context, brightTone: brightTone) : (exposureEV: 0.0, shadowLift: 0.06)
+        let tone = adaptiveTone ? automaticTonePlan(composite, context: context) : (exposureEV: 0.0, shadowLift: 0.06)
         let baseNoiseLevel = adaptiveTone ? min(0.12, 0.055 + tone.exposureEV * 0.035 + max(0, tone.shadowLift - 0.06) * 0.2) : 0.035
         // 高ISO提高边缘保持滤波门限并扩大暗部覆盖，不增加全局高斯模糊或锐化颗粒。
         let noiseLevel = baseNoiseLevel + noiseStress * 0.08
@@ -443,7 +441,7 @@ enum NightPhotoMerger {
     /// 仅A挡自动夜景在真实融合后使用：小探针估计中位数与高光分位。
     /// 在与CIExposureAdjust一致的线性光域计算增益；长曝光已承担主要补光，
     /// 数字提亮最多 0.5EV，避免把暗部噪点整体放大。
-    private static func automaticTonePlan(_ image: CIImage, context: CIContext, brightTone: Bool = false) -> (exposureEV: Double, shadowLift: Double) {
+    private static func automaticTonePlan(_ image: CIImage, context: CIContext) -> (exposureEV: Double, shadowLift: Double) {
         // 长曝光已经把主要亮度信息带回传感器；此时再强拉 EV 只会放大暗部噪点。
         // 无 EXIF 的合成测试/短曝光后备仍允许较大的数字提亮，避免深暗场景发黑。
         let exif = image.properties[kCGImagePropertyExifDictionary as String] as? [String: Any]
@@ -465,12 +463,11 @@ enum NightPhotoMerger {
         }
         let medianEV = log2(linear(0.28) / linear(max(median, 0.02)))
         let highlightEV = log2(linear(0.82) / linear(max(high, 0.05)))
-        let exposureCap = brightTone ? (longExposure ? 1.1 : 2.5) : (longExposure ? 0.5 : 2.5)
-        let shadowCap = brightTone ? (longExposure ? 0.22 : 0.24) : (longExposure ? 0.14 : 0.18)
-        let targetMedian = brightTone ? 0.35 : 0.30
+        let exposureCap = longExposure ? 0.5 : 2.5
+        let shadowCap = longExposure ? 0.14 : 0.18
+        let targetMedian = 0.30
         let exposureEV = min(exposureCap, max(0, min(medianEV, highlightEV)))
-        let shadowLift = min(shadowCap,
-                             max(0.06, 0.06 + (targetMedian - median) * (brightTone ? 0.7 : 0.55)))
+        let shadowLift = min(shadowCap, max(0.06, 0.06 + (targetMedian - median) * 0.55))
         return (exposureEV, shadowLift)
     }
 

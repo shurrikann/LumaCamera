@@ -7,7 +7,6 @@ import UIKit
 final class NightExperimentSettingsUITests: XCTestCase {
     func testNightExperimentSettingsLoadsAndOptionsAreWired() async throws {
         let model = try await FullDeviceRegressionFixture.makeFreshModel()
-        model.nightBrightToneEnabled = false
         model.nightHDRPhotoEnabled = false
         let host = UIHostingController(rootView: CameraView(model: model).settingsView)
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
@@ -22,15 +21,13 @@ final class NightExperimentSettingsUITests: XCTestCase {
         XCTAssertGreaterThanOrEqual(switches.count, 7, "设置页应加载包含开关的表单")
         XCTAssertFalse(host.view.bounds.isEmpty)
 
-        model.nightBrightToneEnabled = true
         model.nightHDRPhotoEnabled = true
         model.independentNightProfile = .highlight
         let options = model.photoOptions
-        XCTAssertTrue(options.nightBrightTone)
         XCTAssertTrue(options.nightHDRPhoto)
         XCTAssertEqual(options.nightProfile, .highlight)
         XCTAssertEqual(IndependentNightProfile.highlight.exposureOffsets, [0, 0, 0, -1, -2])
         XCTAssertFalse(IndependentNightProfile.allCases.contains { $0.exposureOffsets.contains { $0 > 0 } })
-        print("NIGHT-SETTINGS-UI switches=\(switches.count) bright=\(options.nightBrightTone) hdr=\(options.nightHDRPhoto) profile=\(options.nightProfile.rawValue)")
+        print("NIGHT-SETTINGS-UI switches=\(switches.count) hdr=\(options.nightHDRPhoto) profile=\(options.nightProfile.rawValue)")
     }
 }

@@ -1,3 +1,13 @@
+# 2026-11-06 夜景触发、A挡约束与逐帧曝光
+
+- 独立夜景：`syncIndependentNightRoute` 改为仅在 `nightModeEnabled && captureKind == .photo && mode == .auto && nightEnvironmentTriggered` 时启用；环境触发前保持普通夜景/预览路线。
+- 夜景与M挡互斥：`toggleNightMode` 在M挡先切A；`setMode(.manual)` 在夜景开启时先退出夜景并清理环境触发/独立路线；状态恢复也强制A。
+- 移除“亮度优先影调”：删除设置开关、`PhotoOptions.nightBrightTone`、合并器/影调规划中的brightTone分支；保留自适应基础影调。
+- 独立夜景逐帧：`setExposureModeCustom` completion 后才 `capturePhoto`；settings/prepared priority 由 `.quality` 改为 `.speed`；每帧读取文件 EXIF 的 exposureTime/ISO，与计划超出容差则失败，不把错误曝光送进合成。
+- 普通夜景 `NightCapturePolicy.qualityPriority` 也改为 speed，避免质量优先改变帧时序。
+- `NightAdaptiveCapturePolicyTests` 与夜景设置页加载测试在模拟器通过（含新的 speed 规则）。
+- 真机测试：设备当前 Xcode 连接不可用，夜景M挡/A挡、独立触发、逐帧曝光、崩溃复现尚未执行；不能记为真机通过。
+
 # 2026-11-06 调色盘浓度共用线性1.3曲线
 
 - 调色盘浓度直接绑定 `filterParameterBinding(.strength)`，写入同一个 `intensity`（0–100 显示映射），渲染走 `FilmStyle.apply`，不存在第二条曲线。

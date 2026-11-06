@@ -135,177 +135,35 @@ final class NightAdaptiveCapturePhysicalTests: XCTestCase {
             print("NIGHT-AUTO-PERF n=3 captureCallbackSeconds=\(timings) injectedPlan=true noPhotosWrites=true")
         }
     }
-    @MainActor func testManualNightPreservesExposureProductAndRangesAcrossBatches() async throws {
+    @MainActor func testIndependentNightWaitsForEnvironmentTrigger() async throws {
         try await withCamera { model in
             let camera = model.camera
-        camera.setForceOrdinaryNightForTesting(true)
-            model.setMode(.manual)
-            try await self.wait { camera.ready && model.mode == .manual && camera.supportsNightCapture }
-            // A→M 有约1秒路由稳定窗口；窗口内 applyExposure 会延后，先等稳定。
-            try await Task.sleep(for: .milliseconds(1200))
             model.toggleNightMode()
             try await self.wait { model.nightModeEnabled && !model.isPreparingSubmode }
-            XCTAssertEqual(model.mode,.manual,"开启夜景不能强制切回A挡")
-            // 夜景会收窄手动 ISO/快门范围；等能力表落到夜景范围后再验证夹取。
-            try await Task.sleep(for: .milliseconds(500))
-            await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
-            model.manualExposure = true; model.iso = 10000; model.shutter = log2(1.0/125); model.applyExposure()
-            XCTAssertEqual(model.iso,model.manualPhotoISORange.upperBound)
-            XCTAssertEqual(model.shutter,model.manualPhotoShutterRange.lowerBound,accuracy:0.00001)
-            let hardwareISO = try XCTUnwrap(model.hardwareControlSpecs.first { $0.id == "M." + CameraParameter.iso.rawValue })
-            let hardwareShutter = try XCTUnwrap(model.hardwareControlSpecs.first { $0.id == "M." + CameraParameter.shutter.rawValue })
-            XCTAssertEqual(hardwareISO.range.lowerBound,Float(model.manualPhotoISORange.lowerBound))
-            XCTAssertEqual(hardwareISO.range.upperBound,Float(model.manualPhotoISORange.upperBound))
-            XCTAssertEqual(hardwareShutter.range.lowerBound,Float(model.manualPhotoShutterRange.lowerBound))
-            XCTAssertEqual(hardwareShutter.range.upperBound,Float(model.manualPhotoShutterRange.upperBound))
-            model.manualWB = true; model.wb = 5200; model.whiteBalanceTint = 8; model.applyWhiteBalance()
-            model.manualFocus = true; model.focus = 0.5; camera.setFocus(position:0.5)
-            var times = [Double]()
-            let cases: [(PhotoFileFormat,Double,Double,Bool,Int)] = [
-                (.jpeg,400,1.0/15,false,6),(.heif,800,1.0/8,true,9),(.jpeg,100,1,true,3)]
-            for (format,requestedISO,seconds,assist,target) in cases {
-                model.photoFormat = format; model.smoothPreview = assist
-                model.iso = requestedISO; model.shutter = log2(seconds); model.applyExposure()
-                await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
-                try await Task.sleep(for:.milliseconds(300))
-                camera.nightExposureIndexForTesting = target == 9 ? 512 : target == 6 ? 128 : 32
-                camera.nightMotionForTesting = .stable
-                var sourceValues = [(Double,Double)]()
-                camera.onNightSourceForTesting = { data,_ in
-                    if let image = CGImageSourceCreateWithData(data as CFData,nil),
-                       let props = CGImageSourceCopyPropertiesAtIndex(image,0,nil) as? [String:Any],
-                       let exif = props[kCGImagePropertyExifDictionary as String] as? [String:Any],
-                       let iso = (exif[kCGImagePropertyExifISOSpeedRatings as String] as? [NSNumber])?.first?.doubleValue,
-                       let seconds = exif[kCGImagePropertyExifExposureTime as String] as? Double { sourceValues.append((iso,seconds)) }
-                }
-                let start = CACurrentMediaTime()
-                let photo = try await self.capture(camera,format:format)
-                times.append(CACurrentMediaTime()-start)
-                XCTAssertEqual(sourceValues.count,target)
-                let requestedExposureProduct = requestedISO * seconds
-                for source in sourceValues {
-                    // 手动值会规范化到当前硬件可用的 ISO/快门组合，验证曝光量等价而非字面相等。
-                    XCTAssertEqual(source.0 * source.1, requestedExposureProduct,
-                                   accuracy: max(1, requestedExposureProduct * 0.08))
-                }
-                let data = try XCTUnwrap(photo.resources.first?.data)
-                let image = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData,nil))
-                let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(image,0,nil) as? [String:Any])
-                let exif = try XCTUnwrap(properties[kCGImagePropertyExifDictionary as String] as? [String:Any])
-                let outputISO = try XCTUnwrap((exif[kCGImagePropertyExifISOSpeedRatings as String] as? [NSNumber])?.first?.doubleValue)
-                let outputSeconds = try XCTUnwrap(exif[kCGImagePropertyExifExposureTime as String] as? Double)
-                XCTAssertGreaterThan(outputISO, 0); XCTAssertGreaterThan(outputSeconds, 0)
-                XCTAssertEqual(outputISO * outputSeconds, requestedExposureProduct,
-                               accuracy: max(1, requestedExposureProduct * 0.08))
-                XCTAssertEqual(photo.diagnostics?.parameters?.mode,"M")
-                XCTAssertEqual(model.mode,.manual); XCTAssertTrue(model.manualExposure)
-                XCTAssertEqual(model.iso,requestedISO); XCTAssertEqual(pow(2,model.shutter),seconds,accuracy:0.00001)
-                XCTAssertEqual(model.wb,5200); XCTAssertEqual(model.whiteBalanceTint,8); XCTAssertTrue(model.manualWB); XCTAssertTrue(model.manualFocus)
-                try await self.wait { !camera.shutterBusy && camera.pendingPhotoCount == 0 }
-                print("NIGHT-MANUAL target=\(target) format=\(format) assist=\(assist) sources=\(sourceValues) seconds=\(times.last!) rows=\(String(describing:photo.diagnostics?.rows))")
-            }
-            camera.onNightSourceForTesting = nil
-            print("NIGHT-MANUAL-PERFORMANCE samples=3 captureSeconds=\(times) noSystemPhotos=true")
+            model.forceNightEnvironmentTriggeredForTesting(false)
+            let off = await withCheckedContinuation { c in camera.independentNightModeActiveForTesting { c.resume(returning:$0) } }
+            XCTAssertFalse(off, "仅开启夜景、环境未触发时不能进入48MP独立夜景")
+            model.forceNightEnvironmentTriggeredForTesting(true)
+            let on = await withCheckedContinuation { c in camera.independentNightModeActiveForTesting { c.resume(returning:$0) } }
+            XCTAssertTrue(on, "夜景开启且环境触发后才进入独立夜景")
+            print("NIGHT-TRIGGER off=\(off) on=\(on)")
         }
     }
 
-    @MainActor func testNightSupportsMModeAutomaticExposureAndAMSwitching() async throws {
+    @MainActor func testNightForcesAAndManualSwitchExitsNight() async throws {
         try await withCamera { model in
             let camera = model.camera
-        camera.setForceOrdinaryNightForTesting(true)
-            // 真机渲染两种夜景图标：不可用斜线必须改变像素，不能改变按钮尺寸。
-            var iconPixels = [Data]()
-            for unavailable in [false,true] {
-                let renderer = ImageRenderer(content:CameraView(model:model)
-                    .nightIndicatorIcon(symbol:"moon.fill",color:.white,unavailable:unavailable))
-                renderer.scale = 2
-                let image = try XCTUnwrap(renderer.uiImage)
-                XCTAssertEqual(image.size.width,27); XCTAssertEqual(image.size.height,27)
-                iconPixels.append(try XCTUnwrap(image.pngData()))
-            }
-            XCTAssertNotEqual(iconPixels[0],iconPixels[1])
             model.setMode(.manual)
             try await self.wait { camera.ready && model.mode == .manual }
-            model.manualExposure = false; model.applyExposure()
+            try await Task.sleep(for: .milliseconds(1100))
             model.toggleNightMode()
             try await self.wait { model.nightModeEnabled && !model.isPreparingSubmode }
-            XCTAssertNil(model.nightUnavailableReason)
-            camera.nightExposureIndexForTesting = 32
-            let photo = try await self.capture(camera,format:.heif)
-            XCTAssertEqual(photo.diagnostics?.parameters?.mode,"M"); XCTAssertFalse(model.manualExposure)
-            for _ in 0..<3 {
-                model.setMode(.auto); await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
-                try await self.wait { camera.ready && model.mode == .auto }
-                XCTAssertTrue(model.nightModeEnabled)
-                model.setMode(.manual); await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
-                try await self.wait { camera.ready && model.mode == .manual }
-                XCTAssertTrue(model.nightModeEnabled); XCTAssertNil(model.nightUnavailableReason)
-            }
-            model.toggleNightMode(); XCTAssertFalse(model.nightModeEnabled)
-            XCTAssertEqual(model.mode,.manual)
-            print("NIGHT-M-AUTO capture=1 AMCycles=3 enabledStatePreserved=true")
-        }
-    }
-
-    @MainActor func testMNightNaturalTriggerAndManualExposureNormalization() async throws {
-        try await withCamera { model in
-            let camera = model.camera
-        camera.setForceOrdinaryNightForTesting(true)
-            model.setMode(.manual); model.manualExposure = false; model.applyExposure()
-            try await self.wait { camera.ready && model.mode == .manual }
-            model.toggleNightMode()
-            try await self.wait { model.nightModeEnabled && !model.isPreparingSubmode }
-            let end = CACurrentMediaTime()+12
-            while !model.nightIndicatorIsTriggered && CACurrentMediaTime()<end { try await Task.sleep(for:.milliseconds(100)) }
-            print("NIGHT-M-NATURAL automaticTriggered=\(model.nightIndicatorIsTriggered) reading=\(String(describing:camera.readings)) reason=\(model.nightUnavailableReason ?? "none")")
-            guard model.nightIndicatorIsTriggered else { throw XCTSkip("M挡当前真实场景未达到暗光触发阈值，未冒充自然触发通过") }
-            // 换手动参数后，按真实offset修正测光，不能把设定值直接当作环境亮度。
-            model.manualExposure = true; model.iso = 400; model.shutter = log2(0.25)
-            model.smoothPreview = false; model.applyExposure()
-            try await Task.sleep(for:.seconds(2))
-            XCTAssertTrue(model.nightIndicatorIsTriggered,"同一暗光环境切手动后不应误判成明亮场景")
-            XCTAssertTrue(model.photoOptions.nightMode)
-            let done = self.expectation(description:"M挡自然触发夜景")
-            var result: CapturedPhoto?
-            camera.onCaptureCompleted = { result = $0; done.fulfill() }
-            model.takePhoto()
-            await self.fulfillment(of:[done],timeout:45)
-            let photo = try XCTUnwrap(result,camera.message ?? "M挡自然夜景未出片")
-            XCTAssertEqual(photo.diagnostics?.parameters?.mode,"M")
-            XCTAssertNotNil(photo.diagnostics?.rows.first { $0.title == "夜景实际采集" })
-            print("NIGHT-M-NATURAL complete reading=\(String(describing:camera.readings)) rows=\(String(describing:photo.diagnostics?.rows))")
-        }
-    }
-
-    @MainActor func testManualNightCancelAndReturnRetainsMExposure() async throws {
-        try await withCamera { model in
-            let camera = model.camera
-        camera.setForceOrdinaryNightForTesting(true)
+            XCTAssertEqual(model.mode, .auto, "夜景不支持M挡，开启时必须切A")
             model.setMode(.manual)
             try await self.wait { camera.ready && model.mode == .manual }
-            model.toggleNightMode()
-            try await self.wait { model.nightModeEnabled && !model.isPreparingSubmode }
-            model.manualExposure = true; model.iso = 400; model.shutter = log2(1.0/15)
-            model.smoothPreview = true; model.applyExposure()
-            camera.nightExposureIndexForTesting = 512; camera.nightMotionForTesting = .stable
-            var submitted = false, finished = false, result: CapturedPhoto?
-            camera.onNightBatchSubmittedForTesting = { _ in submitted = true }
-            camera.onCaptureCompleted = { result = $0; finished = true }
-            var options = model.photoOptions; options.nightMode = true
-            camera.capture(flashMode:.off,options:options)
-            try await self.wait { submitted }
-            model.setCameraActive(false)
-            // 取消只释放任务，不交付照片；成功回调不应成为取消完成的条件。
-            try await self.wait { camera.pendingPhotoCount == 0 && !camera.shutterBusy }
-            XCTAssertFalse(finished, "取消组不应交付半成品")
-            XCTAssertNil(result)
-            model.setCameraActive(true)
-            try await self.wait { camera.ready && camera.preview != nil }
-            XCTAssertEqual(model.mode,.manual); XCTAssertTrue(model.manualExposure)
-            XCTAssertEqual(model.iso,400); XCTAssertEqual(pow(2,model.shutter),1.0/15,accuracy:0.0001)
-            camera.onNightBatchSubmittedForTesting = nil; camera.nightExposureIndexForTesting = 32
-            _ = try await self.capture(camera,format:.jpeg)
-            print("NIGHT-M-CANCEL cancelled=1 returnCapture=1 mode=M exposure=400,1/15 noPhotosWrites=true")
+            XCTAssertFalse(model.nightModeEnabled, "夜景下切M必须退出夜景")
+            XCTAssertFalse(model.photoOptions.nightMode)
+            print("NIGHT-M-EXIT autoForced=true manualExits=true")
         }
     }
 
@@ -752,15 +610,16 @@ final class NightAdaptiveCapturePhysicalTests: XCTestCase {
         }
     }
 
-    @MainActor func testIndependentNightHDRPhotoAndBrightTone() async throws {
+    @MainActor func testIndependentNightHDRPhoto() async throws {
         try await withCamera { model in
             let camera = model.camera
             model.independentNightProfile = .balanced
-            model.nightBrightToneEnabled = true
             model.nightHDRPhotoEnabled = true
             model.smoothPreview = false
             model.photoFormat = .heif
             model.toggleNightMode()
+            await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
+            model.forceNightEnvironmentTriggeredForTesting(true)
             await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
             camera.nightAutomaticExposureForTesting = .init(seconds: 0.125, iso: 200)
             var result: CapturedPhoto?

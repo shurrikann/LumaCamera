@@ -7107,6 +7107,11 @@ final class CameraEngine: NSObject, ObservableObject {
     func setIndependentNightModeActive(_ active: Bool) {
         queue.async { self.independentNightModeActive = active }
     }
+    #if DEBUG
+    func independentNightModeActiveForTesting(_ completion: @escaping (Bool) -> Void) {
+        queue.async { completion(self.independentNightModeActive) }
+    }
+    #endif
 
     private func independentNightRoute(for displayZoom: CGFloat) -> (device: AVCaptureDevice, baseDisplayZoom: CGFloat)? {
         func supports48(_ device: AVCaptureDevice) -> Bool {
@@ -7267,8 +7272,7 @@ final class CameraEngine: NSObject, ObservableObject {
                             }
                             do {
                                 let merged = try NightPhotoMerger.merge(images, context: self.context,
-                                    referenceIndex: min(1, images.count - 1), adaptiveTone: true,
-                                    brightTone: context.options.nightBrightTone)
+                                    referenceIndex: min(1, images.count - 1), adaptiveTone: true)
                                 var diagnostics = context.diagnostics ?? PhotoCaptureDiagnostics()
                                 if context.options.nightHDRPhoto, context.options.format == .heif {
                                     context.options.hdr = true
@@ -8269,8 +8273,7 @@ extension CameraEngine: AVCapturePhotoCaptureDelegate {
                         if decodedFrames.count >= 2, let referenceIndex = decodedFrames.firstIndex(where: { $0.sequence == 2 }) {
                             self.tracePhotoPhase("night-merge-start")
                             let merged = try NightPhotoMerger.merge(decodedFrames.map(\.image), context: self.context, referenceIndex: referenceIndex,
-                                                                  adaptiveTone: capture.nightAutomaticExposure != nil,
-                                                                  brightTone: capture.options.nightBrightTone)
+                                                                  adaptiveTone: capture.nightAutomaticExposure != nil)
                             self.tracePhotoPhase("night-merge-end")
                             let output: CIImage
                             if merged.alignedFrameCount >= 2 {

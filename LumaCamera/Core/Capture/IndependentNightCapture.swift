@@ -47,6 +47,7 @@ final class IndependentNightCapture: NSObject {
         case startFailed
         case noFrames
         case cancelled
+        case exposureMismatch(String)
 
         var errorDescription: String? {
             switch self {
@@ -57,6 +58,7 @@ final class IndependentNightCapture: NSObject {
             case .startFailed: return "夜景独立采集启动失败。"
             case .noFrames: return "夜景独立采集没有收到曝光帧。"
             case .cancelled: return "夜景独立采集已取消。"
+            case .exposureMismatch(let detail): return "夜景帧曝光与计划不一致：\(detail)"
             }
         }
     }
@@ -83,6 +85,7 @@ final class IndependentNightCapture: NSObject {
     private var highResolutionPrepared = false
     private var focusPrepared = false
     private var finished = false
+    private var pendingExpectedExposure: (seconds: Double, iso: Double)?
 
     func capture(device: AVCaptureDevice, exposureSeconds: Double, iso: Float,
                  rotationAngle: CGFloat? = nil,
@@ -176,7 +179,7 @@ final class IndependentNightCapture: NSObject {
                 // 普通 48MP 路径在会话运行中预分配高像素照片管线；独立会话同样处理。
                 let prepared = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
                 prepared.maxPhotoDimensions = largest
-                prepared.photoQualityPrioritization = .quality
+                prepared.photoQualityPrioritization = .speed
                 self.output.setPreparedPhotoSettingsArray([prepared]) { [weak self] _, _ in
                     guard let self else { return }
                     self.queue.async {
@@ -273,17 +276,32 @@ final class IndependentNightCapture: NSObject {
         #if DEBUG
         print("INDEPENDENT-NIGHT-FRAME profile=\(profile.rawValue) index=\(frameIndex) offsetEV=\(offsetEV) seconds=\(seconds) iso=\(value) codec=\(codec.rawValue)")
         #endif
-        settings.photoQualityPrioritization = .quality
+        settings.photoQualityPrioritization = .speed
         settings.flashMode = .off
+        pendingExpectedExposure = (seconds, Double(value))
         do {
             try device.lockForConfiguration()
+            // 必须等传感器接受本帧快门/ISO后再提交，否则照片可能沿用上一帧曝光。
             device.setExposureModeCustom(duration: CMTime(seconds: seconds, preferredTimescale: 1_000_000_000),
-                                         iso: value, completionHandler: nil)
+                                         iso: value) { [weak self] _ in
+                guard let self else { return }
+                self.queue.async {
+                    guard !self.finished else { return }
+                    let appliedSeconds = device.exposureDuration.seconds
+                    let appliedISO = Double(device.iso)
+                    guard abs(appliedSeconds - seconds) <= max(0.001, seconds * 0.02),
+                          abs(appliedISO - Double(value)) <= max(1, Double(value) * 0.02) else {
+                        self.finish(.failure(Failure.exposureMismatch(
+                            "计划 \(seconds)s/ISO\(value)，设备 \(appliedSeconds)s/ISO\(appliedISO)")))
+                        return
+                    }
+                    self.output.capturePhoto(with: settings, delegate: self)
+                }
+            }
             device.unlockForConfiguration()
         } catch {
             finish(.failure(error)); return
         }
-        output.capturePhoto(with: settings, delegate: self)
     }
 
     private func finish(_ result: Swift.Result<Result, Error>) {
@@ -326,6 +344,23 @@ extension IndependentNightCapture: AVCapturePhotoCaptureDelegate {
                 self.finish(.failure(Failure.noFrames)); return
             }
             self.frames.append(data)
+            if let expected = self.pendingExpectedExposure,
+               let source = CGImageSourceCreateWithData(data as CFData, nil),
+               let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
+                let exif = props[kCGImagePropertyExifDictionary as String] as? [String: Any]
+                let actualSeconds = (exif?[kCGImagePropertyExifExposureTime as String] as? NSNumber)?.doubleValue
+                let actualISO = (exif?[kCGImagePropertyExifISOSpeedRatings as String] as? [NSNumber])?.first?.doubleValue
+                if let actualSeconds, let actualISO {
+                    let secondsOK = abs(actualSeconds - expected.seconds) <= max(0.002, expected.seconds * 0.15)
+                    let isoOK = abs(actualISO - expected.iso) <= max(1, expected.iso * 0.15)
+                    if !secondsOK || !isoOK {
+                        self.finish(.failure(Failure.exposureMismatch(
+                            "文件 \(actualSeconds)s/ISO\(actualISO)，计划 \(expected.seconds)s/ISO\(expected.iso)")))
+                        return
+                    }
+                }
+            }
+            self.pendingExpectedExposure = nil
             if let source = CGImageSourceCreateWithData(data as CFData, nil),
                let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
                let width = props[kCGImagePropertyPixelWidth as String] as? Int,

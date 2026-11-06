@@ -2,13 +2,15 @@ import XCTest
 @testable import LumaCamera
 
 final class NightAdaptiveCapturePolicyTests: XCTestCase {
-    func testNightRequestsHighestPreparedQualityButManualExposureKeepsSpeed() {
+    func testNightAndManualExposureUseSpeedToPreserveFrameTiming() {
         XCTAssertEqual(NightCapturePolicy.qualityPriority(nightMode: true, usesRAW: false, usesManualExposure: false,
-                                                          maximum: .quality), .quality)
+                                                          maximum: .quality), .speed)
         XCTAssertEqual(NightCapturePolicy.qualityPriority(nightMode: true, usesRAW: false, usesManualExposure: false,
-                                                          maximum: .balanced), .balanced)
+                                                          maximum: .balanced), .speed)
         XCTAssertEqual(NightCapturePolicy.qualityPriority(nightMode: false, usesRAW: false, usesManualExposure: true,
                                                           maximum: .quality), .speed)
+        XCTAssertEqual(NightCapturePolicy.qualityPriority(nightMode: false, usesRAW: false, usesManualExposure: false,
+                                                          maximum: .quality), .balanced)
     }
 
     func testDarkAutomaticExposureCollectsMoreLightWithinHardwareBounds() throws {

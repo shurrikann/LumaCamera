@@ -108,7 +108,7 @@ enum NightCapturePolicy {
 
     static func qualityPriority(nightMode: Bool, usesRAW: Bool, usesManualExposure: Bool,
                                 maximum: AVCapturePhotoOutput.QualityPrioritization) -> AVCapturePhotoOutput.QualityPrioritization {
-        let desired: AVCapturePhotoOutput.QualityPrioritization = nightMode ? .quality : (usesRAW || usesManualExposure ? .speed : .balanced)
+        let desired: AVCapturePhotoOutput.QualityPrioritization = (nightMode || usesRAW || usesManualExposure) ? .speed : .balanced
         switch desired {
         case .quality: return maximum == .quality ? .quality : maximum
         case .balanced: return maximum == .speed ? .speed : .balanced
@@ -261,7 +261,6 @@ struct PhotoOptions {
     /// 慢门使用独立的静态曝光请求，避免逐帧改动取景器的曝光时钟。
     var prefersManualExposureBracket = false
     var nightProfile: IndependentNightProfile = .balanced
-    var nightBrightTone = false
     var nightHDRPhoto = false
     var usesHDRHEIF: Bool { format == .heif && hdr }
     /// 普通 HEIF+HDR 走系统处理源；只有 RAW/RAW+JPG/HEIF Pro 需要 RAW。
