@@ -19,7 +19,12 @@ extension CameraView {
             }.font(.system(size: 14)).foregroundStyle(.white.opacity(0.85))
             HStack(spacing: 8) {
                 ForEach(FilterEditorTab.allCases) { tab in
-                    Button { model.filterEditorTab = tab } label: {
+                    Button {
+                        model.setFilterParameterEditing(false)
+                        if model.preferences.filterDialPad {
+                            withAnimation(AppTheme.popupAnimation) { model.filterEditorTab = tab }
+                        } else { model.filterEditorTab = tab }
+                    } label: {
                         Text(tab.rawValue).font(.system(size: 12, weight: .medium))
                             .foregroundStyle(model.filterEditorTab == tab ? AppTheme.accentForeground : .white.opacity(0.7))
                             .frame(maxWidth: .infinity).frame(height: 32)

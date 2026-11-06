@@ -128,7 +128,7 @@ extension CameraView {
                     .accessibilityIdentifier("camera.format.adaptiveHighDynamic")
                     .captureControlGeometry("format.highDynamic", model: model)
                 }
-                Text("通过 RAW 格式转换 HEIF，保留更多细节并降低锐化，支持 Pro 影调。")
+                Text("HEIF Pro支持Pro影调和高动态，开启高动态后自适应平衡明暗，保留更多细节并消除锐化，成片保留DNG底片可供重新显影。")
                     .font(.system(size: 9))
                     .lineSpacing(1)
                     .multilineTextAlignment(.leading)
@@ -186,15 +186,6 @@ extension CameraView {
                     .accessibilityIdentifier("camera.hdr.previewNotice")
                 }
                 .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-            }
-            HStack(alignment: .top, spacing: 12) {
-                Text("普通 HEIF Pro 下自适应平衡亮暗，保留 DNG 底片供重新显影；与 HDR 独立，效果在成片中呈现。")
-                    .font(.system(size: 11)).foregroundStyle(.white.opacity(0.65))
-                    .lineLimit(nil)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityIdentifier("camera.format.adaptiveHighDynamic.explanation")
-                    .captureControlGeometry("format.highDynamic.explanation",model:model)
             }
         }
     }

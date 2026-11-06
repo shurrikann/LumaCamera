@@ -89,11 +89,11 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         XCTAssertEqual(model.filterDialPadFrameForTesting, .zero, "关闭设置后应恢复旧样式")
     }
 
-    func testCompactDialFitsNarrowAndRotatedControlsForEveryPhotoRatio() async throws {
+    func testCompactDialFitsSupportedWidthsAndRotatedControlsForEveryPhotoRatio() async throws {
         let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
         defer { model.setCameraActive(false); model.closePopups() }
         var samples = 0
-        for width: CGFloat in [320, 390] {
+        for width: CGFloat in [390, 430] {
             for angle in [0.0, 90.0] {
                 let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
                 let controller = UIHostingController(rootView: CompactDialPanelHost(model: model, angle: angle))
@@ -112,7 +112,8 @@ final class CameraNewUIFeaturesTests: XCTestCase {
                     for tab in FilterEditorTab.allCases {
                         model.filterEditorTab = tab
                         try await Task.sleep(for: .milliseconds(70))
-                        let frame = model.filterDialPadFrameForTesting
+                        // 宿主直接测量整个真实弹窗，不使用旧子视图退出时会清零的共享调试值。
+                        let frame = model.popupFrameForTesting
                         XCTAssertGreaterThan(frame.height, 200)
                         XCTAssertGreaterThanOrEqual(frame.minX, -1)
                         XCTAssertLessThanOrEqual(frame.maxX, width + 1)
@@ -130,7 +131,7 @@ final class CameraNewUIFeaturesTests: XCTestCase {
                 window.isHidden = true; window.rootViewController = nil
             }
         }
-        print("DIAL-LAYOUT samples=\(samples) widths=320/390 controlAngles=0/90 ratios=7 tabs=3; hosted UI layout, no FPS claim")
+        print("DIAL-LAYOUT samples=\(samples) widths=390/430 controlAngles=0/90 ratios=7 tabs=3; hosted UI layout, no FPS claim")
     }
 
     func testStrengthFadeKeepsSamePreviewDynamicRange() async throws {

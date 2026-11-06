@@ -51,6 +51,8 @@ struct FilterDialEditor: View {
             .padding(8)
             .frame(height: 140)
             .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .id(tab)
+            .transition(.opacity)
             bottomSelector
             bottomSlider
         }
