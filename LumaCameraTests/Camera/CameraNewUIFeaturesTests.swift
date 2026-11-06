@@ -120,6 +120,23 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         XCTAssertEqual(model.effectiveCaptureLook.style, .leicaM9)
     }
 
+    func testDialPadStrengthUsesUniformLinearStrength() {
+        let model = AppDependencies.makeCameraModel(automaticallySave: false)
+        model.setCaptureKind(.photo); model.photoFormat = .heif
+        model.preferences.filterDialPad = true
+        model.style = .leicaM9
+        let binding = model.filterParameterBinding(.strength)
+        binding.wrappedValue = 80
+        XCTAssertEqual(model.intensity, 0.8, accuracy: 0.0001)
+        XCTAssertEqual(FilmStyle.effectStrength(for: model.intensity), 1, accuracy: 0.0001)
+        binding.wrappedValue = 100
+        XCTAssertEqual(model.intensity, 1, accuracy: 0.0001)
+        XCTAssertEqual(FilmStyle.effectStrength(for: model.intensity), 1.3, accuracy: 0.0001)
+        binding.wrappedValue = 0
+        XCTAssertEqual(model.intensity, 0, accuracy: 0.0001)
+        XCTAssertEqual(FilmStyle.effectStrength(for: model.intensity), 0, accuracy: 0.0001)
+    }
+
     func testHDRSuppressesFilterTemporarilyAndRestoresIt() async throws {
         let model = try await FullDeviceRegressionFixture.makeIsolatedModel(), camera = model.camera
         model.setCameraActive(true)

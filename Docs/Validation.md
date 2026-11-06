@@ -1,3 +1,9 @@
+# 2026-11-06 调色盘浓度共用线性1.3曲线
+
+- 调色盘浓度直接绑定 `filterParameterBinding(.strength)`，写入同一个 `intensity`（0–100 显示映射），渲染走 `FilmStyle.apply`，不存在第二条曲线。
+- 新增 `testDialPadStrengthUsesUniformLinearStrength`：80→1.0、100→1.3、0→0。
+- 调色盘布局测试同时通过。
+
 # 2026-11-06 浓度为线性1.3倍，80%=参考LUT
 
 - effectStrength改为分段线性：0–80%=0→1，80–100%=1→1.3；取消80%后的二次加速。
