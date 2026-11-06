@@ -121,7 +121,12 @@ extension CameraView {
                     Toggle("HDR", isOn: $model.hdr).labelsHidden().tint(AppTheme.accent)
                         .disabled(camera.hdrPreviewConfiguring || model.isPreparingSubmode || model.burstModeEnabled || model.nightModeEnabled || model.portraitModeEnabled || (model.photoFormat != .heifPro && model.photoFormat != .heif) || model.border || (model.photoFormat == .heif && !model.hdr && !camera.supportsHEIFHDR))
                         .captureControlGeometry("format.hdr",model:model)
-                    Text("10-bit HEIF").font(.system(size: 10)).foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("10-bit HEIF").font(.system(size: 9))
+                        Text("HDR不支持滤镜").font(.system(size: 8))
+                    }
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("camera.hdr.previewNotice")
                 }
                 .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
                 HStack(spacing: 6) {
@@ -135,12 +140,6 @@ extension CameraView {
                 .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
             }
             HStack(alignment: .top, spacing: 12) {
-                Text(hdrFormatDescription)
-                    .font(.system(size: 11)).foregroundStyle(.white.opacity(0.65))
-                    .lineLimit(nil)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityIdentifier("camera.hdr.previewNotice")
                 Text("普通 HEIF Pro 下自适应平衡亮暗，保留 DNG 底片供重新显影；与 HDR 独立，效果在成片中呈现。")
                     .font(.system(size: 11)).foregroundStyle(.white.opacity(0.65))
                     .lineLimit(nil)
@@ -150,19 +149,6 @@ extension CameraView {
                     .captureControlGeometry("format.highDynamic.explanation",model:model)
             }
         }
-    }
-    private var hdrFormatDescription: String {
-        if model.photoFormat == .heif {
-            return model.hdr
-                ? "HDR 与滤镜互斥：已自动切回原片，滤镜入口禁用。关闭 HDR 后可重新选择滤镜。不能与 Live 同时开启。"
-                : model.filterActive
-                    ? "开启 HDR 会自动切回原片并清空调色参数；各滤镜已保存的配方会保留。"
-                    : "实时预览与 10 位成片；开启后处理时间增加，不能与 Live 同时开启。"
-        }
-        if model.photoFormat == .heifPro {
-            return "效果在成片中呈现，实时预览暂以 SDR 显示。"
-        }
-        return "仅 HEIF / HEIF Pro 可用。"
     }
     private var formatExplanation: String? {
         switch model.photoFormat {
