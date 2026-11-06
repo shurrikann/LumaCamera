@@ -97,14 +97,24 @@ extension CameraView {
                     .frame(width: formatColumnWidth)
                     .accessibilityIdentifier("camera.format.proTone")
                     .captureControlGeometry("format.proTone", model: model)
-                    HStack(spacing: 4) {
-                        Text("高动态").font(.system(size: 9))
-                        Toggle("高动态", isOn: Binding(get:{ model.adaptiveHighDynamic }, set:{ model.setAdaptiveHighDynamic($0) }))
-                            .labelsHidden().tint(AppTheme.accent)
-                            .disabled(!model.adaptiveHighDynamicAvailable)
-                            .accessibilityIdentifier("camera.format.adaptiveHighDynamic")
-                            .captureControlGeometry("format.highDynamic", model: model)
+                    Button {
+                        model.setAdaptiveHighDynamic(!model.adaptiveHighDynamic)
+                    } label: {
+                        Text("高动态")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(model.adaptiveHighDynamic ? .black : .white.opacity(0.9))
+                            .padding(.horizontal, 7)
+                            .frame(height: 24)
+                            .background(model.adaptiveHighDynamic ? AppTheme.accent : Color.white.opacity(0.18), in: Capsule())
                     }
+                    .buttonStyle(.plain)
+                    .disabled(!model.adaptiveHighDynamicAvailable)
+                    .opacity(model.adaptiveHighDynamicAvailable ? 1 : 0.5)
+                    .accessibilityLabel("高动态")
+                    .accessibilityValue(model.adaptiveHighDynamic ? "已开启" : "已关闭")
+                    .accessibilityAddTraits(model.adaptiveHighDynamic ? .isSelected : [])
+                    .accessibilityIdentifier("camera.format.adaptiveHighDynamic")
+                    .captureControlGeometry("format.highDynamic", model: model)
                     .fixedSize()
                 }
                 Text("通过 RAW 格式转换 HEIF，保留更多细节并降低锐化，支持 Pro 影调。")

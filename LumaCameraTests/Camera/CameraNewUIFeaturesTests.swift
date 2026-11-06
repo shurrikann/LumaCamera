@@ -5,13 +5,13 @@ import UIKit
 
 @MainActor
 final class CameraNewUIFeaturesTests: XCTestCase {
-    private func host(_ model: CameraViewModel) throws -> (UIViewController, UIWindow) {
+    private func host(_ model: CameraViewModel, width: CGFloat = 390, angle: Double = 0, scenePhase: ScenePhase = .active) throws -> (UIViewController, UIWindow) {
         let host = UIHostingController(rootView: CameraView(model: model)
-            .environment(\.scenePhase, .active)
-            .environment(\.captureControlAngle, 0))
+            .environment(\.scenePhase, scenePhase)
+            .environment(\.captureControlAngle, angle))
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let window = UIWindow(windowScene: scene)
-        window.frame = CGRect(x: 0, y: 0, width: 390, height: 760)
+        window.frame = CGRect(x: 0, y: 0, width: width, height: 760)
         window.rootViewController = host
         window.isHidden = false
         return (host, window)
@@ -87,6 +87,46 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         model.preferences.filterDialPad = false
         try await Task.sleep(for: .milliseconds(350))
         XCTAssertEqual(model.filterDialPadFrameForTesting, .zero, "关闭设置后应恢复旧样式")
+    }
+
+    func testCompactDialFitsNarrowAndRotatedControlsForEveryPhotoRatio() async throws {
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        defer { model.setCameraActive(false); model.closePopups() }
+        var samples = 0
+        for width: CGFloat in [320, 390] {
+            for angle in [0.0, 90.0] {
+                let (controller, window) = try host(model, width: width, angle: angle, scenePhase: .inactive)
+                defer { window.isHidden = true; window.rootViewController = nil }
+                _ = controller.view
+                model.style = .leicaM9
+                model.preferences.filterDialPad = true
+                model.panel = .film; model.filters.showStrength = true
+                try await Task.sleep(for: .milliseconds(250))
+                let height = model.popupFrameForTesting.height
+                for ratio in FrameRatio.photoOptions {
+                    model.ratio = ratio
+                    for tab in FilterEditorTab.allCases {
+                        model.filterEditorTab = tab
+                        try await Task.sleep(for: .milliseconds(70))
+                        let frame = model.filterDialPadFrameForTesting
+                        XCTAssertGreaterThan(frame.height, 200)
+                        XCTAssertGreaterThanOrEqual(frame.minX, -1)
+                        XCTAssertLessThanOrEqual(frame.maxX, width + 1)
+                        XCTAssertLessThanOrEqual(frame.maxY, window.bounds.maxY + 1)
+                        XCTAssertEqual(model.popupFrameForTesting.height, height, accuracy: 1)
+                        samples += 1
+                    }
+                }
+                let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                    window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+                }
+                let attachment = XCTAttachment(image: shot)
+                attachment.name = "Compact-Dial-width-\(Int(width))-angle-\(Int(angle))"
+                attachment.lifetime = .keepAlways; add(attachment)
+                window.isHidden = true; window.rootViewController = nil
+            }
+        }
+        print("DIAL-LAYOUT samples=\(samples) widths=320/390 controlAngles=0/90 ratios=7 tabs=3; hosted UI layout, no FPS claim")
     }
 
     func testStrengthFadeKeepsSamePreviewDynamicRange() async throws {
