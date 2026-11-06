@@ -1,3 +1,11 @@
+## 可选横向调色盘（2026-11-06）
+
+`CameraFilterAdjustmentPanel`仍以`CapturePreferences.filterDialPad`分支选择控件，默认及旧数据缺省为false；旧版滑条保留334点高度，开启后的调色盘内容为386点，三类同高。`FilterDialLayout`只描述界面分工：色彩为色温×色调、浓度/饱和度竖轨、褪色横轨；明暗为曝光×对比、高光/阴影竖轨、亮度横轨；质感为柔光×卤化、细节/暗角竖轨、色差/颗粒大小/颗粒饱和度标签与共用横轨。卤化在新界面显示“胶片光晕”，原key不变。标签只切换正在编辑的参数，所有配方数值保留；相册照片/视频编辑继续原滑条。
+
+`filterParameterPairBinding`与单项绑定共用格式、videoBusy、重置代次和滤镜身份检查，并拒绝切分类后延迟到达的旧手势；两轴写入一份`FilterAdjustments`后只发布一次。取消原先光晕把softness/halation同时写为同值的合并入口。`FilterDialGeometry`让指示点位置与触摸端点使用同样的13点内缩；默认标记按参数零值定位。浓度仍是基础滤镜的`intensity`，不缩放独立调色参数，不改变渲染器。切页/底部参数切换使用局部透明过渡，遵循`AppTheme.popupAnimation`的减弱动态效果规则。
+
+手势与无障碍采用苹果官方[DragGesture](https://developer.apple.com/documentation/swiftui/draggesture/)和[accessibilityRepresentation](https://developer.apple.com/documentation/swiftui/view/accessibilityrepresentation(representation:))接口；参数映射与批量提交为项目自身实现，不是平台提供的调色算法。
+
 ## 夜景源ISO降噪与元数据（2026-11-03）
 
 NightPhotoMerger配准交集裁切后按原始索引显式带入source.properties；融合器按有效源ISO中位数对800–3200区间线性映射噪声压力，提高CINoiseReduction阈值及暗部覆盖。缺失元数据/低ISO保留原路径，不改自动曝光、帧数、运动拒绝及M挡曝光语义。最终仍使用参考帧元数据。[测试与边界](Test-Reports/2026-11-03-Night-HighISO.md)。

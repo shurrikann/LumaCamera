@@ -67,7 +67,7 @@ extension CameraView {
             panelHeading("分辨率")
             HStack(spacing: 10) {
                 ForEach(PhotoResolution.allCases) { resolution in
-                    choicePill(resolution.title, selected: model.photoResolution == resolution, enabled: model.canSelectPhotoResolution(resolution)) { model.photoResolution = resolution }
+                    choicePill(resolution == .high ? "\(resolution.title) (M)" : resolution.title, selected: model.photoResolution == resolution, enabled: model.canSelectPhotoResolution(resolution)) { model.photoResolution = resolution }
                         .frame(width: 70)
                         .accessibilityIdentifier("format.resolution.\(resolution.rawValue)")
                         .captureControlGeometry("format.resolution.\(resolution.rawValue)", model: model)
