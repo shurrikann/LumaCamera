@@ -5272,7 +5272,7 @@ final class CameraEngine: NSObject, ObservableObject {
         livePreviewState.update {
             $0.running = wantsRunning; $0.manualMode = manualMode
             $0.temporaryMacroPhysicalInput = input?.device.deviceType == .builtInUltraWideCamera
-                && (macroPhysicalHoldRoute != nil || !macroAutomaticRoutes.isEmpty)
+                && (macroPhysicalHoldRoute != nil || macroPreviewRoute != nil || !macroAutomaticRoutes.isEmpty)
             $0.hdr = (heifHDRPreviewRequested && hdrPreviewSource != nil)
                 || (videoModeRequested && requestedVideoSettings.colorSpace == .hdr)
             $0.videoColorSpace = videoModeRequested ? requestedVideoSettings.colorSpace : nil
@@ -5788,6 +5788,66 @@ final class CameraEngine: NSObject, ObservableObject {
 
     func capture(flash: Bool) { capture(flashMode: flash ? .on : .off, options: PhotoOptions()) }
 
+    /// 系统一判定微距就切到最终物理超广角，用户在这之后的预览上构图；
+    /// 快门阶段不再切换输入，避免拍后构图轻微变化。
+    private func updateMacroPhysicalPreview(active: Bool) {
+        queue.async {
+            if active { self.armMacroPhysicalPreview() }
+            else { self.disarmMacroPhysicalPreview() }
+        }
+    }
+
+    private func armMacroPhysicalPreview() {
+        guard macroPreviewRoute == nil, captureContexts.isEmpty, !manualMode,
+              let original = input, original.device.isVirtualDevice else { return }
+        let virtual = original.device
+        let displayZoom = virtual.videoZoomFactor * CameraLensCatalog.displayMultiplier(virtual)
+        let primary = virtual.activePrimaryConstituent
+        let fallback = lensCatalog.first(where: { $0.device.position == .back && $0.device.deviceType == .builtInUltraWideCamera })?.device
+        guard macroActive, virtual.position == .back, displayZoom >= 0.99,
+              let physical = primary?.deviceType == .builtInUltraWideCamera ? primary : fallback,
+              let lens = lensCatalog.first(where: { $0.device.uniqueID == physical.uniqueID }),
+              let replacement = try? reusableInput(for: physical) else { return }
+        let base = lens.displayZoom / lens.zoomFactor
+        session.beginConfiguration()
+        session.removeInput(original)
+        guard session.canAddInput(replacement) else {
+            session.addInput(original); session.commitConfiguration(); return
+        }
+        session.addInput(replacement); input = replacement
+        session.commitConfiguration()
+        macroPreviewRoute = (original, physical.uniqueID)
+        try? physical.lockForConfiguration()
+        physical.videoZoomFactor = min(max(displayZoom / base, physical.minAvailableVideoZoomFactor), physical.maxAvailableVideoZoomFactor)
+        if physical.isFocusPointOfInterestSupported { physical.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5) }
+        if physical.isFocusModeSupported(.continuousAutoFocus) { physical.focusMode = .continuousAutoFocus }
+        physical.unlockForConfiguration()
+        configureConnections(device: physical)
+        configurePhotoOutput(physical, publish: false)
+        syncPreviewState()
+        #if DEBUG
+        print("MACRO-PREVIEW-PHYSICAL input=\(physical.deviceType.rawValue)")
+        #endif
+    }
+
+    private func disarmMacroPhysicalPreview() {
+        guard let saved = macroPreviewRoute, captureContexts.isEmpty,
+              input?.device.uniqueID == saved.physicalID, let current = input else { return }
+        macroPreviewRoute = nil
+        session.beginConfiguration()
+        session.removeInput(current)
+        if session.canAddInput(saved.original) {
+            session.addInput(saved.original); input = saved.original
+        } else { session.addInput(current) }
+        session.commitConfiguration()
+        if let device = input?.device, device.isVirtualDevice {
+            configureConnections(device: device)
+            configurePhotoOutput(device, publish: false)
+            syncPreviewState()
+            configureAutomaticLensPolicy(device)
+        }
+    }
+
     /// 第一张微距后系统会把虚拟多摄切回主摄；锁住当前超广角一小段时间，
     /// 保证紧接着的第二张仍然走微距。
     private func holdMacroPrimaryConstituent(_ device: AVCaptureDevice) {
@@ -6216,6 +6276,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private var macroPhysicalHoldRoute: (original: AVCaptureDeviceInput, physicalID: String)?
     private var macroPhysicalHoldUntil: TimeInterval = 0
     private var macroPhysicalHoldGeneration = 0
+    private var macroPreviewRoute: (original: AVCaptureDeviceInput, physicalID: String)?
     private func scheduleMacroPhysicalRestore() {
         macroPhysicalHoldGeneration &+= 1
         let generation = macroPhysicalHoldGeneration
@@ -7793,7 +7854,10 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
                 guard current.running, current.readingsGeneration == state.readingsGeneration,
                       current.readingsRefreshRevision == state.readingsRefreshRevision,
                       current.macroRouteGeneration == macroRouteGeneration else { return }
-                if self.macroActive != macro { self.macroActive = macro }
+                if self.macroActive != macro {
+                    self.macroActive = macro
+                    self.updateMacroPhysicalPreview(active: macro)
+                }
                 self.readings = values.forDisplay(frameGeneration: state.readingsGeneration,
                                                  currentGeneration: current.readingsGeneration, running: current.running)
             }
