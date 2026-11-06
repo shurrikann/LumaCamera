@@ -1,7 +1,7 @@
 # 2026-11-06 HDR滤镜按钮仅禁用不改文字
 
-- HDR开启时滤镜按钮沿用原滤镜名称/装备与无障碍值，不再显示“HDR/滤镜互斥”。
-- 仅通过filterControlsEnabled禁用和dimmed，保持按钮文字稳定。
+- HDR开启时滤镜按钮展示当前选中滤镜的名称/装备/无障碍值：原片显示“原片”，Leica显示Leica；HDR只负责禁用和dimmed，不覆盖文字。
+- 不再显示“HDR/滤镜互斥”；按钮active仍按effectiveLook判断（HDR期间为原片，故不高亮但保留文字）。
 - testHDRSuppressesFilterTemporarilyAndRestoresIt增加按钮名断言并通过。
 
 # 2026-11-06 连续微距对焦核查（当前虚拟多摄路线）
