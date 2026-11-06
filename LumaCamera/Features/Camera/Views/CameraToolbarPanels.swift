@@ -85,20 +85,23 @@ extension CameraView {
                 choicePill("HEIF Pro", selected: model.photoFormat == .heifPro, enabled: model.canSelectPhotoFormat(.heifPro)) {
                     model.photoFormat = .heifPro
                 }
+                .frame(width: 82)
                 .captureControlGeometry("format.heifPro", model: model)
                 Text("通过 RAW 格式转换 HEIF，保留更多细节并降低锐化，支持 Pro 影调。")
                     .font(.system(size: 9))
                     .lineSpacing(1)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(nil)
                     .foregroundStyle(.white.opacity(0.6))
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .layoutPriority(1)
                     .accessibilityIdentifier("camera.format.heifPro.explanation")
                 if model.photoFormat == .heifPro {
                     choicePill("Pro 影调", selected: false, enabled: !model.isPreparingSubmode) {
                         // choicePill 已提供触感和淡入淡出；格式浮层已完成其他弹窗收起。
                         model.toolbarPanel = .tone
                     }
+                    .frame(width: 68)
                     .accessibilityIdentifier("camera.format.proTone")
                     .captureControlGeometry("format.proTone", model: model)
                 }
