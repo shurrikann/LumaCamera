@@ -6,6 +6,74 @@ import CoreImage
 
 @MainActor
 final class HDRSequentialDiagnosticsTests: XCTestCase {
+    func testRepeatedMacroFocusAndPhotoDetail() async throws {
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel(), camera = model.camera
+        model.setCameraActive(true)
+        defer { model.setCameraActive(false) }
+        for _ in 0..<400 { if camera.ready && camera.macroActive { break }; try await Task.sleep(for:.milliseconds(20)) }
+        guard camera.macroActive else { throw XCTSkip("需要固定近距纹理主体") }
+        model.photoFormat = .heif
+        let context = CIContext(options: [.cacheIntermediates:false])
+        func detail(_ data: Data) throws -> Double {
+            let source = try XCTUnwrap(CIImage(data:data))
+            let scale = 512 / source.extent.width
+            let image = source.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
+            let rect = CGRect(x:image.extent.midX-128,y:image.extent.midY-128,width:256,height:256)
+            var pixels = [UInt8](repeating:0,count:256*256*4)
+            pixels.withUnsafeMutableBytes { context.render(image,toBitmap:$0.baseAddress!,rowBytes:1024,bounds:rect,format:.RGBA8,colorSpace:CGColorSpace(name:CGColorSpace.sRGB)!) }
+            var sum=0.0
+            for y in 1..<255 { for x in 1..<255 {
+                let p=(y*256+x)*4
+                sum += abs(Double(pixels[p])-Double(pixels[p-4])) + abs(Double(pixels[p])-Double(pixels[p-1024]))
+            } }
+            return sum / (254*254*2)
+        }
+        var scores=[Double]()
+        for index in 0..<6 {
+            model.hdr = index >= 3
+            try await Task.sleep(for:.milliseconds(500))
+            let before = await withCheckedContinuation { c in camera.automaticRouteSnapshotForTesting { c.resume(returning:$0) } }
+            var captured: CapturedPhoto?
+            let done=expectation(description:"macro-focus-\(index)")
+            let prior=camera.onCaptureCompleted
+            camera.onCaptureCompleted = { captured=$0; done.fulfill() }
+            let started=CACurrentMediaTime()
+            camera.capture(flashMode:.off,options:model.photoOptions)
+            await fulfillment(of:[done],timeout:30)
+            camera.onCaptureCompleted=prior
+            let photo=try XCTUnwrap(captured,camera.message ?? "拍摄失败")
+            let data=try XCTUnwrap(photo.resources.first?.data)
+            let score=try detail(data); scores.append(score)
+            let after = await withCheckedContinuation { c in camera.automaticRouteSnapshotForTesting { c.resume(returning:$0) } }
+            XCTAssertTrue(before.contains("virtual=true") && after.contains("virtual=true"))
+            XCTAssertTrue(after.contains("AF=2"),"连续自动对焦应保留：\(after)")
+            let a=XCTAttachment(data:data,uniformTypeIdentifier:"public.heic"); a.name="macro-focus-\(index)"; a.lifetime = .keepAlways; add(a)
+            print("MACRO-FOCUS index=\(index) hdr=\(model.hdr) seconds=\(CACurrentMediaTime()-started) detail=\(score) before=\(before) after=\(after)")
+        }
+        // 同一组内的剧烈细节下降作为回归报警，仍需结合原图确认是否失焦。
+        for start in [0,3] { for i in (start+1)...(start+2) { XCTAssertGreaterThan(scores[i],scores[start]*0.6) } }
+    }
+    func testAutomaticMacroFarSceneAndExplicitUltraWideRoutes() async throws {
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel(), camera = model.camera
+        model.setCameraActive(true)
+        defer { model.setCameraActive(false) }
+        for _ in 0..<300 { if camera.ready { break }; try await Task.sleep(for: .milliseconds(20)) }
+        let main = try XCTUnwrap(camera.lenses.first { abs($0.displayZoom - 1) < 0.01 })
+        let ultra = try XCTUnwrap(camera.lenses.first { abs($0.displayZoom - 0.5) < 0.1 })
+        for index in 0..<3 {
+            model.selectFocalLength(main)
+            try await Task.sleep(for: .seconds(2))
+            let far = await withCheckedContinuation { c in camera.automaticRouteSnapshotForTesting { c.resume(returning:$0) } }
+            XCTAssertTrue(far.contains("primary=AVCaptureDeviceTypeBuiltInWideAngleCamera"), far)
+            XCTAssertFalse(camera.macroActive)
+            model.selectFocalLength(ultra)
+            try await Task.sleep(for: .seconds(1))
+            let explicit = await withCheckedContinuation { c in camera.automaticRouteSnapshotForTesting { c.resume(returning:$0) } }
+            XCTAssertTrue(explicit.contains("primary=AVCaptureDeviceTypeBuiltInUltraWideCamera"), explicit)
+            XCTAssertFalse(camera.macroActive, "用户选择0.5×不属于自动微距")
+            print("MACRO-EXIT cycle=\(index) far=\(far) explicit=\(explicit)")
+        }
+    }
     func testMacroGalleryResumeRouteDiagnostic() async throws {
         let model = try await FullDeviceRegressionFixture.makeIsolatedModel(), camera = model.camera
         model.setCameraActive(true)
@@ -68,8 +136,13 @@ final class HDRSequentialDiagnosticsTests: XCTestCase {
             let gmData = gm?[kCGImageAuxiliaryDataInfoData] as? Data
             let routeAfter = await withCheckedContinuation { c in camera.automaticRouteSnapshotForTesting { c.resume(returning:$0) } }
             print("HDR-SEQ-AFTER \(index) macro=\(camera.macroActive) route=\(routeAfter)")
+            XCTAssertTrue(route.contains("virtual=true"), "拍前应保留虚拟多摄")
+            XCTAssertTrue(routeAfter.contains("virtual=true"), "快门不得替换预览输入")
+            let properties = CGImageSourceCopyPropertiesAtIndex(sdr, 0, nil) as? [String: Any]
+            let exif = properties?[kCGImagePropertyExifDictionary as String] as? [String: Any]
+            print("MACRO-FILE focal=\(String(describing:exif?[kCGImagePropertyExifFocalLength as String]))")
             try await Task.sleep(for: .milliseconds(500))
-            if camera.macroActive { XCTAssertTrue(camera.macroActive, "临时微距超广角拍摄后仍应显示微距标识") }
+            XCTAssertTrue(camera.macroActive, "保持近距时拍摄后应继续显示微距")
             if let image = camera.preview {
                 let a = XCTAttachment(image: image); a.name = "macro-after-\(index)"; a.lifetime = .keepAlways; add(a)
             }

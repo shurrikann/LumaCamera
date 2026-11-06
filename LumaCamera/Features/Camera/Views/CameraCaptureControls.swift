@@ -431,15 +431,15 @@ extension CameraView {
                 let isLog = model.logVideoLUTControlsEnabled
                 CameraFilterButtonLabel(
                     title: isLog ? (model.selectedLogLUTPreset?.title ?? "Log LUT")
-                        : model.hdr ? "HDR" : model.filtersEnabled || model.captureKind == .video ? model.style.filterButtonName : "RAW",
+                        : model.filtersEnabled || model.captureKind == .video ? model.style.filterButtonName : "RAW",
                     equipment: isLog ? model.selectedLogLUTPreset?.equipment
-                        : model.hdr ? "滤镜互斥" : model.filtersEnabled || model.captureKind == .video ? model.style.filterButtonEquipment : nil,
+                        : model.filtersEnabled || model.captureKind == .video ? model.style.filterButtonEquipment : nil,
                     active: isLog ? model.selectedLogLUTPreset != nil : model.effectiveCaptureLook.style != .original,
                     size: size, dimmed: !model.filterControlsEnabled)
             }.captureControlGeometry("filter", model: model).disabled(!model.filterControlsEnabled || camera.videoBusy)
                 .accessibilityLabel(model.logVideoLUTControlsEnabled ? "选择 Log 视频 LUT" : "选择滤镜")
                 .accessibilityValue(model.logVideoLUTControlsEnabled ? (model.selectedLogLUTPreset?.displayName ?? "未选择 Log 滤镜")
-                    : model.hdr ? "HDR 开启，滤镜已禁用" : model.filterControlsEnabled ? model.style.title : model.captureKind == .video ? "当前视频色彩空间不支持滤镜" : "RAW，滤镜已禁用")
+                    : model.filterControlsEnabled ? model.style.title : model.captureKind == .video ? "当前视频色彩空间不支持滤镜" : "RAW，滤镜已禁用")
                 .accessibilityHint(model.logVideoLUTControlsEnabled ? "Log/Log 2 LUT 始终作用于预览；打开烧录开关后写入成片并保留 Log 色彩标记"
                     : model.filterControlsEnabled ? "打开滤镜列表；SDR/P3 视频的滤镜会应用到预览和录制结果"
                     : model.captureKind == .video ? "视频滤镜仅支持 SDR 和 P3；HDR 与 RAW 保持原始输出" : "RAW 原始文件不应用滤镜")

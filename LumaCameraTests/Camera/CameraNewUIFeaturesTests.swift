@@ -134,6 +134,7 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         XCTAssertEqual(model.style, .leicaM9, "HDR不应清空已选滤镜")
         XCTAssertEqual(model.effectiveCaptureLook.style, .original, "HDR拍摄临时使用原片")
         XCTAssertFalse(model.filtersEnabled, "HDR开启后滤镜入口禁用")
+        XCTAssertEqual(model.style.filterButtonName, FilmStyle.leicaM9.filterButtonName, "HDR不应改滤镜按钮文字")
         try await Task.sleep(for: .milliseconds(700))
         XCTAssertEqual(camera.preview?.cgImage?.bitsPerComponent, 8, "HDR预览应为SDR")
         XCTAssertEqual(camera.preview?.cgImage?.contentHeadroom ?? -1, 1, accuracy: 0.01)

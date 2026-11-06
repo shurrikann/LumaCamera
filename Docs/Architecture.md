@@ -1076,3 +1076,7 @@ iOS27的`SystemLanguageModel.default`在available、vision及guidedGeneration能
 `SmartSubjectAppearance`以12×12灰度结构补充原11×11固定局部模板，只有高置信连续对象框与整体相关性≥0.90时可作为独立确认。辅助整体参考仅在原固定局部模板连续两帧证实时低频刷新，不逐帧学习预测位置。`SmartCompositionGuideOverlay.smartVisiblePoints`统一组合/去重后用一个ForEach显示所有候选，主候选切换不再将白点移入另一分支。
 
 未对齐预AF获取状态及其额外请求已移除；对齐后的`finishAutomaticSmartFraming`、单次AF保持及取消恢复保留。候选提名/推荐范围未采用本轮尝试的结构质量门限；AI语义接口保持原实现，运行时仍需模型可用与vision能力检查。验证和局限见[专项记录](Test-Reports/2026-11-02-Smart-Point-Stability.md)。
+# 2026-11-06 A挡微距路由更新
+
+A挡预览沿用系统虚拟多摄，不再由macroActive预切物理输入，也不在快门中替换输入。可用时通过AVCapturePhotoSettings的virtualDeviceConstituentPhotoDeliveryEnabledDevices只请求超广角照片，并按sourceDeviceType接收；手选0.5×沿用原路线。近距两张输入保持与远景倍率往返已定向验证，连续近远自然退出及所有格式尚未完整验收。此前物理输入保持方案不代表当前A挡产品路径。
+

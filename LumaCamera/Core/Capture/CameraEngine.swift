@@ -6092,8 +6092,8 @@ final class CameraEngine: NSObject, ObservableObject {
                     self.completeCapture(context, photo: nil, message: "准备夜景曝光失败：\(error.localizedDescription)")
                     return
                 }
-            } else {
-                // 微距优先走物理超广角并保持输入；虚拟 constituent 会让系统在拍完后切回主摄。
+            } else if self.manualMode {
+                // A 挡始终保留系统虚拟多摄输入，快门不再造成第二次预览切镜。
                 do { try self.prepareMacroAutomaticRoute(context) }
                 catch {
                     self.hardwareFinished(token: token)
@@ -6217,9 +6217,10 @@ final class CameraEngine: NSObject, ObservableObject {
             }()
             if macroNow, self.photoOutput.isVirtualDeviceConstituentPhotoDeliveryEnabled,
                let device = self.input?.device, device.isVirtualDevice,
-               let ultraWide = device.constituentDevices.first(where: { $0.deviceType == .builtInUltraWideCamera }),
-               let wide = device.constituentDevices.first(where: { $0.deviceType == .builtInWideAngleCamera }) {
-                settings.virtualDeviceConstituentPhotoDeliveryEnabledDevices = [ultraWide, wide]
+               let ultraWide = device.constituentDevices.first(where: { $0.deviceType == .builtInUltraWideCamera }) {
+                // 官方允许指定 constituent 子集；仅交付超广角，避免同时请求主摄。
+                settings.virtualDeviceConstituentPhotoDeliveryEnabledDevices = [ultraWide]
+                if self.photoOutput.isVirtualDeviceFusionSupported { settings.isAutoVirtualDeviceFusionEnabled = false }
                 context.macroConstituentCapture = true
             }
             settings.metadata = PhotoMetadata.capture(location: captureLocation, copyright: options.copyright)
@@ -7875,7 +7876,6 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
                       current.macroRouteGeneration == macroRouteGeneration else { return }
                 if self.macroActive != macro {
                     self.macroActive = macro
-                    self.updateMacroPhysicalPreview(active: macro)
                 }
                 self.readings = values.forDisplay(frameGeneration: state.readingsGeneration,
                                                  currentGeneration: current.readingsGeneration, running: current.running)
