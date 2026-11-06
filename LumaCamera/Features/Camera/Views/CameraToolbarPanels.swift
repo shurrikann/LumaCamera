@@ -97,6 +97,15 @@ extension CameraView {
                     .frame(width: formatColumnWidth)
                     .accessibilityIdentifier("camera.format.proTone")
                     .captureControlGeometry("format.proTone", model: model)
+                    HStack(spacing: 4) {
+                        Text("高动态").font(.system(size: 9))
+                        Toggle("高动态", isOn: Binding(get:{ model.adaptiveHighDynamic }, set:{ model.setAdaptiveHighDynamic($0) }))
+                            .labelsHidden().tint(AppTheme.accent)
+                            .disabled(!model.adaptiveHighDynamicAvailable)
+                            .accessibilityIdentifier("camera.format.adaptiveHighDynamic")
+                            .captureControlGeometry("format.highDynamic", model: model)
+                    }
+                    .fixedSize()
                 }
                 Text("通过 RAW 格式转换 HEIF，保留更多细节并降低锐化，支持 Pro 影调。")
                     .font(.system(size: 9))
@@ -129,15 +138,6 @@ extension CameraView {
                     }
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("camera.hdr.previewNotice")
-                }
-                .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
-                HStack(spacing: 6) {
-                    Text("高动态").font(.system(size: 12))
-                    Toggle("高动态",isOn:Binding(get:{ model.adaptiveHighDynamic },set:{ model.setAdaptiveHighDynamic($0) }))
-                        .labelsHidden().tint(AppTheme.accent)
-                        .disabled(!model.adaptiveHighDynamicAvailable)
-                        .accessibilityIdentifier("camera.format.adaptiveHighDynamic")
-                        .captureControlGeometry("format.highDynamic",model:model)
                 }
                 .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
             }

@@ -8,8 +8,7 @@ final class CameraNewUIFeaturesTests: XCTestCase {
     private func host(_ model: CameraViewModel) throws -> (UIViewController, UIWindow) {
         let host = UIHostingController(rootView: CameraView(model: model)
             .environment(\.scenePhase, .active)
-            .environment(\.captureControlAngle, 0)
-            .frame(width: 390, height: 760))
+            .environment(\.captureControlAngle, 0))
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let window = UIWindow(windowScene: scene)
         window.frame = CGRect(x: 0, y: 0, width: 390, height: 760)
@@ -65,6 +64,9 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         XCTAssertGreaterThan(frame.height, 200)
         XCTAssertFalse(frame.isEmpty)
         print("DIAL-GEOMETRY panel=\(model.popupFrameForTesting) dial=\(frame) window=\(window.bounds)")
+        XCTAssertLessThanOrEqual(model.popupFrameForTesting.maxY, window.bounds.maxY + 1, "测试宿主应遵循真实安全区，不把底部滑条截掉")
+        let recipe = model.filterAdjustments
+        let originalHeight = model.popupFrameForTesting.height
         for tab in FilterEditorTab.allCases {
             model.filterEditorTab = tab
             try await Task.sleep(for: .milliseconds(250))
@@ -75,7 +77,13 @@ final class CameraNewUIFeaturesTests: XCTestCase {
             attachment.name = "Filter-Dial-" + tab.rawValue
             attachment.lifetime = .keepAlways
             add(attachment)
+            XCTAssertEqual(model.popupFrameForTesting.height, originalHeight, accuracy: 1, "三类弹窗高度必须固定")
         }
+        // 重复切换、离开/返回编辑，不改写配方；横拿仍维持竖屏弹窗。
+        for _ in 0..<5 {
+            for tab in FilterEditorTab.allCases { model.filterEditorTab = tab; await Task.yield() }
+        }
+        XCTAssertEqual(model.filterAdjustments, recipe)
         model.preferences.filterDialPad = false
         try await Task.sleep(for: .milliseconds(350))
         XCTAssertEqual(model.filterDialPadFrameForTesting, .zero, "关闭设置后应恢复旧样式")
