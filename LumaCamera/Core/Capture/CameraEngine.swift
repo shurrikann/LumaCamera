@@ -5788,6 +5788,17 @@ final class CameraEngine: NSObject, ObservableObject {
 
     func capture(flash: Bool) { capture(flashMode: flash ? .on : .off, options: PhotoOptions()) }
 
+    private func lockPrearmedMacroFocus(_ device: AVCaptureDevice) {
+        guard macroPreviewRoute != nil, !macroPreviewFocusLocked,
+              device.deviceType == .builtInUltraWideCamera, device.isFocusModeSupported(.locked) else { return }
+        do {
+            try device.lockForConfiguration()
+            device.setFocusModeLocked(lensPosition: min(max(device.lensPosition, 0), 1), completionHandler: nil)
+            device.unlockForConfiguration()
+            macroPreviewFocusLocked = true
+        } catch { try? device.unlockForConfiguration() }
+    }
+
     /// 系统一判定微距就切到最终物理超广角，用户在这之后的预览上构图；
     /// 快门阶段不再切换输入，避免拍后构图轻微变化。
     private func updateMacroPhysicalPreview(active: Bool) {
@@ -5834,6 +5845,12 @@ final class CameraEngine: NSObject, ObservableObject {
         guard let saved = macroPreviewRoute, captureContexts.isEmpty,
               input?.device.uniqueID == saved.physicalID, let current = input else { return }
         macroPreviewRoute = nil
+        if macroPreviewFocusLocked {
+            macroPreviewFocusLocked = false
+            if let device = input?.device, device.isFocusModeSupported(.continuousAutoFocus) {
+                try? device.lockForConfiguration(); device.focusMode = .continuousAutoFocus; device.unlockForConfiguration()
+            }
+        }
         session.beginConfiguration()
         session.removeInput(current)
         if session.canAddInput(saved.original) {
@@ -6088,6 +6105,7 @@ final class CameraEngine: NSObject, ObservableObject {
             var bayerRAW = false
             var canCaptureNight = options.nightMode
             let captureDevice = self.input?.device
+            if let captureDevice { self.lockPrearmedMacroFocus(captureDevice) }
             if let captureDevice {
                 if captureDevice.deviceType == .builtInUltraWideCamera, self.macroPhysicalHoldRoute != nil || CACurrentMediaTime() < self.macroPhysicalHoldUntil {
                     self.macroPhysicalHoldUntil = CACurrentMediaTime() + 5.0
@@ -6277,6 +6295,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private var macroPhysicalHoldUntil: TimeInterval = 0
     private var macroPhysicalHoldGeneration = 0
     private var macroPreviewRoute: (original: AVCaptureDeviceInput, physicalID: String)?
+    private var macroPreviewFocusLocked = false
     private func scheduleMacroPhysicalRestore() {
         macroPhysicalHoldGeneration &+= 1
         let generation = macroPhysicalHoldGeneration
