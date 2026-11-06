@@ -98,6 +98,7 @@ extension CameraView {
                     .accessibilityIdentifier("camera.format.proTone")
                     .captureControlGeometry("format.proTone", model: model)
                     Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         let reduceMotion = UIAccessibility.isReduceMotionEnabled
                         withAnimation(reduceMotion ? .linear(duration: 0.01) : .easeInOut(duration: 0.18)) {
                             model.setAdaptiveHighDynamic(!model.adaptiveHighDynamic)
@@ -142,16 +143,41 @@ extension CameraView {
             }
             HStack(spacing: 12) {
                 HStack(spacing: 6) {
-                    ZStack(alignment: .trailing) {
-                        Text("HDR").font(.system(size: 12))
-                        if camera.hdrPreviewConfiguring {
-                            ProgressView().controlSize(.mini).tint(AppTheme.accent)
-                                .offset(x: 20).transition(.opacity)
+                    let hdrDisabled = camera.hdrPreviewConfiguring || model.isPreparingSubmode || model.burstModeEnabled || model.nightModeEnabled || model.portraitModeEnabled || (model.photoFormat != .heifPro && model.photoFormat != .heif) || model.border || (model.photoFormat == .heif && !model.hdr && !camera.supportsHEIFHDR)
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        let reduceMotion = UIAccessibility.isReduceMotionEnabled
+                        withAnimation(reduceMotion ? .linear(duration: 0.01) : .easeInOut(duration: 0.18)) {
+                            model.hdr.toggle()
                         }
+                    } label: {
+                        ZStack {
+                            Capsule()
+                                .fill(model.hdr ? AppTheme.accent : Color.white.opacity(0.18))
+                            if camera.hdrPreviewConfiguring {
+                                ProgressView().controlSize(.mini)
+                                    .tint(model.hdr ? .black : .white)
+                            } else {
+                                Text("HDR")
+                                    .font(.system(size: 8, weight: .semibold))
+                                    .foregroundStyle(model.hdr ? .black : .white.opacity(0.9))
+                                    .offset(x: model.hdr ? max(0, formatColumnWidth / 2 - 19) : -max(0, formatColumnWidth / 2 - 19))
+                            }
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 26, height: 26)
+                                .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
+                                .offset(x: model.hdr ? -max(0, formatColumnWidth / 2 - 16) : max(0, formatColumnWidth / 2 - 16))
+                        }
+                        .frame(width: formatColumnWidth, height: 32)
                     }
-                    Toggle("HDR", isOn: $model.hdr).labelsHidden().tint(AppTheme.accent)
-                        .disabled(camera.hdrPreviewConfiguring || model.isPreparingSubmode || model.burstModeEnabled || model.nightModeEnabled || model.portraitModeEnabled || (model.photoFormat != .heifPro && model.photoFormat != .heif) || model.border || (model.photoFormat == .heif && !model.hdr && !camera.supportsHEIFHDR))
-                        .captureControlGeometry("format.hdr",model:model)
+                    .buttonStyle(.plain)
+                    .disabled(hdrDisabled)
+                    .opacity(hdrDisabled ? 0.5 : 1)
+                    .accessibilityLabel("HDR")
+                    .accessibilityValue(model.hdr ? "已开启" : "已关闭")
+                    .accessibilityAddTraits(model.hdr ? .isSelected : [])
+                    .captureControlGeometry("format.hdr",model:model)
                     VStack(alignment: .leading, spacing: 1) {
                         Text("10-bit HEIF").font(.system(size: 9))
                         Text("HDR不支持滤镜").font(.system(size: 8))
@@ -159,7 +185,7 @@ extension CameraView {
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("camera.hdr.previewNotice")
                 }
-                .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
             }
             HStack(alignment: .top, spacing: 12) {
                 Text("普通 HEIF Pro 下自适应平衡亮暗，保留 DNG 底片供重新显影；与 HDR 独立，效果在成片中呈现。")
