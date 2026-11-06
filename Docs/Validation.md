@@ -1,3 +1,10 @@
+# 2026-11-06 浓度为线性1.3倍，80%=参考LUT
+
+- effectStrength改为分段线性：0–80%=0→1，80–100%=1→1.3；取消80%后的二次加速。
+- 80%=参考LUT不变；90%=1.15；100%=1.3。外推仍走filterStrength负值钳制，保留>1高光。
+- FilterStrengthTests全通过；ImportedFilterTables interpolation测试通过。
+- 旧1.5倍/加速实现不再生效，文档已更新。
+
 # 2026-11-06 HDR滤镜按钮仅禁用不改文字
 
 - HDR开启时滤镜按钮展示当前选中滤镜的名称/装备/无障碍值：原片显示“原片”，Leica显示Leica；HDR只负责禁用和dimmed，不覆盖文字。

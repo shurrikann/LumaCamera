@@ -141,8 +141,7 @@ inline float hdrExpansionGain(float peak) {
 }
 
 [[stitchable]] float4 filterStrength(sample_t original, sample_t filtered, float strength) {
-    // HDR 预览不做 SDR 截断；1.5 倍外推可能把负值送进线性显示空间导致整屏发黑。
-    // 只限制负值，保留 >1 的高光。
+    // 浓度最高 1.3 倍外推；负值钳到 0，保留 >1 高光。
     float3 mixed = mix(original.rgb, filtered.rgb, strength);
     return float4(max(mixed, 0.0), original.a);
 }

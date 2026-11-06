@@ -43,11 +43,9 @@ enum FilmStyle: String, CaseIterable, Identifiable {
 
     static func effectStrength(for intensity: Double) -> Double {
         let value = intensity.isFinite ? min(max(intensity, 0), 1) : 0
-        // 0...80% is uniform. Above the reference level, do not linearly extrapolate
-        // the LUT (that crosses zero and turns black into pure black). Keep a
-        // normalized boost value for a safe contrast/saturation enhancement.
+        // 0...80% 线性到参考LUT（80%=1.0）；80...100% 继续线性到1.3倍。
         let progress = max(0, (value - 0.8) / 0.2)
-        return value <= 0.8 ? value / 0.8 : 1 + 0.5 * progress * progress
+        return value <= 0.8 ? value / 0.8 : 1 + 0.3 * progress
     }
 
     func apply(to input: CIImage, intensity: Double) -> CIImage {
@@ -64,18 +62,13 @@ enum FilmStyle: String, CaseIterable, Identifiable {
         let filtered = referenceImage(to: input)
         if abs(strength - 1) < 0.000001 { return filtered }
         if strength > 1 {
-            // 80...100% must remain visible, but linear extrapolation past a LUT
-            // channel of zero is what turned the preview black. Enhance the already
-            // decoded reference instead, preserving black/white endpoints.
-            let boost = strength - 1
-            let saturation = self == .mono ? 0 : 1 + 0.60 * boost
-            let contrast = 1 + 0.35 * boost
-            let safe = clampNonNegative(filtered)
-            let enhanced = safe.applyingFilter("CIColorControls", parameters: [
-                kCIInputSaturationKey: saturation,
-                kCIInputContrastKey: contrast
-            ]).cropped(to: input.extent)
-            return clampNonNegative(enhanced)
+            // 80...100%: extrapolate the LUT difference up to 1.3x. The kernel
+            // clamps negative channels, so a zero LUT channel cannot turn the
+            // whole preview black as the old 1.5x linear path did.
+            if let kernel = Self.strengthKernel,
+               let extrapolated = kernel.apply(extent: input.extent, arguments: [input, filtered, strength]) {
+                return extrapolated.cropped(to: input.extent)
+            }
         }
         guard strength < 1 else { return filtered }
         // A constant linear-light mask gives an actual strength blend, without transition endpoint snapping.

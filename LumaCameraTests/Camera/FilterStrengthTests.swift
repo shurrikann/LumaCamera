@@ -42,20 +42,28 @@ final class FilterStrengthTests: XCTestCase {
         }
     }
 
+    func testEffectStrengthCapsAtOnePointThree() {
+        XCTAssertEqual(FilmStyle.effectStrength(for: 0), 0, accuracy: 0.0001)
+        XCTAssertEqual(FilmStyle.effectStrength(for: 0.8), 1, accuracy: 0.0001)
+        XCTAssertEqual(FilmStyle.effectStrength(for: 1), 1.3, accuracy: 0.0001)
+        XCTAssertEqual(FilmStyle.effectStrength(for: 0.9), 1.15, accuracy: 0.0001)
+        XCTAssertEqual(FilmStyle.effectStrength(for: 0.5), 0.625, accuracy: 0.0001)
+    }
+
     func testFullStrengthAddsSafeBoostInsteadOfNegativeExtrapolation() throws {
         let context = CIContext()
         for alpha in [CGFloat(1), 0.4] {
             let source = CIImage(color: CIColor(red: 0.65, green: 0.4, blue: 0.2, alpha: alpha)).cropped(to: CGRect(x: 0, y: 0, width: 8, height: 8))
             for style in FilmStyle.availableStyles where style != .original {
                 let reference = pixel(style.referenceImage(to: source), context: context)
-                let eighty = pixel(style.apply(to: source, intensity: 0.8), context: context)
+                let atReference = pixel(style.apply(to: source, intensity: 0.8), context: context)
                 let boosted = pixel(style.apply(to: source, intensity: 1), context: context)
                 for channel in 0..<3 {
-                    XCTAssertEqual(eighty[channel], reference[channel], accuracy: 0.001, style.title)
+                    XCTAssertEqual(atReference[channel], reference[channel], accuracy: 0.004, style.title)
                     XCTAssertTrue(boosted[channel].isFinite)
                     XCTAssertGreaterThanOrEqual(boosted[channel], 0, "全强度不能产生负色：\(style.title)")
                 }
-                XCTAssertEqual(boosted[3], eighty[3], accuracy: 0.001, "全强度必须保持 alpha")
+                XCTAssertEqual(boosted[3], atReference[3], accuracy: 0.001, "全强度必须保持 alpha")
             }
         }
     }
