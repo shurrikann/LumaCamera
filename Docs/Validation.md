@@ -1,3 +1,10 @@
+# 2026-11-06 夜景新样张复核（用户提供）
+
+- 三张新 HEIC 均恢复相机参数：ISO 200/200/160，1/100s，f/1.78，6.765mm，LensModel、DateTimeOriginal、GPS、CompositeImage/SourceExposureTimes 均存在。
+- 第一、二张为 sRGB SDR 3000×4000，平均亮度约0.34–0.38，最大1.0；第三张为 Display P3 HDR 3000×4000，headroom约6.5，平均约0.56–0.61，最大约1.65。
+- 三张均为 composite 多帧输出，画面正常，不再是黑图；本轮为室内/桌面亮场景，不是低照度夜景成片验收。
+- 用户未报告本轮崩溃；独立夜景强制开关可用于继续逐方案测试。
+
 # 2026-11-06 夜景触发、A挡约束与逐帧曝光
 
 - 独立夜景：`syncIndependentNightRoute` 改为仅在 `nightModeEnabled && captureKind == .photo && mode == .auto && nightEnvironmentTriggered` 时启用；环境触发前保持普通夜景/预览路线。实验设置新增默认关闭且不持久化的“强制独立夜景（测试）”，打开后跳过环境触发，方便逐项试拍；重启自动关闭。
