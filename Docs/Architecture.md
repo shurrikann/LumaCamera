@@ -1,3 +1,23 @@
+## 底部横条与盘面端点对齐（2026-11-06）
+
+新版底部横条使用50点右对齐名称、6点间距、56点尾部空白，与盘面左右8＋40＋8点的占位一致。DEBUG几何采样记录实际中央盘面与横条的global frame，用例在支持宽度和比例下断言端点及宽度一致；这些调试几何不参与产品布局。旧版Slider保持原结构。
+
+## 新版包裹式滑条（2026-11-06）
+
+仅`FilterDialEditor`内部横/竖轨道复用`FilterDialTrack`。`FilterDialGeometry`集中定义trackThickness=28、thumbDiameter=22、inset=13；端点触摸映射与视觉位置仍共用原fraction/value函数，轨道不再按inset裁短，保证端部圆帽包裹滑块。FilterDialRail保留参数名/数值及AX容器，横条保留参数名和独立AX标签；结束或退出清理交互状态。底部横条通过尾部24点padding收短，不改参数范围、默认值、配方绑定、旧版原生Slider或弹窗高度。
+
+## 分类还原（2026-11-06）
+
+`resetCurrentFilterTab()`依照共用`FilterEditorTab.parameters`目录还原当前分类，不依赖界面类型。调整先写局部配方，持久化恢复标志内一次赋值，随后统一save/flush/updateLook；浓度仅在色彩目录包含strength时恢复80。操作推进filterResetRevision，清理单项输入和拖动状态，防止旧手势写回；录制繁忙、格式不支持或整组重置确认层显示时不执行。选项卡行的还原图标复用此路径，不改变默认旧版、弹窗高度或成片算法。
+
+## 单项数字草稿与键盘隔离（2026-11-06，最新）
+
+`FilterDialEditor`上方统一数值按钮调用`CameraViewModel.presentFilterNumericInput`。模型保存单项参数、草稿及打开时的受保护绑定；只在确认时调用绑定，默认还原仅写草稿。关闭相机弹窗、切滤镜、切分类和整组重置均清除输入状态；原绑定的滤镜身份、重置代次与能力检查继续防止晚到事件覆盖新配方。`FilterParameter.inputValue`只接受该范围内有限Double，默认值集中为strength=80、其它=0。原版滑条的text格式不改，新版numericDisplayText最多显示三位小数。
+
+`FilterNumericInputDialog`复用PopupSurface玻璃外观，使用系统TextField和[FocusState](https://developer.apple.com/documentation/swiftui/focusstate/)获取/释放焦点，监听官方[keyboardWillChangeFrameNotification](https://developer.apple.com/documentation/uikit/uiresponder/keyboardwillchangeframenotification)调整弹窗底部避让；相机根视图忽略键盘safe area，使下层控件不被抬升。当前坐标处理面向固定竖屏、全屏iPhone，不将键盘屏幕坐标与视图全局坐标在多窗口环境下相同视为平台保证。过渡沿用减弱动态效果感知的短淡入淡出。
+
+新版内容高度348点；色彩/明暗五项数值在同一行、盘面两轴方向字为主题色；褪色/亮度只保留滑条左侧名称。质感顶部七值使用与下方轨道相同列距，数值行与轨道背景分离。没有增加成片参数或改变基础滤镜浓度的作用范围。
+
 ## 质感竖轨与静态磨砂表面（2026-11-06，最新）
 
 `FilterDialLayout.vertical`描述质感七项的固定顺序；`FilterDialEditor`在effects分支渲染七个`FilterDialRail(texture: true)`，色彩/明暗继续原二维盘。竖轨复用单参数受保护绑定和端点内缩映射，彼此不联动，值在上、语义双行名称在下。质感无底部标签或横向滑条。两种分支同高并局部淡入淡出；旧版仍由默认false的设置分支控制。

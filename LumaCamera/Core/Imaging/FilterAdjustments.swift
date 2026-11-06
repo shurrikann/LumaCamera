@@ -67,6 +67,20 @@ enum FilterParameter: String, CaseIterable, Codable, Identifiable {
     }
     func clamped(_ value: Double) -> Double { value.isFinite ? min(max(value, range.lowerBound), range.upperBound) : 0 }
     func text(_ value: Double) -> String { self == .exposure ? String(format: "%+.1f", value) : String(format: "%.0f", value) }
+    /// 单项默认值与整组重置一致；浓度沿用80%，其它调色参数为零。
+    var defaultValue: Double { self == .strength ? 80 : 0 }
+    /// 新版数值行保留小数，避免手动输入32.5后仍显示成33；旧版滑条格式不变。
+    func numericDisplayText(_ value: Double) -> String {
+        value.formatted(.number.grouping(.never).precision(.fractionLength(0...3)).locale(Locale(identifier: "en_US_POSIX")))
+    }
+    func inputValue(from text: String) -> Double? {
+        let normalized = (text.applyingTransform(.fullwidthToHalfwidth, reverse: false) ?? text)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "−", with: "-")
+            .replacingOccurrences(of: ",", with: ".")
+        guard let value = Double(normalized), value.isFinite, range.contains(value) else { return nil }
+        return value
+    }
 }
 
 /// Sparse numeric recipe shared by preview, processed output and capture metadata.

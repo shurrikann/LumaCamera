@@ -54,6 +54,7 @@ struct FilterDialEditor: View {
         #endif
         .onChange(of: tab) { _, _ in model.setFilterParameterEditing(false) }
         .onDisappear {
+            model.dismissFilterNumericInput()
             model.setFilterParameterEditing(false)
             #if DEBUG
             model.filterDialPadFrameForTesting = .zero
@@ -71,6 +72,11 @@ struct FilterDialEditor: View {
                               xParameter: layout.x, yParameter: layout.y,
                               xLabel: padXLabel, yLabel: padYLabel, enabled: enabled,
                               onEditingChanged: { model.setFilterParameterEditing($0) })
+                    #if DEBUG
+                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                        model.captureButtonFramesForTesting["filter.dial.plane"] = $0
+                    }
+                    #endif
                 rail(layout.right)
             }
             .padding(8)
@@ -78,69 +84,88 @@ struct FilterDialEditor: View {
             .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .id(tab)
             .transition(.opacity)
-            bottomSelector
             bottomSlider
         }
     }
 
     /// 质感参数从零独立增加，用并排竖轨替代左下角起步的二维盘；沿用同高容器。
     private var textureSliders: some View {
-        HStack(spacing: 4) {
-            ForEach(layout.vertical) { parameter in
-                FilterDialRail(title: FilterDialLayout.title(parameter), value: model.filterParameterBinding(parameter),
-                               range: parameter.range, enabled: enabled, texture: true,
-                               onEditingChanged: { model.setFilterParameterEditing($0) })
-                    .frame(maxWidth: .infinity)
-                    .accessibilityIdentifier("filter.texture." + parameter.rawValue)
+        VStack(spacing: 9) {
+            // 数值独立成行，与下方七条轨道使用相同的列宽和间距。
+            HStack(spacing: 4) {
+                ForEach(layout.vertical) { parameter in
+                    numericValueButton(parameter)
+                        .frame(maxWidth: .infinity)
+                }
             }
+            .padding(.horizontal, 8).frame(height: 34)
+            HStack(spacing: 4) {
+                ForEach(layout.vertical) { parameter in
+                    FilterDialRail(title: FilterDialLayout.title(parameter), value: model.filterParameterBinding(parameter),
+                                   range: parameter.range, enabled: enabled, texture: true, showsValue: false,
+                                   onEditingChanged: { model.setFilterParameterEditing($0) })
+                        .frame(maxWidth: .infinity)
+                        .accessibilityIdentifier("filter.texture." + parameter.rawValue)
+                }
+            }
+            .padding(.horizontal, 8).padding(.vertical, 14)
+            .frame(height: 184)
+            .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         }
-        .padding(.horizontal, 8).padding(.vertical, 14)
-        .frame(height: 265)
-        .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .frame(height: 227)
     }
 
     private var parameterReadout: some View {
         HStack(spacing: 4) {
-            ForEach([layout.x, layout.y, layout.left, layout.right]) { parameter in
+            ForEach(layout.parameters) { parameter in
                 VStack(spacing: 2) {
                     Text(FilterDialLayout.title(parameter)).font(.system(size: 10)).foregroundStyle(.white.opacity(0.58))
                         .lineLimit(1).minimumScaleFactor(0.8)
-                    Text(model.filterParameterText(parameter))
-                        .font(.system(size: 12, weight: .medium, design: .monospaced)).monospacedDigit()
-                        .foregroundStyle(.white)
+                    numericValueButton(parameter)
                 }.frame(maxWidth: .infinity)
             }
         }.frame(height: 34)
     }
 
-    /// 色彩和明暗的第五项沿用底部横向滑条，保持既有位置与高度。
-    private var bottomSelector: some View {
-        HStack {
-            Text(FilterDialLayout.title(bottomParameter))
-                .font(.system(size: 11, weight: .medium)).foregroundStyle(AppTheme.accent)
-                .padding(.horizontal, 10).frame(height: 30)
-                .background(.white.opacity(0.08), in: Capsule())
-            Spacer(minLength: 0)
-        }.frame(height: 30)
-    }
-
     private var bottomSlider: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Text(FilterDialLayout.title(bottomParameter))
                 .font(.system(size: 11)).foregroundStyle(.white.opacity(0.75))
-                .lineLimit(2).frame(width: 60, alignment: .leading)
-            Slider(value: model.filterParameterBinding(bottomParameter), in: bottomParameter.range,
-                   onEditingChanged: { model.setFilterParameterEditing($0) })
-                .tint(AppTheme.accent).disabled(!enabled)
+                // 中央盘面距左边56点；名称右对齐，距轨道仅6点。
+                .lineLimit(2).frame(width: 50, alignment: .trailing)
+            FilterDialTrack(value: model.filterParameterBinding(bottomParameter), range: bottomParameter.range,
+                            enabled: enabled, vertical: false,
+                            onEditingChanged: { model.setFilterParameterEditing($0) })
                 .accessibilityLabel("滤镜" + FilterDialLayout.title(bottomParameter))
                 .accessibilityIdentifier("filter.dial.bottomSlider")
-            Text(model.filterParameterText(bottomParameter))
-                .font(.system(size: 11, weight: .medium, design: .monospaced)).monospacedDigit()
-                .foregroundStyle(AppTheme.accent).frame(width: 32, alignment: .trailing)
+                #if DEBUG
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                    model.captureButtonFramesForTesting["filter.dial.horizontalTrack"] = $0
+                }
+                #endif
         }
+        // 与盘面的8点内边距＋40点竖轨＋8点间距相同，左右端点精确对齐。
+        .padding(.trailing, 56)
         .id(bottomParameter)
         .transition(.opacity)
         .frame(height: 34)
+    }
+
+    private func numericValueButton(_ parameter: FilterParameter) -> some View {
+        Button {
+            withAnimation(AppTheme.popupAnimation) { model.presentFilterNumericInput(parameter) }
+        } label: {
+            Text(parameter == .strength && model.style == .original ? "—" :
+                 parameter.numericDisplayText(model.filterParameterBinding(parameter).wrappedValue))
+                .font(.system(size: 12, weight: .medium, design: .monospaced)).monospacedDigit()
+                .lineLimit(1).minimumScaleFactor(0.75)
+                .foregroundStyle(AppTheme.accent)
+                .frame(minWidth: 32, minHeight: 22).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled || (parameter == .strength && model.style == .original))
+        .accessibilityLabel("输入" + FilterDialLayout.title(parameter))
+        .accessibilityIdentifier("filter.numeric." + parameter.rawValue)
     }
 
     private func rail(_ parameter: FilterParameter) -> some View {
@@ -164,6 +189,8 @@ struct FilterDialEditor: View {
 /// 轨道与盘面使用相同的触点内缩，避免端点处手柄显示与实际参数位置不一致。
 enum FilterDialGeometry {
     static let inset: CGFloat = 13
+    static let trackThickness: CGFloat = 28
+    static let thumbDiameter: CGFloat = 22
     static func fraction(_ value: Double, in range: ClosedRange<Double>) -> Double {
         guard range.upperBound > range.lowerBound else { return 0.5 }
         return (min(max(value, range.lowerBound), range.upperBound) - range.lowerBound) / (range.upperBound - range.lowerBound)
@@ -180,8 +207,8 @@ private struct FilterDialRail: View {
     let range: ClosedRange<Double>
     let enabled: Bool
     var texture = false
+    var showsValue = true
     let onEditingChanged: (Bool) -> Void
-    @State private var editing = false
     private var textureTitle: String {
         switch title {
         case "胶片光晕": return "胶片\n光晕"
@@ -192,31 +219,16 @@ private struct FilterDialRail: View {
     }
     var body: some View {
         VStack(spacing: 4) {
-            if texture {
+            if texture && showsValue {
                 Text(String(format: "%.0f", value))
                     .font(.system(size: 12, weight: .medium, design: .monospaced)).monospacedDigit()
                     .foregroundStyle(AppTheme.accent).frame(height: 22)
-            } else {
+            } else if !texture {
                 Text(title).font(.system(size: 9)).foregroundStyle(.white.opacity(0.65))
                     .lineLimit(1).minimumScaleFactor(0.8)
             }
-            GeometryReader { proxy in
-                let h = proxy.size.height
-                ZStack {
-                    Capsule().fill(LinearGradient(colors: [.white.opacity(0.65), .white.opacity(0.12)], startPoint: .top, endPoint: .bottom))
-                        .frame(width: 12).padding(.vertical, FilterDialGeometry.inset)
-                    Circle().fill(.white).frame(width: 21, height: 21)
-                        .overlay(Circle().stroke(AppTheme.accent.opacity(0.8), lineWidth: 1.5))
-                        .position(x: proxy.size.width/2, y: FilterDialGeometry.inset + (h - 2 * FilterDialGeometry.inset) * (1 - FilterDialGeometry.fraction(value, in: range)))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
-                .gesture(DragGesture(minimumDistance: 0).onChanged { g in
-                    guard enabled else { return }
-                    if !editing { editing = true; onEditingChanged(true) }
-                    value = FilterDialGeometry.value(at: h - g.location.y, length: h, in: range)
-                }.onEnded { _ in editing = false; onEditingChanged(false) })
-            }
+            FilterDialTrack(value: $value, range: range, enabled: enabled, vertical: true,
+                            onEditingChanged: onEditingChanged)
             if texture {
                 Text(textureTitle).font(.system(size: 10)).foregroundStyle(.white.opacity(0.75))
                     .multilineTextAlignment(.center).lineLimit(2).frame(height: 32, alignment: .top)
@@ -227,6 +239,52 @@ private struct FilterDialRail: View {
         }
         .allowsHitTesting(enabled)
         .accessibilityElement().accessibilityLabel(title)
+        .accessibilityValue(String(format: "%.0f", value))
+        .accessibilityAdjustableAction { direction in
+            guard enabled else { return }
+            let step = (range.upperBound - range.lowerBound) / 100
+            value = min(max(value + (direction == .increment ? step : -step), range.lowerBound), range.upperBound)
+        }
+    }
+}
+
+/// 新版横竖滑条共用包裹式轨道；旧版继续使用原生Slider，不经过此控件。
+private struct FilterDialTrack: View {
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let enabled: Bool
+    let vertical: Bool
+    let onEditingChanged: (Bool) -> Void
+    @State private var editing = false
+    var body: some View {
+        GeometryReader { proxy in
+            let size = proxy.size
+            let length = vertical ? size.height : size.width
+            let fraction = FilterDialGeometry.fraction(value, in: range)
+            let position = FilterDialGeometry.inset + (length - 2 * FilterDialGeometry.inset) * (vertical ? 1 - fraction : fraction)
+            ZStack {
+                Capsule()
+                    .fill(LinearGradient(colors: [.white.opacity(0.55), .white.opacity(0.14)],
+                                         startPoint: vertical ? .top : .leading, endPoint: vertical ? .bottom : .trailing))
+                    .frame(width: vertical ? FilterDialGeometry.trackThickness : size.width,
+                           height: vertical ? size.height : FilterDialGeometry.trackThickness)
+                    .position(x: size.width / 2, y: size.height / 2)
+                Circle().fill(.white)
+                    .frame(width: FilterDialGeometry.thumbDiameter, height: FilterDialGeometry.thumbDiameter)
+                    .overlay(Circle().stroke(AppTheme.accent.opacity(0.8), lineWidth: 1.5))
+                    .position(x: vertical ? size.width / 2 : position, y: vertical ? position : size.height / 2)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
+            .gesture(DragGesture(minimumDistance: 0).onChanged { g in
+                guard enabled else { return }
+                if !editing { editing = true; onEditingChanged(true) }
+                value = FilterDialGeometry.value(at: vertical ? size.height - g.location.y : g.location.x,
+                                                length: length, in: range)
+            }.onEnded { _ in editing = false; onEditingChanged(false) })
+        }
+        .allowsHitTesting(enabled)
+        .accessibilityElement()
         .accessibilityValue(String(format: "%.0f", value))
         .accessibilityAdjustableAction { direction in
             guard enabled else { return }
@@ -347,7 +405,7 @@ private struct FilterDialPad: View {
         }
     }
     @ViewBuilder private func axisLabel(_ text: String, alignment: Alignment, size: CGSize) -> some View {
-        Text(text).font(.system(size: 8, weight: .semibold)).foregroundStyle(.white.opacity(0.72))
+        Text(text).font(.system(size: 8, weight: .semibold)).foregroundStyle(AppTheme.accent)
             .shadow(color: .black.opacity(0.35), radius: 1, y: 1)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
             .padding(10)

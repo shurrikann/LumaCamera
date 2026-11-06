@@ -126,6 +126,14 @@ struct CameraView: View {
             }
             .animation(AppTheme.popupAnimation, value: model.filterResetVisible)
             .overlay {
+                if model.filterNumericParameter != nil {
+                    FilterNumericInputDialog(model: model)
+                        .environment(\.captureControlAngle, 0)
+                        .transition(.opacity)
+                }
+            }
+            .animation(AppTheme.popupAnimation, value: model.filterNumericParameter)
+            .overlay {
                 if openGateInfoVisible {
                     OpenGateInformationDialog(
                         specsSummary: OpenGateCapability.supportedSpecsSummary(from: camera.openGateVideoSettings),
@@ -148,6 +156,7 @@ struct CameraView: View {
             silent: model.preferences.silentShutter,
             action: { model.handleHardwareCapture(phase: $0.phase) }
         ))
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .tint(AppTheme.accent)
         .onAppear {
             cameraVisible = true

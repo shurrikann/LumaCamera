@@ -31,6 +31,16 @@ extension CameraView {
                             .background(model.filterEditorTab == tab ? AppTheme.accent : .white.opacity(0.05), in: Capsule())
                     }.accessibilityAddTraits(model.filterEditorTab == tab ? .isSelected : [])
                 }
+                Button { model.resetCurrentFilterTab() } label: {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(AppTheme.accent)
+                        .frame(width: 32, height: 32).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!model.filterControlsEnabled || camera.videoBusy || model.filterResetVisible)
+                .accessibilityLabel("还原当前" + model.filterEditorTab.rawValue + "参数")
+                .accessibilityIdentifier("filter.resetCurrentTab")
             }
             if model.preferences.filterDialPad {
                 FilterDialEditor(model: model, tab: model.filterEditorTab)
@@ -54,7 +64,7 @@ extension CameraView {
             }
         }
         .padding(.horizontal, 16).padding(.bottom, 10)
-        .frame(height: model.preferences.filterDialPad ? 386 : 334)
+        .frame(height: model.preferences.filterDialPad ? 348 : 334)
         .onDisappear { model.setFilterParameterEditing(false); model.dismissFilterReset(); model.flushFilterSettings() }
     }
 }

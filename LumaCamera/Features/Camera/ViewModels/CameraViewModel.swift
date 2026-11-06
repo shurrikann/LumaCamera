@@ -197,13 +197,18 @@ final class CameraViewModel: ObservableObject {
     }
     private let filterSettings: FilterSettingsStore
     private var restoringFilterSettings = false
-    @Published var filterEditorTab = FilterEditorTab.color
+    @Published var filterEditorTab = FilterEditorTab.color { didSet {
+        if filterEditorTab != oldValue { dismissFilterNumericInput() }
+    } }
     @Published private(set) var filterResetVisible = false
+    @Published private(set) var filterNumericParameter: FilterParameter?
+    @Published var filterNumericDraft = ""
+    private var filterNumericBinding: Binding<Double>?
     @Published private(set) var filterResetRevision: UInt64 = 0
     private var filterResetStyle: FilmStyle?
     private var filterParameterEditing = false
     @Published var filterAdjustments = FilterAdjustments() { didSet { if !restoringFilterSettings { saveFilterSettings(); updateLook() } } }
-    @Published var style = FilmStyle.original { didSet { if style != oldValue { dismissFilterReset(); setFilterParameterEditing(false); filterSettings.select(style); restoreFilterSettings() }; updateLook() } }
+    @Published var style = FilmStyle.original { didSet { if style != oldValue { dismissFilterNumericInput(); dismissFilterReset(); setFilterParameterEditing(false); filterSettings.select(style); restoreFilterSettings() }; updateLook() } }
     @Published var intensity = 0.8 { didSet { if !restoringFilterSettings { saveFilterSettings(); updateLook() } } }
     @Published var ratio = FrameRatio.standard { didSet { cancelFocus(); updateLook() } }
     private var restoringVideoSettings = false
@@ -1377,6 +1382,9 @@ final class CameraViewModel: ObservableObject {
             && camera.frontPhotoAspectRatioSwitchAvailable && ratio != .square && photoFormat != .raw
         if hdr {
             // HDR与滤镜互斥：保留用户已选滤镜，仅本次拍摄临时使用原片。
+            // TODO(HDR+ProTone): 仅 HEIF Pro 保留已选 tone；滤镜仍清空。
+            // 实现时必须让影调走“SDR 基底 → tone → 恢复 HDR 高光”的路径，
+            // 不能等 HDR 恢复后再套影调。标记位置等待调色盘同步后处理。
             return CaptureLook(style: .original, intensity: 0, ratio: ratio,
                                landscape: photoLandscape, border: border, tone: .natural,
                                adjustments: FilterAdjustments(), virtualAperture: nil,
@@ -4241,6 +4249,7 @@ final class CameraViewModel: ObservableObject {
 
     func closePopups() {
         dismissDepthControls()
+        dismissFilterNumericInput()
         dismissFilterReset(); setFilterParameterEditing(false)
         flushFilterSettings()
         endZoomDial()
@@ -5202,6 +5211,7 @@ final class CameraViewModel: ObservableObject {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
     func resetCurrentFilter() {
+        dismissFilterNumericInput()
         setFilterParameterEditing(false)
         dismissFilterReset()
         filterResetRevision &+= 1
@@ -5210,9 +5220,50 @@ final class CameraViewModel: ObservableObject {
         restoringFilterSettings = false
         saveFilterSettings(); flushFilterSettings(); updateLook()
     }
+    /// 分类还原仅处理当前页参数；推进代次，防止还原前的滑动/输入事件再次写回。
+    func resetCurrentFilterTab() {
+        guard filterControlsEnabled, !camera.videoBusy, !filterResetVisible else { return }
+        dismissFilterNumericInput()
+        setFilterParameterEditing(false)
+        filterResetRevision &+= 1
+        var next = filterAdjustments
+        for parameter in filterEditorTab.parameters where parameter != .strength {
+            next[parameter] = parameter.defaultValue
+        }
+        restoringFilterSettings = true
+        if filterEditorTab.parameters.contains(.strength) { intensity = FilterParameter.strength.defaultValue / 100 }
+        filterAdjustments = next
+        restoringFilterSettings = false
+        saveFilterSettings(); flushFilterSettings(); updateLook()
+    }
     func filterParameterText(_ parameter: FilterParameter) -> String {
         if parameter == .strength && style == .original { return "—" }
         return parameter.text(filterParameterBinding(parameter).wrappedValue)
+    }
+    /// 输入框只编辑草稿，确认时才经旧版受保护绑定提交，取消不会改写配方。
+    func presentFilterNumericInput(_ parameter: FilterParameter) {
+        guard preferences.filterDialPad, filterControlsEnabled, !camera.videoBusy,
+              panel == .film, filters.showStrength, !(parameter == .strength && style == .original) else { return }
+        setFilterParameterEditing(false)
+        dismissFilterReset()
+        let binding = filterParameterBinding(parameter)
+        filterNumericBinding = binding
+        filterNumericDraft = String(binding.wrappedValue)
+        filterNumericParameter = parameter
+    }
+    var filterNumericValue: Double? { filterNumericParameter?.inputValue(from: filterNumericDraft) }
+    func restoreFilterNumericDraft() {
+        guard let parameter = filterNumericParameter else { return }
+        filterNumericDraft = String(parameter.defaultValue)
+    }
+    func confirmFilterNumericInput() {
+        guard let value = filterNumericValue, let binding = filterNumericBinding else { return }
+        binding.wrappedValue = value
+        flushFilterSettings()
+        dismissFilterNumericInput()
+    }
+    func dismissFilterNumericInput() {
+        filterNumericParameter = nil; filterNumericBinding = nil; filterNumericDraft = ""
     }
     func filterParameterBinding(_ parameter: FilterParameter) -> Binding<Double> {
         let revision = filterResetRevision, selectedStyle = style

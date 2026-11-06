@@ -1,5 +1,7 @@
 # 待办索引
 
+- [ ] HDR-PROTONE-001（待实现，勿提前改）：HEIF Pro 开启 HDR 时保留 Pro 影调，滤镜仍禁用。实现点：`CameraViewModel.effectiveCaptureLook` HDR 分支保留 `tone`；`CaptureLook.requiresImageProcessing` 将非自然影调纳入处理；`Imaging.filteredHDR` 在 SDR 基底上套影调后再恢复 HDR headroom。不得在 HDR 恢复后直接套影调。等待调色盘改动同步后处理，并回归 HDR 高光、headroom、增益图、SDR/HDR 预览差异。
+
 # 夜景 48MP 独立采集线路
 
 - [x] 夜景自动曝光上限 1s → 2s
