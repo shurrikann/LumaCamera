@@ -6015,7 +6015,8 @@ final class CameraEngine: NSObject, ObservableObject {
                     self.completeCapture(context, photo: nil, message: "准备夜景曝光失败：\(error.localizedDescription)")
                     return
                 }
-            } else if !self.photoOutput.isVirtualDeviceConstituentPhotoDeliveryEnabled {
+            } else {
+                // 微距优先走物理超广角并保持输入；虚拟 constituent 会让系统在拍完后切回主摄。
                 do { try self.prepareMacroAutomaticRoute(context) }
                 catch {
                     self.hardwareFinished(token: token)
@@ -6222,6 +6223,12 @@ final class CameraEngine: NSObject, ObservableObject {
             guard generation == self.macroPhysicalHoldGeneration,
                   CACurrentMediaTime() >= self.macroPhysicalHoldUntil,
                   let saved = self.macroPhysicalHoldRoute else { return }
+            // 仍在微距时继续保持超广角，避免定时到期造成预览放大。
+            if self.macroActive {
+                self.macroPhysicalHoldUntil = CACurrentMediaTime() + 5.0
+                self.scheduleMacroPhysicalRestore()
+                return
+            }
             self.macroPhysicalHoldRoute = nil
             self.restorePhysicalInput(saved)
         }
@@ -7315,7 +7322,8 @@ final class CameraEngine: NSObject, ObservableObject {
                 d.primaryConstituentDeviceSwitchingBehavior == .restricted ? "restricted" : "unsupported"
             let fallback = d.fallbackPrimaryConstituentDevices.map(\.deviceType.rawValue).joined(separator: ",")
             let value = "video=\(self.videoModeRequested) input=\(d.deviceType.rawValue) virtual=\(d.isVirtualDevice) primary=\(primary?.deviceType.rawValue ?? "none") switching=\(switching) conditions=\(d.primaryConstituentDeviceRestrictedSwitchingBehaviorConditions.rawValue) fallback=\(fallback) format=\(format) color=\(d.activeColorSpace.rawValue) autoWideColor=\(self.session.automaticallyConfiguresCaptureDeviceForWideColor) zoom=\(zoom) focus=\(d.lensPosition) primaryFocus=\(primary?.lensPosition ?? -1) AF=\(d.focusMode.rawValue) AE=\(d.exposureMode.rawValue) adjusting=\(d.isAdjustingFocus) point=\(d.focusPointOfInterest)"
-            DispatchQueue.main.async { completion(value) }
+            let optics = " fov=\(d.activeFormat.videoFieldOfView) primaryFOV=\(primary?.activeFormat.videoFieldOfView ?? 0) deviceZoom=\(d.videoZoomFactor) primaryZoom=\(primary?.videoZoomFactor ?? 0) distortion=\(d.isGeometricDistortionCorrectionEnabled) primaryDistortion=\(primary?.isGeometricDistortionCorrectionEnabled ?? false)"
+            DispatchQueue.main.async { completion(value + optics) }
         }
     }
     func checkAutomaticLensStabilityForTesting(completion: @escaping (Bool, Int, UInt, String?) -> Void) {

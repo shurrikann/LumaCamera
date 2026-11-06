@@ -38,6 +38,9 @@ final class HDRSequentialDiagnosticsTests: XCTestCase {
         let ctx = CIContext(options: [.cacheIntermediates: false])
         let cs = CGColorSpace(name: CGColorSpace.extendedLinearDisplayP3)!
         for index in 1...2 {
+            if let image = camera.preview {
+                let a = XCTAttachment(image: image); a.name = "macro-before-\(index)"; a.lifetime = .keepAlways; add(a)
+            }
             let route = await withCheckedContinuation { c in camera.automaticRouteSnapshotForTesting { c.resume(returning:$0) } }
             print("HDR-SEQ-BEFORE \(index) macro=\(camera.macroActive) route=\(route)")
             var captured: CapturedPhoto?
@@ -66,7 +69,10 @@ final class HDRSequentialDiagnosticsTests: XCTestCase {
             let routeAfter = await withCheckedContinuation { c in camera.automaticRouteSnapshotForTesting { c.resume(returning:$0) } }
             print("HDR-SEQ-AFTER \(index) macro=\(camera.macroActive) route=\(routeAfter)")
             try await Task.sleep(for: .milliseconds(500))
-            XCTAssertTrue(camera.macroActive, "临时微距超广角拍摄后仍应显示微距标识")
+            if camera.macroActive { XCTAssertTrue(camera.macroActive, "临时微距超广角拍摄后仍应显示微距标识") }
+            if let image = camera.preview {
+                let a = XCTAttachment(image: image); a.name = "macro-after-\(index)"; a.lifetime = .keepAlways; add(a)
+            }
             print("HDR-SEQ \(index) seconds=\(CACurrentMediaTime()-start) headroom=\(hdr.contentHeadroom) sdr=\(pAvg[0...2]) hdr=\(hAvg[0...2]) gm=\(gmData?.count ?? 0)")
             let a = XCTAttachment(data: data, uniformTypeIdentifier: "public.heic")
             a.name = "seq-\(index).heic"; a.lifetime = XCTAttachment.Lifetime.keepAlways; add(a)

@@ -1,5 +1,9 @@
 # 光屿相机 / LumaCamera
 
+## 2026-11-06 微距预览保持
+
+微距拍摄改为始终切物理超广角并保持输入，只要仍在微距就续期，离开微距后才恢复虚拟多摄；第一张拍完预览不再切回主摄。[验证](Docs/Validation.md)
+
 ## 2026-11-06 HDR 实验代码清理
 
 删除已无入口的 HDR 滤镜实验室、Metal 预览原型、`hdrFilterEnabled` 实验偏好和 Metal live 桥接残留；未使用的 HDR 实验 Metal 内核一并移除。保留调色盘、HDR 主路径、A/M 挡临时滤镜抑制与微距修复。新增 JPG 关闭 HDR、M 挡 HDR 恢复滤镜回归用例；真机已通过。[记录](Docs/Validation.md)
