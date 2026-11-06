@@ -181,6 +181,7 @@ extension CameraView {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("10-bit HEIF").font(.system(size: 9))
                         Text("HDR不支持滤镜").font(.system(size: 8))
+                        Text("不支持预览，仅成片可见").font(.system(size: 8))
                     }
                     .foregroundStyle(.secondary)
                     .accessibilityIdentifier("camera.hdr.previewNotice")

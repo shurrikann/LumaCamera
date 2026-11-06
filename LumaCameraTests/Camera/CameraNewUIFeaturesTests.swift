@@ -259,7 +259,9 @@ final class CompactFilterDialTests: XCTestCase {
             XCTAssertEqual(Set(layout.parameters), Set(tab.parameters))
             XCTAssertEqual(layout.parameters.count, Set(layout.parameters).count, "同页不能重复放置参数")
         }
-        XCTAssertEqual(FilterDialLayout.layout(for: .effects).bottom, [.aberration, .grainSize, .grainSaturation])
+        XCTAssertTrue(FilterDialLayout.layout(for: .effects).bottom.isEmpty)
+        XCTAssertEqual(FilterDialLayout.layout(for: .effects).vertical,
+                       [.detail, .softness, .halation, .grainSize, .grainSaturation, .aberration, .vignette])
     }
 
     func testPairCommitsOncePreservesIndependentValuesAndRejectsStaleGestures() throws {

@@ -8,16 +8,17 @@ struct FilterDialLayout {
     let left: FilterParameter
     let right: FilterParameter
     let bottom: [FilterParameter]
+    var vertical: [FilterParameter] = []
 
     static func layout(for tab: FilterEditorTab) -> Self {
         switch tab {
         case .color: return .init(x: .temperature, y: .tint, left: .strength, right: .saturation, bottom: [.fade])
         case .light: return .init(x: .exposure, y: .contrast, left: .highlights, right: .shadows, bottom: [.brightness])
-        case .effects: return .init(x: .softness, y: .halation, left: .detail, right: .vignette,
-                                   bottom: [.aberration, .grainSize, .grainSaturation])
+        case .effects: return .init(x: .softness, y: .halation, left: .detail, right: .vignette, bottom: [],
+                                   vertical: [.detail, .softness, .halation, .grainSize, .grainSaturation, .aberration, .vignette])
         }
     }
-    var parameters: [FilterParameter] { [x, y, left, right] + bottom }
+    var parameters: [FilterParameter] { vertical.isEmpty ? [x, y, left, right] + bottom : vertical }
     static func title(_ parameter: FilterParameter) -> String {
         switch parameter {
         case .exposure: return "曝光"
@@ -31,12 +32,36 @@ struct FilterDialLayout {
 struct FilterDialEditor: View {
     @ObservedObject var model: CameraViewModel
     let tab: FilterEditorTab
-    @State private var textureParameter: FilterParameter = .aberration
     private var layout: FilterDialLayout { .layout(for: tab) }
     private var enabled: Bool { model.filterControlsEnabled && !model.camera.videoBusy && !model.filterResetVisible }
-    private var bottomParameter: FilterParameter { tab == .effects ? textureParameter : layout.bottom[0] }
+    private var bottomParameter: FilterParameter { layout.bottom.first ?? .fade }
 
     var body: some View {
+        Group {
+            if tab == .effects {
+                textureSliders
+                    .transition(.opacity)
+            } else {
+                paletteControls
+                    .transition(.opacity)
+            }
+        }
+        .padding(.top, 8).padding(.bottom, 10)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("filter.dialPad")
+        #if DEBUG
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.filterDialPadFrameForTesting = $0 }
+        #endif
+        .onChange(of: tab) { _, _ in model.setFilterParameterEditing(false) }
+        .onDisappear {
+            model.setFilterParameterEditing(false)
+            #if DEBUG
+            model.filterDialPadFrameForTesting = .zero
+            #endif
+        }
+    }
+
+    private var paletteControls: some View {
         VStack(spacing: 9) {
             parameterReadout
             // 两侧轨道嵌在同一个横向区域内；宽度随弹窗适配，不扩大弹窗或移动焦段条。
@@ -56,19 +81,22 @@ struct FilterDialEditor: View {
             bottomSelector
             bottomSlider
         }
-        .padding(.top, 8).padding(.bottom, 10)
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("filter.dialPad")
-        #if DEBUG
-        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.filterDialPadFrameForTesting = $0 }
-        #endif
-        .onChange(of: tab) { _, _ in model.setFilterParameterEditing(false) }
-        .onDisappear {
-            model.setFilterParameterEditing(false)
-            #if DEBUG
-            model.filterDialPadFrameForTesting = .zero
-            #endif
+    }
+
+    /// 质感参数从零独立增加，用并排竖轨替代左下角起步的二维盘；沿用同高容器。
+    private var textureSliders: some View {
+        HStack(spacing: 4) {
+            ForEach(layout.vertical) { parameter in
+                FilterDialRail(title: FilterDialLayout.title(parameter), value: model.filterParameterBinding(parameter),
+                               range: parameter.range, enabled: enabled, texture: true,
+                               onEditingChanged: { model.setFilterParameterEditing($0) })
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("filter.texture." + parameter.rawValue)
+            }
         }
+        .padding(.horizontal, 8).padding(.vertical, 14)
+        .frame(height: 265)
+        .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
     private var parameterReadout: some View {
@@ -85,26 +113,13 @@ struct FilterDialEditor: View {
         }.frame(height: 34)
     }
 
-    /// 质感三项共享最底部滑条；其它分类保留同高的单项标签，切换时布局不跳动。
+    /// 色彩和明暗的第五项沿用底部横向滑条，保持既有位置与高度。
     private var bottomSelector: some View {
-        HStack(spacing: 8) {
-            ForEach(layout.bottom) { parameter in
-                Button {
-                    guard tab == .effects, textureParameter != parameter else { return }
-                    model.setFilterParameterEditing(false)
-                    withAnimation(AppTheme.popupAnimation) { textureParameter = parameter }
-                } label: {
-                    Text(FilterDialLayout.title(parameter))
-                        .font(.system(size: 11, weight: .medium))
-                        .lineLimit(1).minimumScaleFactor(0.8)
-                        .foregroundStyle(bottomParameter == parameter ? AppTheme.accent : .white.opacity(0.65))
-                        .padding(.horizontal, 10).frame(height: 30)
-                        .background(.white.opacity(bottomParameter == parameter ? 0.08 : 0), in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("filter.dial.bottom." + parameter.rawValue)
-                .accessibilityAddTraits(bottomParameter == parameter ? .isSelected : [])
-            }
+        HStack {
+            Text(FilterDialLayout.title(bottomParameter))
+                .font(.system(size: 11, weight: .medium)).foregroundStyle(AppTheme.accent)
+                .padding(.horizontal, 10).frame(height: 30)
+                .background(.white.opacity(0.08), in: Capsule())
             Spacer(minLength: 0)
         }.frame(height: 30)
     }
@@ -164,12 +179,27 @@ private struct FilterDialRail: View {
     @Binding var value: Double
     let range: ClosedRange<Double>
     let enabled: Bool
+    var texture = false
     let onEditingChanged: (Bool) -> Void
     @State private var editing = false
+    private var textureTitle: String {
+        switch title {
+        case "胶片光晕": return "胶片\n光晕"
+        case "颗粒大小": return "颗粒\n大小"
+        case "颗粒饱和度": return "颗粒\n饱和度"
+        default: return title
+        }
+    }
     var body: some View {
         VStack(spacing: 4) {
-            Text(title).font(.system(size: 9)).foregroundStyle(.white.opacity(0.65))
-                .lineLimit(1).minimumScaleFactor(0.8)
+            if texture {
+                Text(String(format: "%.0f", value))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced)).monospacedDigit()
+                    .foregroundStyle(AppTheme.accent).frame(height: 22)
+            } else {
+                Text(title).font(.system(size: 9)).foregroundStyle(.white.opacity(0.65))
+                    .lineLimit(1).minimumScaleFactor(0.8)
+            }
             GeometryReader { proxy in
                 let h = proxy.size.height
                 ZStack {
@@ -187,8 +217,13 @@ private struct FilterDialRail: View {
                     value = FilterDialGeometry.value(at: h - g.location.y, length: h, in: range)
                 }.onEnded { _ in editing = false; onEditingChanged(false) })
             }
-            Text(String(format: "%.0f", value)).font(.system(size: 10, design: .monospaced)).monospacedDigit()
-                .foregroundStyle(.white.opacity(0.75))
+            if texture {
+                Text(textureTitle).font(.system(size: 10)).foregroundStyle(.white.opacity(0.75))
+                    .multilineTextAlignment(.center).lineLimit(2).frame(height: 32, alignment: .top)
+            } else {
+                Text(String(format: "%.0f", value)).font(.system(size: 10, design: .monospaced)).monospacedDigit()
+                    .foregroundStyle(.white.opacity(0.75))
+            }
         }
         .allowsHitTesting(enabled)
         .accessibilityElement().accessibilityLabel(title)
@@ -224,6 +259,7 @@ private struct FilterDialPad: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 19, style: .continuous).fill(baseGradient)
                 RoundedRectangle(cornerRadius: 19, style: .continuous).fill(overlayGradient).blendMode(.softLight)
+                matteTexture
                 dots
                 Path { p in
                     p.move(to: CGPoint(x: size.width/2, y: 10)); p.addLine(to: CGPoint(x: size.width/2, y: size.height-10))
@@ -269,12 +305,29 @@ private struct FilterDialPad: View {
             let step: CGFloat = 15
             for yy in stride(from: step, to: size.height, by: step) {
                 for xx in stride(from: step, to: size.width, by: step) {
-                    context.fill(Path(ellipseIn: CGRect(x: xx, y: yy, width: 1.2, height: 1.2)), with: .color(.white.opacity(0.36)))
+                    context.fill(Path(ellipseIn: CGRect(x: xx - 1.2, y: yy - 1.2, width: 2.4, height: 2.4)), with: .color(.white.opacity(0.48)))
                 }
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 19, style: .continuous))
-        .blendMode(.overlay)
+        .allowsHitTesting(false)
+    }
+
+    /// 固定磨砂纹理只绘制在控件表面，不参与预览或成片，也不使用逐帧随机噪声。
+    private var matteTexture: some View {
+        Canvas { context, size in
+            for row in 0..<Int(size.height / 4) {
+                for column in 0..<Int(size.width / 4) {
+                    let seed = (row * 37 + column * 61) % 17
+                    let x = CGFloat(column) * 4 + CGFloat(seed % 4) * 0.6
+                    let y = CGFloat(row) * 4 + CGFloat(seed % 3) * 0.7
+                    context.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 0.8, height: 0.8)),
+                                 with: .color(seed.isMultiple(of: 2) ? .white.opacity(0.07) : .black.opacity(0.045)))
+                }
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 19, style: .continuous))
+        .allowsHitTesting(false)
     }
     private var baseGradient: LinearGradient {
         switch style {
