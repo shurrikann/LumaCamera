@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>光屿相机</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>光屿需要使用摄像头来预览画面和拍摄照片。</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>允许定位后，光屿会将拍摄位置记录到照片，并在照片详情显示地图和地点。</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>光屿需要使用麦克风，为视频和 Live 实况照片录制声音。</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>将拍摄的照片和视频自动保存到系统相册。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>光屿需要访问你授权的系统照片，以浏览、分享、编辑和删除你选择的照片。</string>
+	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+	<true/>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+</dict>
+</plist>

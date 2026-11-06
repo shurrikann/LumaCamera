@@ -1,0 +1,80 @@
+{
+  "device": "iPhone 17 Pro",
+  "os": "iOS 27.0.1",
+  "date": "2026-10-26",
+  "distinctMethodsWithPassingRecords": 12,
+  "methods": [
+    "BasicVideoPhysicalTests testRepeatedVideoRecordingsAndPhotoModeReturn",
+    "CaptureStatePersistenceTests testDisabledUsesRequestedPhotoAndVideoDefaultsAndRetainsPreferences",
+    "CaptureStatePersistenceTests testDualCapturePreferenceRoundTripAndLegacyDefault",
+    "DualCapturePhysicalTests testEngineDualCaptureRecordingSwapAndOrdinaryRecovery",
+    "DualCapturePhysicalTests testInactiveDualCaptureEntryIsVisibleInsideLensRegion",
+    "DualCapturePhysicalTests testPortraitHeldDualCaptureOrientation",
+    "DualCapturePhysicalTests testSavedDualCaptureColdModelRestoresWithoutCompetingSession",
+    "DualCapturePhysicalTests testSynchronizedFrontRearFramesAndSingleEncode",
+    "FrontPhotoAspectRatioPhysicalTests testFrontAspectChoiceIsPhotoOnlyAndWideToggleRemainsAvailable",
+    "FrontPhotoAspectRatioPhysicalTests testRepeatedFrontPhotoAspectChangesKeepPreviewReady",
+    "FrontWideAspectReturnPhysicalTests testSupportedRatiosAndSquareGuard",
+    "VideoFrameFilterRendererTests testStillPhotoFilterIsRenderedIntoEncoderPixelBufferInSDRAndP3"
+  ],
+  "releaseCycles": [
+    {
+      "cycle": 0,
+      "enterSeconds": 1.467077708337456,
+      "exitSeconds": 0.7481574999983422,
+      "durationSeconds": 1.4616666666666667
+    },
+    {
+      "cycle": 1,
+      "enterSeconds": 0.6613387083343696,
+      "exitSeconds": 0.7002813750004862,
+      "durationSeconds": 1.4666666666666666
+    },
+    {
+      "cycle": 2,
+      "enterSeconds": 0.6866228333383333,
+      "exitSeconds": 0.7113930833293125,
+      "durationSeconds": 1.4333333333333333
+    }
+  ],
+  "enterMedianSeconds": 0.6866228333383333,
+  "exitMedianSeconds": 0.7113930833293125,
+  "sourceProbe": {
+    "frames": 92,
+    "decodedFrames": 92,
+    "durationSeconds": 3.066666666666667,
+    "renderMedianSeconds": 0.004184083343716338,
+    "maxPairSkewSeconds": 0.018808417,
+    "droppedBeforeComposite": 3,
+    "hardwareCost": 0.5,
+    "systemPressureCost": 0.46121824
+  },
+  "stablePortraitComparison": {
+    "portraitWidthDelta": 0.016306936740875244,
+    "portraitHeightDelta": 0.01223018765449524,
+    "landscapeWidthDelta": 0.00846773386001587,
+    "landscapeHeightDelta": 0.011290326714515686
+  },
+  "logStages": [
+    "ControlsFinal",
+    "Orientation2",
+    "Cold",
+    "PortraitCompare",
+    "ReleaseChecks"
+  ],
+  "limits": [
+    "Not hardware-synchronized shutters; latest secondary frame with <=2/30 s timestamp skew.",
+    "Only HEVC SDR 1080p30, portrait 1080x1920 composite / 16:9 ratio option.",
+    "No 4K, HDR, Log, ProRes, Open Gate or special video submodes while dual capture is active.",
+    "No long thermal/power test, independent production-app memory measurement or external-volume test.",
+    "Earlier-device/iOS18-26 fallback not tested on hardware."
+  ],
+  "historicalFailures": [
+    "Source4 exact-timestamp synchronizer delivered no composite frames; replaced by official sample latest-secondary architecture.",
+    "Engine initial background return removed dual route; corrected lifecycle retention.",
+    "Orientation first pass: front sideways; use per-device official static portrait rotation on iOS27.",
+    "FinalRegression/FrontRecovery front photo baseline lacked dynamic ratios; select native-photo-capable baseline when entering front first from video.",
+    "Finish: saved front narrow-lens identifier changed with format; cold restoration now chooses a front standard fallback.",
+    "Finish: uncontrolled-pose face-size comparison failed; fixed-pose PortraitCompare passed without loosening thresholds."
+  ]
+}

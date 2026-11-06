@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-24",
+  "device": "iPhone 17 Pro / iOS 27.0.1 (24A446)",
+  "passed": 5,
+  "failed": 0,
+  "skipped": 0,
+  "seconds": 38.665,
+  "methods": [
+    {
+      "test": "PreviewExposureAssistPhysicalTests/testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit()",
+      "seconds": 1.235,
+      "result": "Passed"
+    },
+    {
+      "test": "PreviewExposureAssistPhysicalTests/testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure()",
+      "seconds": 8.4,
+      "result": "Passed"
+    },
+    {
+      "test": "PreviewExposureAssistPhysicalTests/testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles()",
+      "seconds": 18.197,
+      "result": "Passed"
+    },
+    {
+      "test": "PreviewExposureAssistPhysicalTests/testSmoothPreviewRemainsPhotoOnlyAcrossVideoAndLifecycleChanges()",
+      "seconds": 10.832,
+      "result": "Passed"
+    },
+    {
+      "test": "SlowShutterPresetTests/testPreviewOptimizationOnlyActivatesWhenSlowShutterWouldExceedPreviewCadence()",
+      "seconds": 0.001,
+      "result": "Passed"
+    }
+  ],
+  "metrics": [
+    "AUTO-SLOW-PREVIEW device=iPhone17Pro; samples=3x1s; publications=[(count: 24, medianMilliseconds: 40.35033332183957), (count: 25, medianMilliseconds: 39.71208333678078), (count: 25, medianMilliseconds: 40.37895833607763)]; requestedStill=ISO400,1/15s; assistCap=0.033333333s",
+    "PREVIEW-ASSIST-FILE EXIF_ISO=400.0 EXIF_ExposureTime=0.06666666666666667 requestedISO=400.0 requestedSeconds=0.06666666666666667",
+    "SMOOTH-PREVIEW cadence=app-preview-publications/second baseline_n=3 baseline=[(count: 16, medianMilliseconds: 66.25108332082164), (count: 15, medianMilliseconds: 66.60575000569224), (count: 15, medianMilliseconds: 67.55350000457838)] assisted_n=3 assisted=[(count: 25, medianMilliseconds: 39.91749999113381), (count: 25, medianMilliseconds: 40.63720833801199), (count: 25, medianMilliseconds: 40.22224999789614)] cap=0.033333333s",
+    "PREVIEW-ASSIST-FILE EXIF_ISO=400.0 EXIF_ExposureTime=0.06666666666666667 requestedISO=400.0 requestedSeconds=0.06666666666666667",
+    "SMOOTH-PREVIEW-CAPTURE requestedISO=400 actualISO=399.4312438964844 requestedSeconds=0.06666666666666667 actualSeconds=0.066563 format=JPG; in-memory only",
+    "PREVIEW-ASSIST-FILE EXIF_ISO=400.0 EXIF_ExposureTime=0.06666666666666667 requestedISO=400.0 requestedSeconds=0.06666666666666667",
+    "PREVIEW-ASSIST-VIDEO requestISO=400 requestSeconds=0.008 actualISO=399.43124 actualSeconds=0.007997 custom=true"
+  ],
+  "runtimeErrors": 0,
+  "resultBundle": "/private/tmp/LumaCamera-PreviewAssist-20261024-Final.xcresult",
+  "log": "/private/tmp/LumaCamera-PreviewAssist-20261024-Final.log",
+  "limitations": [
+    "A 挡采用触发函数注入，不是自然暗光实测",
+    "发布采样不等于屏幕 FPS，未测功耗/独立 App 内存",
+    "未覆盖所有镜头、照片格式、视频编码"
+  ]
+}

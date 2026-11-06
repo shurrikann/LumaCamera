@@ -1,0 +1,31 @@
+{
+  "device": "iPhone 17 Pro",
+  "os": "27.0.1",
+  "scope": "photo-only",
+  "passedMethods": 5,
+  "layoutCases": 28,
+  "dragTargets": 252,
+  "entrySeconds": 0.6271005000162404,
+  "processingFrames": 95,
+  "processingSeconds": 0.12052650039549917,
+  "hardwareCost": 0.5,
+  "systemPressureCost": 0.99861133,
+  "mainSensorZoom": 2,
+  "logicalZoom": 8,
+  "photoEXIF": [
+    {
+      "format": "JPEG",
+      "iso": 200,
+      "seconds": 0.008333333333333333
+    },
+    {
+      "format": "HEIF",
+      "iso": 200,
+      "seconds": 0.008333333333333333
+    }
+  ],
+  "nativeResources": [
+    "HEIF + paired MOV",
+    "DNG"
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-30",
+  "device": "iPhone17Pro/iPhone18,1",
+  "os": "iOS27.2 (24B119)",
+  "summary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64e",
+          "deviceId": "00008150-001934280220401C",
+          "deviceName": "笨笨波尔霸&iPhone Pro",
+          "modelName": "iPhone 17 Pro",
+          "osBuildNumber": "24B119",
+          "osVersion": "27.2",
+          "platform": "iOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 17,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "LumaCamera · Built with macOS 27.2",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1793371278.951,
+    "passedTests": 17,
+    "result": "Passed",
+    "runtimeWarnings": [
+      {
+        "issueType": "Runtime Warning",
+        "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+      },
+      {
+        "issueType": "Runtime Warning",
+        "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+      }
+    ],
+    "skippedTests": 0,
+    "startTime": 1793371110.697,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - LumaCamera",
+    "topInsights": [],
+    "totalTestCount": 17
+  },
+  "testMethodSeconds": 155.244,
+  "xcodebuildTestStageSeconds": 168.195,
+  "cancelReleaseSeconds": [
+    0.7231791666708887,
+    0.7767047916422598,
+    0.923193499998888,
+    0.9953556249965914
+  ],
+  "returnedNightCaptureSeconds": [
+    3.951590541662881,
+    1.9421639166539535,
+    3.194378541666083,
+    1.9340789583220612
+  ],
+  "cancelledCallbacks": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "returnedCallbacks": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "releaseBuild": "passed",
+  "photosWrites": false,
+  "scope": "night cancellation and completion regression, not full suite or natural-scene image quality"
+}

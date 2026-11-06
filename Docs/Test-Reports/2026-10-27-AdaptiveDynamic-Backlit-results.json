@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-27",
+  "device": "iPhone 17 Pro",
+  "os": "27.2 (24B119)",
+  "scope": "targeted",
+  "photosWriteAuthorization": "user explicitly requested one real capture archive verification",
+  "archiveCleanup": true,
+  "metrics": {
+    "BacklitRAW-Check": [
+      "ADAPTIVE-GPU pixels=2880000 samples=6 seconds=[0.01843616666519665, 0.0068321250000735745, 0.007198666666226927, 0.005841791666171048, 0.005351625000912463, 0.005274333332636161] analysis=Analysis(median: 0.06569155883789063, white: 6.5657625, contrast: 820.7203125, shadowEV: 0.7411298371194023)"
+    ],
+    "BacklitRAW-Capture": [
+      "BACKLIT-CAPTURE variant=preview nativeLocal=1.0 median=0.16342966138869525 white=0.9338599274516105 shadowEV=0.0",
+      "BACKLIT-CAPTURE variant=oldRAW035 nativeLocal=1.0 median=0.034189874361455444 white=14.360316367340088 shadowEV=1.7969289421080514",
+      "BACKLIT-CAPTURE variant=systemRAW nativeLocal=1.0 median=0.08938106603622437 white=3.3444777528762817 shadowEV=0.20507906728848774",
+      "BACKLIT-CAPTURE variant=corrected nativeLocal=1.0 median=0.09999999910444021 white=0.9913466975331305 shadowEV=1.6611681655350703e-08",
+      "BACKLIT-CAPTURE variant=actualHEIF nativeLocal=1.0 median=0.09938117382824421 white=0.9753385515809059 shadowEV=0.011504053057803191",
+      "BACKLIT-CAPTURE seconds=1.8269078333323705 noPhotosWrite=true"
+    ],
+    "BacklitRAW-Final": [
+      "BACKLIT-CAPTURE variant=preview nativeLocal=1.0 median=0.26397253720760344 white=0.9317096503138542 shadowEV=0.0",
+      "BACKLIT-CAPTURE variant=oldRAW035 nativeLocal=1.0 median=0.022558776428550482 white=0.7550184322834015 shadowEV=0.0",
+      "BACKLIT-CAPTURE variant=systemRAW nativeLocal=1.0 median=0.09293514445126058 white=0.9773722840309144 shadowEV=0.7677514011338297",
+      "BACKLIT-CAPTURE variant=corrected nativeLocal=1.0 median=0.13818172839581966 white=0.8626430126428604 shadowEV=0.012544931447870599",
+      "BACKLIT-CAPTURE variant=actualHEIF nativeLocal=1.0 median=0.13869689950346945 white=0.860649221587181 shadowEV=0.009179044592880665",
+      "BACKLIT-CAPTURE seconds=2.235079833335476 noPhotosWrite=true",
+      "ADAPTIVE-REDEVELOP rmse=0.0 previewSamples=12 seconds=[0.021212999999988824, 0.02436025000133668, 0.020144166664977092, 0.021324749999621417, 0.024376708333875285, 0.022443833331635688, 0.025794833331019618, 0.02237862499896437, 0.022807499997725245, 0.026009083332610317, 0.01923266666562995, 0.02246845832996769] originalBytesUnchanged=true",
+      "ADAPTIVE-EDITOR rapidUpdates=30 hdrPreviewBits=16 cancelledPublicationStable=true",
+      "ADAPTIVE-CAPTURE pass=0 hdr=false seconds=2.036354541665787 rawBytes=11303355 heifBytes=335022 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=1 hdr=false seconds=1.7201909583309316 rawBytes=22461914 heifBytes=1279854 extent=3000x4000 exposure=0.008333333333333333",
+      "ADAPTIVE-HDR-RECIPE rmse=0.0017741482924991437 toneAndRAWControls=true",
+      "ADAPTIVE-CAPTURE pass=2 hdr=true seconds=3.1767504583331174 rawBytes=10698384 heifBytes=268543 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=3 hdr=false seconds=1.4125487916644488 rawBytes=22496922 heifBytes=991746 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=4 hdr=false seconds=1.209782041667495 rawBytes=22173903 heifBytes=1663164 extent=3024x4032 exposure=0.008333333333333333",
+      "ADAPTIVE-CAPTURE-SUMMARY samples=5 seconds=[2.036354541665787, 1.7201909583309316, 3.1767504583331174, 1.4125487916644488, 1.209782041667495] noPhotosWrite=true",
+      "ADAPTIVE-GPU pixels=2880000 samples=6 seconds=[0.007475624999642605, 0.006889874999615131, 0.006476124999608146, 0.006670750000921544, 0.006338791667076293, 0.00562891666777432] analysis=Analysis(median: 0.06569155883789063, white: 6.5657625, contrast: 820.7203125, shadowEV: 1.4016433708477354)"
+    ],
+    "BacklitRAW-FixedScene": [
+      "BACKLIT-CAPTURE variant=preview nativeLocal=1.0 median=0.1554734079450369 white=0.945617411482334 shadowEV=0.0",
+      "BACKLIT-CAPTURE variant=oldRAW035 nativeLocal=1.0 median=0.033452467074245214 white=15.181694629287719 shadowEV=2.491455228252245",
+      "BACKLIT-CAPTURE variant=systemRAW nativeLocal=1.0 median=0.09344311668425799 white=3.752898514461517 shadowEV=0.7851305675946291",
+      "BACKLIT-CAPTURE variant=corrected nativeLocal=1.0 median=0.1400000098466873 white=0.9913467892050742 shadowEV=0.0",
+      "BACKLIT-CAPTURE variant=actualHEIF nativeLocal=1.0 median=0.1389220477283001 white=0.9751263452887534 shadowEV=0.016159177297519013",
+      "BACKLIT-CAPTURE seconds=1.727183208331553 noPhotosWrite=true"
+    ],
+    "BacklitRAW-ArchiveAudit": [
+      "SAVED-ADAPTIVE-SUMMARY matchedAssets=0 rawResources=0 access=3"
+    ],
+    "RAWArchive-RoundTrip": [
+      "RAW-ARCHIVE createdAsset=8A959592-3B32-4344-8AC8-9D97EAD2B938/L0/001",
+      "RAW-ARCHIVE savedResources=[\"1:public.heic\", \"4:com.adobe.raw-image\"]",
+      "RAW-ARCHIVE readbackBytes=16053763 editedAndReopened=true hdr=true metadataRAWConfirmed=true",
+      "RAW-ARCHIVE cleanup=true onlyCreatedAssetDeleted=true"
+    ]
+  },
+  "limitations": [
+    "Original submitted assets deleted by user; attachment DNG not available",
+    "One moved scene excluded from preview/capture equality",
+    "Copy and iCloud round trip not tested",
+    "No long duration power/thermal metrics"
+  ],
+  "normalBuild": "succeeded",
+  "installationDatabaseSequenceNumber": 2448
+}

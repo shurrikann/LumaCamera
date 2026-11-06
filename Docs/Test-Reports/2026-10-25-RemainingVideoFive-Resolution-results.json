@@ -1,0 +1,176 @@
+{
+  "runs": [
+    {
+      "name": "LumaCamera-VideoMatrix-20261025-Verified",
+      "resultBundle": "/private/tmp/LumaCamera-VideoMatrix-20261025-Verified.xcresult",
+      "passedMethods": [
+        {
+          "test": "VideoSpecificationTests/testAllSupportedVideoSpecificationsWriteMatchingTracks()",
+          "seconds": 38.864
+        },
+        {
+          "test": "VideoSpecificationTests/testUnsupportedRateCannotLeaveToolbarAndCaptureOutOfSync()",
+          "seconds": 7.123
+        }
+      ],
+      "count": 2,
+      "seconds": 45.987
+    },
+    {
+      "name": "LumaCamera-OpenGate-20261025-Final",
+      "resultBundle": "/private/tmp/LumaCamera-OpenGate-20261025-Final.xcresult",
+      "passedMethods": [
+        {
+          "test": "OpenGateCapabilityTests/testOnlySquareOrFourByThreeNativeVideoFormatsQualify()",
+          "seconds": 0.001
+        },
+        {
+          "test": "OpenGateCapabilityTests/testOpenGatePhotoCropLeavesTheWholeNativeFrame()",
+          "seconds": 0.0
+        },
+        {
+          "test": "OpenGateCapabilityTests/testOutputDimensionsPreserveNativeGateAspectAndUseEvenPixels()",
+          "seconds": 0.0
+        },
+        {
+          "test": "OpenGateCapabilityTests/testSupportedSpecsSummaryGroupsFrameRateRangeByColorSpaceAndResolution()",
+          "seconds": 0.0
+        },
+        {
+          "test": "VideoSpecificationTests/testOpenGateSwitchRecordsOnlyFourByThreeOrSquareOnDevice()",
+          "seconds": 10.773
+        }
+      ],
+      "count": 5,
+      "seconds": 10.775
+    },
+    {
+      "name": "LumaCamera-VideoWB-20261025-Final",
+      "resultBundle": "/private/tmp/LumaCamera-VideoWB-20261025-Final.xcresult",
+      "passedMethods": [
+        {
+          "test": "VideoEncodingPolicyTests/testRAWConfigurationNeverQueriesSystemMetadataBeforeWhiteBalanceLocks()",
+          "seconds": 0.001
+        },
+        {
+          "test": "VideoWhiteBalancePhysicalTests/testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording()",
+          "seconds": 17.699
+        },
+        {
+          "test": "VideoWorkflowTests/testImmediateCancelDuringWhiteBalanceStartupCompletesExactlyOnce()",
+          "seconds": 2.797
+        }
+      ],
+      "count": 3,
+      "seconds": 20.497
+    },
+    {
+      "name": "LumaCamera-SlowFocal-20261025-Final",
+      "resultBundle": "/private/tmp/LumaCamera-SlowFocal-20261025-Final.xcresult",
+      "passedMethods": [
+        {
+          "test": "SlowMotionLensTransitionPhysicalTests/testSlowMotionFocalSwitchLatencyAndRecording()",
+          "seconds": 18.659
+        },
+        {
+          "test": "VideoWorkflowTests/testSlowMotionSchedulerRetimes120FPSCaptureAndRejectsInvalidTime()",
+          "seconds": 0.0
+        }
+      ],
+      "count": 2,
+      "seconds": 18.659
+    },
+    {
+      "name": "LumaCamera-VideoSubmodes-20261025-Verified",
+      "resultBundle": "/private/tmp/LumaCamera-VideoSubmodes-20261025-Verified.xcresult",
+      "passedMethods": [
+        {
+          "test": "VideoSpecificationTests/testSlowMotionAndCinematicRoutesOnDevice()",
+          "seconds": 16.623
+        }
+      ],
+      "count": 1,
+      "seconds": 16.623
+    }
+  ],
+  "matrixDecodedFrames": 1134,
+  "slowFocalSeconds": [
+    0.3390536666556727,
+    0.34425899997586384,
+    0.04579375000321306,
+    0.2726002916460857,
+    0.04254150000633672,
+    0.30327124998439103,
+    0.2680594999983441,
+    0.32890420834883116,
+    0.036301833315519616,
+    0.23397879165713675,
+    0.044473249989096075,
+    0.29013608332024887,
+    0.2694969166768715,
+    0.26952587498817593,
+    0.04138045833678916,
+    0.25192666667862795,
+    0.042732250003609806,
+    0.2798041666683275,
+    0.2538804166542832,
+    0.2605280833377037,
+    0.045892875001300126,
+    0.24516941668116488,
+    0.04524725000374019,
+    0.28496608333080076
+  ],
+  "date": "2026-10-25",
+  "device": "iPhone 17 Pro / iOS27.0.1",
+  "distinctPassed": 13,
+  "originalFailureIDs": [
+    "026",
+    "028",
+    "031",
+    "017",
+    "030"
+  ],
+  "productionChanged": true,
+  "totalDecodedFrames": 2698,
+  "finalTemporaryClips": 42,
+  "originalFailuresPassed": 33,
+  "originalFailuresRemaining": 0,
+  "fullSuiteRerun": false,
+  "originalSkippedUnchanged": 7,
+  "runtimeErrorNotificationsWithError": 0,
+  "systemPhotosWrites": 0,
+  "slowRecording": [
+    {
+      "captureFPS": 120,
+      "received": 75,
+      "written": 74,
+      "fileFrames": 74,
+      "durationSeconds": 2.466666666666667,
+      "totalSeconds": 0.813361625012476
+    },
+    {
+      "captureFPS": 240,
+      "received": 148,
+      "written": 145,
+      "fileFrames": 145,
+      "durationSeconds": 4.833333333333333,
+      "totalSeconds": 0.9327317500137724
+    },
+    {
+      "captureFPS": 240,
+      "received": 723,
+      "written": 720,
+      "fileFrames": 720,
+      "durationSeconds": 24,
+      "totalSeconds": 4.254994958348107
+    }
+  ],
+  "limitations": [
+    "No external RAW disk test",
+    "No minutes-long thermal or standalone memory/power test",
+    "1-3 startup frames dropped in final slow samples",
+    "Retimed input hint is empirical policy, not universal Apple guarantee",
+    "Original historical platform internal roots not all proven",
+    "No 529-method full rerun; 7 skips remain"
+  ]
+}

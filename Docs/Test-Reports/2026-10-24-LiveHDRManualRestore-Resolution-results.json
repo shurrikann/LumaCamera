@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-24",
+  "device": "iPhone 17 Pro / iOS 27.0.1",
+  "productionChanged": true,
+  "distinctPassed": 5,
+  "seconds": 86.421,
+  "resultBundle": "/private/tmp/LumaCamera-LiveHDRManualRestore-20261024-Fixed.xcresult",
+  "originalFailure": "FULL-20261024-025",
+  "intermediateFailure": {
+    "resultBundle": "/private/tmp/LumaCamera-LiveHDRManualRestore-20261024-Verified.xcresult",
+    "expected": {
+      "seconds": 0.5,
+      "iso": 200
+    },
+    "actualFile": {
+      "seconds": 0.025,
+      "iso": 1000
+    },
+    "failures": 2
+  },
+  "mainMethodSeconds": 64.158,
+  "mainMethodVideos": 6,
+  "mainMethodPhotos": 6,
+  "returnWithAssertionsSeconds": [
+    0.4623634583,
+    0.4527555,
+    1.0315471667,
+    1.0399881667,
+    0.4579661667,
+    0.48612225
+  ],
+  "captureCallbackSeconds": [
+    4.00357175,
+    5.22396579,
+    2.55116567,
+    2.54194079,
+    5.75100062,
+    3.7101115
+  ],
+  "rapidRoundTrips": 10,
+  "runtimeErrorNotificationsWithError": 0,
+  "systemPhotosWrites": 0,
+  "warnings": [
+    "MDB_MAP_FULL",
+    "FigApplicationStateMonitor",
+    "SwiftUI onChange/Geometry loops during synthetic rapid requests"
+  ],
+  "cumulativeOriginalFailuresPassed": 25,
+  "originalFailuresRemaining": 8,
+  "limitations": [
+    "Not pure preview latency or display FPS",
+    "No standalone power/memory assessment",
+    "No external RAW disk test",
+    "Intermittent platform-internal cause not confirmed"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-24",
+  "device": "iPhone17Pro / iOS27.0.1 (24A446)",
+  "productionChanged": false,
+  "passed": 6,
+  "failed": 0,
+  "skipped": 0,
+  "seconds": 10.338,
+  "methods": [
+    {
+      "test": "LivePhotoOptionsTests/testOnlyHEIFProAppliesProToneAndSwitchingFormatClosesItsPanel()",
+      "seconds": 0.039,
+      "result": "Passed"
+    },
+    {
+      "test": "PhotoOptionsTests/testHDRHEIFUsesTenBitEncoding()",
+      "seconds": 0.047,
+      "result": "Passed"
+    },
+    {
+      "test": "ProToneCapturePhysicalTests/testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving()",
+      "seconds": 10.101,
+      "result": "Passed"
+    },
+    {
+      "test": "ProToneTests/testCurvesRemainMonotonicNeutralAndRetainExtendedHighlights()",
+      "seconds": 0.033,
+      "result": "Passed"
+    },
+    {
+      "test": "ProToneTests/testEachToneIsEncodedInTenBitHDRHEIFWithoutSavingToPhotos()",
+      "seconds": 0.109,
+      "result": "Passed"
+    },
+    {
+      "test": "ProToneTests/testReferenceDirectionsAndNaturalBaseline()",
+      "seconds": 0.008,
+      "result": "Passed"
+    }
+  ],
+  "metrics": [
+    "PRO-TONE-HDR tone=自然影调 seconds=2.58172520835069 profile=Rec. ITU-R BT.2100 PQ depth=10 dimensions=3000x4000 EXIF-preserved=true tasks=0",
+    "PRO-TONE-HDR tone=电影质感 seconds=0.8128550833207555 profile=Rec. ITU-R BT.2100 PQ depth=10 dimensions=3000x4000 EXIF-preserved=true tasks=0",
+    "PRO-TONE-HDR tone=高对比度 seconds=0.894198875001166 profile=Rec. ITU-R BT.2100 PQ depth=10 dimensions=3000x4000 EXIF-preserved=true tasks=0",
+    "PRO-TONE-HDR tone=清新明亮 seconds=0.8693669583299197 profile=Rec. ITU-R BT.2100 PQ depth=10 dimensions=3000x4000 EXIF-preserved=true tasks=0",
+    "PRO-TONE-HDR tone=清新明亮 seconds=0.8284695000038482 profile=Rec. ITU-R BT.2100 PQ depth=10 dimensions=3000x4000 EXIF-preserved=true tasks=0",
+    "PRO-TONE-HDR tone=高对比度 seconds=0.8945290416886564 profile=Rec. ITU-R BT.2100 PQ depth=10 dimensions=3000x4000 EXIF-preserved=true tasks=0",
+    "PRO-TONE-HDR tone=电影质感 seconds=0.8787939583417028 profile=Rec. ITU-R BT.2100 PQ depth=10 dimensions=3000x4000 EXIF-preserved=true tasks=0",
+    "PRO-TONE-HDR tone=自然影调 seconds=0.8559526250173803 profile=Rec. ITU-R BT.2100 PQ depth=10 dimensions=3000x4000 EXIF-preserved=true tasks=0",
+    "PRO-TONE-HDR-SUMMARY samples=8 median=0.8787939583417028 max=2.58172520835069 rapidToneChanges=40 resumed=true"
+  ],
+  "resultBundle": "/private/tmp/LumaCamera-ProToneHDR-20261024-Verified.xcresult",
+  "log": "/private/tmp/LumaCamera-ProToneHDR-20261024-Verified.log",
+  "runtimeErrors": 0,
+  "limitations": [
+    "实际采集只覆盖当前A挡后置标准分辨率HEIF Pro HDR",
+    "影调像素和HDR高光对比来自固定夹具，非不同时间拍照对比",
+    "回调耗时非曝光时间/显示FPS/功耗"
+  ]
+}

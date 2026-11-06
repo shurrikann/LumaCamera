@@ -1,0 +1,122 @@
+{
+  "date": "2026-10-27",
+  "device": "iPhone 17 Pro",
+  "os": "iOS 27.2 (24B119)",
+  "deviceID": "00008150-001934280220401C",
+  "scope": "targeted tests across runs; not a full suite",
+  "passedMethods": [
+    "LumaCameraTests.AdaptiveDynamicPhysicalTests testCaptureRAWRecipeRedevelopmentAndExposure",
+    "LumaCameraTests.AdaptiveDynamicPhysicalTests testFormatPanelLayoutAndRepeatedSwitching",
+    "LumaCameraTests.AdaptiveDynamicPhysicalTests testHighResolutionRAWRequestAndDecode",
+    "LumaCameraTests.AdaptiveDynamicPhysicalTests testLinearHighlightShadowColorAndPerformance",
+    "LumaCameraTests.PhotoEditMetadataTests testCroppedRotatedJPEGKeepsCaptureFactsButUpdatesGeometry",
+    "LumaCameraTests.PhotoEditMetadataTests testNewAssetCopiesCaptureDiagnosticsWithoutAlteringOriginal",
+    "LumaCameraTests.PhotoEditMetadataTests testRAWRecipeCanRemoveBakedFilterWithoutChangingCaptureFacts",
+    "LumaCameraTests.PhotoEditorTests testEditorCompletionReleasesGuardEvenAfterEditorIsDismissed",
+    "LumaCameraTests.PhotoEditorTests testEditorFailureReleasesBusyGuardAndAllowsRetry",
+    "LumaCameraTests.PhotoEditorTests testExposureChangesImageAndAdjustmentDataCanRoundTrip",
+    "LumaCameraTests.PhotoEditorTests testRotatedEditBakesOrientationIntoFullResolutionJPEG",
+    "LumaCameraTests.ProToneCapturePhysicalTests testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving"
+  ],
+  "metrics": {
+    "Checks": [
+      "ADAPTIVE-CAPTURE pass=0 hdr=false seconds=3.211615291666021 rawBytes=10211817 heifBytes=265623 extent=3000x4000 exposure=0.01",
+      "ADAPTIVE-CAPTURE pass=1 hdr=false seconds=1.6738139583339944 rawBytes=20912406 heifBytes=883963 extent=3000x4000 exposure=0.008333333333333333",
+      "ADAPTIVE-CAPTURE pass=2 hdr=true seconds=3.1183545833328026 rawBytes=9254919 heifBytes=271863 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=3 hdr=false seconds=1.501840166666625 rawBytes=22786092 heifBytes=759407 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE-SUMMARY samples=4 seconds=[3.211615291666021, 1.6738139583339944, 3.1183545833328026, 1.501840166666625] noPhotosWrite=true",
+      "ADAPTIVE-LAYOUT orientations=4 switches=60 noPhotosWrite=true",
+      "ADAPTIVE-GPU pixels=2880000 samples=6 seconds=[0.018424291666633508, 0.008000958333468589, 0.007341374999668915, 0.006771583333829767, 0.005905874999371008, 0.005922041666963196] analysis=Analysis(median: 0.06569155883789063, white: 6.5657625, contrast: 820.7203125, shadowEV: 0.7372337646484375)"
+    ],
+    "Final": [
+      "ADAPTIVE-REDEVELOP rmse=0.0 previewSamples=12 seconds=[0.01713579166607815, 0.018487166667000565, 0.01956125000015163, 0.019791541666563717, 0.016668916666276345, 0.019777833333137096, 0.0193236250006521, 0.02212483333369164, 0.020523083333500836, 0.021807750000334636, 0.019869499999913387, 0.022465291666776466] originalBytesUnchanged=true",
+      "ADAPTIVE-CAPTURE pass=0 hdr=false seconds=2.004346374999841 rawBytes=14005126 heifBytes=165140 extent=3000x4000 exposure=0.01",
+      "ADAPTIVE-CAPTURE pass=1 hdr=false seconds=1.6822049999991577 rawBytes=22366573 heifBytes=1009824 extent=3000x4000 exposure=0.008333333333333333",
+      "ADAPTIVE-CAPTURE pass=2 hdr=true seconds=3.0849838333333537 rawBytes=11984639 heifBytes=444207 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=3 hdr=false seconds=1.4021389583331256 rawBytes=22294933 heifBytes=697955 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE-SUMMARY samples=4 seconds=[2.004346374999841, 1.6822049999991577, 3.0849838333333537, 1.4021389583331256] noPhotosWrite=true",
+      "ADAPTIVE-LAYOUT formats=6 orientations=4 switches=60 noPhotosWrite=true",
+      "ADAPTIVE-GPU pixels=2880000 samples=6 seconds=[0.008320083333273942, 0.007143791666749166, 0.006588499999452324, 0.005710458332941926, 0.006266708333896531, 0.0063656250003987225] analysis=Analysis(median: 0.06569155883789063, white: 6.5657625, contrast: 820.7203125, shadowEV: 0.7372337646484375)"
+    ],
+    "Resolution": [
+      "ADAPTIVE-REDEVELOP rmse=0.0 previewSamples=12 seconds=[0.01870650000000751, 0.016427375000603206, 0.01749424999979965, 0.018126291666703764, 0.01831883333306905, 0.01973233333319513, 0.02138233333334938, 0.01840770833314309, 0.020929958332999377, 0.02042933333268593, 0.023575791666189616, 0.01926537500003178] originalBytesUnchanged=true",
+      "ADAPTIVE-CAPTURE pass=0 hdr=false seconds=1.994298333333063 rawBytes=12182030 heifBytes=336965 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=1 hdr=false seconds=1.6684440416665893 rawBytes=22538769 heifBytes=1043100 extent=3000x4000 exposure=0.008333333333333333",
+      "ADAPTIVE-CAPTURE pass=2 hdr=true seconds=3.249886916667492 rawBytes=12340149 heifBytes=457615 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=3 hdr=false seconds=1.313309291666883 rawBytes=22764830 heifBytes=700536 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=4 hdr=false seconds=2.3093083333333198 rawBytes=11323781 heifBytes=294261 extent=3000x4000 exposure=0.01",
+      "ADAPTIVE-CAPTURE-SUMMARY samples=5 seconds=[1.994298333333063, 1.6684440416665893, 3.249886916667492, 1.313309291666883, 2.3093083333333198] noPhotosWrite=true"
+    ],
+    "HighResFinal": [
+      "ADAPTIVE-REDEVELOP rmse=0.0 previewSamples=12 seconds=[0.017082458333788964, 0.01655487500011077, 0.017076083333449787, 0.016777041666500736, 0.017172291666611272, 0.016703041666914942, 0.0172155833333818, 0.017736875000082364, 0.018608750000566943, 0.018400666665911558, 0.02033245833354158, 0.019620916667008714] originalBytesUnchanged=true",
+      "ADAPTIVE-CAPTURE pass=0 hdr=false seconds=2.154140749999897 rawBytes=19348900 heifBytes=999306 extent=3000x4000 exposure=0.016666666666666666",
+      "ADAPTIVE-CAPTURE pass=1 hdr=false seconds=1.8174030416666938 rawBytes=43391290 heifBytes=241684 extent=3000x4000 exposure=0.008333333333333333",
+      "ADAPTIVE-HDR-RECIPE rmse=0.0010733089177537016 toneAndRAWControls=true",
+      "ADAPTIVE-CAPTURE pass=2 hdr=true seconds=3.006670416666566 rawBytes=11732464 heifBytes=481859 extent=3000x4000 exposure=0.007042253521126761",
+      "ADAPTIVE-CAPTURE pass=3 hdr=false seconds=1.1533475833339253 rawBytes=23713289 heifBytes=295581 extent=3000x4000 exposure=0.016666666666666666",
+      "ADAPTIVE-CAPTURE pass=4 hdr=false seconds=1.1985327083330048 rawBytes=21527233 heifBytes=1712648 extent=3024x4032 exposure=0.008333333333333333",
+      "ADAPTIVE-CAPTURE-SUMMARY samples=5 seconds=[2.154140749999897, 1.8174030416666938, 3.006670416666566, 1.1533475833339253, 1.1985327083330048] noPhotosWrite=true"
+    ],
+    "48Inspect2": [
+      "ADAPTIVE-48-BEFORE resolution=48 options=48 capabilities=[LumaCamera.PhotoResolution.standard, LumaCamera.PhotoResolution.high]",
+      "ADAPTIVE-48-AFTER request=Optional(__C.CMVideoDimensions(width: 8064, height: 6048)) rawNative=(8064.0, 6048.0) rawScale=1.0 rawOutput=Optional((0.0, 0.0, 6048.0, 8064.0)) requested=Optional(48)"
+    ],
+    "LastChecks": [
+      "ADAPTIVE-48-BEFORE resolution=48 options=48 capabilities=[LumaCamera.PhotoResolution.standard, LumaCamera.PhotoResolution.high]",
+      "ADAPTIVE-48-AFTER request=Optional(__C.CMVideoDimensions(width: 8064, height: 6048)) rawNative=(8064.0, 6048.0) rawScale=1.0 rawOutput=Optional((0.0, 0.0, 6048.0, 8064.0)) requested=Optional(48)",
+      "ADAPTIVE-48-OUTPUT pixels=48000000 redevelopSeconds=2.709477083333695"
+    ],
+    "MetadataFinal": [
+      "ADAPTIVE-REDEVELOP rmse=0.0 previewSamples=12 seconds=[0.018148291666875593, 0.01862283333321102, 0.019630208333182964, 0.017572875000041677, 0.017162125000140804, 0.020390541666529316, 0.019319374999213323, 0.02239570833353355, 0.021621083333229763, 0.021010333332924347, 0.023500208333643968, 0.019936541666538687] originalBytesUnchanged=true",
+      "ADAPTIVE-CAPTURE pass=0 hdr=false seconds=2.352827833333322 rawBytes=8455961 heifBytes=258960 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=1 hdr=false seconds=1.7223610833334533 rawBytes=20641113 heifBytes=901638 extent=3000x4000 exposure=0.008333333333333333",
+      "ADAPTIVE-HDR-RECIPE rmse=0.0005653205841181369 toneAndRAWControls=true",
+      "ADAPTIVE-CAPTURE pass=2 hdr=true seconds=3.0147466250000434 rawBytes=8459506 heifBytes=147576 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=3 hdr=false seconds=1.3346895833328745 rawBytes=21793753 heifBytes=635518 extent=3000x4000 exposure=0.04",
+      "ADAPTIVE-CAPTURE pass=4 hdr=false seconds=1.4436471250000977 rawBytes=20649010 heifBytes=1102989 extent=3024x4032 exposure=0.008333333333333333",
+      "ADAPTIVE-CAPTURE-SUMMARY samples=5 seconds=[2.352827833333322, 1.7223610833334533, 3.0147466250000434, 1.3346895833328745, 1.4436471250000977] noPhotosWrite=true"
+    ],
+    "FractionalCrop": [
+      "ADAPTIVE-REDEVELOP rmse=0.0 previewSamples=12 seconds=[0.01804879166684259, 0.017843958333287446, 0.01963683333269728, 0.0206718749996071, 0.018042416666503414, 0.01910516666703188, 0.019242874999690684, 0.02117133333285892, 0.022236916666770412, 0.021094291666486242, 0.023034083333186572, 0.021818333333612827] originalBytesUnchanged=true",
+      "ADAPTIVE-CAPTURE pass=0 hdr=false seconds=2.3480502499996874 rawBytes=8544289 heifBytes=224137 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=1 hdr=false seconds=1.7353082499994343 rawBytes=20635024 heifBytes=894822 extent=3000x4000 exposure=0.008333333333333333",
+      "ADAPTIVE-HDR-RECIPE rmse=0.0008678053037208516 toneAndRAWControls=true",
+      "ADAPTIVE-CAPTURE pass=2 hdr=true seconds=3.521185250000599 rawBytes=8539871 heifBytes=240678 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=3 hdr=false seconds=1.140418666665937 rawBytes=25699716 heifBytes=32220 extent=3000x4000 exposure=0.016666666666666666",
+      "ADAPTIVE-CAPTURE pass=4 hdr=false seconds=1.1775259583337174 rawBytes=20643169 heifBytes=1144237 extent=3024x4032 exposure=0.008333333333333333",
+      "ADAPTIVE-CAPTURE-SUMMARY samples=5 seconds=[2.3480502499996874, 1.7353082499994343, 3.521185250000599, 1.140418666665937, 1.1775259583337174] noPhotosWrite=true"
+    ],
+    "HDRFilterFinal": [
+      "ADAPTIVE-REDEVELOP rmse=0.0 previewSamples=12 seconds=[0.01921941666660132, 0.020073416667401034, 0.017986500000006345, 0.018599791666929377, 0.019118624999464373, 0.022441000000071654, 0.020877458333416143, 0.021877583332752693, 0.022056124999835447, 0.020831791666751087, 0.020961958332918584, 0.024800208333545015] originalBytesUnchanged=true",
+      "ADAPTIVE-CAPTURE pass=0 hdr=false seconds=2.3681856666662497 rawBytes=13867174 heifBytes=274762 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=1 hdr=false seconds=1.9848349166668413 rawBytes=25106360 heifBytes=1005166 extent=3000x4000 exposure=0.008333333333333333",
+      "ADAPTIVE-HDR-RECIPE rmse=0.0014147937570392502 toneAndRAWControls=true",
+      "ADAPTIVE-CAPTURE pass=2 hdr=true seconds=3.5043090833332826 rawBytes=13985915 heifBytes=290318 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=3 hdr=false seconds=1.315127291666613 rawBytes=20435644 heifBytes=845962 extent=3000x4000 exposure=0.04",
+      "ADAPTIVE-CAPTURE pass=4 hdr=false seconds=1.4664778749993275 rawBytes=25140993 heifBytes=1236276 extent=3024x4032 exposure=0.008333333333333333",
+      "ADAPTIVE-CAPTURE-SUMMARY samples=5 seconds=[2.3681856666662497, 1.9848349166668413, 3.5043090833332826, 1.315127291666613, 1.4664778749993275] noPhotosWrite=true",
+      "ADAPTIVE-GPU pixels=2880000 samples=6 seconds=[0.0069214583327266155, 0.006857166666122794, 0.006613833333176444, 0.006776666666155506, 0.005452625000543776, 0.006292000000030384] analysis=Analysis(median: 0.06569155883789063, white: 6.5657625, contrast: 820.7203125, shadowEV: 0.7372337646484375)"
+    ],
+    "EditorUI": [
+      "ADAPTIVE-REDEVELOP rmse=0.0 previewSamples=12 seconds=[0.020243333333382907, 0.020038374999785447, 0.020156666666480305, 0.018071125000460597, 0.01823379166671657, 0.01947770833339746, 0.02215687500029162, 0.020036458333379414, 0.021865749999960826, 0.02438254166736442, 0.020721625000078348, 0.02402299999994284] originalBytesUnchanged=true",
+      "ADAPTIVE-EDITOR rapidUpdates=30 hdrPreviewBits=16 cancelledPublicationStable=true",
+      "ADAPTIVE-CAPTURE pass=0 hdr=false seconds=2.3383183333335182 rawBytes=13872545 heifBytes=273942 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=1 hdr=false seconds=1.7000956249994488 rawBytes=25106709 heifBytes=1001465 extent=3000x4000 exposure=0.008333333333333333",
+      "ADAPTIVE-HDR-RECIPE rmse=0.0014026620050774784 toneAndRAWControls=true",
+      "ADAPTIVE-CAPTURE pass=2 hdr=true seconds=3.5258100000000923 rawBytes=13858123 heifBytes=284205 extent=3000x4000 exposure=0.02",
+      "ADAPTIVE-CAPTURE pass=3 hdr=false seconds=1.306276500000422 rawBytes=20512276 heifBytes=810322 extent=3000x4000 exposure=0.04",
+      "ADAPTIVE-CAPTURE pass=4 hdr=false seconds=1.198206458333516 rawBytes=25096484 heifBytes=1278236 extent=3024x4032 exposure=0.008333333333333333",
+      "ADAPTIVE-CAPTURE-SUMMARY samples=5 seconds=[2.3383183333335182, 1.7000956249994488, 3.5258100000000923, 1.306276500000422, 1.198206458333516] noPhotosWrite=true"
+    ]
+  },
+  "build": "BUILD SUCCEEDED",
+  "installationDatabaseSequenceNumber": 1880,
+  "diagnosticPhotosSaved": false,
+  "limitations": [
+    "PhotoKit HEIF+DNG creation, overwrite/copy and reopening not end-to-end verified",
+    "48MP combined unsettled format flow yielded 12MP; dedicated settled 48MP passed",
+    "No long duration energy, thermal or application memory measurement",
+    "Other devices and iOS 18 not verified"
+  ],
+  "normalAppLaunch": "succeeded"
+}

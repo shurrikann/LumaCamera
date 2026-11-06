@@ -1,0 +1,249 @@
+{
+  "date": "2026-10-26",
+  "device": "iPhone 17 Pro",
+  "os": "iOS 27.0.1 (24A446)",
+  "sdk": "27.1",
+  "normalProjectSigning": true,
+  "systemPhotosWrites": 0,
+  "simulatorsLaunched": 0,
+  "realExposurePreviewPreserved": true,
+  "pairedBaselineSeconds": [
+    2.948614291672129,
+    2.6441782916663215,
+    2.351256875001127
+  ],
+  "pairedOptimizedSeconds": [
+    1.1843927083536983,
+    0.8993886666721664,
+    0.5775720000092406
+  ],
+  "medianRatio": 0.34013919163725725,
+  "uniquePassedMethods": [
+    "ManualAutoRecoveryPhysicalTests.testAllManualParametersReturnToAutomaticAndPublishFreshValues",
+    "ManualAutoRecoveryPhysicalTests.testLongExposureAutoReturnKeepsLocksCapturesAndCancellation",
+    "ManualAutoRecoveryPhysicalTests.testLongExposureReturnAcrossPhysicalLenses",
+    "ManualAutoRecoveryPhysicalTests.testSameSceneLegacyAndOptimizedLongExposureReturn",
+    "ManualAutoRecoveryPhysicalTests.testSlowestOrdinaryShutterReturnToAutoLatency",
+    "NativeExposureReturnDiagnosticTests.testNativeOneSecondExposureReturnWithoutAppPipeline",
+    "NativeExposureReturnDiagnosticTests.testNativeSessionRestartAfterOneSecondExposure",
+    "NightAdaptiveCapturePhysicalTests.testManualNightCancelAndReturnRetainsMExposure",
+    "PreviewExposureAssistPhysicalTests.testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit",
+    "PreviewExposureAssistPhysicalTests.testOrdinarySmoothPreviewLongAndShortExposureFiles",
+    "PreviewExposureAssistPhysicalTests.testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure",
+    "PreviewExposureAssistPhysicalTests.testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles",
+    "PreviewExposureAssistPhysicalTests.testSmoothPreviewRemainsPhotoOnlyAcrossVideoAndLifecycleChanges"
+  ],
+  "runs": [
+    {
+      "group": "Native",
+      "log": "/private/tmp/LumaCamera-SlowestAuto-20261026-Native.log",
+      "success": false,
+      "methods": [
+        {
+          "method": "NativeExposureReturnDiagnosticTests.testNativeOneSecondExposureReturnWithoutAppPipeline",
+          "status": "failed",
+          "seconds": 23.769
+        }
+      ],
+      "metrics": []
+    },
+    {
+      "group": "Native2",
+      "log": "/private/tmp/LumaCamera-SlowestAuto-20261026-Native2.log",
+      "success": false,
+      "methods": [
+        {
+          "method": "NativeExposureReturnDiagnosticTests.testNativeOneSecondExposureReturnWithoutAppPipeline",
+          "status": "failed",
+          "seconds": 24.58
+        }
+      ],
+      "metrics": []
+    },
+    {
+      "group": "NativeRestart",
+      "log": "/private/tmp/LumaCamera-SlowestAuto-20261026-NativeRestart.log",
+      "success": true,
+      "methods": [
+        {
+          "method": "NativeExposureReturnDiagnosticTests.testNativeSessionRestartAfterOneSecondExposure",
+          "status": "passed",
+          "seconds": 27.572
+        }
+      ],
+      "metrics": [
+        "NATIVE-EXPOSURE restart=true sample=0 callSeconds=1.1970912083343137 firstShortPropertyOnBuffer=1.2009306249965448 maxDeliveryGap=1.2009306249965448 bufferCount=101 firstRows=[\"1.201/193111.683/0.020/0.205\", \"1.230/193111.716/0.020/0.417\", \"1.262/193111.749/0.020/0.417\", \"1.302/193111.790/0.030/0.429\", \"1.343/193111.830/0.030/0.437\", \"1.385/193111.870/0.030/0.443\", \"1.424/193111.910/0.030/0.448\", \"1.462/193111.950/0.030/0.451\"]",
+        "NATIVE-EXPOSURE restart=true sample=1 callSeconds=0.9588639583380427 firstShortPropertyOnBuffer=0.9644837916712277 maxDeliveryGap=0.9644837916712277 bufferCount=100 firstRows=[\"0.964/193120.129/0.020/0.195\", \"0.985/193120.162/0.020/0.416\", \"1.017/193120.195/0.020/0.416\", \"1.058/193120.236/0.030/0.426\", \"1.098/193120.276/0.030/0.431\", \"1.138/193120.316/0.030/0.434\", \"1.178/193120.356/0.030/0.436\", \"1.221/193120.396/0.030/0.438\"]",
+        "NATIVE-EXPOSURE restart=true sample=2 callSeconds=0.8334714166412596 firstShortPropertyOnBuffer=0.8349624999973457 maxDeliveryGap=0.8349624999973457 bufferCount=102 firstRows=[\"0.835/193128.690/0.020/0.215\", \"0.855/193128.723/0.020/0.398\", \"0.888/193128.757/0.020/0.397\", \"0.928/193128.797/0.030/0.408\", \"0.967/193128.837/0.030/0.415\", \"1.008/193128.877/0.030/0.420\", \"1.050/193128.917/0.030/0.423\", \"1.093/193128.958/0.030/0.427\"]"
+      ]
+    },
+    {
+      "group": "EngineRestart",
+      "log": "/private/tmp/LumaCamera-SlowestAuto-20261026-EngineRestart.log",
+      "success": true,
+      "methods": [
+        {
+          "method": "ManualAutoRecoveryPhysicalTests.testSlowestOrdinaryShutterReturnToAutoLatency",
+          "status": "passed",
+          "seconds": 32.739
+        }
+      ],
+      "metrics": [
+        "SLOWEST-AUTO sample=0 assist=false settled=true requested=1.0 hardware=0.5950645833509043 autoReading=0.6750604166591074 newPreviewUpperBound=0.6931870416738093 actualSeconds=0.030005 longestPublicationGap=0.6632748749980237 publications=26",
+        "SLOWEST-AUTO sample=1 assist=false settled=true requested=1.0 hardware=1.2695309166738298 autoReading=1.3539295000082348 newPreviewUpperBound=1.3713433333323337 actualSeconds=0.030005 longestPublicationGap=1.3409880833351053 publications=26",
+        "SLOWEST-AUTO sample=2 assist=false settled=true requested=1.0 hardware=0.9825098750006873 autoReading=1.067662958346773 newPreviewUpperBound=1.0856290416850243 actualSeconds=0.030005 longestPublicationGap=1.0561809583450668 publications=27",
+        "SLOWEST-AUTO sample=0 assist=true settled=true requested=1.0 hardware=0.007094833330484107 autoReading=0.0399805833294522 newPreviewUpperBound=0.04691262499545701 actualSeconds=0.030005 longestPublicationGap=0.04597925001871772 publications=26",
+        "SLOWEST-AUTO sample=1 assist=true settled=true requested=1.0 hardware=0.023532166669610888 autoReading=0.05646766666905023 newPreviewUpperBound=0.06308208333211951 actualSeconds=0.030005 longestPublicationGap=0.04709812501096167 publications=27",
+        "SLOWEST-AUTO sample=2 assist=true settled=true requested=1.0 hardware=0.003984999988460913 autoReading=0.04578445834340528 newPreviewUpperBound=0.05188700000871904 actualSeconds=0.030005 longestPublicationGap=0.04540758332586847 publications=26"
+      ]
+    },
+    {
+      "group": "Final",
+      "log": "/private/tmp/LumaCamera-SlowestAuto-20261026-Final.log",
+      "success": false,
+      "methods": [
+        {
+          "method": "ManualAutoRecoveryPhysicalTests.testAllManualParametersReturnToAutomaticAndPublishFreshValues",
+          "status": "passed",
+          "seconds": 11.361
+        },
+        {
+          "method": "ManualAutoRecoveryPhysicalTests.testLongExposureAutoReturnKeepsLocksCapturesAndCancellation",
+          "status": "passed",
+          "seconds": 16.751
+        },
+        {
+          "method": "ManualAutoRecoveryPhysicalTests.testSlowestOrdinaryShutterReturnToAutoLatency",
+          "status": "passed",
+          "seconds": 31.247
+        },
+        {
+          "method": "NightAdaptiveCapturePhysicalTests.testManualNightCancelAndReturnRetainsMExposure",
+          "status": "passed",
+          "seconds": 3.969
+        },
+        {
+          "method": "PreviewExposureAssistPhysicalTests.testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit",
+          "status": "passed",
+          "seconds": 0.857
+        },
+        {
+          "method": "PreviewExposureAssistPhysicalTests.testOrdinarySmoothPreviewLongAndShortExposureFiles",
+          "status": "passed",
+          "seconds": 23.17
+        },
+        {
+          "method": "PreviewExposureAssistPhysicalTests.testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure",
+          "status": "passed",
+          "seconds": 8.392
+        },
+        {
+          "method": "PreviewExposureAssistPhysicalTests.testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles",
+          "status": "failed",
+          "seconds": 22.002
+        },
+        {
+          "method": "PreviewExposureAssistPhysicalTests.testSmoothPreviewRemainsPhotoOnlyAcrossVideoAndLifecycleChanges",
+          "status": "passed",
+          "seconds": 10.738
+        }
+      ],
+      "metrics": [
+        "LONG-AUTO-STABILITY manualEXIF=(100.0, 1.0) automaticEXIF=(640.0, 0.030303030303030304) finalManualEXIF=(200.0, 0.25) preservedWBFocus=true reverseCycles=5 cancelReturn=true temporaryPhotos=4 noSystemPhotos=true",
+        "SLOWEST-AUTO sample=0 assist=false settled=true requested=1.0 hardware=0.6071972500067204 autoReading=0.6914053333457559 newPreviewUpperBound=0.7042643750028219 actualSeconds=0.030005 longestPublicationGap=0.6789469166833442 publications=26",
+        "SLOWEST-AUTO sample=1 assist=false settled=true requested=1.0 hardware=0.27755850000539795 autoReading=0.36266445834189653 newPreviewUpperBound=0.37666337500559166 actualSeconds=0.030005 longestPublicationGap=0.35143429166055284 publications=27",
+        "SLOWEST-AUTO sample=2 assist=false settled=true requested=1.0 hardware=0.9881970833230298 autoReading=1.0751968749973457 newPreviewUpperBound=1.082908166659763 actualSeconds=0.030005 longestPublicationGap=1.068903750012396 publications=26",
+        "SLOWEST-AUTO sample=0 assist=true settled=true requested=1.0 hardware=0.01332624998758547 autoReading=0.04934095832868479 newPreviewUpperBound=0.05475687500438653 actualSeconds=0.030005 longestPublicationGap=0.04442587500670925 publications=27",
+        "SLOWEST-AUTO sample=1 assist=true settled=true requested=1.0 hardware=0.005811791663290933 autoReading=0.04214516666252166 newPreviewUpperBound=0.059517458314076066 actualSeconds=0.030005 longestPublicationGap=0.049817458348115906 publications=27",
+        "SLOWEST-AUTO sample=2 assist=true settled=true requested=1.0 hardware=0.025672208343166858 autoReading=0.031659375003073364 newPreviewUpperBound=0.038117458316264674 actualSeconds=0.030005 longestPublicationGap=0.048769416665891185 publications=26"
+      ]
+    },
+    {
+      "group": "IsolationAndLenses",
+      "log": "/private/tmp/LumaCamera-SlowestAuto-20261026-IsolationAndLenses.log",
+      "success": true,
+      "methods": [
+        {
+          "method": "ManualAutoRecoveryPhysicalTests.testAllManualParametersReturnToAutomaticAndPublishFreshValues",
+          "status": "passed",
+          "seconds": 11.577
+        },
+        {
+          "method": "ManualAutoRecoveryPhysicalTests.testLongExposureAutoReturnKeepsLocksCapturesAndCancellation",
+          "status": "passed",
+          "seconds": 16.649
+        },
+        {
+          "method": "ManualAutoRecoveryPhysicalTests.testLongExposureReturnAcrossPhysicalLenses",
+          "status": "passed",
+          "seconds": 28.228
+        },
+        {
+          "method": "ManualAutoRecoveryPhysicalTests.testSlowestOrdinaryShutterReturnToAutoLatency",
+          "status": "passed",
+          "seconds": 33.077
+        },
+        {
+          "method": "NativeExposureReturnDiagnosticTests.testNativeOneSecondExposureReturnWithoutAppPipeline",
+          "status": "passed",
+          "seconds": 24.378
+        },
+        {
+          "method": "PreviewExposureAssistPhysicalTests.testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles",
+          "status": "passed",
+          "seconds": 12.431
+        }
+      ],
+      "metrics": [
+        "LONG-AUTO-STABILITY manualEXIF=(100.0, 1.0) automaticEXIF=(800.0, 0.030303030303030304) finalManualEXIF=(200.0, 0.25) preservedWBFocus=true reverseCycles=5 cancelReturn=true temporaryPhotos=4 noSystemPhotos=true",
+        "LONG-AUTO-LENS type=AVCaptureDeviceTypeBuiltInUltraWideCamera position=1 seconds=1.0 recovery=1.4286337500088848 preview=(900.0, 1200.0) zoom=0.5 sameInput=true newFrames=true",
+        "LONG-AUTO-LENS type=AVCaptureDeviceTypeBuiltInWideAngleCamera position=1 seconds=1.0 recovery=1.358686999999918 preview=(900.0, 1200.0) zoom=1.0 sameInput=true newFrames=true",
+        "LONG-AUTO-LENS type=AVCaptureDeviceTypeBuiltInTelephotoCamera position=1 seconds=1.0 recovery=1.39685329166241 preview=(900.0, 1200.0) zoom=4.0 sameInput=true newFrames=true",
+        "LONG-AUTO-LENS type=AVCaptureDeviceTypeBuiltInUltraWideCamera position=2 seconds=1.0 recovery=1.461715291661676 preview=(900.0, 1200.0) zoom=0.625 sameInput=true newFrames=true",
+        "LONG-AUTO-LENS total=4 noCapture=true",
+        "SLOWEST-AUTO sample=0 assist=false settled=true requested=1.0 hardware=0.7322204583324492 autoReading=0.8769474166620057 newPreviewUpperBound=0.8944992916658521 actualSeconds=0.040008 longestPublicationGap=0.8653515833138954 publications=19",
+        "SLOWEST-AUTO sample=1 assist=false settled=true requested=1.0 hardware=1.3260070416436065 autoReading=1.4689671249943785 newPreviewUpperBound=1.486410708312178 actualSeconds=0.040008 longestPublicationGap=1.4582470833265688 publications=20",
+        "SLOWEST-AUTO sample=2 assist=false settled=true requested=1.0 hardware=1.0296187916828785 autoReading=1.1753022916673217 newPreviewUpperBound=1.1907642500009388 actualSeconds=0.040008 longestPublicationGap=1.1644061666738708 publications=19",
+        "SLOWEST-AUTO sample=0 assist=true settled=true requested=1.0 hardware=0.015687708335462958 autoReading=0.03322595832287334 newPreviewUpperBound=0.04145499999867752 actualSeconds=0.040008 longestPublicationGap=0.06360554168350063 publications=20",
+        "SLOWEST-AUTO sample=1 assist=true settled=true requested=1.0 hardware=0.016560791671508923 autoReading=0.03651320835342631 newPreviewUpperBound=0.04516249999869615 actualSeconds=0.040008 longestPublicationGap=0.0667598333384376 publications=20",
+        "SLOWEST-AUTO sample=2 assist=true settled=true requested=1.0 hardware=0.016453124990221113 autoReading=0.03791229164926335 newPreviewUpperBound=0.041214291675714776 actualSeconds=0.030008 longestPublicationGap=0.051542041648644954 publications=23",
+        "NATIVE-EXPOSURE restart=false sample=0 callSeconds=0.0024276666808873415 firstShortPropertyOnBuffer=3.0820047500019427 maxDeliveryGap=1.0006638749910053 bufferCount=28 firstRows=[\"0.038/193990.623/1.000/0.575\", \"1.038/193991.623/1.000/0.585\", \"2.038/193992.623/1.000/0.594\", \"3.037/193993.623/1.000/0.617\", \"3.082/193993.663/0.040/0.621\", \"3.138/193993.713/0.040/0.607\", \"3.179/193993.753/0.030/0.599\", \"3.217/193993.793/0.030/0.589\"]",
+        "NATIVE-EXPOSURE restart=false sample=1 callSeconds=0.0027597500011324883 firstShortPropertyOnBuffer=3.8339872083452065 maxDeliveryGap=1.0012499583535828 bufferCount=10 firstRows=[\"0.795/193998.889/1.000/0.549\", \"1.795/193999.889/1.000/0.565\", \"2.795/194000.889/1.000/0.573\", \"3.796/194001.889/1.000/0.584\", \"3.834/194001.929/0.040/0.586\", \"3.897/194001.979/0.040/0.578\", \"3.933/194002.019/0.030/0.568\", \"3.973/194002.060/0.030/0.557\"]",
+        "NATIVE-EXPOSURE restart=false sample=2 callSeconds=0.0028541666688397527 firstShortPropertyOnBuffer=3.513437583344057 maxDeliveryGap=1.0008113750081975 bufferCount=16 firstRows=[\"0.472/194006.381/1.000/0.586\", \"1.472/194007.381/1.000/0.595\", \"2.472/194008.381/1.000/0.603\", \"3.472/194009.381/1.000/0.610\", \"3.513/194009.421/0.040/0.610\", \"3.571/194009.471/0.040/0.598\", \"3.611/194009.512/0.030/0.585\", \"3.651/194009.552/0.030/0.571\"]"
+      ]
+    },
+    {
+      "group": "Paired",
+      "log": "/private/tmp/LumaCamera-SlowestAuto-20261026-Paired.log",
+      "success": true,
+      "methods": [
+        {
+          "method": "ManualAutoRecoveryPhysicalTests.testLongExposureAutoReturnKeepsLocksCapturesAndCancellation",
+          "status": "passed",
+          "seconds": 17.095
+        },
+        {
+          "method": "ManualAutoRecoveryPhysicalTests.testSameSceneLegacyAndOptimizedLongExposureReturn",
+          "status": "passed",
+          "seconds": 41.001
+        }
+      ],
+      "metrics": [
+        "LONG-AUTO-STABILITY manualEXIF=(100.0, 1.0) automaticEXIF=(800.0, 0.030303030303030304) finalManualEXIF=(200.0, 0.25) preservedWBFocus=true reverseCycles=5 cancelReturn=true temporaryPhotos=4 noSystemPhotos=true",
+        "LONG-AUTO-AB legacy=true sample=0 freshAutomaticReading=2.948614291672129 sameSession=true realExposurePreview=true restarts=0",
+        "LONG-AUTO-AB legacy=false sample=0 freshAutomaticReading=1.1843927083536983 sameSession=true realExposurePreview=true restarts=1",
+        "LONG-AUTO-AB legacy=true sample=1 freshAutomaticReading=2.6441782916663215 sameSession=true realExposurePreview=true restarts=0",
+        "LONG-AUTO-AB legacy=false sample=1 freshAutomaticReading=0.8993886666721664 sameSession=true realExposurePreview=true restarts=1",
+        "LONG-AUTO-AB legacy=true sample=2 freshAutomaticReading=2.351256875001127 sameSession=true realExposurePreview=true restarts=0",
+        "LONG-AUTO-AB legacy=false sample=2 freshAutomaticReading=0.5775720000092406 sameSession=true realExposurePreview=true restarts=1",
+        "LONG-AUTO-AB-SUMMARY baseline=[2.948614291672129, 2.6441782916663215, 2.351256875001127] optimized=[1.1843927083536983, 0.8993886666721664, 0.5775720000092406] medianRatio=0.34013919163725725 pairedSamples=3 noSystemPhotos=true"
+      ]
+    }
+  ],
+  "limitations": [
+    "Small paired sample: 3 pairs; not a platform latency guarantee",
+    "Reading publications are not display FPS or exact first-auto-pixel timestamps",
+    "No standalone-app memory, power, thermal endurance measurement",
+    "Special capture and preview paths excluded from restart optimization"
+  ]
+}

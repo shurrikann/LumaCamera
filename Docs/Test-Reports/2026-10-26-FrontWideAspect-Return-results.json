@@ -1,0 +1,313 @@
+{
+  "date": "2026-10-26",
+  "device": "iPhone 17 Pro",
+  "os": "iOS 27.0.1",
+  "normalSigning": true,
+  "systemPhotosWrites": 0,
+  "simulatorsLaunched": 0,
+  "uniquePassedMethods": [
+    "FrontPhotoAspectRatioPhysicalTests.testFrontAspectChoiceIsPhotoOnlyAndWideToggleRemainsAvailable",
+    "FrontPhotoAspectRatioPhysicalTests.testManualHEIFSmoothFrontAspectChangesKeepPreviewReady",
+    "FrontPhotoAspectRatioPhysicalTests.testRepeatedFrontPhotoAspectChangesKeepPreviewReady",
+    "FrontWideAspectReturnPhysicalTests.testAAndMWideAspectRestoresExactFramingAndPhotoMetadata",
+    "FrontWideAspectReturnPhysicalTests.testPendingPhotoAspectDoesNotChangeVideoLook",
+    "FrontWideAspectReturnPhysicalTests.testRapidTapsAndCancelReturnDoNotLosePreviousZoom",
+    "FrontWideAspectReturnPhysicalTests.testSupportedRatiosAndSquareGuard"
+  ],
+  "matchingFrameSeconds": [
+    0.1470323333342094,
+    0.11220445833168924,
+    0.1456342916644644,
+    0.1342025833146181,
+    0.14378691665478982,
+    0.1455946666537784,
+    0.09504258332890458,
+    0.1127577500010375,
+    0.11376908331294544,
+    0.11420254167751409,
+    0.11323354166233912,
+    0.11331750001409091,
+    0.14506512499065138,
+    0.15143991669174284,
+    0.16720187501050532,
+    0.14485237500048243,
+    0.14605429166113026,
+    0.147475083329482,
+    0.09834079165011644,
+    0.11217904166551307,
+    0.09540954168187454,
+    0.09422150001046248,
+    0.0978340833389666,
+    0.11388620833167806
+  ],
+  "matchingFrameMedianSeconds": 0.11404437500459608,
+  "runs": [
+    {
+      "stage": "Initial",
+      "success": false,
+      "log": "/private/tmp/LumaCamera-FrontWideAspect-20261026-Initial.log",
+      "methods": [
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testAAndMWideAspectRestoresExactFramingAndPhotoMetadata",
+          "status": "failed",
+          "seconds": 14.099
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testRapidTapsAndCancelReturnDoNotLosePreviousZoom",
+          "status": "failed",
+          "seconds": 18.31
+        }
+      ],
+      "metrics": [
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.0 wideZoom=0.625 fileFocalBefore=31.0 wide=20.0 restored=31.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.25 wideZoom=0.625 fileFocalBefore=38.0 wide=20.0 restored=38.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=0.625 wideZoom=0.625 fileFocalBefore=20.0 wide=20.0 restored=20.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=manual entryZoom=1.0 wideZoom=0.625 fileFocalBefore=31.0 wide=19.0 restored=31.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=manual entryZoom=1.25 wideZoom=0.625 fileFocalBefore=38.0 wide=19.0 restored=38.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=manual entryZoom=0.625 wideZoom=0.625 fileFocalBefore=19.0 wide=19.0 restored=19.0 previewReady=true",
+        "FRONT-WIDE-ASPECT-PERFORMANCE samples=12 requestToMatchingFrameSeconds=[0.0517521666479297, 0.06592654169071466, 0.06402679168968461, 0.04861374999745749, 0.03503862500656396, 0.048525874997721985, 0.03213041665730998, 0.05092695832718164, 0.03359350000391714, 0.03348979167640209, 0.03316741666640155, 0.03211508333333768] temporaryPhotos=18 noSystemPhotos=true"
+      ]
+    },
+    {
+      "stage": "Verified",
+      "success": false,
+      "log": "/private/tmp/LumaCamera-FrontWideAspect-20261026-Verified.log",
+      "methods": [
+        {
+          "method": "FrontPhotoAspectRatioPhysicalTests.testManualHEIFSmoothFrontAspectChangesKeepPreviewReady",
+          "status": "passed",
+          "seconds": 7.81
+        },
+        {
+          "method": "FrontPhotoAspectRatioPhysicalTests.testRepeatedFrontPhotoAspectChangesKeepPreviewReady",
+          "status": "passed",
+          "seconds": 5.754
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testAAndMWideAspectRestoresExactFramingAndPhotoMetadata",
+          "status": "failed",
+          "seconds": 26.178
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testRapidTapsAndCancelReturnDoNotLosePreviousZoom",
+          "status": "passed",
+          "seconds": 3.3
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testSupportedRatiosAndSquareGuard",
+          "status": "passed",
+          "seconds": 6.316
+        }
+      ],
+      "metrics": [
+        "FRONT-FRAMING portrait preview=(0.32517874240875244, 0.4648994207382202, 0.23347613215446472, 0.31130149960517883) photo=(0.3174515664577484, 0.4596273601055145, 0.2368062138557434, 0.3157415986061096) width-delta=0.0033300817012786865 height-delta=0.004440099000930786",
+        "FRONT-FRAMING landscape preview=(0.3783580958843231, 0.5191519260406494, 0.23173604905605316, 0.17380203306674957) photo=(0.36949917674064636, 0.516194224357605, 0.2350674271583557, 0.17630057036876678) width-delta=0.0033313781023025513 height-delta=0.002498537302017212",
+        "FRONT-FRAMING portrait preview=(0.42808836698532104, 0.5138228535652161, 0.17738603055477142, 0.23651470243930817) photo=(0.4102329611778259, 0.4682391583919525, 0.21273858845233917, 0.2836514413356781) width-delta=0.03535255789756775 height-delta=0.047136738896369934",
+        "FRONT-FRAMING landscape preview=(0.41421300172805786, 0.5153448581695557, 0.2198072373867035, 0.16485543549060822) photo=(0.4021257162094116, 0.5134143233299255, 0.23212434351444244, 0.17409326136112213) width-delta=0.012317106127738953 height-delta=0.009237825870513916",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.0 wideZoom=0.625 fileFocalBefore=31.0 wide=20.0 restored=31.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.25 wideZoom=0.625 fileFocalBefore=31.0 wide=20.0 restored=38.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=0.625 wideZoom=0.625 fileFocalBefore=20.0 wide=20.0 restored=20.0 previewReady=true",
+        "FRONT-WIDE-ASPECT-STABILITY rapidTaps=10 cancelledReturn=true restoredZoom=1.25 noCapture=true",
+        "FRONT-WIDE-ASPECT-RATIO ratio=4:3 preview=(900.0, 675.0) file=3000.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=3:2 preview=(900.0, 601.0) file=2667.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=16:9 preview=(900.0, 507.0) file=2250.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=2:1 preview=(900.0, 452.0) file=2000.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=2.39:1 preview=(900.0, 377.0) file=1674.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=XPAN preview=(900.0, 334.0) file=1477.0x4000.0 restoredZoom=1.0000000149011612"
+      ]
+    },
+    {
+      "stage": "Final",
+      "success": false,
+      "log": "/private/tmp/LumaCamera-FrontWideAspect-20261026-Final.log",
+      "methods": [],
+      "metrics": []
+    },
+    {
+      "stage": "Final2",
+      "success": false,
+      "log": "/private/tmp/LumaCamera-FrontWideAspect-20261026-Final2.log",
+      "methods": [
+        {
+          "method": "FrontPhotoAspectRatioPhysicalTests.testManualHEIFSmoothFrontAspectChangesKeepPreviewReady",
+          "status": "failed",
+          "seconds": 7.626
+        },
+        {
+          "method": "FrontPhotoAspectRatioPhysicalTests.testRepeatedFrontPhotoAspectChangesKeepPreviewReady",
+          "status": "passed",
+          "seconds": 5.156
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testAAndMWideAspectRestoresExactFramingAndPhotoMetadata",
+          "status": "failed",
+          "seconds": 26.029
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testRapidTapsAndCancelReturnDoNotLosePreviousZoom",
+          "status": "passed",
+          "seconds": 3.074
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testSupportedRatiosAndSquareGuard",
+          "status": "passed",
+          "seconds": 6.967
+        }
+      ],
+      "metrics": [
+        "FRONT-FRAMING portrait preview=(0.41924524307250977, 0.5439083576202393, 0.15872906148433685, 0.21163874864578247) photo=(0.41303956508636475, 0.5343526601791382, 0.1763572245836258, 0.23514296114444733) width-delta=0.01762816309928894 height-delta=0.023504212498664856",
+        "FRONT-FRAMING landscape preview=(0.39544054865837097, 0.5406430959701538, 0.1985771507024765, 0.14893287420272827) photo=(0.3127848207950592, 0.4969969689846039, 0.2675946354866028, 0.2006959617137909) width-delta=0.06901748478412628 height-delta=0.05176308751106262",
+        "FRONT-FRAMING portrait preview=(0.3089004158973694, 0.4571681618690491, 0.23913179337978363, 0.31884241104125977) photo=(0.30805703997612, 0.4567125737667084, 0.2406643182039261, 0.3208857476711273) width-delta=0.001532524824142456 height-delta=0.0020433366298675537",
+        "FRONT-FRAMING landscape preview=(0.5515438318252563, 0.7168881297111511, 0.2041393518447876, 0.1531045138835907) photo=(0.5592747926712036, 0.7326814532279968, 0.19466938078403473, 0.14600203931331635) width-delta=0.009469971060752869 height-delta=0.007102474570274353",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.0 wideZoom=0.625 fileFocalBefore=31.0 wide=20.0 restored=31.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.25 wideZoom=0.625 fileFocalBefore=38.0 wide=20.0 restored=38.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=0.625 wideZoom=0.625 fileFocalBefore=20.0 wide=20.0 restored=20.0 previewReady=true",
+        "FRONT-WIDE-ASPECT-STABILITY rapidTaps=10 cancelledReturn=true restoredZoom=1.25 noCapture=true",
+        "FRONT-WIDE-ASPECT-RATIO ratio=4:3 preview=(900.0, 675.0) file=3000.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=3:2 preview=(900.0, 601.0) file=2667.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=16:9 preview=(900.0, 507.0) file=2250.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=2:1 preview=(900.0, 452.0) file=2000.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=2.39:1 preview=(900.0, 377.0) file=1674.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=XPAN preview=(900.0, 334.0) file=1477.0x4000.0 restoredZoom=1.0000000149011612"
+      ]
+    },
+    {
+      "stage": "Coordinated",
+      "success": false,
+      "log": "/private/tmp/LumaCamera-FrontWideAspect-20261026-Coordinated.log",
+      "methods": [
+        {
+          "method": "FrontPhotoAspectRatioPhysicalTests.testManualHEIFSmoothFrontAspectChangesKeepPreviewReady",
+          "status": "passed",
+          "seconds": 7.778
+        },
+        {
+          "method": "FrontPhotoAspectRatioPhysicalTests.testRepeatedFrontPhotoAspectChangesKeepPreviewReady",
+          "status": "passed",
+          "seconds": 5.29
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testAAndMWideAspectRestoresExactFramingAndPhotoMetadata",
+          "status": "failed",
+          "seconds": 26.541
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testRapidTapsAndCancelReturnDoNotLosePreviousZoom",
+          "status": "passed",
+          "seconds": 3.231
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testSupportedRatiosAndSquareGuard",
+          "status": "passed",
+          "seconds": 6.585
+        }
+      ],
+      "metrics": [
+        "FRONT-FRAMING portrait preview=(0.40217894315719604, 0.5848081707954407, 0.1581958383321762, 0.2109277844429016) photo=(0.3984353840351105, 0.5863679051399231, 0.1611723005771637, 0.21489639580249786) width-delta=0.002976462244987488 height-delta=0.0039686113595962524",
+        "FRONT-FRAMING landscape preview=(0.3832363486289978, 0.5585187673568726, 0.20285701751708984, 0.15214276313781738) photo=(0.3721114695072174, 0.5534168481826782, 0.21042345464229584, 0.15781758725643158) width-delta=0.007566437125205994 height-delta=0.005674824118614197",
+        "FRONT-FRAMING portrait preview=(0.4051124155521393, 0.5862401127815247, 0.1592380702495575, 0.21231742203235626) photo=(0.3964049518108368, 0.5765947103500366, 0.16747067868709564, 0.2232942432165146) width-delta=0.008232608437538147 height-delta=0.010976821184158325",
+        "FRONT-FRAMING landscape preview=(0.3642258644104004, 0.549389123916626, 0.22583234310150146, 0.1693742573261261) photo=(0.36292460560798645, 0.5508653521537781, 0.22405023872852325, 0.16803768277168274) width-delta=0.0017821043729782104 height-delta=0.0013365745544433594",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.0 wideZoom=0.625 fileFocalBefore=31.0 wide=20.0 restored=41.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.25 wideZoom=0.625 fileFocalBefore=51.0 wide=20.0 restored=51.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=0.625 wideZoom=0.625 fileFocalBefore=20.0 wide=20.0 restored=20.0 previewReady=true",
+        "FRONT-WIDE-ASPECT-STABILITY rapidTaps=10 cancelledReturn=true restoredZoom=1.25 noCapture=true",
+        "FRONT-WIDE-ASPECT-RATIO ratio=4:3 preview=(900.0, 675.0) file=3000.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=3:2 preview=(900.0, 601.0) file=2667.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=16:9 preview=(900.0, 507.0) file=2250.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=2:1 preview=(900.0, 451.0) file=2000.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=2.39:1 preview=(900.0, 377.0) file=1674.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=XPAN preview=(900.0, 333.0) file=1477.0x4000.0 restoredZoom=1.0000000149011612"
+      ]
+    },
+    {
+      "stage": "WarmFrames",
+      "success": true,
+      "log": "/private/tmp/LumaCamera-FrontWideAspect-20261026-WarmFrames.log",
+      "methods": [
+        {
+          "method": "FrontPhotoAspectRatioPhysicalTests.testManualHEIFSmoothFrontAspectChangesKeepPreviewReady",
+          "status": "passed",
+          "seconds": 8.39
+        },
+        {
+          "method": "FrontPhotoAspectRatioPhysicalTests.testRepeatedFrontPhotoAspectChangesKeepPreviewReady",
+          "status": "passed",
+          "seconds": 5.908
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testAAndMWideAspectRestoresExactFramingAndPhotoMetadata",
+          "status": "passed",
+          "seconds": 15.121
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testRapidTapsAndCancelReturnDoNotLosePreviousZoom",
+          "status": "passed",
+          "seconds": 3.151
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testSupportedRatiosAndSquareGuard",
+          "status": "passed",
+          "seconds": 6.895
+        }
+      ],
+      "metrics": [
+        "FRONT-FRAMING portrait preview=(0.40866976976394653, 0.5359678864479065, 0.1781054586172104, 0.23747393488883972) photo=(0.4406602084636688, 0.5010101795196533, 0.1709516942501068, 0.2279355823993683) width-delta=0.007153764367103577 height-delta=0.009538352489471436",
+        "FRONT-FRAMING landscape preview=(0.6231246590614319, 0.5324071645736694, 0.3913501799106598, 0.29351264238357544) photo=(0.6056758165359497, 0.5150616765022278, 0.4055244028568268, 0.3041433095932007) width-delta=0.014174222946166992 height-delta=0.010630667209625244",
+        "FRONT-FRAMING portrait preview=(0.3885895907878876, 0.5495344400405884, 0.22843872010707855, 0.30458495020866394) photo=(0.3777196407318115, 0.5403211712837219, 0.2304975688457489, 0.30733007192611694) width-delta=0.002058848738670349 height-delta=0.002745121717453003",
+        "FRONT-FRAMING landscape preview=(0.39745596051216125, 0.5533724427223206, 0.18551602959632874, 0.13913702964782715) photo=(0.3935040533542633, 0.5473917722702026, 0.20157155394554138, 0.15117865800857544) width-delta=0.016055524349212646 height-delta=0.012041628360748291",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.0 wideZoom=0.625 fileFocalBefore=31.0 wide=20.0 restored=31.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.25 wideZoom=0.625 fileFocalBefore=38.0 wide=20.0 restored=38.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=0.625 wideZoom=0.625 fileFocalBefore=20.0 wide=20.0 restored=20.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=manual entryZoom=1.0 wideZoom=0.625 fileFocalBefore=31.0 wide=19.0 restored=31.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=manual entryZoom=1.25 wideZoom=0.625 fileFocalBefore=38.0 wide=19.0 restored=38.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=manual entryZoom=0.625 wideZoom=0.625 fileFocalBefore=19.0 wide=19.0 restored=19.0 previewReady=true",
+        "FRONT-WIDE-ASPECT-PERFORMANCE samples=12 requestToMatchingFrameSeconds=[0.1470323333342094, 0.11220445833168924, 0.1456342916644644, 0.1342025833146181, 0.14378691665478982, 0.1455946666537784, 0.09504258332890458, 0.1127577500010375, 0.11376908331294544, 0.11420254167751409, 0.11323354166233912, 0.11331750001409091] temporaryPhotos=18 noSystemPhotos=true",
+        "FRONT-WIDE-ASPECT-STABILITY rapidTaps=10 cancelledReturn=true restoredZoom=1.25 noCapture=true",
+        "FRONT-WIDE-ASPECT-RATIO ratio=4:3 preview=(900.0, 675.0) file=3000.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=3:2 preview=(900.0, 601.0) file=2667.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=16:9 preview=(900.0, 507.0) file=2250.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=2:1 preview=(900.0, 451.0) file=2000.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=2.39:1 preview=(900.0, 377.0) file=1674.0x4000.0 restoredZoom=1.0000000149011612",
+        "FRONT-WIDE-ASPECT-RATIO ratio=XPAN preview=(900.0, 333.0) file=1477.0x4000.0 restoredZoom=1.0000000149011612"
+      ]
+    },
+    {
+      "stage": "FinalChecks",
+      "success": true,
+      "log": "/private/tmp/LumaCamera-FrontWideAspect-20261026-FinalChecks.log",
+      "methods": [
+        {
+          "method": "FrontPhotoAspectRatioPhysicalTests.testFrontAspectChoiceIsPhotoOnlyAndWideToggleRemainsAvailable",
+          "status": "passed",
+          "seconds": 3.275
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testAAndMWideAspectRestoresExactFramingAndPhotoMetadata",
+          "status": "passed",
+          "seconds": 13.906
+        },
+        {
+          "method": "FrontWideAspectReturnPhysicalTests.testPendingPhotoAspectDoesNotChangeVideoLook",
+          "status": "passed",
+          "seconds": 1.85
+        }
+      ],
+      "metrics": [
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.0 wideZoom=0.625 fileFocalBefore=31.0 wide=20.0 restored=31.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=1.25 wideZoom=0.625 fileFocalBefore=38.0 wide=20.0 restored=38.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=auto entryZoom=0.625 wideZoom=0.625 fileFocalBefore=20.0 wide=20.0 restored=20.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=manual entryZoom=1.0 wideZoom=0.625 fileFocalBefore=31.0 wide=19.0 restored=31.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=manual entryZoom=1.25 wideZoom=0.625 fileFocalBefore=38.0 wide=19.0 restored=38.0 previewReady=true",
+        "FRONT-WIDE-ASPECT mode=manual entryZoom=0.625 wideZoom=0.625 fileFocalBefore=19.0 wide=19.0 restored=19.0 previewReady=true",
+        "FRONT-WIDE-ASPECT-PERFORMANCE samples=12 requestToMatchingFrameSeconds=[0.14506512499065138, 0.15143991669174284, 0.16720187501050532, 0.14485237500048243, 0.14605429166113026, 0.147475083329482, 0.09834079165011644, 0.11217904166551307, 0.09540954168187454, 0.09422150001046248, 0.0978340833389666, 0.11388620833167806] temporaryPhotos=18 noSystemPhotos=true",
+        "FRONT-WIDE-ASPECT-VIDEO pendingRequestCancelledOrAppliedBeforeSwitch=true videoLookUnchanged=true photoReturnReady=true"
+      ]
+    }
+  ],
+  "limitations": [
+    "No new all-pose content-orientation acceptance",
+    "Undo snapshot is memory-only, not persisted across cold launch",
+    "Latency is app frame publication, not display FPS",
+    "No standalone app memory/power/thermal-endurance measurement"
+  ]
+}

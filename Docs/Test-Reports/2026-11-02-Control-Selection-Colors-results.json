@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-02",
+  "device": "iPhone17Pro / iOS27.2 (24B119)",
+  "xcode": "27.1",
+  "uniqueMethodsWithPassingResults": 3,
+  "batches": {
+    "Core": {
+      "passed": 2,
+      "failed": 0,
+      "seconds": 38.911
+    },
+    "Final": {
+      "passed": 2,
+      "failed": 1,
+      "assertionFailures": 18,
+      "seconds": 47.73
+    },
+    "Settings2": {
+      "passed": 0,
+      "failed": 1,
+      "assertionFailures": 18,
+      "seconds": 9.191
+    },
+    "Settings3": {
+      "passed": 1,
+      "failed": 0,
+      "seconds": 9.127
+    }
+  },
+  "slowColors": {
+    "samples": 71,
+    "presets": 5,
+    "durations": 10,
+    "widths": [
+      320,
+      402
+    ],
+    "separateTextRows": true,
+    "popupOpenAndClosed": true,
+    "rapidPairs": 20,
+    "snapshotMedianMS": 35.69070831872523,
+    "snapshotMaxMS": 41.75662499619648
+  },
+  "slowLayout": {
+    "cases": 56,
+    "snapshotSamples": 20,
+    "snapshotMedianMS": 49.005270848283544,
+    "snapshotMaxMS": 59.51854161685333,
+    "ratios": "all photo ratios",
+    "angles": [
+      0,
+      90,
+      -90,
+      180
+    ],
+    "widths": [
+      320,
+      402
+    ]
+  },
+  "bitrateColors": {
+    "samples": 26,
+    "choices": 4,
+    "widths": [
+      320,
+      402
+    ],
+    "rapidPairs": 20,
+    "reopen": true,
+    "snapshotMedianMS": 44.16133329505101,
+    "snapshotMaxMS": 57.09287500940263,
+    "defaultAndHighScreensVisuallyChecked": true
+  },
+  "notDisplayFPS": true,
+  "photosWrites": false,
+  "evidenceRoot": "/tmp/LumaCamera-SlowPresetColor-20261102",
+  "release": {
+    "passed": true,
+    "sourceWarnings": 0,
+    "toolWarnings": [
+      "AppIntents metadata extraction skipped"
+    ]
+  },
+  "normalAppRestore": "passed"
+}

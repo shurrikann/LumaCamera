@@ -1,0 +1,406 @@
+{
+  "date": "2026-11-01",
+  "device": "iPhone17Pro / iPhone18,1",
+  "os": "iOS27.2 (24B119)",
+  "xcode": "27.1",
+  "summaries": {
+    "Baseline": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00008150-001934280220401C",
+            "deviceName": "笨笨波尔霸&iPhone Pro",
+            "modelName": "iPhone 17 Pro",
+            "osBuildNumber": "24B119",
+            "osVersion": "27.2",
+            "platform": "iOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 3,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "LumaCamera · Built with macOS 27.2",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1793493619.621,
+      "passedTests": 3,
+      "result": "Passed",
+      "runtimeWarnings": [
+        {
+          "issueType": "Runtime Warning",
+          "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+        },
+        {
+          "issueType": "Runtime Warning",
+          "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+        }
+      ],
+      "skippedTests": 0,
+      "startTime": 1793493577.866,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - LumaCamera",
+      "topInsights": [],
+      "totalTestCount": 3
+    },
+    "Probe": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00008150-001934280220401C",
+            "deviceName": "笨笨波尔霸&iPhone Pro",
+            "modelName": "iPhone 17 Pro",
+            "osBuildNumber": "24B119",
+            "osVersion": "27.2",
+            "platform": "iOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 1,
+          "passedTests": 0,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "LumaCamera · Built with macOS 27.2",
+      "expectedFailures": 0,
+      "failedTests": 1,
+      "finishTime": 1793493709.285,
+      "passedTests": 0,
+      "result": "Failed",
+      "runtimeWarnings": [],
+      "skippedTests": 0,
+      "startTime": 1793493692.456,
+      "statistics": [],
+      "testFailures": [
+        {
+          "failureText": "XCTAssertEqualWithAccuracy failed: (\"1.0\") is not equal to (\"2.0\") +/- (\"0.1\") - 导航内改变倍率后，成片不能退回进入导航时的倍率",
+          "targetName": "LumaCameraTests",
+          "testIdentifier": 1,
+          "testIdentifierString": "FocusNavigatorPhysicalTests/testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes()",
+          "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/FocusNavigatorPhysicalTests/testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes",
+          "testName": "testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes()"
+        }
+      ],
+      "title": "Test - LumaCamera",
+      "topInsights": [
+        {
+          "category": "Common Failures",
+          "impact": "100% of failures",
+          "text": "2 runs of 1 test failed with XCTAssertEqualWithAccuracy failed: (\"8.0\") is not equal to (\"16.0\") +/- (\"0.01\") - 退出导航必须保留用户最新倍率"
+        },
+        {
+          "category": "Common Failures",
+          "impact": "100% of failures",
+          "text": "2 runs of 1 test failed with XCTAssertEqualWithAccuracy failed: (\"1.0\") is not equal to (\"2.0\") +/- (\"0.1\") - 导航内改变倍率后，成片不能退回进入导航时的倍率"
+        }
+      ],
+      "totalTestCount": 1
+    },
+    "FixQuick": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00008150-001934280220401C",
+            "deviceName": "笨笨波尔霸&iPhone Pro",
+            "modelName": "iPhone 17 Pro",
+            "osBuildNumber": "24B119",
+            "osVersion": "27.2",
+            "platform": "iOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 1,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "LumaCamera · Built with macOS 27.2",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1793493779.611,
+      "passedTests": 1,
+      "result": "Passed",
+      "runtimeWarnings": [],
+      "skippedTests": 0,
+      "startTime": 1793493763.159,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - LumaCamera",
+      "topInsights": [],
+      "totalTestCount": 1
+    },
+    "Final": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00008150-001934280220401C",
+            "deviceName": "笨笨波尔霸&iPhone Pro",
+            "modelName": "iPhone 17 Pro",
+            "osBuildNumber": "24B119",
+            "osVersion": "27.2",
+            "platform": "iOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 1,
+          "passedTests": 12,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "LumaCamera · Built with macOS 27.2",
+      "expectedFailures": 0,
+      "failedTests": 1,
+      "finishTime": 1793493912.846,
+      "passedTests": 12,
+      "result": "Failed",
+      "runtimeWarnings": [
+        {
+          "issueType": "Runtime Warning",
+          "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+        },
+        {
+          "issueType": "Runtime Warning",
+          "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+        }
+      ],
+      "skippedTests": 0,
+      "startTime": 1793493823.404,
+      "statistics": [],
+      "testFailures": [
+        {
+          "failureText": "XCTAssertTrue failed - Movie output did not start",
+          "targetName": "LumaCameraTests",
+          "testIdentifier": 1,
+          "testIdentifierString": "BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn()",
+          "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn",
+          "testName": "testRepeatedVideoRecordingsAndPhotoModeReturn()"
+        }
+      ],
+      "title": "Test - LumaCamera",
+      "topInsights": [],
+      "totalTestCount": 13
+    },
+    "Verified": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00008150-001934280220401C",
+            "deviceName": "笨笨波尔霸&iPhone Pro",
+            "modelName": "iPhone 17 Pro",
+            "osBuildNumber": "24B119",
+            "osVersion": "27.2",
+            "platform": "iOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 13,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "LumaCamera · Built with macOS 27.2",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1793494067.239,
+      "passedTests": 13,
+      "result": "Passed",
+      "runtimeWarnings": [
+        {
+          "issueType": "Runtime Warning",
+          "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+        },
+        {
+          "issueType": "Runtime Warning",
+          "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+        }
+      ],
+      "skippedTests": 0,
+      "startTime": 1793493981.419,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - LumaCamera",
+      "topInsights": [],
+      "totalTestCount": 13
+    }
+  },
+  "cases": [
+    {
+      "class": "BasicVideoPhysicalTests",
+      "method": "testRepeatedVideoRecordingsAndPhotoModeReturn",
+      "result": "passed",
+      "seconds": 8.793
+    },
+    {
+      "class": "CameraFocalButtonTests",
+      "method": "testCancellationAndDisabledButtonDoNotSelect",
+      "result": "passed",
+      "seconds": 0.001
+    },
+    {
+      "class": "CameraFocalButtonTests",
+      "method": "testEnclosingGlassAvoidsNestedSelectionLayerAcrossRepeatedLayouts",
+      "result": "passed",
+      "seconds": 0.005
+    },
+    {
+      "class": "CameraFocalButtonTests",
+      "method": "testHostedFocalStripHitTargetsAfterRepeatedSelections",
+      "result": "passed",
+      "seconds": 21.36
+    },
+    {
+      "class": "CameraFocalButtonTests",
+      "method": "testLongPressDragsAndFinishesWithoutSelectingFocalLength",
+      "result": "passed",
+      "seconds": 0.0
+    },
+    {
+      "class": "CameraFocalButtonTests",
+      "method": "testNativeButtonHasWorkingTapTargetAndLongPressCancelsTapTracking",
+      "result": "passed",
+      "seconds": 0.001
+    },
+    {
+      "class": "CameraFocalButtonTests",
+      "method": "testRotatedShortAndLongFocalTitlesKeepSquareSpaceWithoutEllipsis",
+      "result": "passed",
+      "seconds": 0.002
+    },
+    {
+      "class": "CameraFocalButtonTests",
+      "method": "testShortTapSelectsWithoutOpeningDial",
+      "result": "passed",
+      "seconds": 0.0
+    },
+    {
+      "class": "DualCaptureExpansionTests",
+      "method": "testInsetNativeGestureConfigurationAndDispatch",
+      "result": "passed",
+      "seconds": 0.275
+    },
+    {
+      "class": "FocusNavigatorPhysicalTests",
+      "method": "testLiveAndRawPhotoPipelineRestoresAfterNavigation",
+      "result": "passed",
+      "seconds": 10.57
+    },
+    {
+      "class": "FocusNavigatorPhysicalTests",
+      "method": "testManualCaptureMetadataAndMovableNavigatorLayout",
+      "result": "passed",
+      "seconds": 16.416
+    },
+    {
+      "class": "FocusNavigatorPhysicalTests",
+      "method": "testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes",
+      "result": "passed",
+      "seconds": 12.194
+    },
+    {
+      "class": "FocusNavigatorPhysicalTests",
+      "method": "testPhotoNavigatorThresholdCaptureAndVideoExit",
+      "result": "passed",
+      "seconds": 12.104
+    }
+  ],
+  "thresholdSeconds": {
+    "enter": [
+      0.6943747083423659,
+      0.6088682916888501,
+      0.6094310416665394,
+      0.5967310416745022
+    ],
+    "exit": [
+      0.5476483333331998,
+      0.5228584166616201,
+      0.559310041659046
+    ],
+    "enterMedian": 0.6091496666776948,
+    "exitMedian": 0.5476483333331998
+  },
+  "metricLines": [
+    "VIDEO-BASIC-BEFORE-READY cycle=0 switch=true ready=true configuring=false shutter=false",
+    "VIDEO-BASIC-READY cycle=0 waitSeconds=0.043125916650751606",
+    "VIDEO-BASIC cycle=0 start=0.04323899999144487 duration=1.0666666666666667 dimensions=Optional((1920.0, 1080.0)) fps=30.0 audio=1 bytes=787399",
+    "VIDEO-BASIC-BEFORE-READY cycle=1 switch=false ready=true configuring=false shutter=true",
+    "VIDEO-BASIC-READY cycle=1 waitSeconds=3.904168261215091e-05",
+    "VIDEO-BASIC cycle=1 start=0.024215583311161026 duration=1.0333333333333334 dimensions=Optional((1920.0, 1080.0)) fps=30.0 audio=1 bytes=770942",
+    "VIDEO-BASIC-BEFORE-READY cycle=2 switch=false ready=true configuring=false shutter=true",
+    "VIDEO-BASIC-READY cycle=2 waitSeconds=2.8583337552845478e-05",
+    "VIDEO-BASIC cycle=2 start=0.026268958317814395 duration=1.0333333333333334 dimensions=Optional((1920.0, 1080.0)) fps=30.0 audio=1 bytes=835053",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-NATIVE live=true files=[\"Luma-DFF611A0-7A7F-4802-9E5F-7F46B6CD250B.heic\", \"Luma-DFF611A0-7A7F-4802-9E5F-7F46B6CD250B.mov\"]",
+    "FOCUS-NAV-NATIVE live=false files=[\"Luma-CB7D4769-2985-4F55-8053-043BC3FDE47A.dng\"]",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-METADATA format=jpeg iso=200.0 seconds=0.008333333333333333 resources=1",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.9145338",
+    "FOCUS-NAV-METADATA format=heif iso=200.0 seconds=0.008333333333333333 resources=1",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.9145338",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.9145338",
+    "FOCUS-NAV-LAYOUT layouts=28 positions=252 wall=8.560618958319537 stats=[\"session\": \"true\", \"wanted\": \"true\", \"video\": \"false\", \"hdrRequested\": \"false\", \"hdrSource\": \"false\", \"contexts\": \"0\", \"renderSeconds\": \"0.09501924985670485\", \"frames\": \"95\", \"active\": \"true\", \"zoom\": \"2.0\", \"pressureCost\": \"0.99861133\", \"route\": \"AVCaptureDeviceTypeBuiltInTripleCamera\", \"hardwareCost\": \"0.5\", \"allowed\": \"true\", \"wantsRunning\": \"true\", \"failedSignature\": \"nil\", \"wantedZoom\": \"8.0\"]",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-ZOOM-FILE logical=8.0 equivalentMM=197.0 digitalZoom=Optional(4.295454545454546)",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-ZOOM-FILE logical=16.0 equivalentMM=408.0 digitalZoom=Optional(8.894117647058824)",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-ZOOM-RESTORE manual=false referenceMM=197.0 enlargedMM=408.0 restoredLogical=16.0",
+    "FOCUS-NAV-ZOOM-FILE logical=8.0 equivalentMM=200.0 digitalZoom=Optional(2)",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-ZOOM-FILE logical=16.0 equivalentMM=400.0 digitalZoom=Optional(4)",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-ZOOM-RESTORE manual=true referenceMM=200.0 enlargedMM=400.0 restoredLogical=16.0",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-PHOTO enter=0.6944726666843053 state=[\"route\": \"AVCaptureDeviceTypeBuiltInTripleCamera\", \"renderSeconds\": \"0.001649458339670673\", \"pressureCost\": \"0.99861133\", \"frames\": \"1\", \"session\": \"true\", \"hdrSource\": \"false\", \"contexts\": \"0\", \"wantsRunning\": \"true\", \"hardwareCost\": \"0.5\", \"allowed\": \"true\", \"hdrRequested\": \"false\", \"wanted\": \"true\", \"wantedZoom\": \"8.0\", \"active\": \"true\", \"video\": \"false\", \"zoom\": \"2.0\", \"failedSignature\": \"nil\"] image=(180.0, 240.0)",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133",
+    "FOCUS-NAV-THRESHOLD-PERF enters=[0.6943747083423659, 0.6088682916888501, 0.6094310416665394, 0.5967310416745022] exits=[0.5476483333331998, 0.5228584166616201, 0.559310041659046] includesZoomDebounceAndFirstImage=true notFPS=true",
+    "FOCUS-NAV-VIDEO-RECOVERY fps=30.0 recordedAfterNavigation=true noPhotosWrites=true",
+    "FOCUS-NAV-BUDGET size=(1440.0, 1080.0) fps=30 nav=AVCaptureDeviceTypeBuiltInWideAngleCamera navFPS=15 hardware=0.5 pressure=0.99861133"
+  ],
+  "probeFailures": [
+    "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/FocusNavigatorPhysicalTests.swift:64: error: -[LumaCameraTests.FocusNavigatorPhysicalTests testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes] : XCTAssertEqualWithAccuracy failed: (\"1.0\") is not equal to (\"2.0\") +/- (\"0.1\") - 导航内改变倍率后，成片不能退回进入导航时的倍率",
+    "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/FocusNavigatorPhysicalTests.swift:71: error: -[LumaCameraTests.FocusNavigatorPhysicalTests testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes] : XCTAssertEqualWithAccuracy failed: (\"8.0\") is not equal to (\"16.0\") +/- (\"0.01\") - 退出导航必须保留用户最新倍率",
+    "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/FocusNavigatorPhysicalTests.swift:64: error: -[LumaCameraTests.FocusNavigatorPhysicalTests testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes] : XCTAssertEqualWithAccuracy failed: (\"1.0\") is not equal to (\"2.0\") +/- (\"0.1\") - 导航内改变倍率后，成片不能退回进入导航时的倍率",
+    "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/FocusNavigatorPhysicalTests.swift:71: error: -[LumaCameraTests.FocusNavigatorPhysicalTests testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes] : XCTAssertEqualWithAccuracy failed: (\"8.0\") is not equal to (\"16.0\") +/- (\"0.01\") - 退出导航必须保留用户最新倍率"
+  ],
+  "runtimeLogOccurrences": {
+    "AVFoundationErrorDomain/-11819": 0,
+    "IOSurface creation failed": 0,
+    "MDB_MAP_FULL": 56
+  },
+  "sourceSHA256": {
+    "LumaCamera/Core/Capture/CameraEngine.swift": "1703a3fd33a500eca8dc77164f6647266a4256934833d0cc92d6f876c2a068a0",
+    "LumaCamera/Core/Capture/FocusNavigatorGraph.swift": "76ce490bd64bf5e14f48b0d82ec266d10901688e6ac76ce0bbf8dbad179911d6",
+    "LumaCameraTests/Camera/FocusNavigatorPhysicalTests.swift": "9af0bedf4e7e4649736382846d5013c731d522e2536158ce809985125b4ddb23",
+    "LumaCameraTests/Camera/BasicVideoPhysicalTests.swift": "dff8ba8562b5e5912ad9bde342cc21dafb5c4d57f96bc020541494ac30e9cd72"
+  },
+  "artifacts": "/tmp/LumaCamera-NavigatorFix-20261101",
+  "screenshot": "/tmp/LumaCamera-NavigatorFix-20261101/Images/91F8CABA-07AB-45E5-B3BB-EBD5B1EA4150.png"
+}

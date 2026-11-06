@@ -1,0 +1,436 @@
+{
+  "date": "2026-10-27",
+  "device": "iPhone 17 Pro",
+  "os": "iOS 27.2 (24B119)",
+  "metrics_note": "Activation wall latency is not animation duration; preview publication gaps are not screen FPS. No app memory or power measurement.",
+  "runs": {
+    "OutputFinal": {
+      "passed": true,
+      "xcresult": "/private/tmp/LumaCamera-FrontVideoCentering-OutputFinal.xcresult",
+      "methods": [
+        [
+          "testOfficialCenterStageVideoFramingExclusionsAndRecording",
+          "33.678"
+        ]
+      ],
+      "activation_seconds": [
+        0.7338505833340605,
+        0.3175832916667787,
+        0.2801097083338391
+      ],
+      "preview_specs": [],
+      "recording_logs": [
+        "CENTER-RECORD mode=auto codec=hevc color=sdr frames=37 size=(1080.0, 1920.0) native=[\"roiWidth\": \"1.0\", \"supports\": \"true\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"outputWidth\": \"1080.0\", \"roiHeight\": \"1.0\", \"active\": \"true\", \"outputHeight\": \"1920.0\", \"size\": \"1920x1080\", \"requested\": \"true\", \"centerFormats\": \"30\", \"depth\": \"false\", \"global\": \"true\", \"zoom\": \"1.0\", \"distortion\": \"true\"]",
+        "CENTER-RECORD mode=manual codec=h264 color=p3 frames=38 size=(1080.0, 1920.0) native=[\"roiHeight\": \"1.0\", \"centerFormats\": \"30\", \"distortion\": \"true\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"outputHeight\": \"1920.0\", \"requested\": \"true\", \"outputWidth\": \"1080.0\", \"active\": \"true\", \"supports\": \"true\", \"depth\": \"false\", \"roiWidth\": \"1.0\", \"global\": \"true\", \"zoom\": \"1.0\", \"size\": \"1920x1080\"]",
+        "CENTER-RECORD mode=auto codec=proRes color=sdr frames=38 size=(1080.0, 1920.0) native=[\"active\": \"true\", \"distortion\": \"true\", \"supports\": \"true\", \"requested\": \"true\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"roiHeight\": \"1.0\", \"global\": \"true\", \"outputHeight\": \"1920.0\", \"centerFormats\": \"30\", \"outputWidth\": \"1080.0\", \"zoom\": \"1.0\", \"depth\": \"false\", \"size\": \"1920x1080\", \"roiWidth\": \"1.0\"]"
+      ],
+      "person_logs": [],
+      "movie_input_logs": [
+        "MOVIE-INPUT received=37 written=37 span=1.200284573 deliveredFPS=29.992887361720676",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]",
+        "MOVIE-INPUT received=38 written=38 span=1.233636702 deliveredFPS=29.992622576820835",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]",
+        "MOVIE-INPUT received=38 written=38 span=1.233628065 deliveredFPS=29.992832564165116",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]"
+      ]
+    },
+    "ReadyFinal": {
+      "passed": true,
+      "xcresult": "/private/tmp/LumaCamera-FrontVideoCentering-ReadyFinal.xcresult",
+      "methods": [
+        [
+          "testCenterStageCapabilitiesFallbackAndRapidRecovery",
+          "16.364"
+        ]
+      ],
+      "activation_seconds": [],
+      "preview_specs": [
+        {
+          "resolution": "hd720",
+          "fps": 24,
+          "color": "p3",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.04409674999988056
+        },
+        {
+          "resolution": "hd720",
+          "fps": 24,
+          "color": "sdr",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.04583516666662035
+        },
+        {
+          "resolution": "hd720",
+          "fps": 25,
+          "color": "p3",
+          "published_count": 9,
+          "max_publication_gap_seconds": 0.04602016666649433
+        },
+        {
+          "resolution": "hd720",
+          "fps": 25,
+          "color": "sdr",
+          "published_count": 7,
+          "max_publication_gap_seconds": 0.04364345833346306
+        },
+        {
+          "resolution": "hd720",
+          "fps": 30,
+          "color": "sdr",
+          "published_count": 11,
+          "max_publication_gap_seconds": 0.03592483333341079
+        },
+        {
+          "resolution": "hd720",
+          "fps": 30,
+          "color": "p3",
+          "published_count": 10,
+          "max_publication_gap_seconds": 0.035434416667158075
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 24,
+          "color": "p3",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.049637208333479066
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 24,
+          "color": "sdr",
+          "published_count": 7,
+          "max_publication_gap_seconds": 0.0433942500003468
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 25,
+          "color": "sdr",
+          "published_count": 10,
+          "max_publication_gap_seconds": 0.04504091666694876
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 25,
+          "color": "p3",
+          "published_count": 7,
+          "max_publication_gap_seconds": 0.04407895833355724
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 30,
+          "color": "p3",
+          "published_count": 11,
+          "max_publication_gap_seconds": 0.03632429166646034
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 30,
+          "color": "sdr",
+          "published_count": 10,
+          "max_publication_gap_seconds": 0.03658941666708415
+        }
+      ],
+      "recording_logs": [],
+      "person_logs": [],
+      "movie_input_logs": []
+    },
+    "LandscapeFinal": {
+      "passed": true,
+      "xcresult": "/private/tmp/LumaCamera-FrontVideoCentering-LandscapeFinal.xcresult",
+      "methods": [
+        [
+          "testCenterStagePersonLandscapeRecording",
+          "15.083"
+        ]
+      ],
+      "activation_seconds": [],
+      "preview_specs": [],
+      "recording_logs": [],
+      "person_logs": [
+        "CENTER-PERSON-DIRECTION landscape=true encoded=(1080.0, 1920.0) transform=CGAffineTransform(a: 0.0, b: 1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 0.0) display=(1920.0, 1080.0)",
+        "CENTER-PERSON-END landscape=true faces=6/6 centers=[\"1s:(0.5741950571537018,0.49710221588611603),size:(0.18759030103683472,0.3334938585758209)\", \"3s:(0.7546200007200241,0.577004075050354),size:(0.2376593053340912,0.4225054383277893)\", \"5s:(0.3160800114274025,0.5615789592266083),size:(0.2448163479566574,0.4352290630340576)\", \"7s:(0.6009247303009033,0.5579498708248138),size:(0.1769545078277588,0.31458580493927)\", \"9s:(0.5189657732844353,0.582083210349083),size:(0.17545835673809052,0.3119259774684906)\", \"11s:(0.5083941072225571,0.5815120786428452),size:(0.19148573279380798,0.34041908383369446)\"] published=369 maxPublicationGap=0.09209474999988743 pose=3"
+      ],
+      "movie_input_logs": [
+        "MOVIE-INPUT received=364 written=364 span=12.10289532 deliveredFPS=29.992823237935763",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]"
+      ]
+    },
+    "PortraitFinal": {
+      "passed": true,
+      "xcresult": "/private/tmp/LumaCamera-FrontVideoCentering-PortraitFinal.xcresult",
+      "methods": [
+        [
+          "testCenterStagePersonPortraitRecording",
+          "15.216"
+        ]
+      ],
+      "activation_seconds": [],
+      "preview_specs": [],
+      "recording_logs": [],
+      "person_logs": [
+        "CENTER-PERSON-DIRECTION landscape=false encoded=(1080.0, 1920.0) transform=CGAffineTransform(a: -1.0, b: 0.0, c: 0.0, d: 1.0, tx: 1080.0, ty: 0.0) display=(1080.0, 1920.0)",
+        "CENTER-PERSON-END landscape=false faces=6/6 centers=[\"1s:(0.5480858385562897,0.32871221750974655),size:(0.3451351523399353,0.1941385120153427)\", \"3s:(0.37814928591251373,0.39300984144210815),size:(0.36156612634658813,0.20338094234466553)\", \"5s:(0.36234769225120544,0.42668332159519196),size:(0.3134426176548004,0.1763114631175995)\", \"7s:(0.49130789935588837,0.4398794546723366),size:(0.32602354884147644,0.18338824808597565)\", \"9s:(0.3024367541074753,0.4211287572979927),size:(0.2703499495983124,0.15207184851169586)\", \"11s:(0.42525140941143036,0.41517867147922516),size:(0.3052442967891693,0.1716999113559723)\"] published=370 maxPublicationGap=0.06861066666670013 pose=1"
+      ],
+      "movie_input_logs": [
+        "MOVIE-INPUT received=365 written=365 span=12.136217824 deliveredFPS=29.992869712685213",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]"
+      ]
+    },
+    "CleanupFinal": {
+      "passed": true,
+      "xcresult": "/private/tmp/LumaCamera-FrontVideoCentering-CleanupFinal.xcresult",
+      "methods": [
+        [
+          "testCenterStageCapabilitiesFallbackAndRapidRecovery",
+          "16.427"
+        ],
+        [
+          "testOfficialCenterStageVideoFramingExclusionsAndRecording",
+          "23.985"
+        ]
+      ],
+      "activation_seconds": [
+        0.2930397083337084,
+        0.3668560416672335,
+        0.3611957083330708
+      ],
+      "preview_specs": [
+        {
+          "resolution": "hd720",
+          "fps": 24,
+          "color": "p3",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.048818708333328686
+        },
+        {
+          "resolution": "hd720",
+          "fps": 24,
+          "color": "sdr",
+          "published_count": 9,
+          "max_publication_gap_seconds": 0.04540866666684451
+        },
+        {
+          "resolution": "hd720",
+          "fps": 25,
+          "color": "sdr",
+          "published_count": 10,
+          "max_publication_gap_seconds": 0.04898004166670944
+        },
+        {
+          "resolution": "hd720",
+          "fps": 25,
+          "color": "p3",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.04604133333350546
+        },
+        {
+          "resolution": "hd720",
+          "fps": 30,
+          "color": "p3",
+          "published_count": 11,
+          "max_publication_gap_seconds": 0.04670583333290779
+        },
+        {
+          "resolution": "hd720",
+          "fps": 30,
+          "color": "sdr",
+          "published_count": 10,
+          "max_publication_gap_seconds": 0.03874066666639919
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 24,
+          "color": "sdr",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.06175233333351571
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 24,
+          "color": "p3",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.04844108333327313
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 25,
+          "color": "sdr",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.048367416666678764
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 25,
+          "color": "p3",
+          "published_count": 7,
+          "max_publication_gap_seconds": 0.04588604166656296
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 30,
+          "color": "p3",
+          "published_count": 11,
+          "max_publication_gap_seconds": 0.058145916666944686
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 30,
+          "color": "sdr",
+          "published_count": 10,
+          "max_publication_gap_seconds": 0.039579124999818305
+        }
+      ],
+      "recording_logs": [
+        "CENTER-RECORD mode=auto codec=hevc color=sdr frames=37 size=(1080.0, 1920.0) native=[\"size\": \"1920x1080\", \"zoom\": \"1.0\", \"active\": \"true\", \"centerFormats\": \"30\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"distortion\": \"true\", \"requested\": \"true\", \"supports\": \"true\", \"depth\": \"false\", \"global\": \"true\"]",
+        "CENTER-RECORD mode=manual codec=h264 color=p3 frames=37 size=(1080.0, 1920.0) native=[\"size\": \"1920x1080\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"global\": \"true\", \"requested\": \"true\", \"depth\": \"false\", \"distortion\": \"true\", \"centerFormats\": \"30\", \"zoom\": \"1.0\", \"active\": \"true\", \"supports\": \"true\"]",
+        "CENTER-RECORD mode=auto codec=proRes color=sdr frames=37 size=(1080.0, 1920.0) native=[\"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"depth\": \"false\", \"size\": \"1920x1080\", \"requested\": \"true\", \"active\": \"true\", \"supports\": \"true\", \"zoom\": \"1.0\", \"distortion\": \"true\", \"centerFormats\": \"30\", \"global\": \"true\"]"
+      ],
+      "person_logs": [],
+      "movie_input_logs": [
+        "MOVIE-INPUT received=37 written=37 span=1.200281219 deliveredFPS=29.992971172199937",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]",
+        "MOVIE-INPUT received=37 written=37 span=1.200292428 deliveredFPS=29.992691081110443",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]",
+        "MOVIE-INPUT received=37 written=37 span=1.200297961 deliveredFPS=29.992552824139974",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]"
+      ]
+    },
+    "RegionRegression": {
+      "passed": true,
+      "xcresult": "/private/tmp/LumaCamera-FrontVideoCentering-RegionRegression.xcresult",
+      "methods": [
+        [
+          "testCenterStageCapabilitiesFallbackAndRapidRecovery",
+          "16.130"
+        ],
+        [
+          "testOfficialCenterStageVideoFramingExclusionsAndRecording",
+          "33.122"
+        ],
+        [
+          "testCurrentOrientationFramingAndRecordingGuard",
+          "2.029"
+        ]
+      ],
+      "activation_seconds": [
+        0.28949704166689116,
+        9.22249624999995,
+        0.3457263749996855
+      ],
+      "preview_specs": [
+        {
+          "resolution": "hd720",
+          "fps": 24,
+          "color": "sdr",
+          "published_count": 9,
+          "max_publication_gap_seconds": 0.04768737499989584
+        },
+        {
+          "resolution": "hd720",
+          "fps": 24,
+          "color": "p3",
+          "published_count": 7,
+          "max_publication_gap_seconds": 0.04937133333351085
+        },
+        {
+          "resolution": "hd720",
+          "fps": 25,
+          "color": "sdr",
+          "published_count": 9,
+          "max_publication_gap_seconds": 0.047429416666545876
+        },
+        {
+          "resolution": "hd720",
+          "fps": 25,
+          "color": "p3",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.047448625000015454
+        },
+        {
+          "resolution": "hd720",
+          "fps": 30,
+          "color": "p3",
+          "published_count": 10,
+          "max_publication_gap_seconds": 0.0352501666666285
+        },
+        {
+          "resolution": "hd720",
+          "fps": 30,
+          "color": "sdr",
+          "published_count": 10,
+          "max_publication_gap_seconds": 0.043771374999778345
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 24,
+          "color": "sdr",
+          "published_count": 9,
+          "max_publication_gap_seconds": 0.04438562500035914
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 24,
+          "color": "p3",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.051211958333169605
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 25,
+          "color": "sdr",
+          "published_count": 8,
+          "max_publication_gap_seconds": 0.04633700000022145
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 25,
+          "color": "p3",
+          "published_count": 9,
+          "max_publication_gap_seconds": 0.04405375000033018
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 30,
+          "color": "p3",
+          "published_count": 11,
+          "max_publication_gap_seconds": 0.07171658333345476
+        },
+        {
+          "resolution": "hd1080",
+          "fps": 30,
+          "color": "sdr",
+          "published_count": 10,
+          "max_publication_gap_seconds": 0.03952154166699984
+        }
+      ],
+      "recording_logs": [
+        "CENTER-RECORD mode=auto codec=hevc color=sdr frames=37 size=(1080.0, 1920.0) native=[\"active\": \"true\", \"size\": \"1920x1080\", \"zoom\": \"1.0\", \"distortion\": \"true\", \"depth\": \"false\", \"centerFormats\": \"30\", \"global\": \"true\", \"requested\": \"true\", \"supports\": \"true\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\"]",
+        "CENTER-RECORD mode=manual codec=h264 color=p3 frames=37 size=(1080.0, 1920.0) native=[\"supports\": \"true\", \"requested\": \"true\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"size\": \"1920x1080\", \"zoom\": \"1.0\", \"active\": \"true\", \"depth\": \"false\", \"global\": \"true\", \"centerFormats\": \"30\", \"distortion\": \"true\"]",
+        "CENTER-RECORD mode=auto codec=proRes color=sdr frames=38 size=(1080.0, 1920.0) native=[\"active\": \"true\", \"supports\": \"true\", \"size\": \"1920x1080\", \"requested\": \"true\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"zoom\": \"1.0\", \"depth\": \"false\", \"distortion\": \"true\", \"centerFormats\": \"30\", \"global\": \"true\"]"
+      ],
+      "person_logs": [],
+      "movie_input_logs": [
+        "MOVIE-INPUT received=37 written=37 span=1.200298867 deliveredFPS=29.9925301854009",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]",
+        "MOVIE-INPUT received=37 written=37 span=1.200283541 deliveredFPS=29.992913149510564",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]",
+        "MOVIE-INPUT received=38 written=38 span=1.233635634 deliveredFPS=29.992648542446364",
+        "MOVIE-PRESSURE notReady=0 appendRejected=0 unscheduled=0 firstDropOffsets=[]"
+      ]
+    }
+  },
+  "limitations": [
+    "Single 9.222s activation outlier retained; complete cause unconfirmed.",
+    "Real-person directional samples preceded final ROI dimension correction.",
+    "No long-duration thermal/power, multi-person accuracy, iOS18, or cold-process Center Stage preference restoration validation.",
+    "Fig -12784 log lines remain; passing runtimeErrorNotification audit does not mean all framework logs are clean."
+  ],
+  "installation": {
+    "normal_debug_build": true,
+    "normal_project_signing": true,
+    "installed": true,
+    "launched": true,
+    "databaseSequenceNumber": 1792,
+    "bundleID": "com.shurrikann.LumaCamera"
+  }
+}

@@ -1,0 +1,265 @@
+{
+  "date": "2026-11-02",
+  "device": "iPhone17Pro / iOS27.2 (24B119)",
+  "xcode": "27.1",
+  "baseline": {
+    "methods": 1,
+    "passed": 1,
+    "recordingSupported": true,
+    "recordingPreferred": 0,
+    "recordingActive": 0,
+    "previewPreferred": 4,
+    "previewActive": 4
+  },
+  "batches": {
+    "Core": {
+      "methods": 4,
+      "passed": 4,
+      "policy": "auto",
+      "transitionSamples": [
+        {
+          "cycle": 0,
+          "kind": "video",
+          "configureSeconds": 0.4380903749843128,
+          "resumedSeconds": 2.3399442083318718,
+          "maxObservedSourceGapSeconds": 2.27577133331215
+        },
+        {
+          "cycle": 0,
+          "kind": "photo",
+          "configureSeconds": 0.4228231250308454,
+          "resumedSeconds": 0.5193197916960344,
+          "maxObservedSourceGapSeconds": 0.5041103750118054
+        },
+        {
+          "cycle": 1,
+          "kind": "video",
+          "configureSeconds": 0.4585063750273548,
+          "resumedSeconds": 2.3573795000556856,
+          "maxObservedSourceGapSeconds": 2.290718875010498
+        },
+        {
+          "cycle": 1,
+          "kind": "photo",
+          "configureSeconds": 0.419310208351817,
+          "resumedSeconds": 0.5156483333557844,
+          "maxObservedSourceGapSeconds": 0.4929342500399798
+        },
+        {
+          "cycle": 2,
+          "kind": "video",
+          "configureSeconds": 0.47359808336477727,
+          "resumedSeconds": 2.273160333337728,
+          "maxObservedSourceGapSeconds": 2.251211458351463
+        },
+        {
+          "cycle": 2,
+          "kind": "photo",
+          "configureSeconds": 0.41184087499277666,
+          "resumedSeconds": 0.5123336249962449,
+          "maxObservedSourceGapSeconds": 0.4934063333203085
+        }
+      ],
+      "realMovies": [
+        {
+          "front": false,
+          "mode": "auto",
+          "activeMode": 5,
+          "decodedFrames": 61,
+          "maxPTSGapSeconds": 0.03333333333333344,
+          "startMS": 41.791541676502675
+        },
+        {
+          "front": false,
+          "mode": "manual",
+          "activeMode": 5,
+          "decodedFrames": 62,
+          "maxPTSGapSeconds": 0.03333333333333344,
+          "startMS": 1553.2082083518617
+        },
+        {
+          "front": true,
+          "mode": "auto",
+          "activeMode": 3,
+          "decodedFrames": 62,
+          "maxPTSGapSeconds": 0.03333333333333344,
+          "startMS": 1516.3090000278316
+        }
+      ],
+      "configurationReadyMS": [
+        287.5297083519399,
+        799.8143333243206,
+        555.6710416567512,
+        282.2680833050981,
+        775.4763333359733,
+        286.6546250297688,
+        710.4040833655745
+      ],
+      "includes250MSSettle": true,
+      "configurationSamples": 7,
+      "configurationMedianMS": 555.6710416567512,
+      "configurationMaxMS": 799.8143333243206,
+      "roundTrips": 6,
+      "rapidRoundTrip": 1,
+      "notDisplayFPS": true
+    },
+    "Core2": {
+      "methods": 4,
+      "passed": 4,
+      "policy": "cinematicThenStandard",
+      "transitionSamples": [
+        {
+          "cycle": 0,
+          "kind": "video",
+          "configureSeconds": 0.4838829166837968,
+          "resumedSeconds": 1.1193307500216179,
+          "maxObservedSourceGapSeconds": 1.0767279583378695
+        },
+        {
+          "cycle": 0,
+          "kind": "photo",
+          "configureSeconds": 0.43256729166023433,
+          "resumedSeconds": 0.4920713750179857,
+          "maxObservedSourceGapSeconds": 0.47618445835541934
+        },
+        {
+          "cycle": 1,
+          "kind": "video",
+          "configureSeconds": 0.4566844583605416,
+          "resumedSeconds": 1.1225260833161883,
+          "maxObservedSourceGapSeconds": 1.0900789583101869
+        },
+        {
+          "cycle": 1,
+          "kind": "photo",
+          "configureSeconds": 0.4234437083359808,
+          "resumedSeconds": 0.51612195832422,
+          "maxObservedSourceGapSeconds": 0.49398162501165643
+        },
+        {
+          "cycle": 2,
+          "kind": "video",
+          "configureSeconds": 0.37518866668688133,
+          "resumedSeconds": 1.3078777916380204,
+          "maxObservedSourceGapSeconds": 1.2516085833194666
+        },
+        {
+          "cycle": 2,
+          "kind": "photo",
+          "configureSeconds": 0.41254374996060506,
+          "resumedSeconds": 0.5104424166493118,
+          "maxObservedSourceGapSeconds": 0.48100129165686667
+        }
+      ],
+      "realMovies": [
+        {
+          "front": false,
+          "mode": "auto",
+          "activeMode": 2,
+          "decodedFrames": 61,
+          "maxPTSGapSeconds": 0.03333333333333344,
+          "startMS": 43.404833297245204
+        },
+        {
+          "front": false,
+          "mode": "manual",
+          "activeMode": 2,
+          "decodedFrames": 63,
+          "maxPTSGapSeconds": 0.03333333333333366,
+          "startMS": 561.3233749754727
+        },
+        {
+          "front": true,
+          "mode": "auto",
+          "activeMode": 2,
+          "decodedFrames": 62,
+          "maxPTSGapSeconds": 0.03333333333333344,
+          "startMS": 521.9783333595842
+        }
+      ],
+      "configurationReadyMS": [
+        274.48295830981806,
+        719.2181249847636,
+        574.4323333492503,
+        298.7963749910705,
+        735.0467499927618,
+        274.2187083349563,
+        767.3330833204091
+      ],
+      "includes250MSSettle": true,
+      "configurationSamples": 7,
+      "configurationMedianMS": 574.4323333492503,
+      "configurationMaxMS": 767.3330833204091,
+      "roundTrips": 6,
+      "rapidRoundTrip": 1,
+      "notDisplayFPS": true
+    }
+  },
+  "evidenceRoot": "/tmp/LumaCamera-VideoStabilization-20261102",
+  "handheld": {
+    "passed": true,
+    "seconds": 13.141,
+    "decodedFrames": 301,
+    "maxPTSGapSeconds": 0.03333333333333499,
+    "activeMode": 2,
+    "naturalSize": [
+      1920,
+      1080
+    ],
+    "rotationDegrees": 90,
+    "nominalFPS": 30,
+    "durationSeconds": 10.5845,
+    "codec": "HEVC",
+    "userFeedback": "感觉画面还是有些抖动",
+    "subjectiveStabilityResolved": false
+  },
+  "photoReturn": {
+    "passed": 1,
+    "seconds": 69.529,
+    "actualPhotoFiles": 6,
+    "rapidRoundTrips": 10
+  },
+  "release": {
+    "passed": true,
+    "sourceWarnings": 0,
+    "toolWarnings": [
+      "AppIntents metadata extraction skipped"
+    ]
+  },
+  "submodes": {
+    "firstRun": {
+      "methods": 1,
+      "failed": 1,
+      "assertionFailures": 2,
+      "reason": "test incorrectly required cinematic at 240fps; actual standard fallback valid"
+    },
+    "final": {
+      "methods": 1,
+      "passed": 1,
+      "seconds": 15.286
+    },
+    "samples": [
+      {
+        "mode": "cinematic",
+        "captureFPS": 30,
+        "playbackFPS": 30,
+        "stabilizationMode": 2,
+        "decodedFrames": 62
+      },
+      {
+        "mode": "timeLapse",
+        "stabilizationMode": 2,
+        "decodedFrames": 2
+      },
+      {
+        "mode": "slowMotion",
+        "captureFPS": 240,
+        "playbackFPS": 30,
+        "stabilizationMode": 1,
+        "decodedFrames": 485
+      }
+    ]
+  },
+  "uniqueFunctionalMethodsWithPassingResults": 7,
+  "normalAppRestore": "passed; devicectl launch"
+}

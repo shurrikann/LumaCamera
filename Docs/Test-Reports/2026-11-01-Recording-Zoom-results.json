@@ -1,0 +1,197 @@
+{
+  "date": "2026-11-01",
+  "device": "iPhone 17 Pro / iOS 27.2 (24B119)",
+  "requirements": [
+    "Selected slow preset title orange, duration keeps previous styling",
+    "Live recording zoom controls work",
+    "Wheel visible means focal strip hidden; idle five seconds hides wheel and restores strip",
+    "Recording input and specification remain fixed; actual zoom changes on that input"
+  ],
+  "uniqueMethodsWithPass": 24,
+  "passedMethods": [
+    "CameraFocalButtonTests/testCancellationAndDisabledButtonDoNotSelect",
+    "CameraFocalButtonTests/testEnclosingGlassAvoidsNestedSelectionLayerAcrossRepeatedLayouts",
+    "CameraFocalButtonTests/testHostedFocalStripHitTargetsAfterRepeatedSelections",
+    "CameraFocalButtonTests/testLongPressDragsAndFinishesWithoutSelectingFocalLength",
+    "CameraFocalButtonTests/testNativeButtonHasWorkingTapTargetAndLongPressCancelsTapTracking",
+    "CameraFocalButtonTests/testRotatedShortAndLongFocalTitlesKeepSquareSpaceWithoutEllipsis",
+    "CameraFocalButtonTests/testShortTapSelectsWithoutOpeningDial",
+    "ContinuousZoomTests/testDemoZoomCropStaysCenteredAndDoesNotPretendToBeHardware",
+    "ContinuousZoomTests/testLogarithmicDragIsConsistentAtEveryFixedAnchorAndClamps",
+    "ContinuousZoomTests/testRangeUsesPhysicalCamerasAndDeviceLimits",
+    "PresetToolbarPhysicalTests/testFrontRecordingZoomChangesHardwareAndDecodes",
+    "PresetToolbarPhysicalTests/testManualRecordingZoomChangesHardwareAndKeepsRoute",
+    "PresetToolbarPhysicalTests/testRecordingWheelAndFocalHitAreasAcrossRatiosWidthsAndDirections",
+    "PresetToolbarPhysicalTests/testRecordingZoomButtonsWheelAndFiveSecondIdleHide",
+    "PresetToolbarPhysicalTests/testSelectedSlowPresetTitleUsesOrangeAndKeepsDurationWhite",
+    "ZoomDialDetentTests/testEveryAnchorIsStrongerInBothDirections",
+    "ZoomDialDetentTests/testFastDragCoalescesTicksAndPrioritizesAnchor",
+    "ZoomDialDetentTests/testJitterAndStationaryValuesDoNotRepeatFeedback",
+    "ZoomDialDetentTests/testOrdinaryTicksInBothDirections",
+    "ZoomThrottleTests/testCancelDiscardsOldTargetAndAllowsNewGesture",
+    "ZoomThrottleTests/testFlushAppliesFinalZoomBeforeCaptureAndDoesNotDeliverTwice",
+    "ZoomThrottleTests/testLensBoundaryHysteresisAvoidsRepeatedPhysicalSwitches",
+    "ZoomThrottleTests/testThousandsOfDragEventsDeliverOnlyTheLatestPendingValue",
+    "ZoomWheelReopenPhysicalTests/testReopeningKeepsActualZoomAndAnchorAcrossBothModes"
+  ],
+  "finalBatch": {
+    "methods": 4,
+    "passed": 4,
+    "failed": 0,
+    "seconds": 79.142
+  },
+  "colors": {
+    "selectedPresets": 5,
+    "unselectedStates": 6,
+    "drawCost": {
+      "samples": 11,
+      "medianMs": 23.340749961789697,
+      "maxMs": 32.85087499534711,
+      "valuesMs": [
+        23.861541703809053,
+        15.38929162779823,
+        21.131708344910294,
+        26.827458350453526,
+        22.758624982088804,
+        22.15716667706147,
+        25.089583301451057,
+        23.340749961789697,
+        23.10549997491762,
+        32.85087499534711,
+        24.428208300378174
+      ],
+      "meaning": "UI hierarchy screenshot drawing, not FPS"
+    }
+  },
+  "layout": {
+    "cases": 80,
+    "widths": [
+      320,
+      402
+    ],
+    "ratios": [
+      "4:3",
+      "1:1",
+      "16:9",
+      "2:1",
+      "2.39:1"
+    ],
+    "modes": [
+      "A",
+      "M"
+    ],
+    "angles": [
+      0,
+      90,
+      -90,
+      180
+    ],
+    "recordingState": "injected only; no real writer in layout matrix",
+    "drawCost": {
+      "samples": 20,
+      "medianMs": 28.494645841419697,
+      "maxMs": 35.13612499227747,
+      "valuesMs": [
+        25.47579165548086,
+        29.959500010591,
+        35.13612499227747,
+        26.02204162394628,
+        31.131208292208612,
+        31.2959166476503,
+        28.629500011447817,
+        28.359791671391577,
+        30.297458288259804,
+        27.430875052232295,
+        19.6953333215788,
+        27.737875003367662,
+        26.390333310700953,
+        25.892041623592377,
+        32.31691668042913,
+        22.565249993931502,
+        31.63250000216067,
+        24.285833351314068,
+        31.278499984182417,
+        30.067541694734246
+      ],
+      "meaning": "UI hierarchy screenshot drawing, not FPS"
+    }
+  },
+  "actualMovies": [
+    {
+      "mode": "A",
+      "front": true,
+      "initialActualZoom": 0.9999999999999999,
+      "dragActualZoom": 1.4363307629965638,
+      "displayZoomRange": "0.6307189441742161...40.0",
+      "decodedFrames": 51,
+      "hideSeconds": "nil"
+    },
+    {
+      "mode": "M",
+      "front": false,
+      "initialActualZoom": 2.0,
+      "dragActualZoom": 2.872661590576172,
+      "displayZoomRange": "1.0...40.0",
+      "decodedFrames": 68,
+      "hideSeconds": "nil"
+    },
+    {
+      "mode": "A",
+      "front": false,
+      "initialActualZoom": 2.0,
+      "dragActualZoom": 2.872661590576172,
+      "displayZoomRange": "0.5...40.0",
+      "decodedFrames": 451,
+      "hideSeconds": "Optional(5.031852125015575)"
+    }
+  ],
+  "stability": {
+    "rapidZoomCommandsPerClip": 20,
+    "wheelOpenClosePairsPerClip": 10,
+    "longHoldSeconds": 5.2,
+    "idleReset": true,
+    "stopCancelsHide": true,
+    "manualHighZoomKeepsPhysicalAnchor": true
+  },
+  "sourceWarnings": 0,
+  "normalAppRestored": true,
+  "photosWritten": false,
+  "evidenceRoot": "/tmp/LumaCamera-RecordingZoom-20261101",
+  "history": {
+    "Core.log": {
+      "passedMethods": 0,
+      "failedMethods": 4
+    },
+    "Core2.log": {
+      "passedMethods": 2,
+      "failedMethods": 2
+    },
+    "Video3.log": {
+      "passedMethods": 1,
+      "failedMethods": 2
+    },
+    "Video4.log": {
+      "passedMethods": 3,
+      "failedMethods": 0
+    },
+    "Regression.log": {
+      "passedMethods": 20,
+      "failedMethods": 1
+    },
+    "Final.log": {
+      "passedMethods": 4,
+      "failedMethods": 0
+    }
+  },
+  "limitations": [
+    "Three real HEVC SDR 1080p30 clips; not every codec/specification",
+    "80 UI cases use injected recording state and control angles, not 80 real movies",
+    "Raw external recording and dual-camera zoom not validated; dual zoom still disabled",
+    "No true display FPS, touch latency or long thermal benchmark",
+    "Earlier coexistence UI validation superseded by final user requirement to hide strip while wheel is visible"
+  ],
+  "releaseBuild": "passed",
+  "toolWarnings": [
+    "AppIntents metadata extraction skipped due to no AppIntents.framework dependency"
+  ]
+}

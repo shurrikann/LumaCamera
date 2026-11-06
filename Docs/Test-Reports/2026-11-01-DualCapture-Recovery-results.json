@@ -1,0 +1,109 @@
+{
+  "date": "2026-11-01",
+  "device": "iPhone17Pro/iPhone18,1",
+  "os": "iOS27.2 (24B119)",
+  "summary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64e",
+          "deviceId": "00008150-001934280220401C",
+          "deviceName": "笨笨波尔霸&iPhone Pro",
+          "modelName": "iPhone 17 Pro",
+          "osBuildNumber": "24B119",
+          "osVersion": "27.2",
+          "platform": "iOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 14,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "LumaCamera · Built with macOS 27.2",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1793491425.013,
+    "passedTests": 14,
+    "result": "Passed",
+    "runtimeWarnings": [
+      {
+        "issueType": "Runtime Warning",
+        "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+      },
+      {
+        "issueType": "Runtime Warning",
+        "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+      }
+    ],
+    "skippedTests": 0,
+    "startTime": 1793491317.299,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - LumaCamera",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "42% of duration",
+        "text": "1 longest test run with outlier durations exceeding 41.53s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 14
+  },
+  "testMethodSeconds": 103.415,
+  "metrics": {
+    "entries": [
+      0.6108019583334681,
+      0.5354931666515768,
+      0.5536262083332986
+    ],
+    "exits": [
+      0.5861429583455902,
+      0.5737375833268743,
+      0.5914040000061505
+    ],
+    "replacements": [
+      0.44384362499113195,
+      0.5947305000154302,
+      0.5606762916722801
+    ],
+    "specificationRoundTripSeconds": [
+      1.614635541656753,
+      1.6446240000077523,
+      1.5885031666839495,
+      1.467578041658271,
+      1.6249694583530072,
+      1.670047458348563,
+      1.591523374983808,
+      1.5115980416594539,
+      1.6413677083328366,
+      1.6323215416632593,
+      1.6401912916626316,
+      1.4885441666701809,
+      1.8585396249836776,
+      1.6638909583271015,
+      1.7444929166522343,
+      1.8166742916509975,
+      1.5725035416544415,
+      1.6730918333341833,
+      1.602379000018118,
+      1.1094682083348744,
+      1.120005291653797,
+      1.0846929166873451,
+      1.1668845000094734,
+      1.1595011666649953,
+      1.8379922916647047
+    ],
+    "runtimeErrorLogCount": 0
+  },
+  "sourceErrorInjection": "application onError callback, not OS media-services reset",
+  "specificationsRecordedAndDecoded": 25,
+  "systemPhotosWrites": false,
+  "normalAppLaunch": "passed",
+  "releaseBuild": "passed",
+  "fullSuiteRerun": false
+}

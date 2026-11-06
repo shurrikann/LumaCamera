@@ -1,0 +1,130 @@
+{
+  "date": "2026-10-31",
+  "physicalFinal": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64e",
+          "deviceId": "00008150-001934280220401C",
+          "deviceName": "笨笨波尔霸&iPhone Pro",
+          "modelName": "iPhone 17 Pro",
+          "osBuildNumber": "24B119",
+          "osVersion": "27.2",
+          "platform": "iOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 45,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "LumaCamera · Built with macOS 27.2",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1793405132.593,
+    "passedTests": 45,
+    "result": "Passed",
+    "runtimeWarnings": [
+      {
+        "issueType": "Runtime Warning",
+        "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+      },
+      {
+        "issueType": "Runtime Warning",
+        "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+      }
+    ],
+    "skippedTests": 0,
+    "startTime": 1793404973.692,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - LumaCamera",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "18% of duration",
+        "text": "1 longest test run with outlier durations exceeding 21.82s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 45
+  },
+  "naturalScene": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64e",
+          "deviceId": "00008150-001934280220401C",
+          "deviceName": "笨笨波尔霸&iPhone Pro",
+          "modelName": "iPhone 17 Pro",
+          "osBuildNumber": "24B119",
+          "osVersion": "27.2",
+          "platform": "iOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 1,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "LumaCamera · Built with macOS 27.2",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1793404442.627,
+    "passedTests": 1,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1793404410.314,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - LumaCamera",
+    "topInsights": [],
+    "totalTestCount": 1
+  },
+  "actualSceneCaptures": [
+    {
+      "zoom": 0.5,
+      "sources": 9,
+      "used": 9,
+      "exposureSeconds": 0.5,
+      "iso": 1600,
+      "callbackSeconds": 11.39829491666751
+    },
+    {
+      "zoom": 1,
+      "sources": 9,
+      "used": 9,
+      "exposureSeconds": 1,
+      "iso": 3200,
+      "callbackSeconds": 15.01333129167324
+    }
+  ],
+  "matchedSourceReplay": {
+    "before": {
+      "meanLumaCode": 68.41666922222223,
+      "relativeHighPassRMS": 0.04394835875548322,
+      "relativeChromaRMS": 0.2824688276855375
+    },
+    "final": {
+      "meanLumaCode": 69.2318326234568,
+      "relativeHighPassRMS": 0.0236542876167809,
+      "relativeChromaRMS": 0.04903536420763439
+    },
+    "changePercent": {
+      "meanLumaCode": 1.1914689950585977,
+      "relativeHighPassRMS": -46.17708536424088,
+      "relativeChromaRMS": -82.64043342077247
+    }
+  },
+  "systemPhotosWrites": false,
+  "fullSuiteRerun": false,
+  "notes": "Natural capture preceded low-signal refinement; final refinement visually checked by same-source macOS replay and covered by final iPhone tests."
+}

@@ -1,0 +1,102 @@
+{
+  "date": "2026-10-25",
+  "device": "iPhone 17 Pro",
+  "os": "iOS 27.0.1 (24A446)",
+  "scope": "Adaptive silky-water exposure and shared average-composition regression",
+  "distinctPassingMethods": 13,
+  "systemPhotosWrites": 0,
+  "measurements": [
+    {
+      "run": "NormalFinal",
+      "preset": "silkyWater",
+      "mode": "auto",
+      "frames": 16,
+      "iso": 80.0,
+      "exposureSeconds": 0.25,
+      "sourceSpanSeconds": 8.359444458328653,
+      "totalSeconds": 10.068859666673234,
+      "lastSourceToEncodedSeconds": 0.27615791666903533,
+      "testHostBaselineMiB": 84.42385864257812,
+      "testHostPeakMiB": 470.9554748535156,
+      "size": "3000x4000",
+      "previewPublicationMaxGapSeconds": 0.38481891667470336
+    },
+    {
+      "run": "NormalFinal",
+      "preset": "silkyWater",
+      "mode": "manual",
+      "frames": 24,
+      "iso": 200.0,
+      "exposureSeconds": 0.008,
+      "sourceSpanSeconds": 8.2410408333526,
+      "totalSeconds": 8.988221583334962,
+      "lastSourceToEncodedSeconds": 0.2586029999947641,
+      "testHostBaselineMiB": 94.48640441894531,
+      "testHostPeakMiB": 509.9085998535156,
+      "size": "3000x4000",
+      "previewPublicationMaxGapSeconds": 0.156491083354922
+    },
+    {
+      "run": "Dark",
+      "preset": "silkyWater",
+      "mode": "auto",
+      "frames": 12,
+      "iso": 64.0,
+      "exposureSeconds": 0.5,
+      "sourceSpanSeconds": 8.197333833348239,
+      "totalSeconds": 9.907189291669056,
+      "lastSourceToEncodedSeconds": 0.14902762498240918,
+      "testHostBaselineMiB": 82.86131286621094,
+      "testHostPeakMiB": 492.06482696533203,
+      "size": "3000x4000",
+      "previewPublicationMaxGapSeconds": 0.6264744166692253
+    },
+    {
+      "run": "Dark",
+      "preset": "motionBlur",
+      "mode": "manual",
+      "frames": 8,
+      "iso": 200.0,
+      "exposureSeconds": 0.125,
+      "sourceSpanSeconds": 2.512862875009887,
+      "totalSeconds": 3.080206000013277,
+      "lastSourceToEncodedSeconds": 0.15029316666186787,
+      "testHostBaselineMiB": 117.2989730834961,
+      "testHostPeakMiB": 480.9711456298828,
+      "size": "3000x4000",
+      "previewPublicationMaxGapSeconds": 0.2549821666616481
+    }
+  ],
+  "runs": [
+    {
+      "name": "NormalFinal",
+      "tests": 10,
+      "outcome": "passed",
+      "seconds": 34.466
+    },
+    {
+      "name": "Dark",
+      "tests": 3,
+      "outcome": "2 methods passed; old early-finish expectations failed",
+      "passedMethods": [
+        "testAdaptiveWaterSceneExposureWithJPEG",
+        "testManualMotionBlurCompletesWithShortSourceExposures"
+      ],
+      "seconds": 50.745
+    },
+    {
+      "name": "CancelFinal",
+      "tests": 1,
+      "outcome": "passed",
+      "seconds": 16.634
+    }
+  ],
+  "limitations": [
+    "Test-host memory is not standalone application memory",
+    "No instrumented power or sustained thermal measurement",
+    "No real moving-water visual acceptance",
+    "Full-resolution native stills are discrete samples, not continuous 8-second sensor integration",
+    "Sunlight/extreme darkness and all physical lenses were not individually tested",
+    "MDB_MAP_FULL platform cache messages remain in logs; no runtime-error notifications in final targeted methods"
+  ]
+}

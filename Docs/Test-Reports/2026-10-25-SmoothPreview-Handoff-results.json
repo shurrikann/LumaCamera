@@ -1,0 +1,166 @@
+{
+  "date": "2026-10-25",
+  "device": "iPhone 17 Pro",
+  "os": "iOS 27.0.1",
+  "distinctFinalPassingMethods": 4,
+  "systemPhotosWrites": 0,
+  "runs": [
+    {
+      "name": "Baseline",
+      "tests": 1,
+      "seconds": 42.519,
+      "outcome": "EXIF checks passed; did not prove pixel equivalence"
+    },
+    {
+      "name": "Pixels",
+      "tests": 1,
+      "outcome": "failed two short-exposure pixel comparisons despite matching EXIF"
+    },
+    {
+      "name": "Handoff",
+      "tests": 1,
+      "seconds": 23.54,
+      "outcome": "passed eight files/four pixel pairs"
+    },
+    {
+      "name": "Recovery",
+      "tests": 3,
+      "seconds": 37.332,
+      "outcome": "passed"
+    }
+  ],
+  "measurements": [
+    {
+      "run": "Pixels",
+      "pixels": [
+        {
+          "format": "jpeg",
+          "exposureSeconds": 0.5,
+          "assisted": false,
+          "sRGBMeanLuma": 0.7035743668300671
+        },
+        {
+          "format": "jpeg",
+          "exposureSeconds": 0.5,
+          "assisted": true,
+          "sRGBMeanLuma": 0.6464519214665029
+        },
+        {
+          "format": "jpeg",
+          "exposureSeconds": 0.008,
+          "assisted": false,
+          "sRGBMeanLuma": 0.5756499678308832
+        },
+        {
+          "format": "jpeg",
+          "exposureSeconds": 0.008,
+          "assisted": true,
+          "sRGBMeanLuma": 0.37252940793504924
+        },
+        {
+          "format": "heif",
+          "exposureSeconds": 0.5,
+          "assisted": false,
+          "sRGBMeanLuma": 0.6946516559436278
+        },
+        {
+          "format": "heif",
+          "exposureSeconds": 0.5,
+          "assisted": true,
+          "sRGBMeanLuma": 0.6424092795138877
+        },
+        {
+          "format": "heif",
+          "exposureSeconds": 0.008,
+          "assisted": false,
+          "sRGBMeanLuma": 0.5794616758578446
+        },
+        {
+          "format": "heif",
+          "exposureSeconds": 0.008,
+          "assisted": true,
+          "sRGBMeanLuma": 0.37501574525122416
+        }
+      ],
+      "captureSeconds": [
+        2.632320166681893,
+        0.8167052083299495,
+        0.6331030833243858,
+        0.2869125833385624,
+        2.735273958329344,
+        0.9697870833333582,
+        0.7327108333411161,
+        0.41174425001372583
+      ]
+    },
+    {
+      "run": "Handoff",
+      "pixels": [
+        {
+          "format": "jpeg",
+          "exposureSeconds": 0.5,
+          "assisted": false,
+          "sRGBMeanLuma": 0.5542398475796552
+        },
+        {
+          "format": "jpeg",
+          "exposureSeconds": 0.5,
+          "assisted": true,
+          "sRGBMeanLuma": 0.49788455141952404
+        },
+        {
+          "format": "jpeg",
+          "exposureSeconds": 0.008,
+          "assisted": false,
+          "sRGBMeanLuma": 0.3157180075571891
+        },
+        {
+          "format": "jpeg",
+          "exposureSeconds": 0.008,
+          "assisted": true,
+          "sRGBMeanLuma": 0.3303212313623358
+        },
+        {
+          "format": "heif",
+          "exposureSeconds": 0.5,
+          "assisted": false,
+          "sRGBMeanLuma": 0.5208040430964054
+        },
+        {
+          "format": "heif",
+          "exposureSeconds": 0.5,
+          "assisted": true,
+          "sRGBMeanLuma": 0.4935599323427279
+        },
+        {
+          "format": "heif",
+          "exposureSeconds": 0.008,
+          "assisted": false,
+          "sRGBMeanLuma": 0.31240437193627424
+        },
+        {
+          "format": "heif",
+          "exposureSeconds": 0.008,
+          "assisted": true,
+          "sRGBMeanLuma": 0.33456895552491817
+        }
+      ],
+      "captureSeconds": [
+        2.6094312083150726,
+        2.558061458345037,
+        0.23359949997393414,
+        0.7600879583333153,
+        2.3017387083382346,
+        2.657742708339356,
+        0.34964133333414793,
+        0.943356458330527
+      ]
+    }
+  ],
+  "limitations": [
+    "sRGB mean luma is a rendered image code-value statistic, not scene lux or RAW EV",
+    "Stationary scene; no calibrated moving target for motion trails",
+    "JPEG/HEIF 12MP rear main-camera pixels checked; not every format/lens/flash combination",
+    "No standalone app memory, power, or sustained thermal measurement"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-25",
+  "device": "iPhone 17 Pro / iOS27.0.1",
+  "method": "CinematicEffectPhysicalTests/testSimulatedApertureChangesPreviewAndRecordedBackground()",
+  "result": "Passed",
+  "seconds": 9.957,
+  "productionBehaviorChanged": false,
+  "debugHookAdded": true,
+  "apertures": [
+    2.8,
+    2,
+    16,
+    2
+  ],
+  "apertureRange": [
+    2,
+    16
+  ],
+  "durationSeconds": [
+    0.8030208333333333,
+    0.7889791666666667,
+    0.7749375,
+    0.7839375
+  ],
+  "clips": 4,
+  "resolution": [
+    1920,
+    1080
+  ],
+  "rate": 30,
+  "color": "SDR",
+  "codec": "HEVC",
+  "systemSubjects": [
+    "face",
+    "humanBody",
+    "salientObject"
+  ],
+  "visualObservation": "Visible preview and encoded-frame depth-of-field differences between f2 and f16, repeated f2 reproduces effect",
+  "systemPhotosWrites": 0,
+  "resultBundle": "/private/tmp/LumaCamera-CinematicEffect-20261025-Compare.xcresult",
+  "limitations": [
+    "Default clip contains handheld motion blur",
+    "No pixel-aligned numerical blur comparison",
+    "No multi-subject focus transition validation",
+    "No long duration or standalone memory/power/display-FPS validation",
+    "Daylight short-exposure water stacking discussed only; not implemented"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "results": [
+    {
+      "id": "ROUNDTRIP",
+      "test": "SlowShutterPresetTests/testSlowShutterModeRoundTripRestoresAutomaticPresetAndResetsManualDuration",
+      "kind": "automatic",
+      "started": "2026-10-29T14:01:50.056320+08:00",
+      "finished": "2026-10-29T14:02:19.719333+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 17.034,
+      "resultBundle": "/private/tmp/LumaCamera-1029-SlowAM/ROUNDTRIP.xcresult",
+      "log": "/private/tmp/LumaCamera-1029-SlowAM/ROUNDTRIP.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": []
+    },
+    {
+      "id": "PERSIST",
+      "test": "CaptureStatePersistenceTests/testSlowShutterAutomaticPresetSurvivesManualRecreation",
+      "kind": "automatic",
+      "started": "2026-10-29T14:02:19.719729+08:00",
+      "finished": "2026-10-29T14:02:24.607265+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 0.062,
+      "resultBundle": "/private/tmp/LumaCamera-1029-SlowAM/PERSIST.xcresult",
+      "log": "/private/tmp/LumaCamera-1029-SlowAM/PERSIST.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": []
+    },
+    {
+      "id": "LENSES",
+      "test": "SlowShutterPresetTests/testSlowShutterAllowsSwitchingRearLenses",
+      "kind": "automatic",
+      "started": "2026-10-29T14:02:24.607784+08:00",
+      "finished": "2026-10-29T14:02:33.648959+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 3.882,
+      "resultBundle": "/private/tmp/LumaCamera-1029-SlowAM/LENSES.xcresult",
+      "log": "/private/tmp/LumaCamera-1029-SlowAM/LENSES.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": []
+    }
+  ],
+  "sourceSHA256": {
+    "LumaCamera/Features/Camera/ViewModels/CameraViewModel.swift": "9e93c97dde420cdac4ed6635c3de74d3547043f1dd5402146495a88775de1acd",
+    "LumaCamera/Features/Camera/Models/SavedCaptureState.swift": "6280aa4d55bddeab4e42c4ea69d461fc203466112b47867461c9afbb09056784",
+    "LumaCamera/Features/Camera/Components/CameraFocalButton.swift": "ecba8fc7d48eed82654586f18edc9903a16269560320b7ca87a95d51a95f4344"
+  }
+}

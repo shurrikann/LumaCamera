@@ -1,0 +1,440 @@
+{
+  "date": "2026-11-01",
+  "device": "iPhone17Pro / iPhone18,1",
+  "os": "iOS27.2 (24B119)",
+  "xcode": "27.1",
+  "baselineSummary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64e",
+          "deviceId": "00008150-001934280220401C",
+          "deviceName": "笨笨波尔霸&iPhone Pro",
+          "modelName": "iPhone 17 Pro",
+          "osBuildNumber": "24B119",
+          "osVersion": "27.2",
+          "platform": "iOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 2,
+        "passedTests": 2,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "LumaCamera · Built with macOS 27.2",
+    "expectedFailures": 0,
+    "failedTests": 2,
+    "finishTime": 1793494473.632,
+    "passedTests": 2,
+    "result": "Failed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1793494359.131,
+    "statistics": [],
+    "testFailures": [
+      {
+        "failureText": "XCTAssertTrue failed - A-mode video recording did not start",
+        "targetName": "LumaCameraTests",
+        "testIdentifier": 2,
+        "testIdentifierString": "VideoModeTransitionTests/testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching()",
+        "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/VideoModeTransitionTests/testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching",
+        "testName": "testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching()"
+      },
+      {
+        "failureText": "XCTAssertTrue failed - HEVC recording failed; lock=false",
+        "targetName": "LumaCameraTests",
+        "testIdentifier": 4,
+        "testIdentifierString": "VideoWhiteBalancePhysicalTests/testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording()",
+        "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/VideoWhiteBalancePhysicalTests/testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording",
+        "testName": "testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording()"
+      }
+    ],
+    "title": "Test - LumaCamera",
+    "topInsights": [],
+    "totalTestCount": 4
+  },
+  "finalSummaries": {
+    "Automated": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00008150-001934280220401C",
+            "deviceName": "笨笨波尔霸&iPhone Pro",
+            "modelName": "iPhone 17 Pro",
+            "osBuildNumber": "24B119",
+            "osVersion": "27.2",
+            "platform": "iOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 7,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "LumaCamera · Built with macOS 27.2",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1793494707.874,
+      "passedTests": 7,
+      "result": "Passed",
+      "runtimeWarnings": [
+        {
+          "issueType": "Runtime Warning",
+          "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+        },
+        {
+          "issueType": "Runtime Warning",
+          "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+        }
+      ],
+      "skippedTests": 0,
+      "startTime": 1793494534.088,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - LumaCamera",
+      "topInsights": [],
+      "totalTestCount": 7
+    },
+    "Portrait": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00008150-001934280220401C",
+            "deviceName": "笨笨波尔霸&iPhone Pro",
+            "modelName": "iPhone 17 Pro",
+            "osBuildNumber": "24B119",
+            "osVersion": "27.2",
+            "platform": "iOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 1,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "LumaCamera · Built with macOS 27.2",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1793494763.728,
+      "passedTests": 1,
+      "result": "Passed",
+      "runtimeWarnings": [],
+      "skippedTests": 0,
+      "startTime": 1793494744.986,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - LumaCamera",
+      "topInsights": [],
+      "totalTestCount": 1
+    },
+    "Landscape": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64e",
+            "deviceId": "00008150-001934280220401C",
+            "deviceName": "笨笨波尔霸&iPhone Pro",
+            "modelName": "iPhone 17 Pro",
+            "osBuildNumber": "24B119",
+            "osVersion": "27.2",
+            "platform": "iOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 1,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "LumaCamera · Built with macOS 27.2",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1793494801.913,
+      "passedTests": 1,
+      "result": "Passed",
+      "runtimeWarnings": [],
+      "skippedTests": 0,
+      "startTime": 1793494783.289,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - LumaCamera",
+      "topInsights": [],
+      "totalTestCount": 1
+    }
+  },
+  "cases": [
+    {
+      "stage": "Automated",
+      "class": "BasicVideoPhysicalTests",
+      "method": "testRepeatedVideoRecordingsAndPhotoModeReturn",
+      "result": "passed",
+      "seconds": 8.707
+    },
+    {
+      "stage": "Automated",
+      "class": "FrontVideoCenteringPhysicalTests",
+      "method": "testCenterStageCapabilitiesFallbackAndRapidRecovery",
+      "result": "passed",
+      "seconds": 19.836
+    },
+    {
+      "stage": "Automated",
+      "class": "FrontVideoCenteringPhysicalTests",
+      "method": "testOfficialCenterStageVideoFramingExclusionsAndRecording",
+      "result": "passed",
+      "seconds": 34.997
+    },
+    {
+      "stage": "Automated",
+      "class": "VideoModeTransitionTests",
+      "method": "testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching",
+      "result": "passed",
+      "seconds": 12.431
+    },
+    {
+      "stage": "Automated",
+      "class": "VideoModeTransitionTests",
+      "method": "testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips",
+      "result": "passed",
+      "seconds": 64.535
+    },
+    {
+      "stage": "Automated",
+      "class": "VideoModeTransitionTests",
+      "method": "testRepeatedModeTransitionPreviewLatency",
+      "result": "passed",
+      "seconds": 10.126
+    },
+    {
+      "stage": "Automated",
+      "class": "VideoWhiteBalancePhysicalTests",
+      "method": "testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording",
+      "result": "passed",
+      "seconds": 19.274
+    },
+    {
+      "stage": "Portrait",
+      "class": "FrontVideoCenteringPhysicalTests",
+      "method": "testCenterStagePersonPortraitRecording",
+      "result": "passed",
+      "seconds": 15.584
+    },
+    {
+      "stage": "Landscape",
+      "class": "FrontVideoCenteringPhysicalTests",
+      "method": "testCenterStagePersonLandscapeRecording",
+      "result": "passed",
+      "seconds": 15.443
+    }
+  ],
+  "originalSix": [
+    {
+      "id": "FULL-20261030-004",
+      "stage": "Automated",
+      "class": "BasicVideoPhysicalTests",
+      "method": "testRepeatedVideoRecordingsAndPhotoModeReturn",
+      "result": "passed",
+      "seconds": 8.707
+    },
+    {
+      "id": "FULL-20261030-017",
+      "stage": "Landscape",
+      "class": "FrontVideoCenteringPhysicalTests",
+      "method": "testCenterStagePersonLandscapeRecording",
+      "result": "passed",
+      "seconds": 15.443
+    },
+    {
+      "id": "FULL-20261030-018",
+      "stage": "Portrait",
+      "class": "FrontVideoCenteringPhysicalTests",
+      "method": "testCenterStagePersonPortraitRecording",
+      "result": "passed",
+      "seconds": 15.584
+    },
+    {
+      "id": "FULL-20261030-076",
+      "stage": "Automated",
+      "class": "VideoModeTransitionTests",
+      "method": "testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching",
+      "result": "passed",
+      "seconds": 12.431
+    },
+    {
+      "id": "FULL-20261030-077",
+      "stage": "Automated",
+      "class": "VideoModeTransitionTests",
+      "method": "testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips",
+      "result": "passed",
+      "seconds": 64.535
+    },
+    {
+      "id": "FULL-20261030-081",
+      "stage": "Automated",
+      "class": "VideoWhiteBalancePhysicalTests",
+      "method": "testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording",
+      "result": "passed",
+      "seconds": 19.274
+    }
+  ],
+  "metricLines": [
+    "VIDEO-HAPTICS audioReady=true permission=true wait=0.17542041666456498",
+    "VIDEO-BASIC-BEFORE-READY cycle=0 switch=true ready=true configuring=false shutter=false",
+    "VIDEO-BASIC-READY cycle=0 waitSeconds=0.024639375013066456",
+    "VIDEO-BASIC cycle=0 start=0.0439616666699294 duration=1.0333333333333334 dimensions=Optional((1920.0, 1080.0)) fps=30.0 audio=1 bytes=763468",
+    "VIDEO-BASIC-BEFORE-READY cycle=1 switch=false ready=true configuring=false shutter=true",
+    "VIDEO-BASIC-READY cycle=1 waitSeconds=3.3166666980832815e-05",
+    "VIDEO-BASIC cycle=1 start=0.023400749982101843 duration=1.0475833333333333 dimensions=Optional((1920.0, 1080.0)) fps=30.0 audio=1 bytes=819274",
+    "VIDEO-BASIC-BEFORE-READY cycle=2 switch=false ready=true configuring=false shutter=true",
+    "VIDEO-BASIC-READY cycle=2 waitSeconds=3.662501694634557e-05",
+    "VIDEO-BASIC cycle=2 start=0.021931916679022834 duration=1.0389166666666667 dimensions=Optional((1920.0, 1080.0)) fps=30.0 audio=1 bytes=811389",
+    "CENTER-SPEC hd720 24 sdr samples=8 maxPublicationGap=0.04358495833002962",
+    "CENTER-SPEC hd720 24 p3 samples=7 maxPublicationGap=0.05043645834666677",
+    "CENTER-SPEC hd720 25 sdr samples=9 maxPublicationGap=0.04505091666942462",
+    "CENTER-SPEC hd720 25 p3 samples=8 maxPublicationGap=0.047098124981857836",
+    "CENTER-SPEC hd720 30 p3 samples=11 maxPublicationGap=0.04045629166648723",
+    "CENTER-SPEC hd720 30 sdr samples=11 maxPublicationGap=0.040058791666524485",
+    "CENTER-SPEC hd1080 24 p3 samples=7 maxPublicationGap=0.04568441666197032",
+    "CENTER-SPEC hd1080 24 sdr samples=7 maxPublicationGap=0.04568916666903533",
+    "CENTER-SPEC hd1080 25 sdr samples=9 maxPublicationGap=0.04606291666277684",
+    "CENTER-SPEC hd1080 25 p3 samples=8 maxPublicationGap=0.042926333320792764",
+    "CENTER-SPEC hd1080 30 sdr samples=11 maxPublicationGap=0.035841666656779125",
+    "CENTER-SPEC hd1080 30 p3 samples=10 maxPublicationGap=0.04344995832070708",
+    "CENTER-STABILITY capabilityCount=12 cycles=3",
+    "CENTER-CAPABILITIES [LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd720, frameRate: LumaCamera.VideoFrameRate.fps24, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.sdr, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd720, frameRate: LumaCamera.VideoFrameRate.fps24, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.p3, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd720, frameRate: LumaCamera.VideoFrameRate.fps25, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.sdr, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd720, frameRate: LumaCamera.VideoFrameRate.fps25, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.p3, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd720, frameRate: LumaCamera.VideoFrameRate.fps30, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.p3, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd720, frameRate: LumaCamera.VideoFrameRate.fps30, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.sdr, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps24, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.p3, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps24, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.sdr, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps25, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.sdr, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps25, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.p3, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps30, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.sdr, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault), LumaCamera.VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps30, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.p3, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault)]",
+    "CENTER-BEFORE [\"requested\": \"false\", \"global\": \"false\", \"roiWidth\": \"1.0\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"outputHeight\": \"1920.0\", \"supports\": \"true\", \"outputWidth\": \"1080.0\", \"roiHeight\": \"1.0\", \"zoom\": \"1.0\", \"size\": \"1920x1080\", \"active\": \"false\", \"centerFormats\": \"30\", \"depth\": \"false\", \"distortion\": \"true\"]",
+    "CENTER-ENABLED pass=0 seconds=0.44314483331982046 native=[\"requested\": \"true\", \"global\": \"true\", \"roiWidth\": \"1.0\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"outputHeight\": \"1920.0\", \"supports\": \"true\", \"outputWidth\": \"1080.0\", \"roiHeight\": \"1.0\", \"zoom\": \"1.0\", \"size\": \"1920x1080\", \"active\": \"true\", \"centerFormats\": \"30\", \"depth\": \"false\", \"distortion\": \"true\"]",
+    "CENTER-ENABLED pass=1 seconds=0.36539991668541916 native=[\"roiWidth\": \"0.7438400743840075\", \"distortion\": \"true\", \"outputWidth\": \"1080.0\", \"zoom\": \"1.0\", \"outputHeight\": \"1920.0\", \"centerFormats\": \"30\", \"active\": \"true\", \"size\": \"1920x1080\", \"depth\": \"false\", \"requested\": \"true\", \"roiHeight\": \"1.0\", \"supports\": \"true\", \"global\": \"true\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\"]",
+    "CENTER-ENABLED pass=2 seconds=0.4416854166483972 native=[\"depth\": \"false\", \"outputWidth\": \"1080.0\", \"size\": \"1920x1080\", \"roiWidth\": \"0.7438400743840075\", \"centerFormats\": \"30\", \"supports\": \"true\", \"outputHeight\": \"1920.0\", \"zoom\": \"1.0\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"global\": \"true\", \"distortion\": \"true\", \"roiHeight\": \"1.0\", \"requested\": \"true\", \"active\": \"true\"]",
+    "VIDEO-SHUTTER-READY label=center-auto-hevc seconds=1.2500007869675756e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "CENTER-ORIENTATION native=(1920.0, 1080.0) angle=Optional(0.0)",
+    "CENTER-RECORD mode=auto codec=hevc color=sdr frames=37 size=(1080.0, 1920.0) native=[\"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"roiHeight\": \"1.0\", \"requested\": \"true\", \"size\": \"1920x1080\", \"zoom\": \"1.0\", \"depth\": \"false\", \"roiWidth\": \"1.0\", \"outputWidth\": \"1080.0\", \"global\": \"true\", \"supports\": \"true\", \"outputHeight\": \"1920.0\", \"distortion\": \"true\", \"active\": \"true\", \"centerFormats\": \"30\"]",
+    "VIDEO-SHUTTER-READY label=center-manual-h264 seconds=1.3666664017364383e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "CENTER-ORIENTATION native=(1920.0, 1080.0) angle=Optional(0.0)",
+    "CENTER-RECORD mode=manual codec=h264 color=p3 frames=38 size=(1080.0, 1920.0) native=[\"depth\": \"false\", \"distortion\": \"true\", \"size\": \"1920x1080\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"outputWidth\": \"1080.0\", \"global\": \"true\", \"supports\": \"true\", \"centerFormats\": \"30\", \"roiHeight\": \"1.0\", \"zoom\": \"1.0\", \"roiWidth\": \"1.0\", \"outputHeight\": \"1920.0\", \"requested\": \"true\", \"active\": \"true\"]",
+    "VIDEO-SHUTTER-READY label=center-auto-proRes seconds=1.441666972823441e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "CENTER-ORIENTATION native=(1920.0, 1080.0) angle=Optional(0.0)",
+    "CENTER-RECORD mode=auto codec=proRes color=sdr frames=37 size=(1080.0, 1920.0) native=[\"depth\": \"false\", \"global\": \"true\", \"supports\": \"true\", \"outputHeight\": \"1920.0\", \"centerFormats\": \"30\", \"active\": \"true\", \"roiHeight\": \"1.0\", \"device\": \"AVCaptureDeviceTypeBuiltInUltraWideCamera\", \"requested\": \"true\", \"roiWidth\": \"1.0\", \"outputWidth\": \"1080.0\", \"distortion\": \"true\", \"size\": \"1920x1080\", \"zoom\": \"1.0\"]",
+    "CENTER-TOGGLE latencies=[0.44314483331982046, 0.36539991668541916, 0.4416854166483972]",
+    "VIDEO-SHUTTER-READY label=automatic-video-route seconds=0.04488262499216944 initial=[switch=true ready=true configuring=false enabled=false]",
+    "AUTO-VIDEO-ROUTE photo=video=false input=AVCaptureDeviceTypeBuiltInTripleCamera virtual=true primary=AVCaptureDeviceTypeBuiltInWideAngleCamera switching=auto conditions=0 fallback=AVCaptureDeviceTypeBuiltInUltraWideCamera,AVCaptureDeviceTypeBuiltInWideAngleCamera format=4032x3024-875704422-1.00-30.00 color=0 autoWideColor=true zoom=1.0 focus=0.572549 primaryFocus=0.58431375 AF=2 AE=2 adjusting=false point=(0.5, 0.5) video=video=true input=AVCaptureDeviceTypeBuiltInTripleCamera virtual=true primary=AVCaptureDeviceTypeBuiltInWideAngleCamera switching=auto conditions=0 fallback=AVCaptureDeviceTypeBuiltInUltraWideCamera,AVCaptureDeviceTypeBuiltInWideAngleCamera format=1920x1080-875704438-1.00-30.00 color=0 autoWideColor=false zoom=1.0 focus=0.5686275 primaryFocus=0.58431375 AF=2 AE=2 adjusting=false point=(0.5, 0.5) restored=video=false input=AVCaptureDeviceTypeBuiltInTripleCamera virtual=true primary=AVCaptureDeviceTypeBuiltInWideAngleCamera switching=auto conditions=0 fallback=AVCaptureDeviceTypeBuiltInUltraWideCamera,AVCaptureDeviceTypeBuiltInWideAngleCamera format=4032x3024-875704422-1.00-30.00 color=1 autoWideColor=true zoom=1.0 focus=0.5764706 primaryFocus=0.58431375 AF=2 AE=2 adjusting=false point=(0.5, 0.5)",
+    "VIDEO-RETURN-PHOTO variant=live resources=2 depth=8 restoredSeconds=0.5997485000116285 EXIF=0.06666666666666667 tasks=0",
+    "VIDEO-ROUNDTRIP variant=live size=(1920.0, 1080.0) mode=auto live=true hdr=false",
+    "VIDEO-RETURN-PHOTO variant=hdr resources=1 depth=10 restoredSeconds=0.6435558749944903 EXIF=0.05882352941176471 tasks=0",
+    "VIDEO-ROUNDTRIP variant=hdr size=(1920.0, 1080.0) mode=auto live=false hdr=true",
+    "PHOTO-EXPOSURE-RESTORE requested=0.5 actual=0.499804 activeMaximum=0.5 minFrame=0.03333333333333333 maxFrame=0.5",
+    "VIDEO-RETURN-PHOTO variant=manual resources=1 depth=8 restoredSeconds=1.2211105833412148 EXIF=0.5 tasks=0",
+    "VIDEO-ROUNDTRIP variant=manual size=(1920.0, 1080.0) mode=manual live=false hdr=false",
+    "PHOTO-EXPOSURE-RESTORE requested=0.5 actual=0.499804 activeMaximum=0.5 minFrame=0.03333333333333333 maxFrame=0.5",
+    "VIDEO-RETURN-PHOTO variant=manual resources=1 depth=8 restoredSeconds=1.2153265833330806 EXIF=0.5 tasks=0",
+    "VIDEO-ROUNDTRIP variant=manual size=(1920.0, 1080.0) mode=manual live=false hdr=false",
+    "VIDEO-RETURN-PHOTO variant=hdr resources=1 depth=10 restoredSeconds=0.4476084166672081 EXIF=0.05882352941176471 tasks=0",
+    "VIDEO-ROUNDTRIP variant=hdr size=(1920.0, 1080.0) mode=auto live=false hdr=true",
+    "VIDEO-RETURN-PHOTO variant=live resources=2 depth=8 restoredSeconds=0.5732836250099353 EXIF=0.06666666666666667 tasks=0",
+    "VIDEO-ROUNDTRIP variant=live size=(1920.0, 1080.0) mode=auto live=true hdr=false",
+    "VIDEO-RETURN-SUMMARY samples=6 times=[0.5997485000116285, 0.6435558749944903, 1.2211105833412148, 1.2153265833330806, 0.4476084166672081, 0.5732836250099353] captureTimes=[3.5914736249833368, 3.821472083334811, 2.115932916669408, 2.136438041663496, 3.752868249983294, 3.556381375005003] rapidRoundTrips=10 actualPhotoFiles=6",
+    "VIDEO-TRANSITION cycle=0 kind=video configure=0.763966791681014 resumed=0.8583779166801833 gap=0.7879297500185203",
+    "VIDEO-TRANSITION cycle=0 kind=photo configure=0.34352091667824425 resumed=0.5320074166811537 gap=0.5151825416833162",
+    "VIDEO-TRANSITION cycle=1 kind=video configure=0.7334531666710973 resumed=0.8317968333431054 gap=0.7866743750055321",
+    "VIDEO-TRANSITION cycle=1 kind=photo configure=0.3429160416708328 resumed=0.5283348750090227 gap=0.5162478749989532",
+    "VIDEO-TRANSITION cycle=2 kind=video configure=0.7451718749944121 resumed=0.8393747499794699 gap=0.7891614999971353",
+    "VIDEO-TRANSITION cycle=2 kind=photo configure=0.3583663333556615 resumed=0.5462174166750629 gap=0.5358199999900535",
+    "VIDEO-WB-ROUTE ready=true kind=video position=1 preview=true videoConfiguring=false requested=hd1080/30/SDR/HEVC supportedCount=75 message=nil",
+    "VIDEO-WB-SCENARIO index=0 mode=auto spec=VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps30, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.sdr, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault) manualWB=false",
+    "VIDEO-SHUTTER-READY label=WB-0-false seconds=0.06481454169261269 initial=[switch=true ready=true configuring=false enabled=false]",
+    "VIDEO-WB-DECODE index=0 enabled=false frames=17",
+    "VIDEO-WB-LOCK enabled=false modeBefore=2 modeDuring=2 modeAfter=2 duration=0.5666666666666667 thermal=1",
+    "VIDEO-SHUTTER-READY label=WB-0-true seconds=1.583332777954638e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-GAINS during=AVCaptureWhiteBalanceGains(redGain: 2.2983398, greenGain: 1.0, blueGain: 2.060791) later=AVCaptureWhiteBalanceGains(redGain: 2.2983398, greenGain: 1.0, blueGain: 2.060791)",
+    "VIDEO-WB-DECODE index=0 enabled=true frames=37",
+    "VIDEO-WB-LOCK enabled=true modeBefore=2 modeDuring=0 modeAfter=2 duration=1.2500208333333334 thermal=1",
+    "VIDEO-WB-SCENARIO index=1 mode=auto spec=VideoCaptureSettings(resolution: LumaCamera.VideoResolution.uhd4K, frameRate: LumaCamera.VideoFrameRate.fps60, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.hdr, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault) manualWB=false",
+    "VIDEO-SHUTTER-READY label=WB-1-false seconds=2.8791662771254778e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-DECODE index=1 enabled=false frames=33",
+    "VIDEO-WB-LOCK enabled=false modeBefore=2 modeDuring=2 modeAfter=2 duration=0.55 thermal=1",
+    "VIDEO-SHUTTER-READY label=WB-1-true seconds=1.7291662516072392e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-GAINS during=AVCaptureWhiteBalanceGains(redGain: 2.3015137, greenGain: 1.0, blueGain: 2.0686035) later=AVCaptureWhiteBalanceGains(redGain: 2.3015137, greenGain: 1.0, blueGain: 2.0686035)",
+    "VIDEO-WB-DECODE index=1 enabled=true frames=73",
+    "VIDEO-WB-LOCK enabled=true modeBefore=2 modeDuring=0 modeAfter=2 duration=1.2473541666666668 thermal=1",
+    "VIDEO-WB-SCENARIO index=2 mode=manual spec=VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps30, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.p3, codec: LumaCamera.VideoCodec.h264, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault) manualWB=false",
+    "VIDEO-SHUTTER-READY label=WB-2-false seconds=3.0499999411404133e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-DECODE index=2 enabled=false frames=17",
+    "VIDEO-WB-LOCK enabled=false modeBefore=2 modeDuring=2 modeAfter=2 duration=0.5666666666666667 thermal=1",
+    "VIDEO-SHUTTER-READY label=WB-2-true seconds=7.266667671501637e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-GAINS during=AVCaptureWhiteBalanceGains(redGain: 2.3015137, greenGain: 1.0, blueGain: 2.0686035) later=AVCaptureWhiteBalanceGains(redGain: 2.3015137, greenGain: 1.0, blueGain: 2.0686035)",
+    "VIDEO-WB-DECODE index=2 enabled=true frames=37",
+    "VIDEO-WB-LOCK enabled=true modeBefore=2 modeDuring=0 modeAfter=2 duration=1.2333333333333334 thermal=1",
+    "VIDEO-WB-SCENARIO index=3 mode=manual spec=VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps30, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.appleLog, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault) manualWB=false",
+    "VIDEO-SHUTTER-READY label=WB-3-false seconds=1.2791657354682684e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-DECODE index=3 enabled=false frames=16",
+    "VIDEO-WB-LOCK enabled=false modeBefore=2 modeDuring=2 modeAfter=2 duration=0.5333333333333333 thermal=1",
+    "VIDEO-SHUTTER-READY label=WB-3-true seconds=1.4374993043020368e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-GAINS during=AVCaptureWhiteBalanceGains(redGain: 2.3078613, greenGain: 1.0, blueGain: 2.0749512) later=AVCaptureWhiteBalanceGains(redGain: 2.3078613, greenGain: 1.0, blueGain: 2.0749512)",
+    "VIDEO-WB-DECODE index=3 enabled=true frames=38",
+    "VIDEO-WB-LOCK enabled=true modeBefore=2 modeDuring=0 modeAfter=2 duration=1.2666666666666666 thermal=1",
+    "VIDEO-WB-SCENARIO index=4 mode=manual spec=VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps30, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.appleLog2, codec: LumaCamera.VideoCodec.proRes, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault) manualWB=false",
+    "VIDEO-SHUTTER-READY label=WB-4-false seconds=1.3083335943520069e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-DECODE index=4 enabled=false frames=17",
+    "VIDEO-WB-LOCK enabled=false modeBefore=2 modeDuring=2 modeAfter=2 duration=0.5666666666666667 thermal=1",
+    "VIDEO-SHUTTER-READY label=WB-4-true seconds=1.9458355382084846e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-GAINS during=AVCaptureWhiteBalanceGains(redGain: 2.3078613, greenGain: 1.0, blueGain: 2.0749512) later=AVCaptureWhiteBalanceGains(redGain: 2.3078613, greenGain: 1.0, blueGain: 2.0749512)",
+    "VIDEO-WB-DECODE index=4 enabled=true frames=38",
+    "VIDEO-WB-LOCK enabled=true modeBefore=2 modeDuring=0 modeAfter=2 duration=1.2666666666666666 thermal=1",
+    "VIDEO-WB-SCENARIO index=5 mode=manual spec=VideoCaptureSettings(resolution: LumaCamera.VideoResolution.hd1080, frameRate: LumaCamera.VideoFrameRate.fps30, captureFrameRate: nil, colorSpace: LumaCamera.VideoColorSpace.sdr, codec: LumaCamera.VideoCodec.hevc, proRes: LumaCamera.ProResSpecification.hq, bitratePreset: LumaCamera.VideoBitratePreset.systemDefault) manualWB=true",
+    "VIDEO-SHUTTER-READY label=WB-5-false seconds=1.2333330232650042e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-DECODE index=5 enabled=false frames=16",
+    "VIDEO-WB-LOCK enabled=false modeBefore=0 modeDuring=0 modeAfter=0 duration=0.5333333333333333 thermal=1",
+    "VIDEO-SHUTTER-READY label=WB-5-true seconds=1.670833444222808e-05 initial=[switch=false ready=true configuring=false enabled=true]",
+    "VIDEO-WB-GAINS during=AVCaptureWhiteBalanceGains(redGain: 2.3669434, greenGain: 1.0, blueGain: 1.7866211) later=AVCaptureWhiteBalanceGains(redGain: 2.3669434, greenGain: 1.0, blueGain: 1.7866211)",
+    "VIDEO-WB-DECODE index=5 enabled=true frames=37",
+    "VIDEO-WB-LOCK enabled=true modeBefore=0 modeDuring=0 modeAfter=0 duration=1.2333333333333334 thermal=1",
+    "VIDEO-WB-START-LATENCY samples=12 p50=0.03929833334404975s max=0.11875687498832121s modeOrder=off,on across six scenarios",
+    "VIDEO-SHUTTER-READY label=center-person-false seconds=0.10627820834633894 initial=[switch=true ready=true configuring=false enabled=false]",
+    "CENTER-ORIENTATION native=(1920.0, 1080.0) angle=Optional(0.0)",
+    "CENTER-PERSON-START landscape=false pose=1",
+    "CENTER-PERSON-DIRECTION landscape=false encoded=(1080.0, 1920.0) transform=CGAffineTransform(a: -1.0, b: 0.0, c: 0.0, d: 1.0, tx: 1080.0, ty: 0.0) display=(1080.0, 1920.0)",
+    "CENTER-PERSON-END landscape=false faces=6/6 centers=[\"1s:(0.40963229537010193,0.46464182436466217),size:(0.41451436281204224,0.23316434025764465)\", \"3s:(0.7061015218496323,0.4678256958723068),size:(0.4312000572681427,0.2425500452518463)\", \"5s:(0.3840947151184082,0.5864876508712769),size:(0.4390765428543091,0.24698054790496826)\", \"7s:(0.7113840878009796,0.5283271223306656),size:(0.46614885330200195,0.2622087299823761)\", \"9s:(0.5609847754240036,0.5112839192152023),size:(0.46898624300956726,0.26380476355552673)\", \"11s:(0.34274615347385406,0.5895296037197113),size:(0.4099356234073639,0.23058879375457764)\"] published=372 maxPublicationGap=0.07736520832986571 pose=1",
+    "VIDEO-SHUTTER-READY label=center-person-true seconds=0.10650774999521673 initial=[switch=true ready=true configuring=false enabled=false]",
+    "CENTER-ORIENTATION native=(1920.0, 1080.0) angle=Optional(90.0)",
+    "CENTER-PERSON-START landscape=true pose=3",
+    "CENTER-PERSON-DIRECTION landscape=true encoded=(1080.0, 1920.0) transform=CGAffineTransform(a: 0.0, b: 1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 0.0) display=(1920.0, 1080.0)",
+    "CENTER-PERSON-END landscape=true faces=6/6 centers=[\"1s:(0.5914920419454575,0.4836583286523819),size:(0.28108057379722595,0.49969881772994995)\", \"3s:(0.7809552997350693,0.5283652245998383),size:(0.29135486483573914,0.517964243888855)\", \"5s:(0.17951163090765476,0.4873129725456238),size:(0.3127176761627197,0.5559425354003906)\", \"7s:(0.3903188332915306,0.5762909948825836),size:(0.16448204219341278,0.29241251945495605)\", \"9s:(0.8288892060518265,0.5237620621919632),size:(0.24896815419197083,0.4426100552082062)\", \"11s:(0.36495497822761536,0.5236968249082565),size:(0.2630482316017151,0.46764132380485535)\"] published=372 maxPublicationGap=0.05941950000124052 pose=3"
+  ],
+  "runtimeLogOccurrences": {
+    "AVFoundationErrorDomain/-11819": 0,
+    "IOSurface creation failed": 0,
+    "MDB_MAP_FULL": 86
+  },
+  "testSourceSHA256": {
+    "LumaCameraTests/Camera/BasicVideoPhysicalTests.swift": "2d75bae8d5cf5a9915e44c0abe9e814f6731b60b59a8357efc3547593bb2046b",
+    "LumaCameraTests/Camera/VideoModeTransitionTests.swift": "36db5b6a97340f4b2e9c527f1ef4af16d36eaa4f34477d8bca2eebe40a2ed7c7",
+    "LumaCameraTests/Camera/VideoWhiteBalancePhysicalTests.swift": "a843bbf9a5b45de0150f6620f0796e744499c95d42668a4c107565487bcbc302",
+    "LumaCameraTests/Camera/FrontVideoCenteringPhysicalTests.swift": "d97a930ef4951854aa1af3e34e3b63010ee2189582a90251e676c75d3c6dcf19"
+  },
+  "productionFilesUnchangedSinceNavigator": {
+    "LumaCamera/Core/Capture/CameraEngine.swift": "1703a3fd33a500eca8dc77164f6647266a4256934833d0cc92d6f876c2a068a0",
+    "LumaCamera/Core/Capture/FocusNavigatorGraph.swift": "76ce490bd64bf5e14f48b0d82ec266d10901688e6ac76ce0bbf8dbad179911d6"
+  },
+  "artifacts": "/tmp/LumaCamera-VideoSix-20261101",
+  "sampleImages": {
+    "portrait1s": "/tmp/LumaCamera-VideoSix-20261101/Portrait-Images/D3B1B372-9C96-4CBB-B891-E764396A464C.png",
+    "landscape1s": "/tmp/LumaCamera-VideoSix-20261101/Landscape-Images/80784479-F151-44AB-BF75-1972DFB33016.png"
+  }
+}

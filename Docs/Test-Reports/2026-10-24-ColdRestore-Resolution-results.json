@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-24",
+  "device": "iPhone 17 Pro / iOS 27.0.1 (24A446)",
+  "passed": 10,
+  "failed": 0,
+  "skipped": 0,
+  "productionChanged": false,
+  "resolutionType": "测试生命周期等待及异常收尾修正，历史系统服务重置未再复现，内部根因未确认",
+  "coldModelSamples": [
+    {
+      "index": 0,
+      "video": false,
+      "readyAndParametersSeconds": 1.5542946250061505,
+      "totalSeconds": 1.5543351250089472
+    },
+    {
+      "index": 1,
+      "video": true,
+      "readyAndParametersSeconds": 0.7228576666675508,
+      "totalSeconds": 1.314939083327772
+    },
+    {
+      "index": 2,
+      "video": false,
+      "readyAndParametersSeconds": 1.5494605833373498,
+      "totalSeconds": 1.5494651250046445
+    },
+    {
+      "index": 3,
+      "video": true,
+      "readyAndParametersSeconds": 0.7226489583263174,
+      "totalSeconds": 1.3137367916642688
+    },
+    {
+      "index": 4,
+      "video": false,
+      "readyAndParametersSeconds": 1.5813620416738559,
+      "totalSeconds": 1.5813750416709809
+    },
+    {
+      "index": 5,
+      "video": true,
+      "readyAndParametersSeconds": 0.7175753750052536,
+      "totalSeconds": 1.3245036666776286
+    }
+  ],
+  "rapidLifecycleGroups": 3,
+  "requestsPerGroup": 21,
+  "hardwareStartsInRapidGroups": 3,
+  "normalRuntimeErrors": 0,
+  "explicitErrorInjections": 5,
+  "results": [
+    {
+      "bundle": "/private/tmp/LumaCamera-ColdRestore-20261024-Baseline.xcresult",
+      "log": "/private/tmp/LumaCamera-ColdRestore-20261024-Baseline.log"
+    },
+    {
+      "bundle": "/private/tmp/LumaCamera-ColdRestore-20261024-Sequence.xcresult",
+      "log": "/private/tmp/LumaCamera-ColdRestore-20261024-Sequence.log"
+    },
+    {
+      "bundle": "/private/tmp/LumaCamera-ColdRestore-20261024-Verified.xcresult",
+      "log": "/private/tmp/LumaCamera-ColdRestore-20261024-Verified.log"
+    },
+    {
+      "bundle": "/private/tmp/LumaCamera-ColdRestore-20261024-Recovery.xcresult",
+      "log": "/private/tmp/LumaCamera-ColdRestore-20261024-Recovery.log"
+    }
+  ]
+}

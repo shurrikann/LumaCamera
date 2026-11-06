@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-27",
+  "device": "iPhone 17 Pro",
+  "os": "27.2 (24B119)",
+  "scope": "targeted",
+  "diagnosticMediaSavedToPhotos": false,
+  "metrics": {
+    "SmartAuto-Checks": [
+      "SMART-AESTHETICS samples=3 candidateScores=12 seconds=[0.06857791666698176, 0.019692208334163297, 0.022602625002036802] preCancelledNoWork=true; not display FPS or aesthetic accuracy",
+      "SMART-AUTO stability: hardwareFlow=1 repeatedAlignedFrames=30 popupCancel=true manualNoChange=true noMediaSaved=true",
+      "SMART-PERF samples=12 median=24.9ms p95=30.5ms max=30.5ms"
+    ],
+    "SmartAuto-RealScene": [
+      "SMART-REAL guides=0 automaticActions=0 initialZoom=1.0 finalZoom=1.0 seconds=20.25038774999848 observations=[]"
+    ],
+    "SmartAuto-RealScene2": [
+      "SMART-REAL guides=78 automaticActions=0 initialZoom=1.0 finalZoom=1.0 seconds=20.559182500001043 observations=[\"salient rect=(0.0212249755859375, 0.2236328125, 0.8454742431640625, 0.6463623046875) center=(0.4427757263183594, 0.461944580078125) text=已对准中心\", \"salient rect=(0.0212249755859375, 0.2236328125, 0.8454742431640625, 0.6463623046875) center=(0.4427757263183594, 0.461944580078125) text=已对准中心\", \"salient rect=(0.0212249755859375, 0.2236328125, 0.8454742431640625, 0.6463623046875) center=(0.39598560333251953, 0.48487091064453125) text=已对准中心\", \"salient rect=(0.036407470703125, 0.1767578125, 0.706756591796875, 0.649658203125) center=(0.38944363594055176, 0.4931354522705078) text=先对准中心\", \"salient rect=(0.053070068359375, 0.13916015625, 0.706695556640625, 0.7100830078125) center=(0.39793074131011963, 0.4994668960571289) text=先对准中心\", \"salient rect=(0.0259246826171875, 0.244140625, 0.7484893798828125, 0.607421875) center=(0.3990500569343567, 0.47580766677856445) text=先对准中心\", \"salient rect=(0.0259246826171875, 0.244140625, 0.7484893798828125, 0.607421875) center=(0.3990500569343567, 0.47580766677856445) text=先对准中心\", \"person rect=(0.01618301847003541, 0.441896976996925, 0.3325893238837278, 0.25104689688632) center=(0.18247768041189932, 0.432579574559915) text=先对准中心\", \"person rect=(0.01618301847003541, 0.441896976996925, 0.3325893238837278, 0.25104689688632) center=(0.18247768041189932, 0.432579574559915) text=先对准中心\", \"salient rect=(0.02392578125, 0.18017578125, 0.71875, 0.6739501953125) center=(0.3354563036478967, 0.46535314559310376) text=先对准中心\", \"salient rect=(0.048187255859375, 0.17724609375, 0.818023681640625, 0.7132568359375) center=(0.4571990966796875, 0.46612548828125) text=已对准中心\", \"salient rect=(0.04071044921875, 0.2275390625, 0.69757080078125, 0.6248779296875) center=(0.398345947265625, 0.45929718017578125) text=先对准中心\", \"salient rect=(0.0307769775390625, 0.18359375, 0.7201995849609375, 0.6607666015625) center=(0.3935356140136719, 0.47396183013916016) text=先对准中心\", \"salient rect=(0.031158447265625, 0.181640625, 0.702239990234375, 0.6566162109375) center=(0.3848252296447754, 0.48300468921661377) text=先对准中心\", \"salient rect=(0.025299072265625, 0.1845703125, 0.735931396484375, 0.667236328125) center=(0.39125242829322815, 0.48410625010728836) text=先对准中心\", \"salient rect=(0.0201873779296875, 0.185546875, 0.7464141845703125, 0.66552734375) center=(0.39232344925403595, 0.4828978516161442) text=先对准中心\", \"salient rect=(0.025970458984375, 0.16748046875, 0.702545166015625, 0.672607421875) center=(0.3847832456231117, 0.4895568359643221) text=先对准中心\", \"salient rect=(0.016510009765625, 0.18310546875, 0.741790771484375, 0.69256591796875) center=(0.3856931868940592, 0.4798416015692055) text=先对准中心\", \"salient rect=(0.074951171875, 0.2802734375, 0.675048828125, 0.560791015625) center=(0.3990843864157796, 0.45958632812835276) text=先对准中心\"]"
+    ],
+    "SmartMulti-Checks": [
+      "SMART-AESTHETICS samples=3 candidateScores=12 seconds=[0.05089137499817298, 0.022440624998125713, 0.02057237500048359] preCancelledNoWork=true; not display FPS or aesthetic accuracy",
+      "SMART-AUTO stability: hardwareFlow=1 repeatedAlignedFrames=30 popupCancel=true manualNoChange=true noMediaSaved=true",
+      "SMART-PERF samples=12 median=29.1ms p95=38.2ms max=38.2ms",
+      "SMART-TRACK samples=12 targets=3 maximumNormalizedDrift=0.0 seconds=[0.012642166668229038, 0.004065249999257503, 0.003961708331189584, 0.003872916666296078, 0.003835541665466735, 0.0038904583343537524, 0.00386429166974267, 0.003958749999583233, 0.00405391666572541, 0.004104541665583383, 0.0038736249989597127, 0.004055083336425014]; synthetic static pixels, not real-scene accuracy"
+    ],
+    "SmartMulti-RealScene": [
+      "SMART-REAL guides=42 automaticActions=1 initialZoom=1.0 finalZoom=1.0 seconds=8.568998750000901 observations=[\"candidates=2 id=Optional(AB6C5539-CD89-4244-98C0-AB6CCFAAF305) salient rect=(0.12673715750376383, 0.3378697633743286, 0.28383898735046387, 0.24398350715637207) center=(0.25852719280454844, 0.5412418693304062) text=先对准中心\", \"candidates=2 id=Optional(AB6C5539-CD89-4244-98C0-AB6CCFAAF305) salient rect=(0.23506087727016872, 0.33667461077372235, 0.29644415113661027, 0.23870227734247842) center=(0.3384881541132927, 0.5442150589078665) text=先对准中心\", \"candidates=2 id=Optional(AB6C5539-CD89-4244-98C0-AB6CCFAAF305) salient rect=(0.198127547899882, 0.32331069310506183, 0.2907488875918918, 0.23445630073547363) center=(0.3577931224265032, 0.5517478045852234) text=先对准中心\", \"candidates=2 id=Optional(AB6C5539-CD89-4244-98C0-AB6CCFAAF305) salient rect=(0.06788478957282172, 0.2731614112854004, 0.2945568561553955, 0.2408745288848877) center=(0.2528311879141256, 0.5963772778341081) text=先对准中心\", \"candidates=2 id=Optional(AB6C5539-CD89-4244-98C0-AB6CCFAAF305) salient rect=(0.10827902952829997, 0.2781529426574707, 0.29820704460144043, 0.244645893573761) center=(0.22662652123350807, 0.602660245505831) text=先对准中心\", \"candidates=1 id=Optional(AB6C5539-CD89-4244-98C0-AB6CCFAAF305) salient rect=(0.29289211167229545, 0.33942453066507977, 0.2923613124423557, 0.24657020966211954) center=(0.4478823455185395, 0.5328712939475887) text=先对准中心\", \"candidates=1 id=Optional(AB6C5539-CD89-4244-98C0-AB6CCFAAF305) salient rect=(0.4357852405971951, 0.4125175476074219, 0.2967567178938124, 0.24606194098790488) center=(0.562195525964234, 0.48441655163038416) text=先对准中心\", \"candidates=1 id=Optional(AB6C5539-CD89-4244-98C0-AB6CCFAAF305) salient rect=(0.4009283118777805, 0.40910637378692627, 0.2981583807203505, 0.24094776312510172) center=(0.564339541693545, 0.46993124699104405) text=先对准中心\", \"candidates=2 id=Optional(AB6C5539-CD89-4244-98C0-AB6CCFAAF305) salient rect=(0.34271372689141166, 0.37261831760406494, 0.2926521036359999, 0.2329768737157186) center=(0.503206207930216, 0.4991304343137996) text=已对准中心\", \"candidates=2 id=Optional(AB6C5539-CD89-4244-98C0-AB6CCFAAF305) salient rect=(0.34245660569932723, 0.36554638544718426, 0.2860450744628906, 0.23340708017349243) center=(0.4880333436751327, 0.5151441726236772) text=已对准中心\"]",
+      "SMART-REAL output=3000x4000 focal35mm=24 noPhotosWrite=true"
+    ],
+    "SmartMulti-Final": [
+      "SMART-AESTHETICS samples=3 candidateScores=12 seconds=[0.0579622916666267, 0.020744333331094822, 0.02524325000194949] preCancelledNoWork=true; not display FPS or aesthetic accuracy",
+      "SMART-AUTO stability: hardwareFlow=1 repeatedAlignedFrames=30 popupCancel=true manualNoChange=true noMediaSaved=true",
+      "SMART-PORTRAIT backlitNoBlurOrigin=true manualToggleClearsOrigin=true noCapture=true",
+      "SMART-PERF samples=12 median=29.1ms p95=40.2ms max=40.2ms",
+      "SMART-TRACK samples=12 targets=3 maximumNormalizedDrift=0.0 seconds=[0.012409208335157018, 0.005555666666623438, 0.005298583335388685, 0.005229416667134501, 0.005317166665918194, 0.008077166665316327, 0.005279583332594484, 0.005712874997698236, 0.005662458333972609, 0.005928583330387482, 0.006679124999209307, 0.009756833333085524]; synthetic static pixels, not real-scene accuracy"
+    ],
+    "SmartMulti-RingStyle": [
+      "SMART-RING renderSamples=16 snapshotSeconds=[0.019943625000450993, 0.014559208331775153, 0.015935541669023223, 0.02237316666651168, 0.03140783333583386, 0.027234416666033212, 0.03487654166747234, 0.036794166670006234, 0.03531999999904656, 0.024892041667044396, 0.036654458333941875, 0.026621916666044854, 0.0366905000009865, 0.02601291666724137, 0.031909666664432734, 0.02834400000210735] ringDiameter=10percentShortEdge stroke=3 dotDiameter=ringMinus6; drawing time, not display FPS"
+    ],
+    "SmartMulti-RingStyleFinal": [
+      "SMART-RING renderSamples=16 snapshotSeconds=[0.011603583330725087, 0.011669291667203652, 0.012515916667325655, 0.016120500000397442, 0.01754741666445625, 0.017473083331424277, 0.03104199999870616, 0.02820962499754387, 0.03383083333392278, 0.030521333330398193, 0.03233462500065798, 0.030483999998978106, 0.03894916666831705, 0.02629170833461103, 0.031277375001081964, 0.029874666666728444] ringDiameter=10percentShortEdge stroke=3 dotDiameter=ringMinus6; drawing time, not display FPS"
+    ],
+    "SmartMulti-OriginFinal": [
+      "SMART-AUTO stability: hardwareFlow=1 repeatedAlignedFrames=30 popupCancel=true manualNoChange=true noMediaSaved=true",
+      "SMART-PORTRAIT backlitNoBlurOrigin=true manualToggleClearsOrigin=true noCapture=true"
+    ],
+    "SmartMulti-FocusProjection": [
+      "SMART-AUTO stability: hardwareFlow=1 repeatedAlignedFrames=30 popupCancel=true manualNoChange=true noMediaSaved=true"
+    ]
+  },
+  "limitations": [
+    "One real desktop scene; retained 1x rather than real model selecting zoom-in",
+    "No broad aesthetic accuracy, long power/thermal or full-format regression",
+    "Earlier harness failures and unaligned scene retained in reports"
+  ],
+  "passedDistinctMethods": [
+    "LumaCameraTests.SmartAutoFramingTests testActualVisionCandidateScoringPerformanceAndCancellation",
+    "LumaCameraTests.SmartAutoFramingTests testAlignmentTextHonorsDwell",
+    "LumaCameraTests.SmartAutoFramingTests testAlignmentUsesDrawnCircleRadiusAcrossRatios",
+    "LumaCameraTests.SmartAutoFramingTests testAutomaticHardwareFramingOnceAndCancelPendingWork",
+    "LumaCameraTests.SmartAutoFramingTests testBacklitPortraitWithoutBlurTracksAutomaticOrigin",
+    "LumaCameraTests.SmartAutoFramingTests testLeavingSubjectAllowsNextSceneAfterGrace",
+    "LumaCameraTests.SmartAutoFramingTests testMovingSubjectAndCancellationRestartDwell",
+    "LumaCameraTests.SmartAutoFramingTests testRealSceneGuideAutomaticFramingAndCapture",
+    "LumaCameraTests.SmartAutoFramingTests testRelativeZoomAndSubjectMargins",
+    "LumaCameraTests.SmartAutoFramingTests testStableAlignmentAndJitterDoNotRepeatZoom",
+    "LumaCameraTests.SmartAutoFramingTests testVisibleAnalysisCropsAllSupportedRatios",
+    "LumaCameraTests.SmartCaptureAnalyzerTests testAnalyzerReturnsNightForDarkPreview",
+    "LumaCameraTests.SmartCapturePhysicalTests testRealPreviewAnalysisPerformanceAndStability",
+    "LumaCameraTests.SmartCompositionGeometryTests testPortraitDisplayMapsCentreAndCropOffset",
+    "LumaCameraTests.SmartCompositionGeometryTests testSquareDisplayMapsFourThreeSourceWithVerticalCrop",
+    "LumaCameraTests.SmartCompositionGeometryTests testWhitePointAndThickerRingRendering",
+    "LumaCameraTests.SmartCompositionStabilizerTests testDirectionChangeWaitsAndSmoothsPoint",
+    "LumaCameraTests.SmartCompositionStabilizerTests testMissingGuideClearsAfterGrace",
+    "LumaCameraTests.SmartCompositionStabilizerTests testStageChangeWaitsForDwell",
+    "LumaCameraTests.SmartFramingRecommendationTests testLargeSubjectDoesNotZoomOutBelowOne",
+    "LumaCameraTests.SmartFramingRecommendationTests testSelectedSubjectFocusFollowsZoomProjection",
+    "LumaCameraTests.SmartFramingRecommendationTests testSmallSubjectGetsZoomIn",
+    "LumaCameraTests.SmartFramingRecommendationTests testZoomClampsToMaximum",
+    "LumaCameraTests.SmartSubjectTrackerTests testThreeStableIdentitiesDoNotFollowDetectionOrder"
+  ],
+  "normalBuild": "succeeded",
+  "installationDatabaseSequenceNumber": 2544
+}

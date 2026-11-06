@@ -1,0 +1,41 @@
+{
+  "summary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64e",
+          "deviceId": "00008150-001934280220401C",
+          "deviceName": "笨笨波尔霸&iPhone Pro",
+          "modelName": "iPhone 17 Pro",
+          "osBuildNumber": "24B119",
+          "osVersion": "27.2",
+          "platform": "iOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 7,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "LumaCamera · Built with macOS 27.2",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1793254589.509,
+    "passedTests": 7,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1793254577.769,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - LumaCamera",
+    "topInsights": [],
+    "totalTestCount": 7
+  },
+  "sourceSHA256": "e5133f71f47549dc06bcc97685862b8ec58ac0c7ca635a17c8ff4cd201122c1d",
+  "log": "/private/tmp/LumaCamera-1029-FocalGlass/Related.log"
+}

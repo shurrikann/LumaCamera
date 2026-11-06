@@ -1,0 +1,72 @@
+{
+  "device": "iPhone17Pro / iOS27.2 (24B119)",
+  "xcode": "27.1",
+  "uniqueMethodsWithPassingResults": 14,
+  "batches": {
+    "ThreeSeconds": {
+      "methods": 14,
+      "passed": 12,
+      "failedMethods": 2,
+      "assertionFailures": 4,
+      "seconds": 147.561
+    },
+    "Retry": {
+      "methods": 2,
+      "passed": 2,
+      "failedMethods": 0,
+      "seconds": 57.168
+    }
+  },
+  "idleSeconds": {
+    "depthSliders": [
+      3.0216354166623205,
+      3.0253612083615735,
+      3.030575916694943,
+      3.0163160416996107,
+      3.017735083354637,
+      3.0228833750006743
+    ],
+    "videoStandby": 3.035178374964744,
+    "recordingRearA": 3.031711958348751
+  },
+  "layout": {
+    "cases": 80,
+    "simulatedRecordingState": true,
+    "widths": [
+      320,
+      402
+    ],
+    "modes": [
+      "A",
+      "M"
+    ],
+    "ratios": 5,
+    "controlAngles": 4,
+    "snapshotSamples": 20,
+    "snapshotMedianMS": 28.631562512600794,
+    "snapshotMaxMS": 34.84837501309812,
+    "notDisplayFPS": true
+  },
+  "realMovies": {
+    "frontA": {
+      "decodedFrames": 55
+    },
+    "rearMRetry": {
+      "decodedFrames": 68
+    },
+    "rearA": {
+      "decodedFrames": 363
+    }
+  },
+  "photosWrites": false,
+  "evidenceRoot": "/tmp/LumaCamera-VideoZoomInteraction-20261101",
+  "release": {
+    "status": "passed 2026-11-02",
+    "sourceWarnings": 0,
+    "toolWarnings": [
+      "AppIntents metadata extraction skipped; no dependency"
+    ],
+    "log": "/tmp/LumaCamera-VideoZoomInteraction-20261101/Release.log"
+  },
+  "normalAppRestore": "passed 2026-11-02; devicectl launch"
+}

@@ -1,0 +1,2581 @@
+{
+  "date": "2026-11-02",
+  "timezone": "Asia/Shanghai",
+  "device": "iPhone17Pro / iPhone18,1 / iOS27.2 (24B119)",
+  "xcode": "27.1",
+  "build": "existing Debug arm64 physical build; no app/test code changes",
+  "uniqueMethods": 287,
+  "latestMethodStatus": {
+    "passed": 282,
+    "failed": 1,
+    "skipped": 4
+  },
+  "totalExecutions": 296,
+  "executionStatus": {
+    "passed": 282,
+    "failed": 10,
+    "skipped": 4
+  },
+  "bundles": {
+    "Core": {
+      "totalTestCount": 81,
+      "passedTests": 80,
+      "failedTests": 0,
+      "skippedTests": 1,
+      "result": "Passed",
+      "startTime": 1793583988.027,
+      "finishTime": 1793584104.363
+    },
+    "Dark": {
+      "totalTestCount": 1,
+      "passedTests": 0,
+      "failedTests": 1,
+      "skippedTests": 0,
+      "result": "Failed",
+      "startTime": 1793586967.669,
+      "finishTime": 1793586976.001
+    },
+    "DarkGate": {
+      "totalTestCount": 1,
+      "passedTests": 0,
+      "failedTests": 0,
+      "skippedTests": 1,
+      "result": "Skipped",
+      "startTime": 1793587579.911,
+      "finishTime": 1793587589.731
+    },
+    "FilterBurst": {
+      "totalTestCount": 26,
+      "passedTests": 26,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793588112.895,
+      "finishTime": 1793588136.778
+    },
+    "Library": {
+      "totalTestCount": 72,
+      "passedTests": 72,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793584137.071,
+      "finishTime": 1793584181.595
+    },
+    "Macro": {
+      "totalTestCount": 1,
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793586844.577,
+      "finishTime": 1793586853.512
+    },
+    "NightSlow": {
+      "totalTestCount": 10,
+      "passedTests": 10,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793584743.298,
+      "finishTime": 1793584944.326
+    },
+    "PersonSmart": {
+      "totalTestCount": 28,
+      "passedTests": 27,
+      "failedTests": 0,
+      "skippedTests": 1,
+      "result": "Passed",
+      "startTime": 1793586498.933,
+      "finishTime": 1793586579.877
+    },
+    "Photo": {
+      "totalTestCount": 14,
+      "passedTests": 12,
+      "failedTests": 2,
+      "skippedTests": 0,
+      "result": "Failed",
+      "startTime": 1793584501.61,
+      "finishTime": 1793584710.328
+    },
+    "RecheckCold": {
+      "totalTestCount": 1,
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793587928.552,
+      "finishTime": 1793587944.686
+    },
+    "RecheckDepth": {
+      "totalTestCount": 1,
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793587714.547,
+      "finishTime": 1793587755.293
+    },
+    "RecheckFront": {
+      "totalTestCount": 1,
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793587756.749,
+      "finishTime": 1793587765.911
+    },
+    "RecheckHDR": {
+      "totalTestCount": 1,
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793587767.302,
+      "finishTime": 1793587803.523
+    },
+    "RecheckNavigator": {
+      "totalTestCount": 2,
+      "passedTests": 2,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793586734.175,
+      "finishTime": 1793586761.467
+    },
+    "RecheckSilent": {
+      "totalTestCount": 1,
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793587805.097,
+      "finishTime": 1793587826.206
+    },
+    "RecheckVideoReturn": {
+      "totalTestCount": 1,
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793587827.576,
+      "finishTime": 1793587899.326
+    },
+    "RecheckWB": {
+      "totalTestCount": 1,
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "result": "Passed",
+      "startTime": 1793587900.79,
+      "finishTime": 1793587927.14
+    },
+    "Routes": {
+      "totalTestCount": 12,
+      "passedTests": 9,
+      "failedTests": 3,
+      "skippedTests": 0,
+      "result": "Failed",
+      "startTime": 1793586141.459,
+      "finishTime": 1793586369.793
+    },
+    "Supplement": {
+      "totalTestCount": 14,
+      "passedTests": 13,
+      "failedTests": 0,
+      "skippedTests": 1,
+      "result": "Passed",
+      "startTime": 1793587946.081,
+      "finishTime": 1793587988.873
+    },
+    "UI": {
+      "totalTestCount": 14,
+      "passedTests": 12,
+      "failedTests": 2,
+      "skippedTests": 0,
+      "result": "Failed",
+      "startTime": 1793584241.044,
+      "finishTime": 1793584467.999
+    },
+    "Video": {
+      "totalTestCount": 13,
+      "passedTests": 11,
+      "failedTests": 2,
+      "skippedTests": 0,
+      "result": "Failed",
+      "startTime": 1793584969.849,
+      "finishTime": 1793585277.82
+    }
+  },
+  "methodHistories": {
+    "CameraSessionRecoveryTests/testLateRecoveryNotificationCannotCancelQueuedForegroundStart": [
+      {
+        "batch": "Core",
+        "id": "CameraSessionRecoveryTests/testLateRecoveryNotificationCannotCancelQueuedForegroundStart",
+        "status": "passed",
+        "seconds": 2.84
+      }
+    ],
+    "CameraSessionRecoveryTests/testReportedRuntimeErrorsRecoverAndCannotRestartAfterExit": [
+      {
+        "batch": "Core",
+        "id": "CameraSessionRecoveryTests/testReportedRuntimeErrorsRecoverAndCannotRestartAfterExit",
+        "status": "passed",
+        "seconds": 1.745
+      }
+    ],
+    "CameraSessionRecoveryTests/testRestartAfterInterruptedFrameGateDeliversFreshPreview": [
+      {
+        "batch": "Core",
+        "id": "CameraSessionRecoveryTests/testRestartAfterInterruptedFrameGateDeliversFreshPreview",
+        "status": "passed",
+        "seconds": 0.648
+      }
+    ],
+    "CameraSessionRecoveryTests/testRuntimeRecoveryRestoresLiveFramesAndManualExposureWithoutWritingPhotos": [
+      {
+        "batch": "Core",
+        "id": "CameraSessionRecoveryTests/testRuntimeRecoveryRestoresLiveFramesAndManualExposureWithoutWritingPhotos",
+        "status": "passed",
+        "seconds": 6.431
+      }
+    ],
+    "CameraSessionRecoveryTests/testTemporaryInterruptionIsSilentAndEndedCannotRestartStoppedCamera": [
+      {
+        "batch": "Core",
+        "id": "CameraSessionRecoveryTests/testTemporaryInterruptionIsSilentAndEndedCannotRestartStoppedCamera",
+        "status": "skipped",
+        "seconds": 0.05
+      }
+    ],
+    "CapturePreferencesTests/testDockKitPreviewMappingAccountsForAspectFillCrop": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testDockKitPreviewMappingAccountsForAspectFillCrop",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "CapturePreferencesTests/testDockKitPreviewMappingRejectsInvalidGeometry": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testDockKitPreviewMappingRejectsInvalidGeometry",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "CapturePreferencesTests/testDockKitTrackingPreferenceCanBeChangedWhileCameraIsInactive": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testDockKitTrackingPreferenceCanBeChangedWhileCameraIsInactive",
+        "status": "passed",
+        "seconds": 0.031
+      }
+    ],
+    "CapturePreferencesTests/testExistingPreferencesMigrateWithoutResettingOtherSettings": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testExistingPreferencesMigrateWithoutResettingOtherSettings",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "CapturePreferencesTests/testFrontMirrorPreferenceAndRealHDRCaptureMetadataWithoutSaving": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testFrontMirrorPreferenceAndRealHDRCaptureMetadataWithoutSaving",
+        "status": "passed",
+        "seconds": 4.501
+      }
+    ],
+    "CapturePreferencesTests/testHDRPreviewRetainsExtendedHighlightsInsteadOfEightBitClipping": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testHDRPreviewRetainsExtendedHighlightsInsteadOfEightBitClipping",
+        "status": "passed",
+        "seconds": 0.033
+      }
+    ],
+    "CapturePreferencesTests/testJPGAndHEIFOriginalCompanionIsUnfilteredAndPreservesCopyright": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testJPGAndHEIFOriginalCompanionIsUnfilteredAndPreservesCopyright",
+        "status": "passed",
+        "seconds": 0.067
+      }
+    ],
+    "CapturePreferencesTests/testMetadataPreservesCameraFieldsRemovesLocationWhenOffAndAddsCopyright": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testMetadataPreservesCameraFieldsRemovesLocationWhenOffAndAddsCopyright",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "CapturePreferencesTests/testPreferencesPersistAndNewInstallDoesNotRecordLocation": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testPreferencesPersistAndNewInstallDoesNotRecordLocation",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "CapturePreferencesTests/testRAWAttributionAndLocationOffUseCaptureMetadataWithoutSaving": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testRAWAttributionAndLocationOffUseCaptureMetadataWithoutSaving",
+        "status": "passed",
+        "seconds": 3.14
+      }
+    ],
+    "CapturePreferencesTests/testShutterPreferencePropagatesToEachNewCaptureOptionsSnapshot": [
+      {
+        "batch": "Core",
+        "id": "CapturePreferencesTests/testShutterPreferencePropagatesToEachNewCaptureOptionsSnapshot",
+        "status": "passed",
+        "seconds": 0.031
+      }
+    ],
+    "CaptureReviewEntryTests/testCaptureOpensDetailsOnceThenAlwaysOpensGridUntilNextCapture": [
+      {
+        "batch": "Core",
+        "id": "CaptureReviewEntryTests/testCaptureOpensDetailsOnceThenAlwaysOpensGridUntilNextCapture",
+        "status": "passed",
+        "seconds": 0.036
+      }
+    ],
+    "CaptureReviewEntryTests/testDiagnosticEnvironmentProtectsDefaultModelCallbacks": [
+      {
+        "batch": "Core",
+        "id": "CaptureReviewEntryTests/testDiagnosticEnvironmentProtectsDefaultModelCallbacks",
+        "status": "passed",
+        "seconds": 0.045
+      }
+    ],
+    "CaptureReviewEntryTests/testDiagnosticPhotoIsolationBlocksAllMutationEntrypoints": [
+      {
+        "batch": "Core",
+        "id": "CaptureReviewEntryTests/testDiagnosticPhotoIsolationBlocksAllMutationEntrypoints",
+        "status": "passed",
+        "seconds": 0.047
+      }
+    ],
+    "CaptureReviewEntryTests/testEditingCurrentCaptureDoesNotMakeItAnUnviewedNewCapture": [
+      {
+        "batch": "Core",
+        "id": "CaptureReviewEntryTests/testEditingCurrentCaptureDoesNotMakeItAnUnviewedNewCapture",
+        "status": "passed",
+        "seconds": 0.03
+      }
+    ],
+    "CaptureReviewEntryTests/testNewSessionHasNoAutomaticCaptureEntry": [
+      {
+        "batch": "Core",
+        "id": "CaptureReviewEntryTests/testNewSessionHasNoAutomaticCaptureEntry",
+        "status": "passed",
+        "seconds": 0.06
+      }
+    ],
+    "CaptureReviewEntryTests/testRejectedCaptureWhileSavingDoesNotRearmViewedPhoto": [
+      {
+        "batch": "Core",
+        "id": "CaptureReviewEntryTests/testRejectedCaptureWhileSavingDoesNotRearmViewedPhoto",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "CaptureStatePersistenceTests/test48MPRemembersAutomaticExposureWithoutChangingWBOrFocusFlags": [
+      {
+        "batch": "Core",
+        "id": "CaptureStatePersistenceTests/test48MPRemembersAutomaticExposureWithoutChangingWBOrFocusFlags",
+        "status": "passed",
+        "seconds": 0.078
+      }
+    ],
+    "CaptureStatePersistenceTests/testAllCaptureChoicesAndManualFlagsSurviveModelRecreation": [
+      {
+        "batch": "Core",
+        "id": "CaptureStatePersistenceTests/testAllCaptureChoicesAndManualFlagsSurviveModelRecreation",
+        "status": "passed",
+        "seconds": 0.197
+      }
+    ],
+    "CaptureStatePersistenceTests/testCorruptAndFutureStatesAreIgnoredAndBurstUpdatesFlushLatest": [
+      {
+        "batch": "Core",
+        "id": "CaptureStatePersistenceTests/testCorruptAndFutureStatesAreIgnoredAndBurstUpdatesFlushLatest",
+        "status": "passed",
+        "seconds": 0.845
+      }
+    ],
+    "CaptureStatePersistenceTests/testCustomTimeLapseWithoutPresetSurvivesRecreation": [
+      {
+        "batch": "Core",
+        "id": "CaptureStatePersistenceTests/testCustomTimeLapseWithoutPresetSurvivesRecreation",
+        "status": "passed",
+        "seconds": 0.083
+      }
+    ],
+    "CaptureStatePersistenceTests/testDisabledUsesRequestedPhotoAndVideoDefaultsAndRetainsPreferences": [
+      {
+        "batch": "Core",
+        "id": "CaptureStatePersistenceTests/testDisabledUsesRequestedPhotoAndVideoDefaultsAndRetainsPreferences",
+        "status": "passed",
+        "seconds": 0.079
+      }
+    ],
+    "CaptureStatePersistenceTests/testDualCapturePreferenceRoundTripAndLegacyDefault": [
+      {
+        "batch": "Core",
+        "id": "CaptureStatePersistenceTests/testDualCapturePreferenceRoundTripAndLegacyDefault",
+        "status": "passed",
+        "seconds": 0.002
+      }
+    ],
+    "CaptureStatePersistenceTests/testIndependentVideoModePersistsWhilePhotoIsSelected": [
+      {
+        "batch": "Core",
+        "id": "CaptureStatePersistenceTests/testIndependentVideoModePersistsWhilePhotoIsSelected",
+        "status": "passed",
+        "seconds": 0.172
+      }
+    ],
+    "CaptureStatePersistenceTests/testPhotoManualExposureSurvivesVideoClampAndModelRecreation": [
+      {
+        "batch": "Core",
+        "id": "CaptureStatePersistenceTests/testPhotoManualExposureSurvivesVideoClampAndModelRecreation",
+        "status": "passed",
+        "seconds": 0.094
+      }
+    ],
+    "CaptureStatePersistenceTests/testSlowShutterAutomaticPresetSurvivesManualRecreation": [
+      {
+        "batch": "Core",
+        "id": "CaptureStatePersistenceTests/testSlowShutterAutomaticPresetSurvivesManualRecreation",
+        "status": "passed",
+        "seconds": 0.046
+      }
+    ],
+    "CaptureStatePersistenceTests/testVideoOpenGateChoicePersistsAndLegacyRatioMigrates": [
+      {
+        "batch": "Core",
+        "id": "CaptureStatePersistenceTests/testVideoOpenGateChoicePersistsAndLegacyRatioMigrates",
+        "status": "passed",
+        "seconds": 0.091
+      }
+    ],
+    "PhotoOptionsTests/testBurstPolicyAllowsOnlyStandardJpegAndHEIFWithoutLiveOrHDR": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testBurstPolicyAllowsOnlyStandardJpegAndHEIFWithoutLiveOrHDR",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoOptionsTests/testEncodedFormatsMatchTheirFileContainersAndCrop": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testEncodedFormatsMatchTheirFileContainersAndCrop",
+        "status": "passed",
+        "seconds": 0.035
+      }
+    ],
+    "PhotoOptionsTests/testFlashCyclesThroughAllThreeStates": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testFlashCyclesThroughAllThreeStates",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoOptionsTests/testHDRHEIFUsesTenBitEncoding": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testHDRHEIFUsesTenBitEncoding",
+        "status": "passed",
+        "seconds": 0.023
+      }
+    ],
+    "PhotoOptionsTests/testLiveFilterColorsMatchSavedTIFFAcrossStylesAndTones": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testLiveFilterColorsMatchSavedTIFFAcrossStylesAndTones",
+        "status": "passed",
+        "seconds": 1.851
+      }
+    ],
+    "PhotoOptionsTests/testMeanMeteringMeasuresEntireFrameInLinearLight": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testMeanMeteringMeasuresEntireFrameInLinearLight",
+        "status": "passed",
+        "seconds": 0.009
+      }
+    ],
+    "PhotoOptionsTests/testNewRatiosAreCenteredAndXPANUsesFilmGateRatio": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testNewRatiosAreCenteredAndXPANUsesFilmGateRatio",
+        "status": "passed",
+        "seconds": 0.016
+      }
+    ],
+    "PhotoOptionsTests/testNightEnvironmentGateNormalizesExposureCompensationAndResets": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testNightEnvironmentGateNormalizesExposureCompensationAndResets",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoOptionsTests/testNightEnvironmentGateRepeatedReadingsPerformance": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testNightEnvironmentGateRepeatedReadingsPerformance",
+        "status": "passed",
+        "seconds": 0.082
+      }
+    ],
+    "PhotoOptionsTests/testNightEnvironmentGateRequiresStableLowLightAndUsesHysteresis": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testNightEnvironmentGateRequiresStableLowLightAndUsesHysteresis",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoOptionsTests/testNightIndicatorMapsClosedWaitingTriggeredAndUnsupportedStates": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testNightIndicatorMapsClosedWaitingTriggeredAndUnsupportedStates",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoOptionsTests/testNightMergerRepeatedSyntheticThreeFrameBracket": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testNightMergerRepeatedSyntheticThreeFrameBracket",
+        "status": "passed",
+        "seconds": 1.105
+      }
+    ],
+    "PhotoOptionsTests/testNightPolicyRequiresThreeFrameAEBracketAndCompatiblePhotoSettings": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testNightPolicyRequiresThreeFrameAEBracketAndCompatiblePhotoSettings",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoOptionsTests/testNightTapWaitsForAReadyCameraBeforeChangingCaptureState": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testNightTapWaitsForAReadyCameraBeforeChangingCaptureState",
+        "status": "passed",
+        "seconds": 0.032
+      }
+    ],
+    "PhotoOptionsTests/testPhotoSubmodePoliciesExposeSafeFormatsAndResolutionFallbacks": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testPhotoSubmodePoliciesExposeSafeFormatsAndResolutionFallbacks",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoOptionsTests/testPortraitPolicyAllows48MPWhenCurrentCameraFormatProvidesIt": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testPortraitPolicyAllows48MPWhenCurrentCameraFormatProvidesIt",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoOptionsTests/testRAWPairPreservesDNGBytesAndJPEGPrimary": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testRAWPairPreservesDNGBytesAndJPEGPrimary",
+        "status": "passed",
+        "seconds": 0.004
+      }
+    ],
+    "PhotoOptionsTests/testSoftwarePortraitDoesNotRequireNativeDepthDelivery": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testSoftwarePortraitDoesNotRequireNativeDepthDelivery",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoOptionsTests/testToneChangesPixelsButNaturalPreservesSource": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testToneChangesPixelsButNaturalPreservesSource",
+        "status": "passed",
+        "seconds": 0.004
+      }
+    ],
+    "PhotoOptionsTests/testToolbarPanelCoexistsWithFiltersAndReplacesManualPanel": [
+      {
+        "batch": "Core",
+        "id": "PhotoOptionsTests/testToolbarPanelCoexistsWithFiltersAndReplacesManualPanel",
+        "status": "passed",
+        "seconds": 0.032
+      }
+    ],
+    "VideoEncodingPolicyTests/testBitratePresetAppliesOnlyToHEVCAndH264": [
+      {
+        "batch": "Core",
+        "id": "VideoEncodingPolicyTests/testBitratePresetAppliesOnlyToHEVCAndH264",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEncodingPolicyTests/testExternalRAWCapacityShowsSpaceAndApproximateRemainingTime": [
+      {
+        "batch": "Core",
+        "id": "VideoEncodingPolicyTests/testExternalRAWCapacityShowsSpaceAndApproximateRemainingTime",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEncodingPolicyTests/testExternalRecordingAccessCanBeReleasedAtWriterCompletionAndOnlyOnce": [
+      {
+        "batch": "Core",
+        "id": "VideoEncodingPolicyTests/testExternalRecordingAccessCanBeReleasedAtWriterCompletionAndOnlyOnce",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEncodingPolicyTests/testExternalRecordingAccessReleasesScopeWhenRecorderSetupFails": [
+      {
+        "batch": "Core",
+        "id": "VideoEncodingPolicyTests/testExternalRecordingAccessReleasesScopeWhenRecorderSetupFails",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEncodingPolicyTests/testH264FallsBackToSDRWithoutDiscardingCodec": [
+      {
+        "batch": "Core",
+        "id": "VideoEncodingPolicyTests/testH264FallsBackToSDRWithoutDiscardingCodec",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEncodingPolicyTests/testRAWConfigurationDoesNotQueryMetadataForRejectedDestination": [
+      {
+        "batch": "Core",
+        "id": "VideoEncodingPolicyTests/testRAWConfigurationDoesNotQueryMetadataForRejectedDestination",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEncodingPolicyTests/testRAWConfigurationNeverQueriesSystemMetadataBeforeWhiteBalanceLocks": [
+      {
+        "batch": "Core",
+        "id": "VideoEncodingPolicyTests/testRAWConfigurationNeverQueriesSystemMetadataBeforeWhiteBalanceLocks",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEncodingPolicyTests/testRAWConfigurationPreservesRecommendedSettingsAndMetadataInOrder": [
+      {
+        "batch": "Core",
+        "id": "VideoEncodingPolicyTests/testRAWConfigurationPreservesRecommendedSettingsAndMetadataInOrder",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "VideoEncodingPolicyTests/testStorageRejectsUnknownSpaceDisconnectionAndSystemWarnings": [
+      {
+        "batch": "Core",
+        "id": "VideoEncodingPolicyTests/testStorageRejectsUnknownSpaceDisconnectionAndSystemWarnings",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEncodingPolicyTests/testVideoWhiteBalanceLockIsOptInExceptForRAWRequirements": [
+      {
+        "batch": "Core",
+        "id": "VideoEncodingPolicyTests/testVideoWhiteBalanceLockIsOptInExceptForRAWRequirements",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoSelectionCompatibilityTests/testPhysicalLensAndSpecificationFilteringPreservesSelectionAndAdaptiveLayout": [
+      {
+        "batch": "Core",
+        "id": "VideoSelectionCompatibilityTests/testPhysicalLensAndSpecificationFilteringPreservesSelectionAndAdaptiveLayout",
+        "status": "passed",
+        "seconds": 27.824
+      }
+    ],
+    "VideoSelectionCompatibilityTests/testPresetsUseExactCaptureRateAndCinematicZoomRange": [
+      {
+        "batch": "Core",
+        "id": "VideoSelectionCompatibilityTests/testPresetsUseExactCaptureRateAndCinematicZoomRange",
+        "status": "passed",
+        "seconds": 6.176
+      }
+    ],
+    "VideoWorkflowTests/testCinematicPolicyAndAutomaticSubmodeSpecificationSelection": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testCinematicPolicyAndAutomaticSubmodeSpecificationSelection",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoWorkflowTests/testCinematicResolutionAndFrameRateCanBeSelectedAsApplePairs": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testCinematicResolutionAndFrameRateCanBeSelectedAsApplePairs",
+        "status": "passed",
+        "seconds": 0.149
+      }
+    ],
+    "VideoWorkflowTests/testFrameRateChoicesHaveThirtySelectedByDefault": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testFrameRateChoicesHaveThirtySelectedByDefault",
+        "status": "passed",
+        "seconds": 0.148
+      }
+    ],
+    "VideoWorkflowTests/testImmediateCancelDuringWhiteBalanceStartupCompletesExactlyOnce": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testImmediateCancelDuringWhiteBalanceStartupCompletesExactlyOnce",
+        "status": "passed",
+        "seconds": 3.416
+      }
+    ],
+    "VideoWorkflowTests/testLifecycleStopFreezesClockAndRapidModeRequestsCoalesce": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testLifecycleStopFreezesClockAndRapidModeRequestsCoalesce",
+        "status": "passed",
+        "seconds": 26.852
+      }
+    ],
+    "VideoWorkflowTests/testPhotoFilterLookAndEditsAreAvailableOnlyForSDRAndP3Video": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testPhotoFilterLookAndEditsAreAvailableOnlyForSDRAndP3Video",
+        "status": "passed",
+        "seconds": 0.178
+      }
+    ],
+    "VideoWorkflowTests/testSlowMotionPickerShowsCaptureFormatsAndKeepsPlaybackRateSeparate": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testSlowMotionPickerShowsCaptureFormatsAndKeepsPlaybackRateSeparate",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoWorkflowTests/testSlowMotionPolicyOnlyAllowsSupportedNormalVideoCombinations": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testSlowMotionPolicyOnlyAllowsSupportedNormalVideoCombinations",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoWorkflowTests/testSlowMotionSchedulerRetimes120FPSCaptureAndRejectsInvalidTime": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testSlowMotionSchedulerRetimes120FPSCaptureAndRejectsInvalidTime",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoWorkflowTests/testSlowMotionSchedulerThroughputAndRepeatedStartStopState": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testSlowMotionSchedulerThroughputAndRepeatedStartStopState",
+        "status": "passed",
+        "seconds": 0.006
+      }
+    ],
+    "VideoWorkflowTests/testSubmodeFocalChoicesOnlyIncludeLensesSupportingTheSelectedVideoSettings": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testSubmodeFocalChoicesOnlyIncludeLensesSupportingTheSelectedVideoSettings",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoWorkflowTests/testTimeLapsePresetBarMatchesFocalBarAndSurvivesRapidChanges": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testTimeLapsePresetBarMatchesFocalBarAndSurvivesRapidChanges",
+        "status": "passed",
+        "seconds": 21.073
+      }
+    ],
+    "VideoWorkflowTests/testTimeLapsePresetsSchedulerAndModeStability": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testTimeLapsePresetsSchedulerAndModeStability",
+        "status": "passed",
+        "seconds": 0.535
+      }
+    ],
+    "VideoWorkflowTests/testTimeLapseSchedulerThroughput": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testTimeLapseSchedulerThroughput",
+        "status": "passed",
+        "seconds": 0.004
+      }
+    ],
+    "VideoWorkflowTests/testVideoLensCapabilitiesExposeOnlyTheRequestedSubmodeRoutes": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testVideoLensCapabilitiesExposeOnlyTheRequestedSubmodeRoutes",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoWorkflowTests/testVideoSubmodeFallsBackToTheNearestSafeDefaultAndPreservesValidChoice": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testVideoSubmodeFallsBackToTheNearestSafeDefaultAndPreservesValidChoice",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoWorkflowTests/testVideoSubmodeSwitchesAreExclusiveAndKeepOnlySupportedSettings": [
+      {
+        "batch": "Core",
+        "id": "VideoWorkflowTests/testVideoSubmodeSwitchesAreExclusiveAndKeepOnlySupportedSettings",
+        "status": "passed",
+        "seconds": 1.322
+      }
+    ],
+    "NightAdaptiveCapturePhysicalTests/testNaturalDarkRoomHandheldUltraWideAndMainWithSourceAttachments": [
+      {
+        "batch": "Dark",
+        "id": "NightAdaptiveCapturePhysicalTests/testNaturalDarkRoomHandheldUltraWideAndMainWithSourceAttachments",
+        "status": "failed",
+        "seconds": 4.466
+      }
+    ],
+    "NightAdaptiveCapturePhysicalTests/testNaturallyTriggeredNightUsesActualMeteringAndFrameCount": [
+      {
+        "batch": "DarkGate",
+        "id": "NightAdaptiveCapturePhysicalTests/testNaturallyTriggeredNightUsesActualMeteringAndFrameCount",
+        "status": "skipped",
+        "seconds": 5.516
+      }
+    ],
+    "BurstCapturePipelineTests/testHeldBurstShutterOnDeviceStopsCleanlyWithoutSavingToPhotos": [
+      {
+        "batch": "FilterBurst",
+        "id": "BurstCapturePipelineTests/testHeldBurstShutterOnDeviceStopsCleanlyWithoutSavingToPhotos",
+        "status": "passed",
+        "seconds": 5.685
+      }
+    ],
+    "BurstCapturePipelineTests/testNativeConsecutiveCapturesKeepSeparateResourcesWithoutSavingPhotos": [
+      {
+        "batch": "FilterBurst",
+        "id": "BurstCapturePipelineTests/testNativeConsecutiveCapturesKeepSeparateResourcesWithoutSavingPhotos",
+        "status": "passed",
+        "seconds": 4.218
+      }
+    ],
+    "BurstCapturePipelineTests/testQueuedSavesRetainEveryShotAndOnlyLatestUpdatesCurrentIdentity": [
+      {
+        "batch": "FilterBurst",
+        "id": "BurstCapturePipelineTests/testQueuedSavesRetainEveryShotAndOnlyLatestUpdatesCurrentIdentity",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "ImportedFilterTests/testAll45TablesMatchOriginalPNGAndCUBEGridSamplesAndManagedP3Input": [
+      {
+        "batch": "FilterBurst",
+        "id": "ImportedFilterTests/testAll45TablesMatchOriginalPNGAndCUBEGridSamplesAndManagedP3Input",
+        "status": "passed",
+        "seconds": 0.583
+      }
+    ],
+    "ImportedFilterTests/testAllImportedTablesInterpolateOffGridAndBlendInManagedColorSpaces": [
+      {
+        "batch": "FilterBurst",
+        "id": "ImportedFilterTests/testAllImportedTablesInterpolateOffGridAndBlendInManagedColorSpaces",
+        "status": "passed",
+        "seconds": 5.604
+      }
+    ],
+    "ImportedFilterTests/testEveryImportedFilterRetainsIndependentEditsAndFavorites": [
+      {
+        "batch": "FilterBurst",
+        "id": "ImportedFilterTests/testEveryImportedFilterRetainsIndependentEditsAndFavorites",
+        "status": "passed",
+        "seconds": 0.006
+      }
+    ],
+    "LogLUTCubeTests/testBundledLUTsRetainTheirOriginal33Or65Grid": [
+      {
+        "batch": "FilterBurst",
+        "id": "LogLUTCubeTests/testBundledLUTsRetainTheirOriginal33Or65Grid",
+        "status": "passed",
+        "seconds": 2.614
+      }
+    ],
+    "LogLUTCubeTests/testCubeCanBeAppliedToImage": [
+      {
+        "batch": "FilterBurst",
+        "id": "LogLUTCubeTests/testCubeCanBeAppliedToImage",
+        "status": "passed",
+        "seconds": 0.008
+      }
+    ],
+    "LogLUTCubeTests/testDisplayNamesAreSeparatedForRec709AndBohemianLUTs": [
+      {
+        "batch": "FilterBurst",
+        "id": "LogLUTCubeTests/testDisplayNamesAreSeparatedForRec709AndBohemianLUTs",
+        "status": "passed",
+        "seconds": 0.002
+      }
+    ],
+    "LogLUTCubeTests/testOriginalChoiceIsAvailableAlongsideBundledLUTs": [
+      {
+        "batch": "FilterBurst",
+        "id": "LogLUTCubeTests/testOriginalChoiceIsAvailableAlongsideBundledLUTs",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "LogLUTCubeTests/testRecordingBadgesRetainFilterRecipeForVideoEditing": [
+      {
+        "batch": "FilterBurst",
+        "id": "LogLUTCubeTests/testRecordingBadgesRetainFilterRecipeForVideoEditing",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "LogLUTCubeTests/testVideoBadgeStoreRetainsLogAndFilterFlagsAcrossReads": [
+      {
+        "batch": "FilterBurst",
+        "id": "LogLUTCubeTests/testVideoBadgeStoreRetainsLogAndFilterFlagsAcrossReads",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "ProToneTests/testCurvesRemainMonotonicNeutralAndRetainExtendedHighlights": [
+      {
+        "batch": "FilterBurst",
+        "id": "ProToneTests/testCurvesRemainMonotonicNeutralAndRetainExtendedHighlights",
+        "status": "passed",
+        "seconds": 0.026
+      }
+    ],
+    "ProToneTests/testEachToneIsEncodedInTenBitHDRHEIFWithoutSavingToPhotos": [
+      {
+        "batch": "FilterBurst",
+        "id": "ProToneTests/testEachToneIsEncodedInTenBitHDRHEIFWithoutSavingToPhotos",
+        "status": "passed",
+        "seconds": 0.117
+      }
+    ],
+    "ProToneTests/testHDRBrightToneKeepsBlackAndUsesRestrainedMidtoneLift": [
+      {
+        "batch": "FilterBurst",
+        "id": "ProToneTests/testHDRBrightToneKeepsBlackAndUsesRestrainedMidtoneLift",
+        "status": "passed",
+        "seconds": 0.008
+      }
+    ],
+    "ProToneTests/testReferenceDirectionsAndNaturalBaseline": [
+      {
+        "batch": "FilterBurst",
+        "id": "ProToneTests/testReferenceDirectionsAndNaturalBaseline",
+        "status": "passed",
+        "seconds": 0.008
+      }
+    ],
+    "RAWFilterPolicyTests/testRAWDisablesFilterPanelAndPreservesSelectionForProcessedFormats": [
+      {
+        "batch": "FilterBurst",
+        "id": "RAWFilterPolicyTests/testRAWDisablesFilterPanelAndPreservesSelectionForProcessedFormats",
+        "status": "passed",
+        "seconds": 0.034
+      }
+    ],
+    "RAWFilterPolicyTests/testRAWPreviewBypassesFilmAndPairOnlyFiltersJPEGWhilePreservingDNGBytes": [
+      {
+        "batch": "FilterBurst",
+        "id": "RAWFilterPolicyTests/testRAWPreviewBypassesFilmAndPairOnlyFiltersJPEGWhilePreservingDNGBytes",
+        "status": "passed",
+        "seconds": 0.013
+      }
+    ],
+    "VideoFrameFilterRendererTests/testFoodCubeLookIsBakedIntoSDRAndP3VideoFrames": [
+      {
+        "batch": "FilterBurst",
+        "id": "VideoFrameFilterRendererTests/testFoodCubeLookIsBakedIntoSDRAndP3VideoFrames",
+        "status": "passed",
+        "seconds": 0.013
+      }
+    ],
+    "VideoFrameFilterRendererTests/testFoodCubeRendersThirty640pFramesForPerformanceSample": [
+      {
+        "batch": "FilterBurst",
+        "id": "VideoFrameFilterRendererTests/testFoodCubeRendersThirty640pFramesForPerformanceSample",
+        "status": "passed",
+        "seconds": 0.136
+      }
+    ],
+    "VideoFrameFilterRendererTests/testLogLUTRenderKeepsTenBitEncoderPixelFormat": [
+      {
+        "batch": "FilterBurst",
+        "id": "VideoFrameFilterRendererTests/testLogLUTRenderKeepsTenBitEncoderPixelFormat",
+        "status": "passed",
+        "seconds": 0.117
+      }
+    ],
+    "VideoFrameFilterRendererTests/testLogLUTRenderPerformanceAt640x360ForThirtyFrames": [
+      {
+        "batch": "FilterBurst",
+        "id": "VideoFrameFilterRendererTests/testLogLUTRenderPerformanceAt640x360ForThirtyFrames",
+        "status": "passed",
+        "seconds": 0.65
+      }
+    ],
+    "VideoFrameFilterRendererTests/testStillPhotoFilterIsRenderedIntoEncoderPixelBufferInSDRAndP3": [
+      {
+        "batch": "FilterBurst",
+        "id": "VideoFrameFilterRendererTests/testStillPhotoFilterIsRenderedIntoEncoderPixelBufferInSDRAndP3",
+        "status": "passed",
+        "seconds": 0.012
+      }
+    ],
+    "VirtualApertureTests/testContinuousRangeHighlightRaysAndUniformAreas": [
+      {
+        "batch": "FilterBurst",
+        "id": "VirtualApertureTests/testContinuousRangeHighlightRaysAndUniformAreas",
+        "status": "passed",
+        "seconds": 0.104
+      }
+    ],
+    "VirtualApertureTests/testEightRayAngularBalance": [
+      {
+        "batch": "FilterBurst",
+        "id": "VirtualApertureTests/testEightRayAngularBalance",
+        "status": "passed",
+        "seconds": 0.027
+      }
+    ],
+    "VirtualApertureTests/testPointIsolationRejectsPanelsAndLongEdges": [
+      {
+        "batch": "FilterBurst",
+        "id": "VirtualApertureTests/testPointIsolationRejectsPanelsAndLongEdges",
+        "status": "passed",
+        "seconds": 0.057
+      }
+    ],
+    "GalleryPhotoPagingTests/testDeletionAlwaysUsesOlderPhotoAndNeverWrapsToNewer": [
+      {
+        "batch": "Library",
+        "id": "GalleryPhotoPagingTests/testDeletionAlwaysUsesOlderPhotoAndNeverWrapsToNewer",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "GalleryPhotoPagingTests/testFreshCaptureCanPageToLibraryAndBackWithoutDuplicateAfterIndexing": [
+      {
+        "batch": "Library",
+        "id": "GalleryPhotoPagingTests/testFreshCaptureCanPageToLibraryAndBackWithoutDuplicateAfterIndexing",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryPhotoPagingTests/testPagesFollowGridOrderWithoutWrappingAtEitherEnd": [
+      {
+        "batch": "Library",
+        "id": "GalleryPhotoPagingTests/testPagesFollowGridOrderWithoutWrappingAtEitherEnd",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryPhotoPagingTests/testPagingDoesNotStealPinchOrEnlargedPhotoPanAndReplacementResetsZoom": [
+      {
+        "batch": "Library",
+        "id": "GalleryPhotoPagingTests/testPagingDoesNotStealPinchOrEnlargedPhotoPanAndReplacementResetsZoom",
+        "status": "passed",
+        "seconds": 0.002
+      }
+    ],
+    "GalleryPhotoPagingTests/testRefreshDeletionLimitedListAndInvalidStepsCannotSelectUnrelatedPhoto": [
+      {
+        "batch": "Library",
+        "id": "GalleryPhotoPagingTests/testRefreshDeletionLimitedListAndInvalidStepsCannotSelectUnrelatedPhoto",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryPhotoPagingTests/testSavedCaptureNotIndexedOrAlreadyClearedStillUsesFirstDisplayedNeighbor": [
+      {
+        "batch": "Library",
+        "id": "GalleryPhotoPagingTests/testSavedCaptureNotIndexedOrAlreadyClearedStillUsesFirstDisplayedNeighbor",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryPhotoPagingTests/testStillAndVideoPagesUseMatchingLeftAndRightTransitionGeometry": [
+      {
+        "batch": "Library",
+        "id": "GalleryPhotoPagingTests/testStillAndVideoPagesUseMatchingLeftAndRightTransitionGeometry",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryPhotoPagingTests/testVideoCanvasPagingUsesHorizontalSwipesOnly": [
+      {
+        "batch": "Library",
+        "id": "GalleryPhotoPagingTests/testVideoCanvasPagingUsesHorizontalSwipesOnly",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryPhotoPagingTests/testVideoPageDoesNotWaitForPhotoPosterLoading": [
+      {
+        "batch": "Library",
+        "id": "GalleryPhotoPagingTests/testVideoPageDoesNotWaitForPhotoPosterLoading",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryViewModelTests/testBatchDeleteUsesOneRequestAndCancellationPreservesSelection": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testBatchDeleteUsesOneRequestAndCancellationPreservesSelection",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "GalleryViewModelTests/testConfirmedMissingRowsArePrunedBeforeSlowMetadataAndCannotBeReinserted": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testConfirmedMissingRowsArePrunedBeforeSlowMetadataAndCannotBeReinserted",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryViewModelTests/testDecliningBatchDeleteConfirmationKeepsSelectionWithoutAlert": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testDecliningBatchDeleteConfirmationKeepsSelectionWithoutAlert",
+        "status": "passed",
+        "seconds": 0.003
+      }
+    ],
+    "GalleryViewModelTests/testDecliningSystemDeleteConfirmationIsSilentAndCanRetryAfterReentry": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testDecliningSystemDeleteConfirmationIsSilentAndCanRetryAfterReentry",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryViewModelTests/testDeleteFailureKeepsSystemAndCurrentPhoto": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testDeleteFailureKeepsSystemAndCurrentPhoto",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "GalleryViewModelTests/testDeletingSavedCurrentPhotoClearsBothViewsAndBlocksDuplicateDelete": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testDeletingSavedCurrentPhotoClearsBothViewsAndBlocksDuplicateDelete",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "GalleryViewModelTests/testDeletingUnrelatedSystemPhotoPreservesCurrentCapture": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testDeletingUnrelatedSystemPhotoPreservesCurrentCapture",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryViewModelTests/testDeniedAccessDoesNotFetchSystemPhotos": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testDeniedAccessDoesNotFetchSystemPhotos",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryViewModelTests/testEachGalleryEntryRequeriesSavedBurstEvenWithoutChangeNotification": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testEachGalleryEntryRequeriesSavedBurstEvenWithoutChangeNotification",
+        "status": "passed",
+        "seconds": 0.038
+      }
+    ],
+    "GalleryViewModelTests/testEachQueuedSaveRefreshesEvenBeforeNewestCaptureFinishes": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testEachQueuedSaveRefreshesEvenBeforeNewestCaptureFinishes",
+        "status": "passed",
+        "seconds": 0.004
+      }
+    ],
+    "GalleryViewModelTests/testExternalDeletionClearsSavedCaptureAndSelectionInsteadOfReinsertingGhost": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testExternalDeletionClearsSavedCaptureAndSelectionInsteadOfReinsertingGhost",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryViewModelTests/testForegroundRefreshFindsExternalImportsWhenChangeNotificationWasMissed": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testForegroundRefreshFindsExternalImportsWhenChangeNotificationWasMissed",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryViewModelTests/testForegroundWithUnrequestedAccessDoesNotAskForPhotoPermission": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testForegroundWithUnrequestedAccessDoesNotAskForPhotoPermission",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryViewModelTests/testLateMissingResultCannotClearNewerCapture": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testLateMissingResultCannotClearNewerCapture",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryViewModelTests/testLibraryChangeReloadsAvailablePhotos": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testLibraryChangeReloadsAvailablePhotos",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "GalleryViewModelTests/testLibraryRefreshKeepsLoadedPagesAndPrunesMissingSelections": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testLibraryRefreshKeepsLoadedPagesAndPrunesMissingSelections",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "GalleryViewModelTests/testLimitedAccessLoadsOnlyProvidedPhotosAndPaginates": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testLimitedAccessLoadsOnlyProvidedPhotosAndPaginates",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "GalleryViewModelTests/testOldFetchCannotOverwriteNewPermissionState": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testOldFetchCannotOverwriteNewPermissionState",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "GalleryViewModelTests/testSaveCompletionRefreshesListWithoutPhotoKitChangeNotification": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testSaveCompletionRefreshesListWithoutPhotoKitChangeNotification",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "GalleryViewModelTests/testUnavailableThumbnailOnlyRemovesConfirmedDeletionNotOfflineOrLimitedPhotos": [
+      {
+        "batch": "Library",
+        "id": "GalleryViewModelTests/testUnavailableThumbnailOnlyRemovesConfirmedDeletionNotOfflineOrLimitedPhotos",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "LibraryMediaRotationTests/testAllEXIFOrientationsRemainUntouched": [
+      {
+        "batch": "Library",
+        "id": "LibraryMediaRotationTests/testAllEXIFOrientationsRemainUntouched",
+        "status": "passed",
+        "seconds": 0.005
+      }
+    ],
+    "LibraryMediaRotationTests/testPhotoFitRotationAndStableControlsOnDevice": [
+      {
+        "batch": "Library",
+        "id": "LibraryMediaRotationTests/testPhotoFitRotationAndStableControlsOnDevice",
+        "status": "passed",
+        "seconds": 32.328
+      }
+    ],
+    "LibraryMediaRotationTests/testPresentedGalleryDropsStaleCameraAngleAndFollowsCurrentPose": [
+      {
+        "batch": "Library",
+        "id": "LibraryMediaRotationTests/testPresentedGalleryDropsStaleCameraAngleAndFollowsCurrentPose",
+        "status": "passed",
+        "seconds": 0.582
+      }
+    ],
+    "LibraryMediaRotationTests/testScreenPagingAndLiveCancellationAfterRotation": [
+      {
+        "batch": "Library",
+        "id": "LibraryMediaRotationTests/testScreenPagingAndLiveCancellationAfterRotation",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "LibraryMediaRotationTests/testThumbnailOrientationDoesNotReloadPhotoOrMoveCell": [
+      {
+        "batch": "Library",
+        "id": "LibraryMediaRotationTests/testThumbnailOrientationDoesNotReloadPhotoOrMoveCell",
+        "status": "passed",
+        "seconds": 6.088
+      }
+    ],
+    "PhotoCaptureDiagnosticsTests/testCaptureReviewRetainsDiagnosticsAfterEditingAndUsesFileSize": [
+      {
+        "batch": "Library",
+        "id": "PhotoCaptureDiagnosticsTests/testCaptureReviewRetainsDiagnosticsAfterEditingAndUsesFileSize",
+        "status": "passed",
+        "seconds": 0.043
+      }
+    ],
+    "PhotoCaptureDiagnosticsTests/testDiagnosticsSurviveStoreRecreationAndAssetIdentifiersDoNotCollide": [
+      {
+        "batch": "Library",
+        "id": "PhotoCaptureDiagnosticsTests/testDiagnosticsSurviveStoreRecreationAndAssetIdentifiersDoNotCollide",
+        "status": "passed",
+        "seconds": 0.002
+      }
+    ],
+    "PhotoCaptureDiagnosticsTests/testFailedOrCorruptedStoreIsNotReportedAsKnownInformation": [
+      {
+        "batch": "Library",
+        "id": "PhotoCaptureDiagnosticsTests/testFailedOrCorruptedStoreIsNotReportedAsKnownInformation",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "PhotoCaptureDiagnosticsTests/testMalformedMetadataDoesNotCrashOrInventValues": [
+      {
+        "batch": "Library",
+        "id": "PhotoCaptureDiagnosticsTests/testMalformedMetadataDoesNotCrashOrInventValues",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoCaptureDiagnosticsTests/testMergingPreservesActualFileValuesAndDoesNotDuplicateTitles": [
+      {
+        "batch": "Library",
+        "id": "PhotoCaptureDiagnosticsTests/testMergingPreservesActualFileValuesAndDoesNotDuplicateTitles",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoCaptureDiagnosticsTests/testNightBadgeRequiresActualMultiFrameMergeAndPersists": [
+      {
+        "batch": "Library",
+        "id": "PhotoCaptureDiagnosticsTests/testNightBadgeRequiresActualMultiFrameMergeAndPersists",
+        "status": "passed",
+        "seconds": 0.007
+      }
+    ],
+    "PhotoCaptureDiagnosticsTests/testNumericParametersPersistWithoutFormattingLossAndRAWDoesNotOverwriteProcessedEXIF": [
+      {
+        "batch": "Library",
+        "id": "PhotoCaptureDiagnosticsTests/testNumericParametersPersistWithoutFormattingLossAndRAWDoesNotOverwriteProcessedEXIF",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoCaptureDiagnosticsTests/testOldRecordsRemainReadableAndUnavailableEXIFStaysUnknown": [
+      {
+        "batch": "Library",
+        "id": "PhotoCaptureDiagnosticsTests/testOldRecordsRemainReadableAndUnavailableEXIFStaysUnknown",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoCaptureDiagnosticsTests/testOriginalEXIFProvidesLensAndExposureWithoutInferringLensFromZoom": [
+      {
+        "batch": "Library",
+        "id": "PhotoCaptureDiagnosticsTests/testOriginalEXIFProvidesLensAndExposureWithoutInferringLensFromZoom",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoCaptureDiagnosticsTests/testOutputDimensionsComeFromEncodedFileAndAllRatios": [
+      {
+        "batch": "Library",
+        "id": "PhotoCaptureDiagnosticsTests/testOutputDimensionsComeFromEncodedFileAndAllRatios",
+        "status": "passed",
+        "seconds": 0.055
+      }
+    ],
+    "PhotoEditorTests/testEditorCompletionReleasesGuardEvenAfterEditorIsDismissed": [
+      {
+        "batch": "Library",
+        "id": "PhotoEditorTests/testEditorCompletionReleasesGuardEvenAfterEditorIsDismissed",
+        "status": "passed",
+        "seconds": 0.008
+      }
+    ],
+    "PhotoEditorTests/testEditorFailureReleasesBusyGuardAndAllowsRetry": [
+      {
+        "batch": "Library",
+        "id": "PhotoEditorTests/testEditorFailureReleasesBusyGuardAndAllowsRetry",
+        "status": "passed",
+        "seconds": 0.007
+      }
+    ],
+    "PhotoEditorTests/testExposureChangesImageAndAdjustmentDataCanRoundTrip": [
+      {
+        "batch": "Library",
+        "id": "PhotoEditorTests/testExposureChangesImageAndAdjustmentDataCanRoundTrip",
+        "status": "passed",
+        "seconds": 0.011
+      }
+    ],
+    "PhotoEditorTests/testRotatedEditBakesOrientationIntoFullResolutionJPEG": [
+      {
+        "batch": "Library",
+        "id": "PhotoEditorTests/testRotatedEditBakesOrientationIntoFullResolutionJPEG",
+        "status": "passed",
+        "seconds": 0.007
+      }
+    ],
+    "PhotoFilterEditorTests/testContinuousPhotoEditingPublishesThenSettlesAtExactSavedRecipeWithoutAccumulation": [
+      {
+        "batch": "Library",
+        "id": "PhotoFilterEditorTests/testContinuousPhotoEditingPublishesThenSettlesAtExactSavedRecipeWithoutAccumulation",
+        "status": "passed",
+        "seconds": 1.811
+      }
+    ],
+    "PhotoFilterEditorTests/testSaveChoicesPreserveRecipeRouteAndRejectRepeatedSave": [
+      {
+        "batch": "Library",
+        "id": "PhotoFilterEditorTests/testSaveChoicesPreserveRecipeRouteAndRejectRepeatedSave",
+        "status": "passed",
+        "seconds": 0.007
+      }
+    ],
+    "PhotoFilterEditorTests/testSavedFilterRecipeRoundTripsAndOldPhotoEditsRemainDecodable": [
+      {
+        "batch": "Library",
+        "id": "PhotoFilterEditorTests/testSavedFilterRecipeRoundTripsAndOldPhotoEditsRemainDecodable",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoFilterEditorTests/testSwitchingFiltersRestoresLocalRecipesAndResetRejectsLateSliderWrites": [
+      {
+        "batch": "Library",
+        "id": "PhotoFilterEditorTests/testSwitchingFiltersRestoresLocalRecipesAndResetRejectsLateSliderWrites",
+        "status": "passed",
+        "seconds": 0.007
+      }
+    ],
+    "PhotoLibraryViewModelTests/testAutomaticSaveFailureRetainsResourcesAndSupportsRetry": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testAutomaticSaveFailureRetainsResourcesAndSupportsRetry",
+        "status": "passed",
+        "seconds": 0.003
+      }
+    ],
+    "PhotoLibraryViewModelTests/testBusyOperationProtectsCurrentPhoto": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testBusyOperationProtectsCurrentPhoto",
+        "status": "passed",
+        "seconds": 0.004
+      }
+    ],
+    "PhotoLibraryViewModelTests/testCaptureAutomaticallySavesEncodedResourcesWithoutSuccessPrompt": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testCaptureAutomaticallySavesEncodedResourcesWithoutSuccessPrompt",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoLibraryViewModelTests/testCaptureBlocksSaveAndDeleteUntilProcessingFinishes": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testCaptureBlocksSaveAndDeleteUntilProcessingFinishes",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoLibraryViewModelTests/testDeleteCancellationOrLimitedAccessPreservesSavedPhoto": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testDeleteCancellationOrLimitedAccessPreservesSavedPhoto",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoLibraryViewModelTests/testEarlierSaveCompletionDoesNotReleaseNewestUnsavedCapture": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testEarlierSaveCompletionDoesNotReleaseNewestUnsavedCapture",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoLibraryViewModelTests/testEditingProtectsCaptureAndOnlyUpdatesMatchingSavedPhoto": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testEditingProtectsCaptureAndOnlyUpdatesMatchingSavedPhoto",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "PhotoLibraryViewModelTests/testPermissionFailurePreservesPhotoAndAllowsRetry": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testPermissionFailurePreservesPhotoAndAllowsRetry",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoLibraryViewModelTests/testSavedCaptureReleasesFullSizeBytesButRetainsFlagsMetadataAndOneTimeReview": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testSavedCaptureReleasesFullSizeBytesButRetainsFlagsMetadataAndOneTimeReview",
+        "status": "passed",
+        "seconds": 0.019
+      }
+    ],
+    "PhotoLibraryViewModelTests/testSaveTracksAssetAndPreventsDuplicateWrites": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testSaveTracksAssetAndPreventsDuplicateWrites",
+        "status": "passed",
+        "seconds": 0.002
+      }
+    ],
+    "PhotoLibraryViewModelTests/testUnsavedDeleteDoesNotAccessSystemLibrary": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testUnsavedDeleteDoesNotAccessSystemLibrary",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PhotoLibraryViewModelTests/testVideoSaveFailureKeepsFileForRetryAndPublishesSavedAsset": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testVideoSaveFailureKeepsFileForRetryAndPublishesSavedAsset",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "PhotoLibraryViewModelTests/testWriteOnlyAccessRetainsResourcesUntilSavedPhotoCanBeRead": [
+      {
+        "batch": "Library",
+        "id": "PhotoLibraryViewModelTests/testWriteOnlyAccessRetainsResourcesUntilSavedPhotoCanBeRead",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEditorWorkflowTests/testLivePhotoSelectionUsesPlayheadAndNeverExceedsThreeSeconds": [
+      {
+        "batch": "Library",
+        "id": "VideoEditorWorkflowTests/testLivePhotoSelectionUsesPlayheadAndNeverExceedsThreeSeconds",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEditorWorkflowTests/testLogVideosExposeTrimAndLogFiltersButNoAdjustmentTool": [
+      {
+        "batch": "Library",
+        "id": "VideoEditorWorkflowTests/testLogVideosExposeTrimAndLogFiltersButNoAdjustmentTool",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEditorWorkflowTests/testSDRAndP3ExposeAdjustmentTool": [
+      {
+        "batch": "Library",
+        "id": "VideoEditorWorkflowTests/testSDRAndP3ExposeAdjustmentTool",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEditorWorkflowTests/testTrimPanelUsesCompactHeightWithoutMovingToolPanelForOtherModes": [
+      {
+        "batch": "Library",
+        "id": "VideoEditorWorkflowTests/testTrimPanelUsesCompactHeightWithoutMovingToolPanelForOtherModes",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEditorWorkflowTests/testTrimSelectionClampsToVideoAndKeepsMinimumDuration": [
+      {
+        "batch": "Library",
+        "id": "VideoEditorWorkflowTests/testTrimSelectionClampsToVideoAndKeepsMinimumDuration",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEditorWorkflowTests/testTrimSelectionHandlesInvalidValuesAndShortClips": [
+      {
+        "batch": "Library",
+        "id": "VideoEditorWorkflowTests/testTrimSelectionHandlesInvalidValuesAndShortClips",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "VideoEditorWorkflowTests/testVideoTransferMetadataMapsLogHDRP3AndSDR": [
+      {
+        "batch": "Library",
+        "id": "VideoEditorWorkflowTests/testVideoTransferMetadataMapsLogHDRP3AndSDR",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "PortraitCapturePhysicalTests/testAutomaticMacroSuspendsPortraitCaptureAndRecovers": [
+      {
+        "batch": "Macro",
+        "id": "PortraitCapturePhysicalTests/testAutomaticMacroSuspendsPortraitCaptureAndRecovers",
+        "status": "passed",
+        "seconds": 4.761
+      }
+    ],
+    "NightAdaptiveCapturePhysicalTests/testAutomaticNightUsesPlannedExposureAndRepeatedCaptureReleasesTasks": [
+      {
+        "batch": "NightSlow",
+        "id": "NightAdaptiveCapturePhysicalTests/testAutomaticNightUsesPlannedExposureAndRepeatedCaptureReleasesTasks",
+        "status": "passed",
+        "seconds": 14.898
+      }
+    ],
+    "NightAdaptiveCapturePhysicalTests/testRepeatedCancellationDuringExposureAndQueuedCompositionNeverDelivers": [
+      {
+        "batch": "NightSlow",
+        "id": "NightAdaptiveCapturePhysicalTests/testRepeatedCancellationDuringExposureAndQueuedCompositionNeverDelivers",
+        "status": "passed",
+        "seconds": 23.13
+      }
+    ],
+    "NightCapturePhysicalTests/testNightRapidToggleAndReturnKeepOrdinaryPhotoPath": [
+      {
+        "batch": "NightSlow",
+        "id": "NightCapturePhysicalTests/testNightRapidToggleAndReturnKeepOrdinaryPhotoPath",
+        "status": "passed",
+        "seconds": 3.711
+      }
+    ],
+    "NightCapturePhysicalTests/testThreeNightCapturesCompleteInMemoryAndReportHonestMergeState": [
+      {
+        "batch": "NightSlow",
+        "id": "NightCapturePhysicalTests/testThreeNightCapturesCompleteInMemoryAndReportHonestMergeState",
+        "status": "passed",
+        "seconds": 10.691
+      }
+    ],
+    "SlowShutterLifecyclePhysicalTests/testAllIdlePresetsRestoreIntoResponsiveCamera": [
+      {
+        "batch": "NightSlow",
+        "id": "SlowShutterLifecyclePhysicalTests/testAllIdlePresetsRestoreIntoResponsiveCamera",
+        "status": "passed",
+        "seconds": 49.645
+      }
+    ],
+    "SlowShutterLifecyclePhysicalTests/testIdlePresetsRepeatedAndRapidSessionReturn": [
+      {
+        "batch": "NightSlow",
+        "id": "SlowShutterLifecyclePhysicalTests/testIdlePresetsRepeatedAndRapidSessionReturn",
+        "status": "passed",
+        "seconds": 8.306
+      }
+    ],
+    "SlowShutterSequencePhysicalTests/testAdaptiveOtherPresetsManualEarlyFinishAndCancellation": [
+      {
+        "batch": "NightSlow",
+        "id": "SlowShutterSequencePhysicalTests/testAdaptiveOtherPresetsManualEarlyFinishAndCancellation",
+        "status": "passed",
+        "seconds": 54.088
+      }
+    ],
+    "SlowShutterSequencePhysicalTests/testAdaptiveWaterEarlyFinishCancelAndRestart": [
+      {
+        "batch": "NightSlow",
+        "id": "SlowShutterSequencePhysicalTests/testAdaptiveWaterEarlyFinishCancelAndRestart",
+        "status": "passed",
+        "seconds": 10.252
+      }
+    ],
+    "SlowShutterSequencePhysicalTests/testGenericManualDurationAndInfiniteCancellation": [
+      {
+        "batch": "NightSlow",
+        "id": "SlowShutterSequencePhysicalTests/testGenericManualDurationAndInfiniteCancellation",
+        "status": "passed",
+        "seconds": 4.631
+      }
+    ],
+    "SlowShutterSequencePhysicalTests/testRealAccumulationPreviewAndCancelOnPhysicalViewfinder": [
+      {
+        "batch": "NightSlow",
+        "id": "SlowShutterSequencePhysicalTests/testRealAccumulationPreviewAndCancelOnPhysicalViewfinder",
+        "status": "passed",
+        "seconds": 17.856
+      }
+    ],
+    "PortraitOptimizationPhysicalTests/testRearPortraitContinuousAdjustmentAndCapture": [
+      {
+        "batch": "PersonSmart",
+        "id": "PortraitOptimizationPhysicalTests/testRearPortraitContinuousAdjustmentAndCapture",
+        "status": "passed",
+        "seconds": 11.428
+      }
+    ],
+    "PortraitOptimizationPhysicalTests/testRearPortraitSameFrameReference": [
+      {
+        "batch": "PersonSmart",
+        "id": "PortraitOptimizationPhysicalTests/testRearPortraitSameFrameReference",
+        "status": "passed",
+        "seconds": 2.572
+      }
+    ],
+    "SmartAutoFramingTests/testActualVisionCandidateScoringPerformanceAndCancellation": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testActualVisionCandidateScoringPerformanceAndCancellation",
+        "status": "passed",
+        "seconds": 0.602
+      }
+    ],
+    "SmartAutoFramingTests/testAlignmentTextHonorsDwell": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testAlignmentTextHonorsDwell",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "SmartAutoFramingTests/testAlignmentUsesDrawnCircleRadiusAcrossRatios": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testAlignmentUsesDrawnCircleRadiusAcrossRatios",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "SmartAutoFramingTests/testAutomaticHardwareFramingOnceAndCancelPendingWork": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testAutomaticHardwareFramingOnceAndCancelPendingWork",
+        "status": "passed",
+        "seconds": 4.614
+      }
+    ],
+    "SmartAutoFramingTests/testBacklitPortraitWithoutBlurTracksAutomaticOrigin": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testBacklitPortraitWithoutBlurTracksAutomaticOrigin",
+        "status": "passed",
+        "seconds": 0.65
+      }
+    ],
+    "SmartAutoFramingTests/testBriefBoundaryExcursionPausesAndLongLossRestartsAlignment": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testBriefBoundaryExcursionPausesAndLongLossRestartsAlignment",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "SmartAutoFramingTests/testEarlyVisualAlignmentDoesNotShortenAutomaticFramingDwell": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testEarlyVisualAlignmentDoesNotShortenAutomaticFramingDwell",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "SmartAutoFramingTests/testEmptyAestheticScoresStillFocusAndShowCompletionWithoutZoom": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testEmptyAestheticScoresStillFocusAndShowCompletionWithoutZoom",
+        "status": "passed",
+        "seconds": 3.743
+      }
+    ],
+    "SmartAutoFramingTests/testHandheldAlignmentSurvivesBriefMissesWithoutCountingThemAsConfirmed": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testHandheldAlignmentSurvivesBriefMissesWithoutCountingThemAsConfirmed",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "SmartAutoFramingTests/testLeavingSubjectAllowsNextSceneAfterGrace": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testLeavingSubjectAllowsNextSceneAfterGrace",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "SmartAutoFramingTests/testManualAlignmentOfAnotherVisibleCandidateRearmsCompletedRound": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testManualAlignmentOfAnotherVisibleCandidateRearmsCompletedRound",
+        "status": "passed",
+        "seconds": 2.645
+      }
+    ],
+    "SmartAutoFramingTests/testManualSmartFramingFocusExposureAndMoveAwayReturn": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testManualSmartFramingFocusExposureAndMoveAwayReturn",
+        "status": "passed",
+        "seconds": 7.689
+      }
+    ],
+    "SmartAutoFramingTests/testMovingAwayRearmsSameSubjectAndReturningCanAlignAgain": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testMovingAwayRearmsSameSubjectAndReturningCanAlignAgain",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "SmartAutoFramingTests/testMovingSubjectAndCancellationRestartDwell": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testMovingSubjectAndCancellationRestartDwell",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "SmartAutoFramingTests/testOwnZoomGraceDoesNotPreventLaterSceneLossRearming": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testOwnZoomGraceDoesNotPreventLaterSceneLossRearming",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "SmartAutoFramingTests/testPredictedMarkerCannotTriggerAutomaticFraming": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testPredictedMarkerCannotTriggerAutomaticFraming",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "SmartAutoFramingTests/testRealSceneGuideAutomaticFramingAndCapture": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testRealSceneGuideAutomaticFramingAndCapture",
+        "status": "skipped",
+        "seconds": 21.646
+      }
+    ],
+    "SmartAutoFramingTests/testRelativeZoomAndSubjectMargins": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testRelativeZoomAndSubjectMargins",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "SmartAutoFramingTests/testSmartPreviewUsesOneShotInteriorFocusAndReleasesToNormalControls": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testSmartPreviewUsesOneShotInteriorFocusAndReleasesToNormalControls",
+        "status": "passed",
+        "seconds": 6.162
+      }
+    ],
+    "SmartAutoFramingTests/testStableAlignmentAndJitterDoNotRepeatZoom": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testStableAlignmentAndJitterDoNotRepeatZoom",
+        "status": "passed",
+        "seconds": 0.001
+      }
+    ],
+    "SmartAutoFramingTests/testVisibleAnalysisCropsAllSupportedRatios": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartAutoFramingTests/testVisibleAnalysisCropsAllSupportedRatios",
+        "status": "passed",
+        "seconds": 0.099
+      }
+    ],
+    "SmartCapturePhysicalTests/testLiveTrackingCadenceDismissalAndRepeatedPopupCancellation": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartCapturePhysicalTests/testLiveTrackingCadenceDismissalAndRepeatedPopupCancellation",
+        "status": "passed",
+        "seconds": 11.284
+      }
+    ],
+    "SmartCapturePhysicalTests/testRealPreviewAnalysisPerformanceAndStability": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartCapturePhysicalTests/testRealPreviewAnalysisPerformanceAndStability",
+        "status": "passed",
+        "seconds": 3.241
+      }
+    ],
+    "SmartLocalCompositionAITests/testOnDeviceModelAvailabilityAndFallback": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartLocalCompositionAITests/testOnDeviceModelAvailabilityAndFallback",
+        "status": "passed",
+        "seconds": 0.052
+      }
+    ],
+    "SmartLocalCompositionAITests/testUntrustedModelOutputCannotInventCoordinatesOrOverrideAlignedUserChoice": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartLocalCompositionAITests/testUntrustedModelOutputCannotInventCoordinatesOrOverrideAlignedUserChoice",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "SmartLocalCompositionAITests/testVisionClassificationOnRealPreviewAndCancelledRequest": [
+      {
+        "batch": "PersonSmart",
+        "id": "SmartLocalCompositionAITests/testVisionClassificationOnRealPreviewAndCancelledRequest",
+        "status": "passed",
+        "seconds": 0.739
+      }
+    ],
+    "A48ResolutionPhysicalTests/testAutoMode48MPAndAllFormats": [
+      {
+        "batch": "Photo",
+        "id": "A48ResolutionPhysicalTests/testAutoMode48MPAndAllFormats",
+        "status": "passed",
+        "seconds": 13.149
+      }
+    ],
+    "FilterEditorPhysicalTests/testEditedFilterKeepsLiveFramesAndCaptureRecipeWithoutSavingPhotos": [
+      {
+        "batch": "Photo",
+        "id": "FilterEditorPhysicalTests/testEditedFilterKeepsLiveFramesAndCaptureRecipeWithoutSavingPhotos",
+        "status": "passed",
+        "seconds": 10.219
+      }
+    ],
+    "FrontPhotoAspectRatioPhysicalTests/testRepeatedFrontPhotoAspectChangesKeepPreviewReady": [
+      {
+        "batch": "Photo",
+        "id": "FrontPhotoAspectRatioPhysicalTests/testRepeatedFrontPhotoAspectChangesKeepPreviewReady",
+        "status": "passed",
+        "seconds": 8.183
+      }
+    ],
+    "HEIFHDRPhysicalTests/testHEIFHDRUsesTenBitLivePreviewAndRestoresRAWPhotoQualityWithoutSaving": [
+      {
+        "batch": "Photo",
+        "id": "HEIFHDRPhysicalTests/testHEIFHDRUsesTenBitLivePreviewAndRestoresRAWPhotoQualityWithoutSaving",
+        "status": "failed",
+        "seconds": 31.319
+      },
+      {
+        "batch": "RecheckHDR",
+        "id": "HEIFHDRPhysicalTests/testHEIFHDRUsesTenBitLivePreviewAndRestoresRAWPhotoQualityWithoutSaving",
+        "status": "passed",
+        "seconds": 32.829
+      }
+    ],
+    "HEIFHDRPhysicalTests/testTurningHDRBackOffDoesNotPublishBlackPreviewFrames": [
+      {
+        "batch": "Photo",
+        "id": "HEIFHDRPhysicalTests/testTurningHDRBackOffDoesNotPublishBlackPreviewFrames",
+        "status": "passed",
+        "seconds": 7.164
+      }
+    ],
+    "LivePhotoPhysicalTests/testManualParametersSurviveRepeatedSessionStopsAndRestarts": [
+      {
+        "batch": "Photo",
+        "id": "LivePhotoPhysicalTests/testManualParametersSurviveRepeatedSessionStopsAndRestarts",
+        "status": "passed",
+        "seconds": 11.208
+      }
+    ],
+    "LivePhotoPhysicalTests/testNativeJPEGAndHEIFLivePairsDecodeWithoutWritingPhotos": [
+      {
+        "batch": "Photo",
+        "id": "LivePhotoPhysicalTests/testNativeJPEGAndHEIFLivePairsDecodeWithoutWritingPhotos",
+        "status": "passed",
+        "seconds": 14.426
+      }
+    ],
+    "LivePhotoPhysicalTests/testRearLiveTogglePreserves24mmAnd35mmFraming": [
+      {
+        "batch": "Photo",
+        "id": "LivePhotoPhysicalTests/testRearLiveTogglePreserves24mmAnd35mmFraming",
+        "status": "passed",
+        "seconds": 2.787
+      }
+    ],
+    "ManualAutoRecoveryPhysicalTests/testAllManualParametersReturnToAutomaticAndPublishFreshValues": [
+      {
+        "batch": "Photo",
+        "id": "ManualAutoRecoveryPhysicalTests/testAllManualParametersReturnToAutomaticAndPublishFreshValues",
+        "status": "passed",
+        "seconds": 11.352
+      }
+    ],
+    "PreviewExposureAssistPhysicalTests/testSmoothPreviewRemainsPhotoOnlyAcrossVideoAndLifecycleChanges": [
+      {
+        "batch": "Photo",
+        "id": "PreviewExposureAssistPhysicalTests/testSmoothPreviewRemainsPhotoOnlyAcrossVideoAndLifecycleChanges",
+        "status": "passed",
+        "seconds": 5.027
+      }
+    ],
+    "ProToneCapturePhysicalTests/testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving": [
+      {
+        "batch": "Photo",
+        "id": "ProToneCapturePhysicalTests/testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving",
+        "status": "passed",
+        "seconds": 9.312
+      }
+    ],
+    "SilentShutterPhysicalTests/testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving": [
+      {
+        "batch": "Photo",
+        "id": "SilentShutterPhysicalTests/testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving",
+        "status": "failed",
+        "seconds": 58.058
+      },
+      {
+        "batch": "RecheckSilent",
+        "id": "SilentShutterPhysicalTests/testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving",
+        "status": "passed",
+        "seconds": 17.323
+      }
+    ],
+    "SilentShutterPhysicalTests/testNightBatchesUseSilentPreferenceAndReleaseCaptureTasks": [
+      {
+        "batch": "Photo",
+        "id": "SilentShutterPhysicalTests/testNightBatchesUseSilentPreferenceAndReleaseCaptureTasks",
+        "status": "passed",
+        "seconds": 5.997
+      }
+    ],
+    "VirtualAperturePhysicalTests/testLensRestrictionsContinuousSliderAndRealPhotoInformation": [
+      {
+        "batch": "Photo",
+        "id": "VirtualAperturePhysicalTests/testLensRestrictionsContinuousSliderAndRealPhotoInformation",
+        "status": "passed",
+        "seconds": 16.506
+      }
+    ],
+    "CaptureStatePhysicalTests/testColdRestorationAppliesManualValuesToRealLensAndVideoPipeline": [
+      {
+        "batch": "Routes",
+        "id": "CaptureStatePhysicalTests/testColdRestorationAppliesManualValuesToRealLensAndVideoPipeline",
+        "status": "failed",
+        "seconds": 16.291
+      },
+      {
+        "batch": "RecheckCold",
+        "id": "CaptureStatePhysicalTests/testColdRestorationAppliesManualValuesToRealLensAndVideoPipeline",
+        "status": "passed",
+        "seconds": 12.619
+      }
+    ],
+    "DepthToolbarPhysicalTests/testDepthSlidersThreeSecondIdleResetHoldAndCancellation": [
+      {
+        "batch": "UI",
+        "id": "DepthToolbarPhysicalTests/testDepthSlidersThreeSecondIdleResetHoldAndCancellation",
+        "status": "failed",
+        "seconds": 35.965
+      },
+      {
+        "batch": "RecheckDepth",
+        "id": "DepthToolbarPhysicalTests/testDepthSlidersThreeSecondIdleResetHoldAndCancellation",
+        "status": "passed",
+        "seconds": 36.668
+      }
+    ],
+    "PresetToolbarPhysicalTests/testFrontVideoWideSelectionHasNoBackground": [
+      {
+        "batch": "UI",
+        "id": "PresetToolbarPhysicalTests/testFrontVideoWideSelectionHasNoBackground",
+        "status": "failed",
+        "seconds": 22.832
+      },
+      {
+        "batch": "RecheckFront",
+        "id": "PresetToolbarPhysicalTests/testFrontVideoWideSelectionHasNoBackground",
+        "status": "passed",
+        "seconds": 5.152
+      }
+    ],
+    "FocusNavigatorPhysicalTests/testLiveAndRawPhotoPipelineRestoresAfterNavigation": [
+      {
+        "batch": "Routes",
+        "id": "FocusNavigatorPhysicalTests/testLiveAndRawPhotoPipelineRestoresAfterNavigation",
+        "status": "failed",
+        "seconds": 30.471
+      },
+      {
+        "batch": "RecheckNavigator",
+        "id": "FocusNavigatorPhysicalTests/testLiveAndRawPhotoPipelineRestoresAfterNavigation",
+        "status": "passed",
+        "seconds": 11.873
+      }
+    ],
+    "FocusNavigatorPhysicalTests/testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes": [
+      {
+        "batch": "Routes",
+        "id": "FocusNavigatorPhysicalTests/testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes",
+        "status": "failed",
+        "seconds": 27.073
+      },
+      {
+        "batch": "RecheckNavigator",
+        "id": "FocusNavigatorPhysicalTests/testNavigationZoomSurvivesCaptureAndExitInAutomaticAndManualModes",
+        "status": "passed",
+        "seconds": 11.434
+      }
+    ],
+    "VideoModeTransitionTests/testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips": [
+      {
+        "batch": "Video",
+        "id": "VideoModeTransitionTests/testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips",
+        "status": "failed",
+        "seconds": 47.052
+      },
+      {
+        "batch": "RecheckVideoReturn",
+        "id": "VideoModeTransitionTests/testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips",
+        "status": "passed",
+        "seconds": 67.849
+      }
+    ],
+    "VideoWhiteBalancePhysicalTests/testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording": [
+      {
+        "batch": "Video",
+        "id": "VideoWhiteBalancePhysicalTests/testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording",
+        "status": "failed",
+        "seconds": 22.316
+      },
+      {
+        "batch": "RecheckWB",
+        "id": "VideoWhiteBalancePhysicalTests/testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording",
+        "status": "passed",
+        "seconds": 22.01
+      }
+    ],
+    "AutomaticZoomPhysicalTests/testAutomaticWheelChangesActualHardwareZoomThroughFortyAndKeepsFramesMoving": [
+      {
+        "batch": "Routes",
+        "id": "AutomaticZoomPhysicalTests/testAutomaticWheelChangesActualHardwareZoomThroughFortyAndKeepsFramesMoving",
+        "status": "passed",
+        "seconds": 10.402
+      }
+    ],
+    "AutomaticZoomPhysicalTests/testPreviewPinchUpdatesActualLensZoomAndRecoversAcrossRepeatedGestures": [
+      {
+        "batch": "Routes",
+        "id": "AutomaticZoomPhysicalTests/testPreviewPinchUpdatesActualLensZoomAndRecoversAcrossRepeatedGestures",
+        "status": "passed",
+        "seconds": 2.263
+      }
+    ],
+    "CameraFacingLatencyPhysicalTests/testPhotoAndVideoFacingDirectionLatency": [
+      {
+        "batch": "Routes",
+        "id": "CameraFacingLatencyPhysicalTests/testPhotoAndVideoFacingDirectionLatency",
+        "status": "passed",
+        "seconds": 31.073
+      }
+    ],
+    "DualCaptureExpansionTests/testExpandedPickerRecordsRealFilesAndRestoresOrdinarySettings": [
+      {
+        "batch": "Routes",
+        "id": "DualCaptureExpansionTests/testExpandedPickerRecordsRealFilesAndRestoresOrdinarySettings",
+        "status": "passed",
+        "seconds": 44.89
+      }
+    ],
+    "DualCaptureLandscapeTests/testActualWideRestoreRapidSwitchRecordingAndRatioChanges": [
+      {
+        "batch": "Routes",
+        "id": "DualCaptureLandscapeTests/testActualWideRestoreRapidSwitchRecordingAndRatioChanges",
+        "status": "passed",
+        "seconds": 16.942
+      }
+    ],
+    "DualCapturePhysicalTests/testEngineDualCaptureRecordingSwapAndOrdinaryRecovery": [
+      {
+        "batch": "Routes",
+        "id": "DualCapturePhysicalTests/testEngineDualCaptureRecordingSwapAndOrdinaryRecovery",
+        "status": "passed",
+        "seconds": 20.287
+      }
+    ],
+    "DualCapturePhysicalTests/testRetiredSourceErrorCannotExitReplacementAndCurrentErrorRecoversRecording": [
+      {
+        "batch": "Routes",
+        "id": "DualCapturePhysicalTests/testRetiredSourceErrorCannotExitReplacementAndCurrentErrorRecoversRecording",
+        "status": "passed",
+        "seconds": 10.098
+      }
+    ],
+    "DualCapturePhysicalTests/testSynchronizedFrontRearFramesAndSingleEncode": [
+      {
+        "batch": "Routes",
+        "id": "DualCapturePhysicalTests/testSynchronizedFrontRearFramesAndSingleEncode",
+        "status": "passed",
+        "seconds": 4.86
+      }
+    ],
+    "ManualPinnedZoomPhysicalTests/testEveryManualPresetKeepsItsPhysicalCameraAndExposureAcrossWheelRange": [
+      {
+        "batch": "Routes",
+        "id": "ManualPinnedZoomPhysicalTests/testEveryManualPresetKeepsItsPhysicalCameraAndExposureAcrossWheelRange",
+        "status": "passed",
+        "seconds": 9.557
+      }
+    ],
+    "LibraryQueryPhysicalTests/testReadOnlyGalleryQueryMatchesAccessibleRecentCaptures": [
+      {
+        "batch": "Supplement",
+        "id": "LibraryQueryPhysicalTests/testReadOnlyGalleryQueryMatchesAccessibleRecentCaptures",
+        "status": "passed",
+        "seconds": 0.178
+      }
+    ],
+    "PopupAppearanceAndOrientationTests/testParameterPopupRapidOpenCloseRotationStress": [
+      {
+        "batch": "Supplement",
+        "id": "PopupAppearanceAndOrientationTests/testParameterPopupRapidOpenCloseRotationStress",
+        "status": "passed",
+        "seconds": 2.733
+      }
+    ],
+    "PopupAppearanceAndOrientationTests/testPopupOpenCloseDuringOrientationChangesRemainsResponsive": [
+      {
+        "batch": "Supplement",
+        "id": "PopupAppearanceAndOrientationTests/testPopupOpenCloseDuringOrientationChangesRemainsResponsive",
+        "status": "skipped",
+        "seconds": 0.006
+      }
+    ],
+    "PopupAppearanceAndOrientationTests/testPopupOrientationFramePacingOnDevice": [
+      {
+        "batch": "Supplement",
+        "id": "PopupAppearanceAndOrientationTests/testPopupOrientationFramePacingOnDevice",
+        "status": "passed",
+        "seconds": 1.022
+      }
+    ],
+    "PopupAppearanceAndOrientationTests/testToolbarOverlapGlassTracksEveryPhotoRatioOnDevice": [
+      {
+        "batch": "Supplement",
+        "id": "PopupAppearanceAndOrientationTests/testToolbarOverlapGlassTracksEveryPhotoRatioOnDevice",
+        "status": "passed",
+        "seconds": 2.277
+      }
+    ],
+    "PopupAppearanceAndOrientationTests/testTopToolbarPopupRapidOpenCloseRotationStress": [
+      {
+        "batch": "Supplement",
+        "id": "PopupAppearanceAndOrientationTests/testTopToolbarPopupRapidOpenCloseRotationStress",
+        "status": "passed",
+        "seconds": 1.769
+      }
+    ],
+    "VideoDetailLayoutTests/testDraggingTrimHandlesSeeksThePreviewToEachCutPoint": [
+      {
+        "batch": "Supplement",
+        "id": "VideoDetailLayoutTests/testDraggingTrimHandlesSeeksThePreviewToEachCutPoint",
+        "status": "passed",
+        "seconds": 0.304
+      }
+    ],
+    "VideoDetailLayoutTests/testEditedVideoCanBeExportedAsAStandaloneFilesCopy": [
+      {
+        "batch": "Supplement",
+        "id": "VideoDetailLayoutTests/testEditedVideoCanBeExportedAsAStandaloneFilesCopy",
+        "status": "passed",
+        "seconds": 0.172
+      }
+    ],
+    "VideoDetailLayoutTests/testLevelStaysInsideAllPhotoAndVideoRatioPreviews": [
+      {
+        "batch": "Supplement",
+        "id": "VideoDetailLayoutTests/testLevelStaysInsideAllPhotoAndVideoRatioPreviews",
+        "status": "passed",
+        "seconds": 15.146
+      }
+    ],
+    "VideoDetailLayoutTests/testLivePanelPresentationRepeatedlyAndCaptureLayout": [
+      {
+        "batch": "Supplement",
+        "id": "VideoDetailLayoutTests/testLivePanelPresentationRepeatedlyAndCaptureLayout",
+        "status": "passed",
+        "seconds": 2.643
+      }
+    ],
+    "VideoDetailLayoutTests/testLiveSelectionMovesThreeSecondsAndRestoresVideoTrim": [
+      {
+        "batch": "Supplement",
+        "id": "VideoDetailLayoutTests/testLiveSelectionMovesThreeSecondsAndRestoresVideoTrim",
+        "status": "passed",
+        "seconds": 0.937
+      }
+    ],
+    "VideoDetailLayoutTests/testVideoEditorCanOpenFromFullscreenCoverWithStoredFilter": [
+      {
+        "batch": "Supplement",
+        "id": "VideoDetailLayoutTests/testVideoEditorCanOpenFromFullscreenCoverWithStoredFilter",
+        "status": "passed",
+        "seconds": 3.155
+      }
+    ],
+    "VideoDetailLayoutTests/testVideoInfoAndLandscapeLevelFitCompactAndRegularScreens": [
+      {
+        "batch": "Supplement",
+        "id": "VideoDetailLayoutTests/testVideoInfoAndLandscapeLevelFitCompactAndRegularScreens",
+        "status": "passed",
+        "seconds": 2.072
+      }
+    ],
+    "VideoDetailLayoutTests/testVideoPlaybackRotatesWithoutMovingHeaderOrActions": [
+      {
+        "batch": "Supplement",
+        "id": "VideoDetailLayoutTests/testVideoPlaybackRotatesWithoutMovingHeaderOrActions",
+        "status": "passed",
+        "seconds": 6.158
+      }
+    ],
+    "CameraPopupLifecycleTests/testGalleryReviewKeepsPopupState": [
+      {
+        "batch": "UI",
+        "id": "CameraPopupLifecycleTests/testGalleryReviewKeepsPopupState",
+        "status": "passed",
+        "seconds": 0.036
+      }
+    ],
+    "CameraPopupLifecycleTests/testLeavingCameraClosesAllFunctionPopups": [
+      {
+        "batch": "UI",
+        "id": "CameraPopupLifecycleTests/testLeavingCameraClosesAllFunctionPopups",
+        "status": "passed",
+        "seconds": 0.035
+      }
+    ],
+    "CaptureControlRotationTests/testAlbumThumbnailRotatesWithControlsWithoutMovingButton": [
+      {
+        "batch": "UI",
+        "id": "CaptureControlRotationTests/testAlbumThumbnailRotatesWithControlsWithoutMovingButton",
+        "status": "passed",
+        "seconds": 10.628
+      }
+    ],
+    "CaptureControlRotationTests/testFlatDeviceKeepsLastDirectionAndRotationTakesShortestPath": [
+      {
+        "batch": "UI",
+        "id": "CaptureControlRotationTests/testFlatDeviceKeepsLastDirectionAndRotationTakesShortestPath",
+        "status": "passed",
+        "seconds": 0.0
+      }
+    ],
+    "DepthToolbarPhysicalTests/testHEIFProToolbarPopupLayoutsLifecycleAndCapture": [
+      {
+        "batch": "UI",
+        "id": "DepthToolbarPhysicalTests/testHEIFProToolbarPopupLayoutsLifecycleAndCapture",
+        "status": "passed",
+        "seconds": 45.871
+      }
+    ],
+    "PresetToolbarPhysicalTests/testFrontRecordingZoomChangesHardwareAndDecodes": [
+      {
+        "batch": "UI",
+        "id": "PresetToolbarPhysicalTests/testFrontRecordingZoomChangesHardwareAndDecodes",
+        "status": "passed",
+        "seconds": 4.886
+      }
+    ],
+    "PresetToolbarPhysicalTests/testManualRecordingZoomChangesHardwareAndKeepsRoute": [
+      {
+        "batch": "UI",
+        "id": "PresetToolbarPhysicalTests/testManualRecordingZoomChangesHardwareAndKeepsRoute",
+        "status": "passed",
+        "seconds": 6.276
+      }
+    ],
+    "PresetToolbarPhysicalTests/testRecordingWheelAndFocalHitAreasAcrossRatiosWidthsAndDirections": [
+      {
+        "batch": "UI",
+        "id": "PresetToolbarPhysicalTests/testRecordingWheelAndFocalHitAreasAcrossRatiosWidthsAndDirections",
+        "status": "passed",
+        "seconds": 53.964
+      }
+    ],
+    "PresetToolbarPhysicalTests/testRecordingZoomButtonsWheelAndThreeSecondIdleHide": [
+      {
+        "batch": "UI",
+        "id": "PresetToolbarPhysicalTests/testRecordingZoomButtonsWheelAndThreeSecondIdleHide",
+        "status": "passed",
+        "seconds": 14.872
+      }
+    ],
+    "PresetToolbarPhysicalTests/testSettingsBitrateDefaultWhiteAndOtherPresetsOrange": [
+      {
+        "batch": "UI",
+        "id": "PresetToolbarPhysicalTests/testSettingsBitrateDefaultWhiteAndOtherPresetsOrange",
+        "status": "passed",
+        "seconds": 9.778
+      }
+    ],
+    "PresetToolbarPhysicalTests/testSlowPresetAndDurationColorsDependOnlyOnPresetSelection": [
+      {
+        "batch": "UI",
+        "id": "PresetToolbarPhysicalTests/testSlowPresetAndDurationColorsDependOnlyOnPresetSelection",
+        "status": "passed",
+        "seconds": 12.557
+      }
+    ],
+    "PresetToolbarPhysicalTests/testVideoStandbyDefaultsToFocalsAndWheelHidesAfterIdle": [
+      {
+        "batch": "UI",
+        "id": "PresetToolbarPhysicalTests/testVideoStandbyDefaultsToFocalsAndWheelHidesAfterIdle",
+        "status": "passed",
+        "seconds": 5.319
+      }
+    ],
+    "BasicVideoPhysicalTests/testFiniteTimeLapseActuallyStopsAtAcceptedFrameLimitTwice": [
+      {
+        "batch": "Video",
+        "id": "BasicVideoPhysicalTests/testFiniteTimeLapseActuallyStopsAtAcceptedFrameLimitTwice",
+        "status": "passed",
+        "seconds": 6.084
+      }
+    ],
+    "BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn": [
+      {
+        "batch": "Video",
+        "id": "BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn",
+        "status": "passed",
+        "seconds": 11.149
+      }
+    ],
+    "CinematicZoomPhysicalTests/testFixedButtonsWheelRangeActualCinematicRouteAndRecovery": [
+      {
+        "batch": "Video",
+        "id": "CinematicZoomPhysicalTests/testFixedButtonsWheelRangeActualCinematicRouteAndRecovery",
+        "status": "passed",
+        "seconds": 11.317
+      }
+    ],
+    "FrontVideoCenteringPhysicalTests/testCenterStageCapabilitiesFallbackAndRapidRecovery": [
+      {
+        "batch": "Video",
+        "id": "FrontVideoCenteringPhysicalTests/testCenterStageCapabilitiesFallbackAndRapidRecovery",
+        "status": "passed",
+        "seconds": 21.116
+      }
+    ],
+    "SlowMotionLensTransitionPhysicalTests/testSlowMotionFocalSwitchLatencyAndRecording": [
+      {
+        "batch": "Video",
+        "id": "SlowMotionLensTransitionPhysicalTests/testSlowMotionFocalSwitchLatencyAndRecording",
+        "status": "passed",
+        "seconds": 29.656
+      }
+    ],
+    "VideoCodecPhysicalTests/testActualCodecsAndColorsRepeatedRecording": [
+      {
+        "batch": "Video",
+        "id": "VideoCodecPhysicalTests/testActualCodecsAndColorsRepeatedRecording",
+        "status": "passed",
+        "seconds": 42.722
+      }
+    ],
+    "VideoColorPhysicalTests/testEveryAvailableColorSpaceRecordsRealTagsAndRestoresPhotos": [
+      {
+        "batch": "Video",
+        "id": "VideoColorPhysicalTests/testEveryAvailableColorSpaceRecordsRealTagsAndRestoresPhotos",
+        "status": "passed",
+        "seconds": 38.468
+      }
+    ],
+    "VideoStabilizationPhysicalTests/testCinematicTimeLapseAndSlowMotionUseStabilization": [
+      {
+        "batch": "Video",
+        "id": "VideoStabilizationPhysicalTests/testCinematicTimeLapseAndSlowMotionUseStabilization",
+        "status": "passed",
+        "seconds": 16.02
+      }
+    ],
+    "VideoStabilizationPhysicalTests/testStabilizedRealMoviesFrontRearAndManualDecode": [
+      {
+        "batch": "Video",
+        "id": "VideoStabilizationPhysicalTests/testStabilizedRealMoviesFrontRearAndManualDecode",
+        "status": "passed",
+        "seconds": 11.954
+      }
+    ],
+    "VideoStabilizationPhysicalTests/testSupportedRoutesKeepStabilizationAcrossSettingsAndPhotoReturn": [
+      {
+        "batch": "Video",
+        "id": "VideoStabilizationPhysicalTests/testSupportedRoutesKeepStabilizationAcrossSettingsAndPhotoReturn",
+        "status": "passed",
+        "seconds": 20.786
+      }
+    ],
+    "VideoVirtualAperturePhysicalTests/testVideoEntryLayoutRecordingAndRecovery": [
+      {
+        "batch": "Video",
+        "id": "VideoVirtualAperturePhysicalTests/testVideoEntryLayoutRecordingAndRecovery",
+        "status": "passed",
+        "seconds": 24.09
+      }
+    ]
+  },
+  "sourceAudit": {
+    "files": 383,
+    "changed": []
+  },
+  "evidenceRoot": "/tmp/LumaCamera-MainFunctions-20261102",
+  "photosLibraryMutations": "blocked by diagnostic read-only service; real assets queried read-only",
+  "knownProductIssue": "video virtual aperture implementation exists but menu entry is absent",
+  "conditionalAvailability": {
+    "systemOnDeviceMultimodalModel": "deviceNotEligible",
+    "visionFallback": "executed",
+    "naturalNightGate": {
+      "ISO": 624.5477905273438,
+      "seconds": 0.030005,
+      "triggered": false,
+      "triggerExposureIndex": 64
+    },
+    "smartRealSceneAlignment": "not completed"
+  },
+  "normalAppRestore": "passed; devicectl launched normal app without test arguments"
+}

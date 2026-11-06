@@ -1,0 +1,40 @@
+{
+  "device": "iPhone17 Pro",
+  "os": "iOS27.2",
+  "passedUniqueMethods": 2,
+  "photoNativeControlUpdates": 270,
+  "photoPublicationCounts": [
+    57,
+    47,
+    46
+  ],
+  "photoMaximumPublicationGapSeconds": [
+    0.042154333,
+    0.041445958,
+    0.038721667
+  ],
+  "videoModelUpdates": 180,
+  "videoPublicationCounts": [
+    31,
+    31,
+    31
+  ],
+  "videoMaximumPublicationGapSeconds": [
+    0.038570625,
+    0.039621875,
+    0.037009708
+  ],
+  "endedEvents": [
+    "touchCancel",
+    "touchUpOutside",
+    "touchUpInside"
+  ],
+  "highlightedScreenshot": "/private/tmp/LumaCamera-ApertureSlider-PhotoFinal-Images/DE04BE24-D254-4A0B-9DBB-7FF0F3590EB6.png",
+  "installSequence": 1672,
+  "normalBuild": "passed",
+  "limitations": [
+    "UIControl events and highlighted state are simulated, not physical touch injection",
+    "iOS18 real device untested",
+    "long thermal untested"
+  ]
+}

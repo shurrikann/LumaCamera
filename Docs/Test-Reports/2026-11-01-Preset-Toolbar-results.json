@@ -1,0 +1,227 @@
+{
+  "status": "targeted_passed",
+  "device": "iPhone17Pro iPhone18,1 iOS27.2 24B119",
+  "xcode": "27.1",
+  "finalPassed": 15,
+  "finalFailed": 0,
+  "finalSkipped": 0,
+  "finalExecutionSeconds": 86.291,
+  "batches": {
+    "UI": [
+      {
+        "name": "PopupAppearanceAndOrientationTests/testSlowShutterPresetGroupGlassStabilityAndDrawCost",
+        "status": "passed",
+        "seconds": 7.23
+      },
+      {
+        "name": "PresetToolbarPhysicalTests/testFrontVideoWideSelectionHasNoBackground",
+        "status": "passed",
+        "seconds": 5.019
+      },
+      {
+        "name": "SlowShutterPresetTests/testPresetSlotsAlignWithFocalSlotsAndSurviveRapidToggleOnDevice",
+        "status": "passed",
+        "seconds": 24.435
+      },
+      {
+        "name": "VideoWorkflowTests/testTimeLapsePresetBarMatchesFocalBarAndSurvivesRapidChanges",
+        "status": "passed",
+        "seconds": 17.951
+      }
+    ],
+    "Final": [
+      {
+        "name": "BasicVideoPhysicalTests/testTimeLapseRecordingCreatesSparseSilentMovie",
+        "status": "failed",
+        "seconds": 20.566
+      },
+      {
+        "name": "CameraFocalButtonTests/testHostedFocalStripHitTargetsAfterRepeatedSelections",
+        "status": "failed",
+        "seconds": 63.43
+      },
+      {
+        "name": "PopupAppearanceAndOrientationTests/testSlowShutterPresetGroupGlassStabilityAndDrawCost",
+        "status": "failed",
+        "seconds": 20.121
+      },
+      {
+        "name": "PresetToolbarPhysicalTests/testFrontVideoWideSelectionHasNoBackground",
+        "status": "failed",
+        "seconds": 20.096
+      },
+      {
+        "name": "SlowShutterDurationTests/testFivePerRowLayout",
+        "status": "passed",
+        "seconds": 0.001
+      },
+      {
+        "name": "SlowShutterDurationTests/testOneSecondScalesPresetDurationAndKeepsMinimumFrames",
+        "status": "passed",
+        "seconds": 0.001
+      },
+      {
+        "name": "SlowShutterDurationTests/testOptionsAndDefault",
+        "status": "passed",
+        "seconds": 0.001
+      },
+      {
+        "name": "SlowShutterDurationTests/testPresetDurationRangesAndDefaults",
+        "status": "passed",
+        "seconds": 0.001
+      },
+      {
+        "name": "SlowShutterPresetTests/testPresetSlotsAlignWithFocalSlotsAndSurviveRapidToggleOnDevice",
+        "status": "failed",
+        "seconds": 20.114
+      },
+      {
+        "name": "SlowShutterPresetTests/testSlowShutterModeRoundTripRestoresAutomaticPresetAndResetsManualDuration",
+        "status": "failed",
+        "seconds": 53.949
+      },
+      {
+        "name": "TimeLapseSettingsTests/testCancellingPresetRestoresOneSecondAnd120Frames",
+        "status": "passed",
+        "seconds": 0.619
+      },
+      {
+        "name": "TimeLapseSettingsTests/testIntervalAndFrameCountOptions",
+        "status": "passed",
+        "seconds": 0.0
+      },
+      {
+        "name": "TimeLapseSettingsTests/testPresetRecommendedCombinations",
+        "status": "passed",
+        "seconds": 0.0
+      },
+      {
+        "name": "TimeLapseSettingsTests/testSchedulerStopsAtFrameLimit",
+        "status": "passed",
+        "seconds": 0.0
+      },
+      {
+        "name": "VideoWorkflowTests/testTimeLapsePresetBarMatchesFocalBarAndSurvivesRapidChanges",
+        "status": "passed",
+        "seconds": 23.038
+      }
+    ],
+    "Final2": [
+      {
+        "name": "BasicVideoPhysicalTests/testTimeLapseRecordingCreatesSparseSilentMovie",
+        "status": "passed",
+        "seconds": 4.264
+      },
+      {
+        "name": "CameraFocalButtonTests/testHostedFocalStripHitTargetsAfterRepeatedSelections",
+        "status": "passed",
+        "seconds": 21.821
+      },
+      {
+        "name": "PopupAppearanceAndOrientationTests/testSlowShutterPresetGroupGlassStabilityAndDrawCost",
+        "status": "passed",
+        "seconds": 6.639
+      },
+      {
+        "name": "PresetToolbarPhysicalTests/testFrontVideoWideSelectionHasNoBackground",
+        "status": "passed",
+        "seconds": 4.775
+      },
+      {
+        "name": "SlowShutterDurationTests/testFivePerRowLayout",
+        "status": "passed",
+        "seconds": 0.001
+      },
+      {
+        "name": "SlowShutterDurationTests/testOneSecondScalesPresetDurationAndKeepsMinimumFrames",
+        "status": "passed",
+        "seconds": 0.0
+      },
+      {
+        "name": "SlowShutterDurationTests/testOptionsAndDefault",
+        "status": "passed",
+        "seconds": 0.0
+      },
+      {
+        "name": "SlowShutterDurationTests/testPresetDurationRangesAndDefaults",
+        "status": "passed",
+        "seconds": 0.001
+      },
+      {
+        "name": "SlowShutterPresetTests/testPresetSlotsAlignWithFocalSlotsAndSurviveRapidToggleOnDevice",
+        "status": "passed",
+        "seconds": 23.836
+      },
+      {
+        "name": "SlowShutterPresetTests/testSlowShutterModeRoundTripRestoresAutomaticPresetAndResetsManualDuration",
+        "status": "passed",
+        "seconds": 5.849
+      },
+      {
+        "name": "TimeLapseSettingsTests/testCancellingPresetRestoresOneSecondAnd120Frames",
+        "status": "passed",
+        "seconds": 0.646
+      },
+      {
+        "name": "TimeLapseSettingsTests/testIntervalAndFrameCountOptions",
+        "status": "passed",
+        "seconds": 0.0
+      },
+      {
+        "name": "TimeLapseSettingsTests/testPresetRecommendedCombinations",
+        "status": "passed",
+        "seconds": 0.0
+      },
+      {
+        "name": "TimeLapseSettingsTests/testSchedulerStopsAtFrameLimit",
+        "status": "passed",
+        "seconds": 0.0
+      },
+      {
+        "name": "VideoWorkflowTests/testTimeLapsePresetBarMatchesFocalBarAndSurvivesRapidChanges",
+        "status": "passed",
+        "seconds": 18.458
+      }
+    ]
+  },
+  "metrics": {
+    "slow": {
+      "snapshotSamples": 20,
+      "snapshotMedianMS": 55.18679166561924,
+      "snapshotMaxMS": 71.03691666270606
+    },
+    "timeLapse": {
+      "snapshotSamples": 10,
+      "snapshotMedianMS": 50.34639583027456,
+      "snapshotMaxMS": 61.01358332671225
+    }
+  },
+  "layoutChecks": {
+    "slow": 56,
+    "slowRepeatedSubset": 8,
+    "timeLapse": 40,
+    "widths": [
+      320,
+      402
+    ],
+    "anglesInjected": [
+      0,
+      90,
+      -90,
+      180
+    ]
+  },
+  "timeLapseMovie": {
+    "captureSeconds": 2.2,
+    "decodedFrames": 3,
+    "fileDurationSeconds": 0.1,
+    "playbackFPS": 30,
+    "audioTracks": 0
+  },
+  "realHumanDeviceRotationNotMeasured": true,
+  "displayFPSNotMeasured": true,
+  "ordinaryAppRestored": true,
+  "systemPhotosWrites": false,
+  "slowResumeIssue": "SLOW-RESUME-001 remains open; unrelated to this toolbar change",
+  "releaseBuild": "Release.log: BUILD SUCCEEDED; no source warnings; AppIntents metadata warning"
+}

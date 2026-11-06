@@ -1,0 +1,30 @@
+{
+  "device": "iPhone 17 Pro",
+  "os": "iOS 27.0.1",
+  "date": "2026-10-26",
+  "testsPassed": 3,
+  "layouts": 28,
+  "sliderUpdates": 100,
+  "sliderModelSeconds": {
+    "median": 2.5041663320735097e-05,
+    "max": 3.354166983626783e-05
+  },
+  "captureWallSeconds": {
+    "main": 0.923060125,
+    "tele": 0.656777958
+  },
+  "actualFNumber": {
+    "main": 1.779999971,
+    "tele": 2.798828125
+  },
+  "tinyLightRenderSeconds": 0.072183917,
+  "resultBundle": "/private/tmp/LumaCamera-VirtualAperture-FinalChecks.xcresult",
+  "limits": [
+    "模型提交耗时不等于触控到显示延迟或FPS",
+    "每个镜头仅一张最终批次样本",
+    "未验证真实夜景审美、长时间热稳定性及其他设备"
+  ],
+  "normalBuild": "passed",
+  "installationSequence": 12480,
+  "normalLaunch": "succeeded"
+}

@@ -1,0 +1,86 @@
+{
+  "date": "2026-11-01",
+  "device": "iPhone 17 Pro (iPhone18,1), iOS 27.2 (24B119)",
+  "scope": "photo and video poster fit/rotation; photo and video detail fixed controls; screen-axis paging",
+  "finalUniqueMethodsPassed": 30,
+  "finalWholeSuiteRerun": false,
+  "batches": {
+    "Media-Final": {
+      "methods": 30,
+      "passed": 29,
+      "failed": 1,
+      "seconds": 52.932,
+      "failure": "Legacy assertion required 2 local swipe recognizers; now 4 local directions with exactly 2 enabled on the screen horizontal axis"
+    },
+    "Media-Paging": {
+      "methods": 1,
+      "passed": 1,
+      "failed": 0,
+      "seconds": 0.002
+    }
+  },
+  "photoLayoutCases": 112,
+  "photoRapidChanges": 40,
+  "videoLayoutCases": 10,
+  "videoRapidChanges": 40,
+  "thumbnailOrientations": 18,
+  "thumbnailRequests": 2,
+  "thumbnailCancellations": 2,
+  "exifTagsPreserved": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "photoSnapshots": {
+    "samples": 4,
+    "medianMs": 40.01243750099093,
+    "maxMs": 44.61016666027717,
+    "meanMs": 39.478968748881016,
+    "meaning": "UIKit hierarchy snapshot drawing cost; not FPS or touch latency"
+  },
+  "thumbnailSnapshots": {
+    "samples": 18,
+    "medianMs": 41.15941666532308,
+    "maxMs": 51.28270832938142,
+    "meanMs": 42.00728703775288,
+    "meaning": "UIKit hierarchy snapshot drawing cost; not FPS or touch latency"
+  },
+  "videoSnapshots": {
+    "samples": 10,
+    "meanMs": 122.7318874996854,
+    "maxMs": 206.75658332766034,
+    "meaning": "UI hierarchy capture and attachment cost; not display FPS"
+  },
+  "evidenceRoot": "/tmp/LumaCamera-PhotoRotation-20261101",
+  "limitations": [
+    "Physical-device rendering with injected orientation angles; no new manual sensor-turn acceptance",
+    "Synthetic images and temporary H264 video; no system Photos mutation",
+    "EXIF preservation checks use generated JPEG resources, not new camera photos",
+    "AVPlayerLayer videoRect geometry verified; UIKit hierarchy screenshots do not verify composited video pixels",
+    "Not a full project regression or long-duration playback/thermal test"
+  ],
+  "historicalPhotoBatches": {
+    "Final": {
+      "passed": 18,
+      "failed": 1,
+      "assertionsFailed": 16,
+      "reason": "sampled intermediate animated canvas bounds at a fixed 260 ms; now waits for target dimensions"
+    },
+    "Final2": {
+      "passed": 20,
+      "failed": 0,
+      "seconds": 41.258
+    }
+  },
+  "releaseBuild": "passed",
+  "sourceWarnings": 0,
+  "toolWarnings": [
+    "AppIntents metadata extraction skipped because no AppIntents.framework dependency"
+  ],
+  "normalAppRestored": true
+}

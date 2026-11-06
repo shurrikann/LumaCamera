@@ -1,0 +1,100 @@
+{
+  "date": "2026-10-24",
+  "device": "iPhone17Pro / iOS27.0.1 (24A446)",
+  "productionChanged": false,
+  "resolutionType": "原三项复测通过；补强拍后清空、退出后新帧和同帧真实EXIF断言",
+  "distinctPassed": 11,
+  "methods": [
+    {
+      "test": "PortraitDepthControlTests/testBlurAppearanceScalesWithImageResolutionAndMeasuresRendering()",
+      "seconds": 0.152,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearFinal.xcresult"
+    },
+    {
+      "test": "PortraitDepthControlTests/testBlurSliderMapsFromSharpToStrongerBlur()",
+      "seconds": 0.0,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearFinal.xcresult"
+    },
+    {
+      "test": "PortraitDepthControlTests/testNormalizedBackgroundBlurPreservesForegroundAndAvoidsColorHalo()",
+      "seconds": 0.015,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearFinal.xcresult"
+    },
+    {
+      "test": "PortraitDepthControlTests/testPhotoEncoderBakesSelectedBlurStrengthIntoProcessedImage()",
+      "seconds": 0.022,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearFinal.xcresult"
+    },
+    {
+      "test": "PortraitDepthControlTests/testPreviewMaskSurvivesTransientSegmentationMissesDuringSliderDrag()",
+      "seconds": 0.0,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearFinal.xcresult"
+    },
+    {
+      "test": "PortraitDepthControlTests/testPreviewProcessorInvalidatesMaskWhenPortraitStops()",
+      "seconds": 0.0,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearFinal.xcresult"
+    },
+    {
+      "test": "PortraitDepthControlTests/testPreviewRefinesPersonMaskBeforeApplyingBlur()",
+      "seconds": 0.043,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearFinal.xcresult"
+    },
+    {
+      "test": "PortraitDepthControlTests/testStrengthChangesConvergeWithoutResettingMask()",
+      "seconds": 0.0,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearFinal.xcresult"
+    },
+    {
+      "test": "PortraitOptimizationPhysicalTests/testRearPortraitSameFrameReference()",
+      "seconds": 2.391,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearConfirmed.xcresult"
+    },
+    {
+      "test": "PortraitOptimizationPhysicalTests/testRearPortraitContinuousAdjustmentAndCapture()",
+      "seconds": 11.034,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearConfirmed.xcresult"
+    },
+    {
+      "test": "PortraitOptimizationPhysicalTests/testFrontPortraitContinuousAdjustmentAndCapture()",
+      "seconds": 11.884,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-FrontFinal.xcresult"
+    }
+  ],
+  "metrics": [
+    {
+      "group": "RearConfirmed",
+      "text": "PORTRAIT-OPT position=1 sliderUpdates=180 missingPreviews=0 publications=199 publicationGapP95=0.05087558334344067 maxGap=0.06422862499312032 segmentationSamples=57 medianMS=10.438249999424443 p95MS=13.261333326227032 maxMS=51.64175000390969 requestsCreated=1 acceptedMasks=57 failures=0"
+    },
+    {
+      "group": "FrontFinal",
+      "text": "PORTRAIT-OPT position=2 sliderUpdates=180 missingPreviews=0 publications=131 publicationGapP95=0.061704666673904285 maxGap=0.06926558332634158 segmentationSamples=63 medianMS=15.306624991353601 p95MS=23.189833329524845 maxMS=29.29854167450685 requestsCreated=1 acceptedMasks=63 failures=0"
+    },
+    {
+      "group": "RearFinal",
+      "text": "PORTRAIT-RENDER device=physical samples=20 size=900x1200 medianMS=3.7107916577951983 p95MS=5.64012500399258 maxMS=6.057958336896263 scaledMeanDifference=[0.0026474, 0.0026474, 0.0026474, 1.0]"
+    },
+    {
+      "group": "RearFinal",
+      "text": "PORTRAIT-OPT position=1 sliderUpdates=180 missingPreviews=0 publications=206 publicationGapP95=0.04426416667411104 maxGap=0.08609216667537112 segmentationSamples=15 medianMS=10.79050000407733 p95MS=20.009083338663913 maxMS=20.009083338663913 requestsCreated=2 acceptedMasks=0 failures=15"
+    }
+  ],
+  "intermediateFailure": "RearFinal: 无人物蒙版且进入微距；用户重新准备后RearConfirmed通过",
+  "runtimeErrorsInFinalGroups": 0,
+  "limitations": [
+    "只验当前单人场景，未覆盖全部边缘/运动/多人",
+    "图像发布及分割耗时不是屏幕FPS或功耗",
+    "不保证平台永不出现照片回调超时"
+  ]
+}

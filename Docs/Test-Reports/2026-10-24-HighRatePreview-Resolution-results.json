@@ -1,0 +1,186 @@
+{
+  "date": "2026-10-24",
+  "device": "iPhone 17 Pro / iOS 27.0.1",
+  "productionChanged": false,
+  "distinctPassed": 4,
+  "baseline": {
+    "methods": 2,
+    "seconds": 30.731,
+    "resultBundle": "/private/tmp/LumaCamera-HighRatePreview-20261024-Baseline.xcresult"
+  },
+  "enhanced": {
+    "methods": 4,
+    "seconds": 56.455,
+    "resultBundle": "/private/tmp/LumaCamera-HighRatePreview-20261024-Enhanced.xcresult"
+  },
+  "files": [
+    {
+      "route": "rear-0",
+      "resolution": "720p",
+      "selectedRate": 120,
+      "frames": 99,
+      "nominalFPS": 120.0,
+      "ptsFPS": 120.0
+    },
+    {
+      "route": "rear-0",
+      "resolution": "1080p",
+      "selectedRate": 120,
+      "frames": 98,
+      "nominalFPS": 120.0,
+      "ptsFPS": 120.0
+    },
+    {
+      "route": "rear-0",
+      "resolution": "4K",
+      "selectedRate": 120,
+      "frames": 98,
+      "nominalFPS": 120.0,
+      "ptsFPS": 120.0
+    },
+    {
+      "route": "front-0",
+      "resolution": "1080p",
+      "selectedRate": 30,
+      "frames": 25,
+      "nominalFPS": 30.0,
+      "ptsFPS": 30.0
+    },
+    {
+      "route": "front-0",
+      "resolution": "4K",
+      "selectedRate": 60,
+      "frames": 49,
+      "nominalFPS": 60.0,
+      "ptsFPS": 60.0
+    },
+    {
+      "route": "rear-1",
+      "resolution": "720p",
+      "selectedRate": 120,
+      "frames": 99,
+      "nominalFPS": 120.0,
+      "ptsFPS": 120.0
+    },
+    {
+      "route": "rear-1",
+      "resolution": "1080p",
+      "selectedRate": 120,
+      "frames": 98,
+      "nominalFPS": 120.0,
+      "ptsFPS": 120.0
+    },
+    {
+      "route": "rear-1",
+      "resolution": "4K",
+      "selectedRate": 120,
+      "frames": 98,
+      "nominalFPS": 120.0,
+      "ptsFPS": 120.0
+    },
+    {
+      "route": "front-1",
+      "resolution": "1080p",
+      "selectedRate": 30,
+      "frames": 25,
+      "nominalFPS": 30.0,
+      "ptsFPS": 30.0
+    },
+    {
+      "route": "front-1",
+      "resolution": "4K",
+      "selectedRate": 60,
+      "frames": 50,
+      "nominalFPS": 60.0,
+      "ptsFPS": 60.0
+    }
+  ],
+  "totalDecodedFrames": 739,
+  "previewPublicationWindows": [
+    {
+      "selectedRate": 24,
+      "resolution": "1080p",
+      "publications": 39,
+      "hostPublicationFPS": 23.9
+    },
+    {
+      "selectedRate": 25,
+      "resolution": "1080p",
+      "publications": 40,
+      "hostPublicationFPS": 25.0
+    },
+    {
+      "selectedRate": 30,
+      "resolution": "1080p",
+      "publications": 48,
+      "hostPublicationFPS": 29.9
+    },
+    {
+      "selectedRate": 50,
+      "resolution": "1080p",
+      "publications": 80,
+      "hostPublicationFPS": 49.6
+    },
+    {
+      "selectedRate": 60,
+      "resolution": "1080p",
+      "publications": 95,
+      "hostPublicationFPS": 59.3
+    },
+    {
+      "selectedRate": 120,
+      "resolution": "720p",
+      "publications": 237,
+      "hostPublicationFPS": 118.0
+    },
+    {
+      "selectedRate": 120,
+      "resolution": "1080p",
+      "publications": 240,
+      "hostPublicationFPS": 119.8
+    },
+    {
+      "selectedRate": 120,
+      "resolution": "4K",
+      "publications": 240,
+      "hostPublicationFPS": 119.7
+    },
+    {
+      "selectedRate": 120,
+      "resolution": "4K",
+      "publications": 240,
+      "hostPublicationFPS": 119.9
+    },
+    {
+      "selectedRate": 120,
+      "resolution": "1080p",
+      "publications": 240,
+      "hostPublicationFPS": 119.7
+    },
+    {
+      "selectedRate": 120,
+      "resolution": "720p",
+      "publications": 234,
+      "hostPublicationFPS": 116.5
+    }
+  ],
+  "finalRapidRequests": 30,
+  "finalPublicationFPS": 29.87801446943845,
+  "runtimeErrorNotificationsWithError": 0,
+  "systemPhotosWrites": 0,
+  "cumulativeOriginalFailuresPassed": 28,
+  "remainingOriginalFailures": 5,
+  "warnings": [
+    "MDB_MAP_FULL",
+    "Fig -12710",
+    "FigApplicationStateMonitor -19431",
+    "onChange(of: Bool) multiple updates per frame"
+  ],
+  "limitations": [
+    "Main-thread publication cadence is not display FPS",
+    "Short HEVC SDR clips only",
+    "No long-recording thermal, power or memory assessment",
+    "No external RAW test",
+    "Historical full-suite platform root cause unconfirmed"
+  ]
+}

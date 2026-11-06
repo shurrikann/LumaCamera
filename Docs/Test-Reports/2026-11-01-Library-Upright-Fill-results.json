@@ -1,0 +1,195 @@
+{
+  "date": "2026-11-01",
+  "device": "iPhone 17 Pro / iOS 27.2 (24B119)",
+  "scope": "upright library display after landscape capture; filled thumbnails; camera album follows current hand orientation",
+  "uniqueMethodsWithPassingResult": 55,
+  "wholeSuiteRerun": false,
+  "batches": {
+    "Final": {
+      "methods": 33,
+      "passedMethods": 32,
+      "failedMethods": 1,
+      "assertionsFailed": 32,
+      "seconds": 63.835,
+      "failure": "Isolated shutterBar host accessed CameraView controlAngle before the view was installed, always default 0; fixed by CaptureAlbumThumbnail reading its installed environment"
+    },
+    "Confirm": {
+      "methods": 3,
+      "passedMethods": 3,
+      "failedMethods": 0,
+      "seconds": 17.347
+    },
+    "Rear-Core": {
+      "methods": 18,
+      "passed": 18,
+      "failed": 0,
+      "seconds": 13.418
+    },
+    "Rear-Landscape": {
+      "methods": 1,
+      "passed": 1,
+      "failed": 0,
+      "seconds": 4.189
+    },
+    "Rear-Portrait": {
+      "methods": 1,
+      "passed": 1,
+      "failed": 0,
+      "seconds": 4.218
+    },
+    "Rear-PhotoRegression": {
+      "methods": 3,
+      "passed": 3,
+      "failed": 0,
+      "seconds": 25.874
+    },
+    "Final-UI": {
+      "methods": 3,
+      "passed": 3,
+      "failed": 0,
+      "seconds": 17.364
+    }
+  },
+  "orientationGalleryCases": 6,
+  "staleOuterEnvironmentDegrees": 90,
+  "entryResetTests": [
+    "unknown",
+    "faceUp",
+    "faceDown",
+    "portrait"
+  ],
+  "thumbnailDirections": 18,
+  "thumbnailRequests": 2,
+  "thumbnailCancels": 2,
+  "cameraAlbumPhotoVideoCases": 32,
+  "cameraAlbumChecks": [
+    "fixed button frame",
+    "red-blue pixel orientation",
+    "filled near-circle-edge pixels",
+    "no reload",
+    "source image orientation unchanged"
+  ],
+  "cameraAlbumSnapshotCost": {
+    "samples": 32,
+    "medianMs": 36.5240416576853,
+    "maxMs": 50.791916670277715,
+    "meanMs": 36.35399088670965
+  },
+  "thumbnailSnapshotCost": {
+    "samples": 18,
+    "medianMs": 39.65774999232963,
+    "maxMs": 44.71874999580905,
+    "meanMs": 39.19571295813916
+  },
+  "galleryModelToViewObservationCost": {
+    "samples": 6,
+    "medianMs": 11.18106250942219,
+    "maxMs": 11.866375018144026,
+    "meanMs": 11.254048615228385
+  },
+  "metricLimitations": [
+    "snapshot drawing cost is not FPS",
+    "gallery observation includes 10 ms polling and is not completed-animation or hand-motion latency"
+  ],
+  "manualUserVerification": "Display-only fix rejected by user; exact selected resources confirmed incorrectly saved; new rear physical landscape and portrait photo/movie passed",
+  "evidenceRoot": "/tmp/LumaCamera-MediaUprightFill-20261101",
+  "oldFilesModified": false,
+  "rootCause": "Rear photo output fixed 90 degrees and ordinary rear video default portrait track transform; source files were already sideways",
+  "selectedFileEvidence": {
+    "viewerDeviceOrientation": 1,
+    "viewerInterfaceOrientation": 1,
+    "viewerExtraAngle": 0,
+    "photo": {
+      "width": 2250,
+      "height": 4000,
+      "exifOrientation": 1,
+      "contentVisuallySideways": true
+    },
+    "video": {
+      "naturalWidth": 1440,
+      "naturalHeight": 1080,
+      "trackRotation": 90,
+      "displayWidth": 1080,
+      "displayHeight": 1440,
+      "contentVisuallySideways": true
+    }
+  },
+  "newPhysicalFiles": {
+    "landscape": {
+      "photo": [
+        4000,
+        2250
+      ],
+      "photoExifOrientation": 1,
+      "videoNatural": [
+        1920,
+        1080
+      ],
+      "videoRotation": 0,
+      "videoDisplay": [
+        1920,
+        1080
+      ],
+      "deviceOrientation": 3
+    },
+    "portrait": {
+      "photo": [
+        2250,
+        4000
+      ],
+      "photoExifOrientation": 1,
+      "videoNatural": [
+        1920,
+        1080
+      ],
+      "videoRotation": 90,
+      "videoDisplay": [
+        1080,
+        1920
+      ],
+      "deviceOrientation": 1
+    }
+  },
+  "rear20EncodeDecodeWallCost": {
+    "samples": 20,
+    "medianMs": 286.7113333195448,
+    "maxMs": 291.6915000532754,
+    "valuesMs": [
+      269.9391249916516,
+      275.1655416795984,
+      281.9412082899362,
+      284.2850833549164,
+      286.72633331734687,
+      284.6134167048149,
+      282.7589583466761,
+      283.8545416598208,
+      281.821749988012,
+      290.26595829054713,
+      291.38791671721265,
+      287.62899996945634,
+      288.2389583392069,
+      286.6963333217427,
+      290.624666668009,
+      290.184416633565,
+      291.6915000532754,
+      285.3432083502412,
+      289.60491670295596,
+      290.78891669632867
+    ],
+    "meaning": "six-frame temporary movie encoding plus file load/decoding wall time; not FPS"
+  },
+  "temporaryDisplayDiagnosticRemoved": true,
+  "normalAppRestored": true,
+  "remainingLimits": [
+    "Existing incorrect files untouched",
+    "Physical rear wide JPEG / HEVC SDR 1080p30 verified at landscapeLeft and portrait",
+    "Two other directions and five video ratios tested with generated real encoded files",
+    "RAW external, dual composite, slow shutter frame-composite direction not physically retested",
+    "No full project rerun or long-duration thermal test"
+  ],
+  "releaseBuild": "Final-Release passed",
+  "sourceWarnings": 0,
+  "toolWarnings": [
+    "AppIntents metadata extraction skipped: no AppIntents.framework dependency"
+  ]
+}

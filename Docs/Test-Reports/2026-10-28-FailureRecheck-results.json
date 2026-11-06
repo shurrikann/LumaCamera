@@ -1,0 +1,4762 @@
+{
+  "date": "2026-10-28",
+  "device": "iPhone 17 Pro / iOS 27.2 (24B119)",
+  "scope": "2026-10-28全量78个失败方法逐项新进程复验",
+  "started": "2026-10-28T14:04:43.381684+08:00",
+  "finished": "2026-10-28T14:51:15.576076+08:00",
+  "counts": {
+    "passed": 65,
+    "failed": 11,
+    "crashed": 2,
+    "timed-out": 0,
+    "skipped": 0,
+    "environment-blocked": 0
+  },
+  "tests": [
+    {
+      "id": "FULL-20261028-001",
+      "test": "AutomaticLensStabilityPhysicalTests/testAutomaticModeUsesSystemVirtualCameraCandidatesAndWheelRetainsFullRange",
+      "kind": "automatic",
+      "started": "2026-10-28T14:04:43.381684+08:00",
+      "finished": "2026-10-28T14:04:58.462641+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 9.856,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-001.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-001.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167498.434,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167484.817,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-002",
+      "test": "AutomaticWhiteBalanceExposureTests/testAutomaticWhiteBalanceRemainsAutomaticDuringManualISOSweep",
+      "kind": "automatic",
+      "started": "2026-10-28T14:04:58.463007+08:00",
+      "finished": "2026-10-28T14:05:08.867353+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 4.89,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-002.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-002.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167508.835,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167499.942,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-003",
+      "test": "BasicVideoPhysicalTests/testTimeLapseRecordingCreatesSparseSilentMovie",
+      "kind": "automatic",
+      "started": "2026-10-28T14:05:08.867763+08:00",
+      "finished": "2026-10-28T14:05:17.878717+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 3.371,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-003.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-003.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 57,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/BasicVideoPhysicalTests.swift:89: error: -[LumaCameraTests.BasicVideoPhysicalTests testTimeLapseRecordingCreatesSparseSilentMovie] : XCTAssertGreaterThan failed: (\"0.1\") is not greater than (\"0.1\")"
+        },
+        {
+          "logLine": 58,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/BasicVideoPhysicalTests.swift:103: error: -[LumaCameraTests.BasicVideoPhysicalTests testTimeLapseRecordingCreatesSparseSilentMovie] : XCTAssertGreaterThanOrEqual failed: (\"3\") is less than (\"4\")"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793167517.848,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167510.18,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertGreaterThan failed: (\"0.1\") is not greater than (\"0.1\")",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "BasicVideoPhysicalTests/testTimeLapseRecordingCreatesSparseSilentMovie()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/BasicVideoPhysicalTests/testTimeLapseRecordingCreatesSparseSilentMovie",
+            "testName": "testTimeLapseRecordingCreatesSparseSilentMovie()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "verificationNote": "延时短片实际3帧/0.1秒，用例要求至少4帧且大于0.1秒；应先核对启动窗口、采样间隔与测试边界。"
+    },
+    {
+      "id": "FULL-20261028-004",
+      "test": "DualCapturePhysicalTests/testEngineDualCaptureRecordingSwapAndOrdinaryRecovery",
+      "kind": "automatic",
+      "started": "2026-10-28T14:05:17.879143+08:00",
+      "finished": "2026-10-28T14:05:40.473071+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 16.096,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-004.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-004.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167540.434,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167519.436,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-005",
+      "test": "DualCapturePhysicalTests/testInactiveDualCaptureEntryIsVisibleInsideLensRegion",
+      "kind": "automatic",
+      "started": "2026-10-28T14:05:40.473654+08:00",
+      "finished": "2026-10-28T14:05:52.770034+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 6.463,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-005.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-005.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167552.735,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167542.009,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-006",
+      "test": "FilterEditorPhysicalTests/testRepeatedFilterEditingResetsAndFormatChangesStayBoundedAndRecover",
+      "kind": "automatic",
+      "started": "2026-10-28T14:05:52.770555+08:00",
+      "finished": "2026-10-28T14:06:32.204580+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 33.471,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-006.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-006.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167592.165,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167554.222,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-007",
+      "test": "FocusNavigatorPhysicalTests/testLiveAndRawPhotoPipelineRestoresAfterNavigation",
+      "kind": "automatic",
+      "started": "2026-10-28T14:06:32.205128+08:00",
+      "finished": "2026-10-28T14:06:48.590927+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 10.151,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-007.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-007.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167608.554,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167593.821,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-008",
+      "test": "FocusNavigatorPhysicalTests/testManualCaptureMetadataAndMovableNavigatorLayout",
+      "kind": "automatic",
+      "started": "2026-10-28T14:06:48.591414+08:00",
+      "finished": "2026-10-28T14:07:13.251212+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 17.62,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-008.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-008.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167633.214,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167610.03,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-009",
+      "test": "FocusNavigatorPhysicalTests/testPhotoNavigatorThresholdCaptureAndVideoExit",
+      "kind": "automatic",
+      "started": "2026-10-28T14:07:13.251839+08:00",
+      "finished": "2026-10-28T14:07:30.757298+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 11.052,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-009.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-009.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167650.72,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167634.659,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-010",
+      "test": "FrontVideoCenteringPhysicalTests/testCenterStagePersonLandscapeRecording",
+      "kind": "sceneDependent",
+      "started": "2026-10-28T14:44:05.651648+08:00",
+      "finished": "2026-10-28T14:44:31.903895+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 19.47,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-010.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-010.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 73,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/FrontVideoCenteringPhysicalTests.swift:43: error: -[LumaCameraTests.FrontVideoCenteringPhysicalTests testCenterStagePersonLandscapeRecording] : failed - 真实手持方向 "
+        },
+        {
+          "logLine": 74,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/FrontVideoCenteringPhysicalTests.swift:43: error: -[LumaCameraTests.FrontVideoCenteringPhysicalTests testCenterStagePersonLandscapeRecording] : failed: caught error: \"CancellationError()\""
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793169871.87,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169847.606,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "failed - 真实手持方向 ",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "FrontVideoCenteringPhysicalTests/testCenterStagePersonLandscapeRecording()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/FrontVideoCenteringPhysicalTests/testCenterStagePersonLandscapeRecording",
+            "testName": "testCenterStagePersonLandscapeRecording()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "note": "用户两次配合横拿，仍未通过UIDevice横屏姿态前置判断，均未进入录制；不判定横屏跟随效果已验证。",
+      "verificationNote": "两轮均未通过UIDevice横屏姿态前置判断，未录制；用户已配合横拿，姿态读取/测试前提仍待定位，不能判定实际跟随效果。"
+    },
+    {
+      "id": "FULL-20261028-011",
+      "test": "FrontVideoCenteringPhysicalTests/testCenterStagePersonPortraitRecording",
+      "kind": "sceneDependent",
+      "started": "2026-10-28T14:42:21.853759+08:00",
+      "finished": "2026-10-28T14:42:45.814237+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 15.148,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-011.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-011.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169765.777,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169743.543,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-012",
+      "test": "NightCapturePhysicalTests/testThreeNightCapturesCompleteInMemoryAndReportHonestMergeState",
+      "kind": "automatic",
+      "started": "2026-10-28T14:07:30.757901+08:00",
+      "finished": "2026-10-28T14:07:45.825144+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 9.316,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-012.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-012.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 72,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/NightCapturePhysicalTests.swift:146: error: -[LumaCameraTests.NightCapturePhysicalTests testThreeNightCapturesCompleteInMemoryAndReportHonestMergeState] : XCTAssertEqual failed: (\"Optional(6.764999865652793)\") is not equal to (\"Optional(6.764999866370901)\")"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793167665.793,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167652.2,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertEqual failed: (\"Optional(6.764999865652793)\") is not equal to (\"Optional(6.764999866370901)\")",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "NightCapturePhysicalTests/testThreeNightCapturesCompleteInMemoryAndReportHonestMergeState()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/NightCapturePhysicalTests/testThreeNightCapturesCompleteInMemoryAndReportHonestMergeState",
+            "testName": "testThreeNightCapturesCompleteInMemoryAndReportHonestMergeState()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "verificationNote": "焦距6.764999865652793与6.764999866370901精确相等断言失败，差约7.18e-10mm；照片采集/融合已完成，疑似浮点容差问题。"
+    },
+    {
+      "id": "FULL-20261028-013",
+      "test": "PhysicalCameraSwitchingTests/testManualPresetsThenAutomaticModeOnPhysicalCamera",
+      "kind": "automatic",
+      "started": "2026-10-28T14:07:45.825820+08:00",
+      "finished": "2026-10-28T14:08:12.832749+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 19.465,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-013.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-013.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167692.796,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167667.464,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-014",
+      "test": "PortraitCapturePhysicalTests/testAutomaticMacroSuspendsPortraitCaptureAndRecovers",
+      "kind": "sceneDependent",
+      "started": "2026-10-28T14:49:32.659421+08:00",
+      "finished": "2026-10-28T14:49:48.226964+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 9.952,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-014.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-014.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 83,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PortraitCapturePhysicalTests.swift:221: error: -[LumaCameraTests.PortraitCapturePhysicalTests testAutomaticMacroSuspendsPortraitCaptureAndRecovers] : XCTAssertTrue failed - 近距回归必须观察到系统主动选择超广角；请保持近处有纹理主体"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793170188.193,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793170174.519,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertTrue failed - 近距回归必须观察到系统主动选择超广角；请保持近处有纹理主体",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "PortraitCapturePhysicalTests/testAutomaticMacroSuspendsPortraitCaptureAndRecovers()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/PortraitCapturePhysicalTests/testAutomaticMacroSuspendsPortraitCaptureAndRecovers",
+            "testName": "testAutomaticMacroSuspendsPortraitCaptureAndRecovers()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "verificationNote": "用户准备5–10cm纹理物体后仍未观察到系统主供图切超广角；微距暂停人像分支未覆盖，触发条件/路线待定位。"
+    },
+    {
+      "id": "FULL-20261028-015",
+      "test": "PortraitOptimizationPhysicalTests/testFrontPortraitContinuousAdjustmentAndCapture",
+      "kind": "sceneDependent",
+      "started": "2026-10-28T14:42:45.816122+08:00",
+      "finished": "2026-10-28T14:43:03.918247+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 12.008,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-015.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-015.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169783.885,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169767.609,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-016",
+      "test": "PortraitOptimizationPhysicalTests/testRearPortraitContinuousAdjustmentAndCapture",
+      "kind": "sceneDependent",
+      "started": "2026-10-28T14:48:19.662522+08:00",
+      "finished": "2026-10-28T14:48:37.583361+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 11.24,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-016.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-016.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793170117.549,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793170101.477,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-017",
+      "test": "PreviewExposureAssistPhysicalTests/testOrdinarySmoothPreviewLongAndShortExposureFiles",
+      "kind": "automatic",
+      "started": "2026-10-28T14:08:12.833404+08:00",
+      "finished": "2026-10-28T14:08:42.212910+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 22.808,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-017.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-017.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167722.182,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167694.307,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-018",
+      "test": "PreviewExposureAssistPhysicalTests/testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure",
+      "kind": "automatic",
+      "started": "2026-10-28T14:08:42.213592+08:00",
+      "finished": "2026-10-28T14:09:09.119506+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 20.338,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-018.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-018.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 72,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:280: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertLessThanOrEqual failed: (\"0.25\") is greater than (\"0.035333333333333335\")"
+        },
+        {
+          "logLine": 73,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:281: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTUnwrap failed: expected non-nil value of type \"Float\""
+        },
+        {
+          "logLine": 74,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:281: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqual failed: threw error \"UnwrappingOptional(errorCode: 105, errorUserInfo: [\"XCTestErrorUserInfoKeyShouldIgnore\": true])\""
+        },
+        {
+          "logLine": 75,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:282: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTUnwrap failed: expected non-nil value of type \"Double\""
+        },
+        {
+          "logLine": 76,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:282: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqual failed: threw error \"UnwrappingOptional(errorCode: 105, errorUserInfo: [\"XCTestErrorUserInfoKeyShouldIgnore\": true])\""
+        },
+        {
+          "logLine": 78,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:591: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqualWithAccuracy failed: (\"250.0\") is not equal to (\"400.0\") +/- (\"5.0\")"
+        },
+        {
+          "logLine": 79,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:592: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqualWithAccuracy failed: (\"0.02\") is not equal to (\"0.06666666666666667\") +/- (\"0.002\")"
+        },
+        {
+          "logLine": 81,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:303: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqualWithAccuracy failed: (\"264.3955383300781\") is not equal to (\"400.0\") +/- (\"5.0\")"
+        },
+        {
+          "logLine": 82,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:304: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqualWithAccuracy failed: (\"0.020001\") is not equal to (\"0.06666666666666667\") +/- (\"0.002\")"
+        },
+        {
+          "logLine": 83,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:317: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertLessThanOrEqual failed: (\"0.25\") is greater than (\"0.035333333333333335\")"
+        },
+        {
+          "logLine": 84,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:338: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqual failed: (\"AVCaptureExposureMode(rawValue: 2)\") is not equal to (\"AVCaptureExposureMode(rawValue: 3)\")"
+        },
+        {
+          "logLine": 85,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:339: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqualWithAccuracy failed: (\"0.020001\") is not equal to (\"0.06666666666666665\") +/- (\"0.002\")"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793167749.089,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167723.76,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertLessThanOrEqual failed: (\"0.25\") is greater than (\"0.035333333333333335\")",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "PreviewExposureAssistPhysicalTests/testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/PreviewExposureAssistPhysicalTests/testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure",
+            "testName": "testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [
+          {
+            "category": "Common Failures",
+            "impact": "100% of failures",
+            "text": "2 runs of 1 test failed with XCTAssertLessThanOrEqual failed: (\"0.25\") is greater than (\"0.035333333333333335\")"
+          },
+          {
+            "category": "Common Failures",
+            "impact": "100% of failures",
+            "text": "2 runs of 1 test failed with XCTAssertEqual failed: threw error \"UnwrappingOptional(errorCode: 105, errorUserInfo: [\"XCTestErrorUserInfoKeyShouldIgnore\": true])\""
+          }
+        ],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "verificationNote": "进入慢门后的预览曝光上限0.25s（断言<=约0.0353s）、requestedISO/Seconds为空，后续恢复断言亦失败；用例仍按M挡进入慢门后保持手动的旧前提，需结合新A/M规则核对，暂不裁定为单一功能缺陷。"
+    },
+    {
+      "id": "FULL-20261028-019",
+      "test": "PreviewExposureAssistPhysicalTests/testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles",
+      "kind": "automatic",
+      "started": "2026-10-28T14:09:09.120123+08:00",
+      "finished": "2026-10-28T14:09:28.971988+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 12.158,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-019.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-019.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167768.94,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167750.537,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-020",
+      "test": "PreviewExposureAssistPhysicalTests/testSmoothPreviewRemainsPhotoOnlyAcrossVideoAndLifecycleChanges",
+      "kind": "automatic",
+      "started": "2026-10-28T14:09:28.972572+08:00",
+      "finished": "2026-10-28T14:09:39.884256+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 4.954,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-020.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-020.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167779.849,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167770.49,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-021",
+      "test": "ProResCompatibilityPhysicalTests/testActualCameraFrameEncodesWithAllConventionalProfiles",
+      "kind": "automatic",
+      "started": "2026-10-28T14:09:39.885072+08:00",
+      "finished": "2026-10-28T14:09:47.188266+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 1.87,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-021.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-021.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167787.153,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167781.276,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-022",
+      "test": "ProResRAWPhysicalTests/testRAWMetadataAfterWhiteBalanceLockWithoutWritingFiles",
+      "kind": "automatic",
+      "started": "2026-10-28T14:09:47.189071+08:00",
+      "finished": "2026-10-28T14:09:54.589355+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 1.482,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-022.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-022.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167794.558,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167788.683,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-023",
+      "test": "ProToneCapturePhysicalTests/testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving",
+      "kind": "automatic",
+      "started": "2026-10-28T14:09:54.589957+08:00",
+      "finished": "2026-10-28T14:10:15.568442+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 9.771,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-023.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-023.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167815.535,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167796.052,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-024",
+      "test": "RecordingEdgeLayoutPhysicalTests/testFrontButtonGroupsStayCenteredAndRecordingPanelsUsePreviewEdges",
+      "kind": "automatic",
+      "started": "2026-10-28T14:10:15.569082+08:00",
+      "finished": "2026-10-28T14:10:49.505583+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 28.552,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-024.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-024.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167849.476,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167816.927,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-025",
+      "test": "RecordingEdgeLayoutPhysicalTests/testRealRecordingUsesEdgePositionsAndStopsCleanly",
+      "kind": "automatic",
+      "started": "2026-10-28T14:10:49.506313+08:00",
+      "finished": "2026-10-28T14:10:57.628341+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 2.27,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-025.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-025.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167857.595,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167850.993,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-026",
+      "test": "ShootingModeButtonTests/testActivePhotoAndVideoSubmodesUpdateEntryIcon",
+      "kind": "automatic",
+      "started": "2026-10-28T14:10:57.629263+08:00",
+      "finished": "2026-10-28T14:11:07.239793+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 3.848,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-026.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-026.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167867.21,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167859.417,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-027",
+      "test": "SilentShutterPhysicalTests/testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving",
+      "kind": "automatic",
+      "started": "2026-10-28T14:11:07.240791+08:00",
+      "finished": "2026-10-28T14:11:29.300206+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 16.239,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-027.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-027.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167889.269,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167868.831,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-028",
+      "test": "SilentShutterPhysicalTests/testNightBatchesUseSilentPreferenceAndReleaseCaptureTasks",
+      "kind": "automatic",
+      "started": "2026-10-28T14:11:29.300986+08:00",
+      "finished": "2026-10-28T14:11:40.396046+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 5.562,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-028.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-028.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 90,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SilentShutterPhysicalTests.swift:105: error: -[LumaCameraTests.SilentShutterPhysicalTests testNightBatchesUseSilentPreferenceAndReleaseCaptureTasks] : XCTAssertEqual failed: (\"1\") is not equal to (\"2\")"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793167900.361,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167890.716,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertEqual failed: (\"1\") is not equal to (\"2\")",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "SilentShutterPhysicalTests/testNightBatchesUseSilentPreferenceAndReleaseCaptureTasks()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SilentShutterPhysicalTests/testNightBatchesUseSilentPreferenceAndReleaseCaptureTasks",
+            "testName": "testNightBatchesUseSilentPreferenceAndReleaseCaptureTasks()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "verificationNote": "实际批次[3,6]完整，任务清空；静音状态快照仅收到1次而断言要求2次。不是少采一批，回调时序/验证方式待定位。"
+    },
+    {
+      "id": "FULL-20261028-029",
+      "test": "SlowMotionLensTransitionPhysicalTests/testSlowMotionFocalSwitchLatencyAndRecording",
+      "kind": "automatic",
+      "started": "2026-10-28T14:11:40.396735+08:00",
+      "finished": "2026-10-28T14:12:03.812866+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 18.548,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-029.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-029.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167923.782,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167901.758,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-030",
+      "test": "SlowShutterPresetTests/testPresetSlotsAlignWithFocalSlotsAndSurviveRapidToggleOnDevice",
+      "kind": "automatic",
+      "started": "2026-10-28T14:12:03.813674+08:00",
+      "finished": "2026-10-28T14:12:13.703764+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 3.695,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-030.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-030.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167933.674,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167925.233,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-031",
+      "test": "SlowShutterPresetTests/testSlowShutterAllowsSwitchingRearLenses",
+      "kind": "automatic",
+      "started": "2026-10-28T14:12:13.704654+08:00",
+      "finished": "2026-10-28T14:12:30.214931+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 10.981,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-031.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-031.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 72,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:414: error: -[LumaCameraTests.SlowShutterPresetTests testSlowShutterAllowsSwitchingRearLenses] : XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")"
+        },
+        {
+          "logLine": 73,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:431: error: -[LumaCameraTests.SlowShutterPresetTests testSlowShutterAllowsSwitchingRearLenses] : XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")"
+        },
+        {
+          "logLine": 74,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:431: error: -[LumaCameraTests.SlowShutterPresetTests testSlowShutterAllowsSwitchingRearLenses] : XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")"
+        },
+        {
+          "logLine": 75,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:431: error: -[LumaCameraTests.SlowShutterPresetTests testSlowShutterAllowsSwitchingRearLenses] : XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")"
+        },
+        {
+          "logLine": 76,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:431: error: -[LumaCameraTests.SlowShutterPresetTests testSlowShutterAllowsSwitchingRearLenses] : XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")"
+        },
+        {
+          "logLine": 77,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:431: error: -[LumaCameraTests.SlowShutterPresetTests testSlowShutterAllowsSwitchingRearLenses] : XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")"
+        },
+        {
+          "logLine": 78,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:431: error: -[LumaCameraTests.SlowShutterPresetTests testSlowShutterAllowsSwitchingRearLenses] : XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793167950.184,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167935.155,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "SlowShutterPresetTests/testSlowShutterAllowsSwitchingRearLenses()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SlowShutterPresetTests/testSlowShutterAllowsSwitchingRearLenses",
+            "testName": "testSlowShutterAllowsSwitchingRearLenses()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [
+          {
+            "category": "Common Failures",
+            "impact": "100% of failures",
+            "text": "7 runs of 1 test failed with XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")"
+          }
+        ],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "verificationNote": "慢门M挡选择/切镜后selectedPreset=nil，旧断言要求保留预设；与当天文档“M挡清除/隐藏预设”新契约冲突，应核对用例。"
+    },
+    {
+      "id": "FULL-20261028-032",
+      "test": "SlowShutterSequencePhysicalTests/testAdaptiveOtherPresetsAutomaticFullSequences",
+      "kind": "automatic",
+      "started": "2026-10-28T14:12:30.215716+08:00",
+      "finished": "2026-10-28T14:13:14.004979+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 37.88,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-032.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-032.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793167993.969,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793167951.617,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-033",
+      "test": "SlowShutterSequencePhysicalTests/testAdaptiveOtherPresetsManualEarlyFinishAndCancellation",
+      "kind": "automatic",
+      "started": "2026-10-28T14:13:14.006087+08:00",
+      "finished": "2026-10-28T14:14:02.616705+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "crashed",
+      "seconds": null,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-033.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-033.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 193,
+          "text": "<unknown>:0: error: -[LumaCameraTests.SlowShutterSequencePhysicalTests testAdaptiveOtherPresetsManualEarlyFinishAndCancellation] : *** -[AVCapturePhotoOutput capturePhotoWithSettings:delegate:] The active format of the source device does not support manual exposure bracketed capture. Use AVCaptureDeviceFormat supportsExposureModeCustomWithLensAperture:duration:ISO:] with AVCaptureLensApertureCurrent, AVCaptureExposureDurationCurrent and AVCaptureISOCurrent (NSInvalidArgumentException)"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "classification": "AVFoundation NSInvalidArgumentException；已启动且崩溃，不是环境未启动",
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793168042.585,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [
+          {
+            "issueType": "Runtime Warning",
+            "message": "[Internal] Thread running at User-initiated quality-of-service class waiting on a lower QoS thread running at Default quality-of-service class. Investigate ways to avoid priority inversions"
+          }
+        ],
+        "skippedTests": 0,
+        "startTime": 1793167995.441,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "*** -[AVCapturePhotoOutput capturePhotoWithSettings:delegate:] The active format of the source device does not support manual exposure bracketed capture. Use AVCaptureDeviceFormat supportsExposureModeCustomWithLensAperture:duration:ISO:] with AVCaptureLensApertureCurrent, AVCaptureExposureDurationCurrent and AVCaptureISOCurrent (NSInvalidArgumentException)",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "SlowShutterSequencePhysicalTests/testAdaptiveOtherPresetsManualEarlyFinishAndCancellation()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SlowShutterSequencePhysicalTests/testAdaptiveOtherPresetsManualEarlyFinishAndCancellation",
+            "testName": "testAdaptiveOtherPresetsManualEarlyFinishAndCancellation()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "crashed",
+      "verificationNote": "真实崩溃：光轨、动态模糊后进入摇拍，手动包围曝光请求在当前format不支持时触发NSInvalidArgumentException。"
+    },
+    {
+      "id": "FULL-20261028-034",
+      "test": "SlowShutterSequencePhysicalTests/testAdaptiveStarTrailsFullDuration",
+      "kind": "automatic",
+      "started": "2026-10-28T14:15:27.429390+08:00",
+      "finished": "2026-10-28T14:16:44.308589+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 71.192,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-034.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-034.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 99,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterSequencePhysicalTests.swift:464: error: -[LumaCameraTests.SlowShutterSequencePhysicalTests testAdaptiveStarTrailsFullDuration] : XCTAssertGreaterThanOrEqual failed: (\"60.02437737499713\") is less than (\"119.95\")"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793168204.275,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168128.943,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertGreaterThanOrEqual failed: (\"60.02437737499713\") is less than (\"119.95\")",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "SlowShutterSequencePhysicalTests/testAdaptiveStarTrailsFullDuration()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SlowShutterSequencePhysicalTests/testAdaptiveStarTrailsFullDuration",
+            "testName": "testAdaptiveStarTrailsFullDuration()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "verificationNote": "完整星轨实际约60秒并出片，旧断言要求>=119.95秒；与新默认60秒冲突，需更新测试契约。"
+    },
+    {
+      "id": "FULL-20261028-035",
+      "test": "SlowShutterSequencePhysicalTests/testAdaptiveWaterAutomaticAndManualRestoration",
+      "kind": "automatic",
+      "started": "2026-10-28T14:16:44.309540+08:00",
+      "finished": "2026-10-28T14:17:27.330322+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 36.935,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-035.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-035.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168247.297,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168206.397,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-036",
+      "test": "SlowShutterSequencePhysicalTests/testAdaptiveWaterEarlyFinishCancelAndRestart",
+      "kind": "automatic",
+      "started": "2026-10-28T14:17:27.331725+08:00",
+      "finished": "2026-10-28T14:17:43.420737+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 9.323,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-036.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-036.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168263.389,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168249.034,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-037",
+      "test": "SlowShutterSequencePhysicalTests/testAdaptiveWaterSceneExposureWithJPEG",
+      "kind": "automatic",
+      "started": "2026-10-28T14:17:43.421744+08:00",
+      "finished": "2026-10-28T14:18:10.231941+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 21.23,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-037.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-037.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168290.194,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168264.89,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-038",
+      "test": "SlowShutterSequencePhysicalTests/testAutomaticLightTrailsAndWaterCompleteOrRejectUnsafeExposure",
+      "kind": "automatic",
+      "started": "2026-10-28T14:18:10.233099+08:00",
+      "finished": "2026-10-28T14:18:55.564763+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 39.633,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-038.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-038.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168335.532,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168291.67,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-039",
+      "test": "SlowShutterSequencePhysicalTests/testAutomaticNewPresetsPreserveModeAndValidateMeteredExposure",
+      "kind": "automatic",
+      "started": "2026-10-28T14:18:55.565678+08:00",
+      "finished": "2026-10-28T14:19:21.446405+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 18.579,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-039.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-039.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168361.408,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168336.965,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-040",
+      "test": "SlowShutterSequencePhysicalTests/testAutomaticSequencesWithMeteredExposureCompensation",
+      "kind": "automatic",
+      "started": "2026-10-28T14:19:21.447481+08:00",
+      "finished": "2026-10-28T14:20:16.412458+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 49.128,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-040.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-040.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168416.371,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168362.793,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-041",
+      "test": "SlowShutterSequencePhysicalTests/testEarlyFinishCancellationAndRepeatedSelectionRecover",
+      "kind": "automatic",
+      "started": "2026-10-28T14:20:16.413679+08:00",
+      "finished": "2026-10-28T14:20:31.451176+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "crashed",
+      "seconds": null,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-041.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-041.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 83,
+          "text": "<unknown>:0: error: -[LumaCameraTests.SlowShutterSequencePhysicalTests testEarlyFinishCancellationAndRepeatedSelectionRecover] : *** -[AVCapturePhotoOutput capturePhotoWithSettings:delegate:] The active format of the source device does not support manual exposure bracketed capture. Use AVCaptureDeviceFormat supportsExposureModeCustomWithLensAperture:duration:ISO:] with AVCaptureLensApertureCurrent, AVCaptureExposureDurationCurrent and AVCaptureISOCurrent (NSInvalidArgumentException)"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793168431.421,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [
+          {
+            "issueType": "Runtime Warning",
+            "message": "[Internal] Thread running at User-initiated quality-of-service class waiting on a lower QoS thread running at Default quality-of-service class. Investigate ways to avoid priority inversions"
+          }
+        ],
+        "skippedTests": 0,
+        "startTime": 1793168417.777,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "*** -[AVCapturePhotoOutput capturePhotoWithSettings:delegate:] The active format of the source device does not support manual exposure bracketed capture. Use AVCaptureDeviceFormat supportsExposureModeCustomWithLensAperture:duration:ISO:] with AVCaptureLensApertureCurrent, AVCaptureExposureDurationCurrent and AVCaptureISOCurrent (NSInvalidArgumentException)",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "SlowShutterSequencePhysicalTests/testEarlyFinishCancellationAndRepeatedSelectionRecover()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SlowShutterSequencePhysicalTests/testEarlyFinishCancellationAndRepeatedSelectionRecover",
+            "testName": "testEarlyFinishCancellationAndRepeatedSelectionRecover()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "crashed",
+      "verificationNote": "真实崩溃：提前结束/取消及重新选择流程同样触发不支持手动包围曝光的NSInvalidArgumentException。"
+    },
+    {
+      "id": "FULL-20261028-042",
+      "test": "SlowShutterSequencePhysicalTests/testManualBracketSpeedComparisonAndRepeatedCapture",
+      "kind": "automatic",
+      "started": "2026-10-28T14:20:31.452162+08:00",
+      "finished": "2026-10-28T14:23:58.289356+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "passed",
+      "seconds": 187.422,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-042.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-042.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793168638.242,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168432.908,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "Test exceeded execution time allowance of 3 minutes",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "SlowShutterSequencePhysicalTests/testManualBracketSpeedComparisonAndRepeatedCapture()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SlowShutterSequencePhysicalTests/testManualBracketSpeedComparisonAndRepeatedCapture",
+            "testName": "testManualBracketSpeedComparisonAndRepeatedCapture()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "timed-out",
+      "latestResultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/Repeat042-SufficientBudget.xcresult",
+      "latestLog": "/private/tmp/LumaCamera-FailureRecheck-20261028/Repeat042-SufficientBudget.log",
+      "note": "首轮180秒预算超时；仅提高诊断预算至420秒补验，通过187.319秒，功能/断言未改。"
+    },
+    {
+      "id": "FULL-20261028-043",
+      "test": "SlowShutterSequencePhysicalTests/testManualLightTrailsAndWaterCompleteWithMetadata",
+      "kind": "automatic",
+      "started": "2026-10-28T14:23:58.292105+08:00",
+      "finished": "2026-10-28T14:24:51.926376+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 43.678,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-043.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-043.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168691.884,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168640.317,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-044",
+      "test": "SlowShutterSequencePhysicalTests/testManualMotionBlurCompletesWithShortSourceExposures",
+      "kind": "automatic",
+      "started": "2026-10-28T14:24:51.927981+08:00",
+      "finished": "2026-10-28T14:25:14.142373+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 15.825,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-044.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-044.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168714.103,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168693.552,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-045",
+      "test": "SlowShutterSequencePhysicalTests/testPanningLatencyWithAndWithoutPreviewAssist",
+      "kind": "automatic",
+      "started": "2026-10-28T14:25:14.143694+08:00",
+      "finished": "2026-10-28T14:25:38.791456+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 18.861,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-045.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-045.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168738.749,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168715.729,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-046",
+      "test": "SlowShutterSequencePhysicalTests/testSingleFramePresetsCaptureRequestedExposureWithoutStartingSequence",
+      "kind": "automatic",
+      "started": "2026-10-28T14:25:38.794069+08:00",
+      "finished": "2026-10-28T14:25:58.974383+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 13.758,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-046.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-046.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168758.932,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168740.291,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-047",
+      "test": "SlowShutterSequencePhysicalTests/testStarTrailsEarlyFinishCancellationAndRepeatedSelection",
+      "kind": "automatic",
+      "started": "2026-10-28T14:25:58.975433+08:00",
+      "finished": "2026-10-28T14:26:19.919836+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 15.305,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-047.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-047.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168779.886,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168760.45,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-048",
+      "test": "SlowShutterSequencePhysicalTests/testStarTrailsFull120FrameStreamingSequence",
+      "kind": "automatic",
+      "started": "2026-10-28T14:26:19.920813+08:00",
+      "finished": "2026-10-28T14:27:39.645994+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 73.131,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-048.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-048.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 99,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterSequencePhysicalTests.swift:464: error: -[LumaCameraTests.SlowShutterSequencePhysicalTests testStarTrailsFull120FrameStreamingSequence] : XCTAssertGreaterThanOrEqual failed: (\"60.23283237499709\") is less than (\"119.95\")"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793168859.603,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168782.048,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertGreaterThanOrEqual failed: (\"60.23283237499709\") is less than (\"119.95\")",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "SlowShutterSequencePhysicalTests/testStarTrailsFull120FrameStreamingSequence()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SlowShutterSequencePhysicalTests/testStarTrailsFull120FrameStreamingSequence",
+            "testName": "testStarTrailsFull120FrameStreamingSequence()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "verificationNote": "完整星轨实际约60秒并出片，旧断言要求>=119.95秒；同034的新旧时长契约冲突。"
+    },
+    {
+      "id": "FULL-20261028-049",
+      "test": "Smart48CompatibilityTests/test48MPSmartFramingHDRAndNightBoundaries",
+      "kind": "automatic",
+      "started": "2026-10-28T14:27:39.647110+08:00",
+      "finished": "2026-10-28T14:27:59.950257+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 13.587,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-049.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-049.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 75,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/Smart48CompatibilityTests.swift:56: error: -[LumaCameraTests.Smart48CompatibilityTests test48MPSmartFramingHDRAndNightBoundaries] : XCTAssertGreaterThan failed: (\"12192768\") is not greater than (\"40000000\") - 不能只验UI为48MP"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793168879.909,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168861.275,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertGreaterThan failed: (\"12192768\") is not greater than (\"40000000\") - 不能只验UI为48MP",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "Smart48CompatibilityTests/test48MPSmartFramingHDRAndNightBoundaries()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/Smart48CompatibilityTests/test48MPSmartFramingHDRAndNightBoundaries",
+            "testName": "test48MPSmartFramingHDRAndNightBoundaries()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "verificationNote": "JPG48实际6000×8000；应用HDR建议后HEIF为3024×4032（10bit PQ），随后关闭HDR恢复HEIF48。HDR组合实际降到约12.2MP，UI/能力边界需核对。"
+    },
+    {
+      "id": "FULL-20261028-050",
+      "test": "SmartAutoFramingTests/testAutomaticHardwareFramingOnceAndCancelPendingWork",
+      "kind": "automatic",
+      "started": "2026-10-28T14:27:59.951448+08:00",
+      "finished": "2026-10-28T14:28:10.139963+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 4.462,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-050.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-050.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168890.104,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168881.45,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-051",
+      "test": "SmartAutoFramingTests/testBacklitPortraitWithoutBlurTracksAutomaticOrigin",
+      "kind": "automatic",
+      "started": "2026-10-28T14:28:10.141020+08:00",
+      "finished": "2026-10-28T14:28:16.852628+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 0.952,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-051.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-051.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168896.822,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168891.709,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-052",
+      "test": "SmartAutoFramingTests/testRealSceneGuideAutomaticFramingAndCapture",
+      "kind": "sceneDependent",
+      "started": "2026-10-28T14:50:57.447484+08:00",
+      "finished": "2026-10-28T14:51:15.576076+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 11.278,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-052.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-052.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793170275.545,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793170259.235,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-053",
+      "test": "SmartCapturePhysicalTests/testRealPreviewAnalysisPerformanceAndStability",
+      "kind": "automatic",
+      "started": "2026-10-28T14:28:16.853914+08:00",
+      "finished": "2026-10-28T14:28:26.667093+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 3.442,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-053.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-053.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168906.632,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168898.539,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-054",
+      "test": "SmartCompositionGeometryTests/testWhitePointAndThickerRingRendering",
+      "kind": "automatic",
+      "started": "2026-10-28T14:28:26.668773+08:00",
+      "finished": "2026-10-28T14:28:34.704225+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 2.267,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-054.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-054.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168914.667,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [
+          {
+            "issueType": "Runtime Warning",
+            "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update.",
+            "sourceURL": "file:///Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SmartCompositionGeometryTests.swift"
+          }
+        ],
+        "skippedTests": 0,
+        "startTime": 1793168908.42,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-055",
+      "test": "VideoCodecPhysicalTests/testActualCodecsAndColorsRepeatedRecording",
+      "kind": "automatic",
+      "started": "2026-10-28T14:28:34.705610+08:00",
+      "finished": "2026-10-28T14:29:15.597580+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 33.3,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-055.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-055.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168955.546,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168916.711,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-056",
+      "test": "VideoColorPhysicalTests/testAppleLogLUTBurnKeepsLogVideoTagsAndTenBitPixels",
+      "kind": "automatic",
+      "started": "2026-10-28T14:29:15.599807+08:00",
+      "finished": "2026-10-28T14:29:24.657243+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 3.34,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-056.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-056.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793168964.62,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168957.296,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-057",
+      "test": "VideoColorPhysicalTests/testEveryAvailableColorSpaceRecordsRealTagsAndRestoresPhotos",
+      "kind": "automatic",
+      "started": "2026-10-28T14:29:24.658545+08:00",
+      "finished": "2026-10-28T14:30:10.382308+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 39.348,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-057.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-057.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169010.342,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793168966.298,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-058",
+      "test": "VideoColorPhysicalTests/testLogAndLog2PreviewOnlyAndBurnHaveDifferentEncodedPixels",
+      "kind": "automatic",
+      "started": "2026-10-28T14:30:10.383770+08:00",
+      "finished": "2026-10-28T14:30:21.795856+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 5.426,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-058.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-058.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169021.758,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169012.273,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-059",
+      "test": "VideoColorPhysicalTests/testSDRAndP3FiltersAreBakedIntoRecordedPixelsWithStableFrameDelivery",
+      "kind": "automatic",
+      "started": "2026-10-28T14:30:21.797135+08:00",
+      "finished": "2026-10-28T14:30:33.917814+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 4.449,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-059.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-059.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169033.882,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169023.483,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-060",
+      "test": "VideoMacroIndicatorTests/testMacroIndicatorReplacesPortraitDepthControlAndSliderGrowsUpward",
+      "kind": "automatic",
+      "started": "2026-10-28T14:30:33.919110+08:00",
+      "finished": "2026-10-28T14:30:41.970051+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 1.391,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-060.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-060.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169041.938,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169035.678,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-061",
+      "test": "VideoModeTransitionTests/testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching",
+      "kind": "automatic",
+      "started": "2026-10-28T14:30:41.971209+08:00",
+      "finished": "2026-10-28T14:30:59.020537+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 11.274,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-061.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-061.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169058.988,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169043.5,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-062",
+      "test": "VideoModeTransitionTests/testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips",
+      "kind": "automatic",
+      "started": "2026-10-28T14:30:59.021937+08:00",
+      "finished": "2026-10-28T14:32:06.198323+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 59.712,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-062.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-062.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169126.16,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169060.592,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-063",
+      "test": "VideoModeTransitionTests/testRepeatedModeTransitionPreviewLatency",
+      "kind": "automatic",
+      "started": "2026-10-28T14:32:06.199743+08:00",
+      "finished": "2026-10-28T14:32:20.458635+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 7.967,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-063.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-063.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169140.426,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169127.738,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-064",
+      "test": "VideoSpecificationTests/testAllSupportedVideoSpecificationsWriteMatchingTracks",
+      "kind": "automatic",
+      "started": "2026-10-28T14:32:20.459811+08:00",
+      "finished": "2026-10-28T14:33:04.154844+08:00",
+      "exitCode": 65,
+      "executed": true,
+      "status": "failed",
+      "seconds": 37.791,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-064.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-064.log",
+      "readOnlyConfirmed": true,
+      "assertions": [
+        {
+          "logLine": 101,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:867: error: -[LumaCameraTests.VideoSpecificationTests testAllSupportedVideoSpecificationsWriteMatchingTracks] : XCTAssertEqualWithAccuracy failed: (\"24.0\") is not equal to (\"30.0\") +/- (\"1.5\")"
+        },
+        {
+          "logLine": 102,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:881: error: -[LumaCameraTests.VideoSpecificationTests testAllSupportedVideoSpecificationsWriteMatchingTracks] : XCTAssertEqualWithAccuracy failed: (\"24.0\") is not equal to (\"30.0\") +/- (\"1.5\")"
+        },
+        {
+          "logLine": 117,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:867: error: -[LumaCameraTests.VideoSpecificationTests testAllSupportedVideoSpecificationsWriteMatchingTracks] : XCTAssertEqualWithAccuracy failed: (\"50.0\") is not equal to (\"60.0\") +/- (\"3.0\")"
+        },
+        {
+          "logLine": 118,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:881: error: -[LumaCameraTests.VideoSpecificationTests testAllSupportedVideoSpecificationsWriteMatchingTracks] : XCTAssertEqualWithAccuracy failed: (\"50.0\") is not equal to (\"60.0\") +/- (\"3.0\")"
+        },
+        {
+          "logLine": 147,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:867: error: -[LumaCameraTests.VideoSpecificationTests testAllSupportedVideoSpecificationsWriteMatchingTracks] : XCTAssertEqualWithAccuracy failed: (\"24.0\") is not equal to (\"30.0\") +/- (\"1.5\")"
+        },
+        {
+          "logLine": 148,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:881: error: -[LumaCameraTests.VideoSpecificationTests testAllSupportedVideoSpecificationsWriteMatchingTracks] : XCTAssertEqualWithAccuracy failed: (\"24.0\") is not equal to (\"30.0\") +/- (\"1.5\")"
+        },
+        {
+          "logLine": 163,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:867: error: -[LumaCameraTests.VideoSpecificationTests testAllSupportedVideoSpecificationsWriteMatchingTracks] : XCTAssertEqualWithAccuracy failed: (\"50.0\") is not equal to (\"60.0\") +/- (\"3.0\")"
+        },
+        {
+          "logLine": 164,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:881: error: -[LumaCameraTests.VideoSpecificationTests testAllSupportedVideoSpecificationsWriteMatchingTracks] : XCTAssertEqualWithAccuracy failed: (\"50.0\") is not equal to (\"60.0\") +/- (\"3.0\")"
+        }
+      ],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793169184.119,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169142.097,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertEqualWithAccuracy failed: (\"24.0\") is not equal to (\"30.0\") +/- (\"1.5\")",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "VideoSpecificationTests/testAllSupportedVideoSpecificationsWriteMatchingTracks()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/VideoSpecificationTests/testAllSupportedVideoSpecificationsWriteMatchingTracks",
+            "testName": "testAllSupportedVideoSpecificationsWriteMatchingTracks()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [
+          {
+            "category": "Common Failures",
+            "impact": "100% of failures",
+            "text": "4 runs of 1 test failed with XCTAssertEqualWithAccuracy failed: (\"50.0\") is not equal to (\"60.0\") +/- (\"3.0\")"
+          },
+          {
+            "category": "Common Failures",
+            "impact": "100% of failures",
+            "text": "4 runs of 1 test failed with XCTAssertEqualWithAccuracy failed: (\"24.0\") is not equal to (\"30.0\") +/- (\"1.5\")"
+          }
+        ],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "failed",
+      "verificationNote": "720p/1080p所选30fps实际24fps、所选60fps实际50fps；输入和完整解码PTS均支持差异，notReady/appendRejected为0。25fps也实际24fps但落在当前宽容差内。4K 24/25/30/50/60/120对应正确。"
+    },
+    {
+      "id": "FULL-20261028-065",
+      "test": "VideoSpecificationTests/testCinematicOutputGraphsAgainstAppleCapturePatternOnDevice",
+      "kind": "automatic",
+      "started": "2026-10-28T14:33:04.156410+08:00",
+      "finished": "2026-10-28T14:33:24.718038+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 15.012,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-065.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-065.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169204.685,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169185.668,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-066",
+      "test": "VideoSpecificationTests/testHighFrameRateAndFrontCameraRestoreSupportedSpecifications",
+      "kind": "automatic",
+      "started": "2026-10-28T14:33:24.719484+08:00",
+      "finished": "2026-10-28T14:33:52.560414+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 20.487,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-066.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-066.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169232.528,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169206.421,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-067",
+      "test": "VideoSpecificationTests/testOpenGateSwitchRecordsOnlyFourByThreeOrSquareOnDevice",
+      "kind": "automatic",
+      "started": "2026-10-28T14:33:52.562039+08:00",
+      "finished": "2026-10-28T14:34:08.808970+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 10.515,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-067.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-067.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169248.773,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169234.179,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-068",
+      "test": "VideoSpecificationTests/testRenderedVideoPreviewCadenceTracksSupportedRates",
+      "kind": "automatic",
+      "started": "2026-10-28T14:34:08.810409+08:00",
+      "finished": "2026-10-28T14:34:47.261133+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 32.213,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-068.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-068.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169287.227,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169250.671,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-069",
+      "test": "VideoSpecificationTests/testSlowMotionAndCinematicRoutesOnDevice",
+      "kind": "automatic",
+      "started": "2026-10-28T14:34:47.262448+08:00",
+      "finished": "2026-10-28T14:35:09.757837+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 16.538,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-069.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-069.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169309.723,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169288.988,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-070",
+      "test": "VideoVirtualAperturePhysicalTests/testVideoEntryLayoutRecordingAndRecovery",
+      "kind": "automatic",
+      "started": "2026-10-28T14:35:09.759329+08:00",
+      "finished": "2026-10-28T14:35:36.798319+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 20.106,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-070.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-070.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169336.762,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169311.365,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-071",
+      "test": "VideoWhiteBalancePhysicalTests/testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording",
+      "kind": "automatic",
+      "started": "2026-10-28T14:35:36.800028+08:00",
+      "finished": "2026-10-28T14:35:59.829442+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 17.158,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-071.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-071.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169359.797,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169338.477,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-072",
+      "test": "VideoWorkflowTests/testImmediateCancelDuringWhiteBalanceStartupCompletesExactlyOnce",
+      "kind": "automatic",
+      "started": "2026-10-28T14:35:59.830832+08:00",
+      "finished": "2026-10-28T14:36:09.161684+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 2.647,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-072.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-072.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169369.127,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169361.499,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-073",
+      "test": "VideoWorkflowTests/testLifecycleStopFreezesClockAndRapidModeRequestsCoalesce",
+      "kind": "automatic",
+      "started": "2026-10-28T14:36:09.164662+08:00",
+      "finished": "2026-10-28T14:36:35.777274+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 20.853,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-073.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-073.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169395.745,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169370.809,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-074",
+      "test": "VideoWorkflowTests/testTimeLapsePresetBarMatchesFocalBarAndSurvivesRapidChanges",
+      "kind": "automatic",
+      "started": "2026-10-28T14:36:35.778806+08:00",
+      "finished": "2026-10-28T14:36:43.639419+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 1.757,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-074.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-074.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169403.604,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169397.219,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-075",
+      "test": "VirtualAperturePhysicalTests/testLensRestrictionsContinuousSliderAndRealPhotoInformation",
+      "kind": "automatic",
+      "started": "2026-10-28T14:36:43.640814+08:00",
+      "finished": "2026-10-28T14:37:06.397500+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 17.261,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-075.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-075.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169426.365,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169405.323,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-076",
+      "test": "VirtualAperturePhysicalTests/testVirtualAperturePreservesAutoTapAndManualFocus",
+      "kind": "automatic",
+      "started": "2026-10-28T14:37:06.398853+08:00",
+      "finished": "2026-10-28T14:37:32.809640+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 20.839,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-076.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-076.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169452.778,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169427.907,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-077",
+      "test": "WhiteBalanceRouteSafetyTests/testStaleCustomWhiteBalanceDuringRouteChangesDoesNotCrashVirtualCamera",
+      "kind": "automatic",
+      "started": "2026-10-28T14:37:32.811167+08:00",
+      "finished": "2026-10-28T14:37:44.035646+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 5.327,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-077.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-077.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169464.002,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169454.34,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    },
+    {
+      "id": "FULL-20261028-078",
+      "test": "ZoomWheelReopenPhysicalTests/testReopeningKeepsActualZoomAndAnchorAcrossBothModes",
+      "kind": "automatic",
+      "started": "2026-10-28T14:37:44.036947+08:00",
+      "finished": "2026-10-28T14:37:52.025887+08:00",
+      "exitCode": 0,
+      "executed": true,
+      "status": "passed",
+      "seconds": 2.242,
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-078.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/FULL-20261028-078.log",
+      "readOnlyConfirmed": true,
+      "assertions": [],
+      "runtimeErrors": [],
+      "blockedMutations": [],
+      "xcresultSummary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169471.994,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169465.709,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "firstRecheckStatus": "passed"
+    }
+  ],
+  "supplementalRuns": [
+    {
+      "id": "FULL-20261028-042",
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/Repeat042-SufficientBudget.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/Repeat042-SufficientBudget.log",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793169691.13,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169499.524,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      }
+    },
+    {
+      "id": "FULL-20261028-010",
+      "resultBundle": "/private/tmp/LumaCamera-FailureRecheck-20261028/Repeat010-UprightLandscape.xcresult",
+      "log": "/private/tmp/LumaCamera-FailureRecheck-20261028/Repeat010-UprightLandscape.log",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793169946.761,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793169923.044,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "failed - 真实手持方向 ",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "FrontVideoCenteringPhysicalTests/testCenterStagePersonLandscapeRecording()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/FrontVideoCenteringPhysicalTests/testCenterStagePersonLandscapeRecording",
+            "testName": "testCenterStagePersonLandscapeRecording()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      }
+    }
+  ],
+  "sourceChangesDuringRecheck": [],
+  "safetyGate": "/private/tmp/LumaCamera-FailureRecheck-20261028/SafetyGate.xcresult",
+  "normalAppLaunch": "测试完成后手机锁屏，devicectl启动超时；未自动重新打开，未声称正常启动验证通过。"
+}

@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-24",
+  "device": "iPhone17Pro / iOS27.0.1 (24A446)",
+  "distinctPassed": 3,
+  "methods": [
+    {
+      "test": "CapturePreferencesTests/testShutterPreferencePropagatesToEachNewCaptureOptionsSnapshot()",
+      "result": "Passed",
+      "seconds": 0.041,
+      "resultBundle": "/private/tmp/LumaCamera-SilentShutter-20261024-Fixed.xcresult"
+    },
+    {
+      "test": "SilentShutterPhysicalTests/testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving()",
+      "result": "Passed",
+      "seconds": 15.412,
+      "resultBundle": "/private/tmp/LumaCamera-SilentShutter-20261024-Fixed.xcresult"
+    },
+    {
+      "test": "SilentShutterPhysicalTests/testNightBatchesUseSilentPreferenceAndReleaseCaptureTasks()",
+      "result": "Passed",
+      "seconds": 4.273,
+      "resultBundle": "/private/tmp/LumaCamera-SilentShutter-20261024-Final.xcresult"
+    }
+  ],
+  "metrics": [
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER format=JPG live=false requested=false supported=true enabled=false seconds=0.5390497500193305 resources=1 tasks=0"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER format=JPG live=false requested=true supported=true enabled=true seconds=0.3500987916777376 resources=1 tasks=0"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER format=HEIF live=false requested=true supported=true enabled=true seconds=0.4532780416775495 resources=1 tasks=0"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER format=RAW live=false requested=true supported=true enabled=true seconds=0.870955624995986 resources=1 tasks=0"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER format=RAW+JPG live=false requested=true supported=true enabled=true seconds=0.6092984999995679 resources=2 tasks=0"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER format=HEIF Pro live=false requested=true supported=true enabled=true seconds=0.8796395416429732 resources=1 tasks=0"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER format=TIFF live=false requested=true supported=true enabled=true seconds=0.4394238333334215 resources=1 tasks=0"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER format=HEIF live=true requested=true supported=true enabled=true seconds=3.602189166675089 resources=2 tasks=0"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER format=JPG live=true requested=true supported=true enabled=true seconds=3.34490679166629 resources=2 tasks=0"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER format=JPG live=false requested=false supported=true enabled=false seconds=1.113958708330756 resources=1 tasks=0"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-SHUTTER-SUMMARY samples=10 sorted=[0.3500987916777376, 0.4394238333334215, 0.4532780416775495, 0.5390497500193305, 0.6092984999995679, 0.870955624995986, 0.8796395416429732, 1.113958708330756, 3.34490679166629, 3.602189166675089]"
+    },
+    {
+      "group": "Fixed",
+      "text": "SILENT-NIGHT batches=[3, 6] states=[(true, true, true), (true, true, true)] seconds=2.9508157500240486 tasks=0 sceneInjected=true"
+    },
+    {
+      "group": "Final",
+      "text": "SILENT-NIGHT batches=[3, 6] states=[(true, true, true), (true, true, true)] seconds=2.8331401249743067 tasks=0 sceneInjected=true midCapturePreferenceChanged=true"
+    }
+  ],
+  "originalFailureResolved": "原016定向通过",
+  "productFix": "统一提交入口应用静音快照，补上夜景首批/追加批次",
+  "intermediateFailure": "NightBaseline两批requested=true supported=true enabled=false",
+  "runtimeErrorsInFixedGroups": 0,
+  "limitations": [
+    "检查系统请求与文件，未做声音录制/声压测量",
+    "当前设备supported=true，未实测系统禁止静音配置",
+    "夜景测光/运动输入受控，不是自然暗光验收"
+  ]
+}

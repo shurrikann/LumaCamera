@@ -1,0 +1,33 @@
+{
+  "device": "iPhone17 Pro",
+  "os": "iOS27.2",
+  "build": "24B119",
+  "uniqueRelatedMethodsPassed": 7,
+  "videoLayouts": 20,
+  "photoLayouts": 28,
+  "videoDragUpdates": 180,
+  "videoPublishedFrames": [
+    31,
+    31,
+    31
+  ],
+  "maxPreviewPublicationGapSeconds": [
+    0.040812292,
+    0.040460417,
+    0.040119167
+  ],
+  "encodingPixelCheck": {
+    "sdrRayEnergy": 108198,
+    "p3RayEnergy": 108198,
+    "pausedRayEnergy": 0,
+    "decodedPerClip": 24
+  },
+  "realClips": [
+    "VIDEO-APERTURE-REAL index=0 requested=(LumaCamera.VideoResolution.hd720, LumaCamera.VideoFrameRate.fps30, LumaCamera.VideoColorSpace.sdr, LumaCamera.VideoCodec.hevc) size=(1280.0, 720.0) duration=2.0194375 decoded=60 wall=2.1766172500000494 writer=Optional((received: 60, written: 60, span: 1.96824147))",
+    "VIDEO-APERTURE-REAL index=1 requested=(LumaCamera.VideoResolution.hd1080, LumaCamera.VideoFrameRate.fps30, LumaCamera.VideoColorSpace.p3, LumaCamera.VideoCodec.h264) size=(1920.0, 1080.0) duration=1.2666666666666666 decoded=38 wall=1.3845988749999378 writer=Optional((received: 38, written: 38, span: 1.233360838))",
+    "VIDEO-APERTURE-REAL index=2 requested=(LumaCamera.VideoResolution.uhd4K, LumaCamera.VideoFrameRate.fps30, LumaCamera.VideoColorSpace.sdr, LumaCamera.VideoCodec.hevc) size=(3840.0, 2160.0) duration=1.251 decoded=37 wall=1.5523753333333161 writer=Optional((received: 37, written: 37, span: 1.200820544))",
+    "VIDEO-APERTURE-REAL index=3 requested=(LumaCamera.VideoResolution.hd1080, LumaCamera.VideoFrameRate.fps30, LumaCamera.VideoColorSpace.sdr, LumaCamera.VideoCodec.proRes) size=(1920.0, 1080.0) duration=1.2333333333333334 decoded=37 wall=1.4070436666667092 writer=Optional((received: 37, written: 37, span: 1.200024356))"
+  ],
+  "installSequence": 1640,
+  "normalBuild": "passed"
+}

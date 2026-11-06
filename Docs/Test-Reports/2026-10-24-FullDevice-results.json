@@ -1,0 +1,3922 @@
+{
+  "date": "2026-10-24",
+  "timezone": "Asia/Shanghai",
+  "device": "iPhone 17 Pro / iOS 27.0.1 (24A446)",
+  "started": "2026-10-24 12:35:40",
+  "finished": "2026-10-24 13:11:39",
+  "wallSeconds": 2159.204999923706,
+  "total": 529,
+  "passed": 489,
+  "failed": 33,
+  "skipped": 7,
+  "result": "Failed",
+  "resultBundle": "/private/tmp/LumaCamera-FullDevice-20261024-Run1.xcresult",
+  "log": "/private/tmp/LumaCamera-FullDevice-20261024-Run1.log",
+  "excludedSelectors": [
+    "LiveAudioSavePhysicalTests",
+    "SystemGalleryRefreshTests",
+    "BasicVideoSaveIntegrationTests",
+    "LivePhotoSaveIntegrationTests",
+    "CommittedGallerySaveIntegrationTests",
+    "FocusLockModeTests",
+    "ProResRAWPhysicalTests/testRealSensorRAWAndRAWHQStorageCompatibility",
+    "FrontPhotoAspectRatioPhysicalTests/testRealLandscapeToPortraitThenAspectFraming"
+  ],
+  "failures": [
+    {
+      "id": "FULL-20261024-001",
+      "test": "CaptureStatePhysicalTests/testColdRestorationAppliesManualValuesToRealLensAndVideoPipeline()",
+      "status": "测试生命周期等待及异常停机收尾修正后定向通过；历史服务重置内部根因未确认",
+      "seconds": 18.55589997768402,
+      "summary": "XCTAssertTrue failed",
+      "observations": [
+        {
+          "logLine": 2017,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/CaptureStatePhysicalTests.swift:40: error: -[LumaCameraTests.CaptureStatePhysicalTests testColdRestorationAppliesManualValuesToRealLensAndVideoPipeline] : XCTAssertTrue failed"
+        },
+        {
+          "logLine": 2018,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/CaptureStatePhysicalTests.swift:41: error: -[LumaCameraTests.CaptureStatePhysicalTests testColdRestorationAppliesManualValuesToRealLensAndVideoPipeline] : XCTUnwrap failed: expected non-nil value of type \"CameraReadings\""
+        }
+      ],
+      "resolutionType": "测试前提/清理修正；未改生产参数恢复",
+      "resolutionReport": "2026-10-24-ColdRestore-Resolution.md",
+      "retest": {
+        "test": "CaptureStatePhysicalTests/testColdRestorationAppliesManualValuesToRealLensAndVideoPipeline()",
+        "result": "Passed",
+        "seconds": 10.898,
+        "resultBundle": "/private/tmp/LumaCamera-ColdRestore-20261024-Verified.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-002",
+      "test": "FrontWideSelectionTests/testCurrentOrientationFramingAndRecordingGuard()",
+      "status": "前提修正及前置横拿侧转产品修复后，横持/竖持定向真机通过；原失败保留",
+      "seconds": 42.46233403682709,
+      "summary": "XCTAssertEqual failed: (\"com.apple.avfoundation.avcapturedevice.built-in_video:8:1.6000\") is not equal to (\"com.apple.avfoundation.avcapturedevice.built-in_video:8:1.0000\") - Front framing should match the device's current orientation",
+      "observations": [
+        {
+          "logLine": 2616,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/FrontWideSelectionTests.swift:64: error: -[LumaCameraTests.FrontWideSelectionTests testCurrentOrientationFramingAndRecordingGuard] : XCTAssertEqual failed: (\"com.apple.avfoundation.avcapturedevice.built-in_video:8:1.6000\") is not equal to (\"com.apple.avfoundation.avcapturedevice.built-in_video:8:1.0000\") - Front framing should match the device's current orientation"
+        }
+      ],
+      "resolutionType": "测试前提修正；另修复目视发现的前置横拿成片侧转",
+      "resolutionReport": "2026-10-24-FrontThree-Resolution.md",
+      "retest": {
+        "result": "Passed",
+        "resultBundles": [
+          "/private/tmp/LumaCamera-FrontThree-20261024-Rotation.xcresult",
+          "/private/tmp/LumaCamera-FrontThree-20261024-PortraitLive.xcresult"
+        ],
+        "note": "两组均包含原三项；方向内容另有目视附件核对"
+      }
+    },
+    {
+      "id": "FULL-20261024-003",
+      "test": "FrontWideSelectionTests/testFrontPhotoFilesKeepUprightPixelsAndSystemFocalLengths()",
+      "status": "前提修正及前置横拿侧转产品修复后，横持/竖持定向真机通过；原失败保留",
+      "seconds": 5.414664030075073,
+      "summary": "XCTAssertGreaterThan failed: (\"3024.0\") is not greater than (\"4032.0\")",
+      "observations": [
+        {
+          "logLine": 2665,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/FrontWideSelectionTests.swift:413: error: -[LumaCameraTests.FrontWideSelectionTests testFrontPhotoFilesKeepUprightPixelsAndSystemFocalLengths] : XCTAssertGreaterThan failed: (\"3024.0\") is not greater than (\"4032.0\")"
+        },
+        {
+          "logLine": 2666,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/FrontWideSelectionTests.swift:427: error: -[LumaCameraTests.FrontWideSelectionTests testFrontPhotoFilesKeepUprightPixelsAndSystemFocalLengths] : XCTAssertGreaterThan failed: (\"3000.0\") is not greater than (\"4000.0\")"
+        }
+      ],
+      "resolutionType": "测试前提修正；另修复目视发现的前置横拿成片侧转",
+      "resolutionReport": "2026-10-24-FrontThree-Resolution.md",
+      "retest": {
+        "result": "Passed",
+        "resultBundles": [
+          "/private/tmp/LumaCamera-FrontThree-20261024-Rotation.xcresult",
+          "/private/tmp/LumaCamera-FrontThree-20261024-PortraitLive.xcresult"
+        ],
+        "note": "两组均包含原三项；方向内容另有目视附件核对"
+      }
+    },
+    {
+      "id": "FULL-20261024-004",
+      "test": "FrontWideSelectionTests/testFrontSwitchManualExposureMirrorCaptureAndCancellation()",
+      "status": "前提修正及前置横拿侧转产品修复后，横持/竖持定向真机通过；原失败保留",
+      "seconds": 2.707568049430847,
+      "summary": "XCTAssertGreaterThan failed: (\"1800.0\") is not greater than (\"2400.0\")",
+      "observations": [
+        {
+          "logLine": 2680,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/FrontWideSelectionTests.swift:364: error: -[LumaCameraTests.FrontWideSelectionTests testFrontSwitchManualExposureMirrorCaptureAndCancellation] : XCTAssertGreaterThan failed: (\"1800.0\") is not greater than (\"2400.0\")"
+        }
+      ],
+      "resolutionType": "测试前提修正；另修复目视发现的前置横拿成片侧转",
+      "resolutionReport": "2026-10-24-FrontThree-Resolution.md",
+      "retest": {
+        "result": "Passed",
+        "resultBundles": [
+          "/private/tmp/LumaCamera-FrontThree-20261024-Rotation.xcresult",
+          "/private/tmp/LumaCamera-FrontThree-20261024-PortraitLive.xcresult"
+        ],
+        "note": "两组均包含原三项；方向内容另有目视附件核对"
+      }
+    },
+    {
+      "id": "FULL-20261024-005",
+      "test": "PhotoOptionsTests/testNewRatiosAreCenteredAndXPANUsesFilmGateRatio()",
+      "status": "测试前提/断言已修正，定向真机通过；原始失败保留",
+      "seconds": 0.0013419389724731445,
+      "summary": "XCTAssertEqualWithAccuracy failed: (\"60.5\") is not equal to (\"60.0\") +/- (\"0.001\")",
+      "observations": [
+        {
+          "logLine": 5615,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PhotoOptionsTests.swift:258: error: -[LumaCameraTests.PhotoOptionsTests testNewRatiosAreCenteredAndXPANUsesFilmGateRatio] : XCTAssertEqualWithAccuracy failed: (\"60.5\") is not equal to (\"60.0\") +/- (\"0.001\")"
+        }
+      ],
+      "resolutionType": "测试修正，无生产代码变更",
+      "resolutionReport": "2026-10-24-EasyTwo-Resolution.md",
+      "retest": {
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-EasyTwo-20261024-1.xcresult",
+        "methodSeconds": 0.041
+      }
+    },
+    {
+      "id": "FULL-20261024-006",
+      "test": "PhysicalCameraSwitchingTests/testManualPresetsThenAutomaticModeOnPhysicalCamera()",
+      "status": "实际构图断言修正及前置 1:1 冻结修复后定向通过",
+      "seconds": 24.332031965255737,
+      "summary": "XCTAssertLessThan failed: (\"900.0\") is not less than (\"675.0\")",
+      "observations": [
+        {
+          "logLine": 5726,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/CameraReadingsSafetyTests.swift:174: error: -[LumaCameraTests.PhysicalCameraSwitchingTests testManualPresetsThenAutomaticModeOnPhysicalCamera] : XCTAssertLessThan failed: (\"900.0\") is not less than (\"675.0\")"
+        }
+      ],
+      "resolutionType": "测试预期修正；补测发现并修复传感器/裁切方向混用导致方形预览冻结",
+      "resolutionReport": "2026-10-24-ModePreviewSize-Resolution.md",
+      "retest": {
+        "test": "PhysicalCameraSwitchingTests/testManualPresetsThenAutomaticModeOnPhysicalCamera()",
+        "result": "Passed",
+        "seconds": 20.791,
+        "resultBundle": "/private/tmp/LumaCamera-ModePreviewSize-20261024-Final.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-007",
+      "test": "PortraitCapturePhysicalTests/testPortraitProcessedAndProRAWCapturesWithoutSaving()",
+      "status": "原生漏回调收尾与恢复机制修复，定向真机通过；原失败保留",
+      "seconds": 55.592265009880066,
+      "summary": "Asynchronous wait failed: Exceeded timeout of 55 seconds, with unfulfilled expectations: \"Portrait capture: HEIF 12MP portrait matte\".",
+      "observations": [
+        {
+          "logLine": 5907,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PortraitCapturePhysicalTests.swift:344: error: -[LumaCameraTests.PortraitCapturePhysicalTests testPortraitProcessedAndProRAWCapturesWithoutSaving] : Asynchronous wait failed: Exceeded timeout of 55 seconds, with unfulfilled expectations: \"Portrait capture: HEIF 12MP portrait matte\"."
+        },
+        {
+          "logLine": 5908,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PortraitCapturePhysicalTests.swift:346: error: -[LumaCameraTests.PortraitCapturePhysicalTests testPortraitProcessedAndProRAWCapturesWithoutSaving] : XCTUnwrap failed: expected non-nil value of type \"CapturedPhoto\" - 相机暂时无法恢复，请点击重试重新连接。"
+        }
+      ],
+      "resolutionType": "产品修复：有界原生请求、一次性收尾、有序交付解堵及旧输出重建",
+      "resolutionReport": "2026-10-24-Portrait-Timeout-Recovery.md",
+      "retest": {
+        "test": "PortraitCapturePhysicalTests/testPortraitProcessedAndProRAWCapturesWithoutSaving()",
+        "seconds": 16.238,
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PortraitRecovery-20261024-Real.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-008",
+      "test": "PortraitOptimizationPhysicalTests/testFrontPortraitContinuousAdjustmentAndCapture()",
+      "status": "真实人物定向通过，补强拍后清空/退出新帧/同帧EXIF检查",
+      "seconds": 20.586843967437744,
+      "summary": "XCTAssertTrue failed - 人像测试等待条件超时",
+      "observations": [
+        {
+          "logLine": 5942,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PortraitOptimizationPhysicalTests.swift:258: error: -[LumaCameraTests.PortraitOptimizationPhysicalTests testFrontPortraitContinuousAdjustmentAndCapture] : XCTAssertTrue failed - 人像测试等待条件超时"
+        },
+        {
+          "logLine": 5943,
+          "text": "<unknown>:0: error: -[LumaCameraTests.PortraitOptimizationPhysicalTests testFrontPortraitContinuousAdjustmentAndCapture] : failed: caught error: \"InvalidTransition { "
+        }
+      ],
+      "resolutionType": "复测通过；未改生产算法，补强验证断言",
+      "resolutionReport": "2026-10-24-PortraitThree-Resolution.md",
+      "retest": {
+        "test": "PortraitOptimizationPhysicalTests/testFrontPortraitContinuousAdjustmentAndCapture()",
+        "seconds": 11.884,
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-FrontFinal.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-009",
+      "test": "PortraitOptimizationPhysicalTests/testManualMainHEIFPortraitCanBeEnabledAndCaptured()",
+      "status": "原生漏回调收尾与恢复机制修复，定向真机通过；原失败保留",
+      "seconds": 0.701309084892273,
+      "summary": "XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。",
+      "observations": [
+        {
+          "logLine": 5950,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PortraitOptimizationPhysicalTests.swift:43: error: -[LumaCameraTests.PortraitOptimizationPhysicalTests testManualMainHEIFPortraitCanBeEnabledAndCaptured] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 5951,
+          "text": "<unknown>:0: error: -[LumaCameraTests.PortraitOptimizationPhysicalTests testManualMainHEIFPortraitCanBeEnabledAndCaptured] : failed: caught error: \"InvalidTransition { "
+        }
+      ],
+      "resolutionType": "产品修复：有界原生请求、一次性收尾、有序交付解堵及旧输出重建",
+      "resolutionReport": "2026-10-24-Portrait-Timeout-Recovery.md",
+      "retest": {
+        "test": "PortraitOptimizationPhysicalTests/testManualMainHEIFPortraitCanBeEnabledAndCaptured()",
+        "seconds": 11.196,
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PortraitRecovery-20261024-Real.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-010",
+      "test": "PortraitOptimizationPhysicalTests/testRearPortraitContinuousAdjustmentAndCapture()",
+      "status": "真实人物定向通过，补强拍后清空/退出新帧/同帧EXIF检查",
+      "seconds": 15.717583894729614,
+      "summary": "XCTAssertTrue failed - 人像测试等待条件超时",
+      "observations": [
+        {
+          "logLine": 5957,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PortraitOptimizationPhysicalTests.swift:258: error: -[LumaCameraTests.PortraitOptimizationPhysicalTests testRearPortraitContinuousAdjustmentAndCapture] : XCTAssertTrue failed - 人像测试等待条件超时"
+        },
+        {
+          "logLine": 5958,
+          "text": "<unknown>:0: error: -[LumaCameraTests.PortraitOptimizationPhysicalTests testRearPortraitContinuousAdjustmentAndCapture] : failed: caught error: \"InvalidTransition { "
+        }
+      ],
+      "resolutionType": "复测通过；未改生产算法，补强验证断言",
+      "resolutionReport": "2026-10-24-PortraitThree-Resolution.md",
+      "retest": {
+        "test": "PortraitOptimizationPhysicalTests/testRearPortraitContinuousAdjustmentAndCapture()",
+        "seconds": 11.034,
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearConfirmed.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-011",
+      "test": "PortraitOptimizationPhysicalTests/testRearPortraitSameFrameReference()",
+      "status": "真实人物定向通过，补强拍后清空/退出新帧/同帧EXIF检查",
+      "seconds": 1.5492899417877197,
+      "summary": "XCTUnwrap failed: expected non-nil value of type \"CapturedPhoto\" - 相机暂时无法恢复，请点击重试重新连接。",
+      "observations": [
+        {
+          "logLine": 5964,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PortraitOptimizationPhysicalTests.swift:153: error: -[LumaCameraTests.PortraitOptimizationPhysicalTests testRearPortraitSameFrameReference] : XCTUnwrap failed: expected non-nil value of type \"CapturedPhoto\" - 相机暂时无法恢复，请点击重试重新连接。"
+        }
+      ],
+      "resolutionType": "复测通过；未改生产算法，补强验证断言",
+      "resolutionReport": "2026-10-24-PortraitThree-Resolution.md",
+      "retest": {
+        "test": "PortraitOptimizationPhysicalTests/testRearPortraitSameFrameReference()",
+        "seconds": 2.391,
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PortraitThree-20261024-RearConfirmed.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-012",
+      "test": "PreviewExposureAssistPhysicalTests/testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit()",
+      "status": "预览辅助原用例及增强EXIF/恢复检查定向通过",
+      "seconds": 5.465810060501099,
+      "summary": "XCTAssertTrue failed",
+      "observations": [
+        {
+          "logLine": 5977,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:53: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit] : XCTAssertTrue failed"
+        },
+        {
+          "logLine": 5978,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:54: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit] : XCTUnwrap failed: expected non-nil value of type \"Double\""
+        },
+        {
+          "logLine": 5979,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:54: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit] : XCTAssertEqual failed: threw error \"UnwrappingOptional(errorCode: 105, errorUserInfo: [\"XCTestErrorUserInfoKeyShouldIgnore\": true])\""
+        },
+        {
+          "logLine": 5980,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:61: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit] : XCTAssertTrue failed - A-mode preview optimization should engage after AE needs slower than 1/30 s"
+        },
+        {
+          "logLine": 5981,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:64: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit] : XCTAssertTrue failed"
+        },
+        {
+          "logLine": 5982,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:66: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit] : XCTAssertLessThanOrEqual failed: (\"0.06666666666666667\") is greater than (\"0.035333333333333335\")"
+        }
+      ],
+      "resolutionType": "原三项独立基线已通过；补测修复照片辅助误覆盖视频M挡曝光",
+      "resolutionReport": "2026-10-24-PreviewAssist-Resolution.md",
+      "retest": {
+        "test": "PreviewExposureAssistPhysicalTests/testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit()",
+        "seconds": 1.235,
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PreviewAssist-20261024-Final.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-013",
+      "test": "PreviewExposureAssistPhysicalTests/testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure()",
+      "status": "预览辅助原用例及增强EXIF/恢复检查定向通过",
+      "seconds": 42.67169892787933,
+      "summary": "XCTAssertEqual failed: (\"AVCaptureExposureMode(rawValue: 2)\") is not equal to (\"AVCaptureExposureMode(rawValue: 3)\")",
+      "observations": [
+        {
+          "logLine": 5985,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:162: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqual failed: (\"AVCaptureExposureMode(rawValue: 2)\") is not equal to (\"AVCaptureExposureMode(rawValue: 3)\")"
+        },
+        {
+          "logLine": 5986,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:163: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqualWithAccuracy failed: (\"1027.6875\") is not equal to (\"400.0\") +/- (\"5.0\")"
+        },
+        {
+          "logLine": 5987,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:164: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqualWithAccuracy failed: (\"0.040009\") is not equal to (\"0.06666666666666667\") +/- (\"0.002\")"
+        },
+        {
+          "logLine": 5988,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:183: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertTrue failed"
+        },
+        {
+          "logLine": 5989,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:185: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertLessThanOrEqual failed: (\"0.06666666666666667\") is greater than (\"0.035333333333333335\")"
+        },
+        {
+          "logLine": 5990,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:186: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTUnwrap failed: expected non-nil value of type \"Float\""
+        },
+        {
+          "logLine": 5991,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:186: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqual failed: threw error \"UnwrappingOptional(errorCode: 105, errorUserInfo: [\"XCTestErrorUserInfoKeyShouldIgnore\": true])\""
+        },
+        {
+          "logLine": 5992,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:187: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTUnwrap failed: expected non-nil value of type \"Double\""
+        },
+        {
+          "logLine": 5993,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:187: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTAssertEqual failed: threw error \"UnwrappingOptional(errorCode: 105, errorUserInfo: [\"XCTestErrorUserInfoKeyShouldIgnore\": true])\""
+        },
+        {
+          "logLine": 5995,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:199: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : Asynchronous wait failed: Exceeded timeout of 30 seconds, with unfulfilled expectations: \"automatic slow-shutter preview still capture\"."
+        },
+        {
+          "logLine": 5996,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:200: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure] : XCTUnwrap failed: expected non-nil value of type \"CapturedPhoto\" - 相机暂时无法恢复，请点击重试重新连接。"
+        }
+      ],
+      "resolutionType": "原三项独立基线已通过；补测修复照片辅助误覆盖视频M挡曝光",
+      "resolutionReport": "2026-10-24-PreviewAssist-Resolution.md",
+      "retest": {
+        "test": "PreviewExposureAssistPhysicalTests/testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure()",
+        "seconds": 8.4,
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PreviewAssist-20261024-Final.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-014",
+      "test": "PreviewExposureAssistPhysicalTests/testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles()",
+      "status": "预览辅助原用例及增强EXIF/恢复检查定向通过",
+      "seconds": 45.7782928943634,
+      "summary": "XCTAssertEqual failed: (\"AVCaptureExposureMode(rawValue: 2)\") is not equal to (\"AVCaptureExposureMode(rawValue: 3)\")",
+      "observations": [
+        {
+          "logLine": 5999,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:313: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles] : XCTAssertEqual failed: (\"AVCaptureExposureMode(rawValue: 2)\") is not equal to (\"AVCaptureExposureMode(rawValue: 3)\")"
+        },
+        {
+          "logLine": 6000,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:314: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles] : XCTAssertEqualWithAccuracy failed: (\"1035.8653564453125\") is not equal to (\"400.0\") +/- (\"5.0\")"
+        },
+        {
+          "logLine": 6001,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:315: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles] : XCTAssertEqualWithAccuracy failed: (\"0.040009\") is not equal to (\"0.06666666666666667\") +/- (\"0.002\")"
+        },
+        {
+          "logLine": 6002,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:333: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles] : XCTAssertLessThanOrEqual failed: (\"0.06666666666666667\") is greater than (\"0.035333333333333335\")"
+        },
+        {
+          "logLine": 6003,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:334: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles] : XCTUnwrap failed: expected non-nil value of type \"Float\""
+        },
+        {
+          "logLine": 6004,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:334: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles] : XCTAssertEqual failed: threw error \"UnwrappingOptional(errorCode: 105, errorUserInfo: [\"XCTestErrorUserInfoKeyShouldIgnore\": true])\""
+        },
+        {
+          "logLine": 6005,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:335: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles] : XCTUnwrap failed: expected non-nil value of type \"Double\""
+        },
+        {
+          "logLine": 6006,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:335: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles] : XCTAssertEqual failed: threw error \"UnwrappingOptional(errorCode: 105, errorUserInfo: [\"XCTestErrorUserInfoKeyShouldIgnore\": true])\""
+        },
+        {
+          "logLine": 6008,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:347: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles] : Asynchronous wait failed: Exceeded timeout of 30 seconds, with unfulfilled expectations: \"manual exposure photo with smooth preview\"."
+        },
+        {
+          "logLine": 6009,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PreviewExposureAssistPhysicalTests.swift:348: error: -[LumaCameraTests.PreviewExposureAssistPhysicalTests testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles] : XCTUnwrap failed: expected non-nil value of type \"CapturedPhoto\" - 相机暂时无法恢复，请点击重试重新连接。"
+        }
+      ],
+      "resolutionType": "原三项独立基线已通过；补测修复照片辅助误覆盖视频M挡曝光",
+      "resolutionReport": "2026-10-24-PreviewAssist-Resolution.md",
+      "retest": {
+        "test": "PreviewExposureAssistPhysicalTests/testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles()",
+        "seconds": 18.197,
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PreviewAssist-20261024-Final.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-015",
+      "test": "ProToneCapturePhysicalTests/testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving()",
+      "status": "四种影调真实HDR拍摄及增强文件/恢复检查定向通过",
+      "seconds": 35.38104796409607,
+      "summary": "Asynchronous wait failed: Exceeded timeout of 35 seconds, with unfulfilled expectations: \"HDR HEIF Pro 自然影调\".",
+      "observations": [
+        {
+          "logLine": 6726,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/ProToneCapturePhysicalTests.swift:34: error: -[LumaCameraTests.ProToneCapturePhysicalTests testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving] : Asynchronous wait failed: Exceeded timeout of 35 seconds, with unfulfilled expectations: \"HDR HEIF Pro 自然影调\"."
+        },
+        {
+          "logLine": 6727,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/ProToneCapturePhysicalTests.swift:35: error: -[LumaCameraTests.ProToneCapturePhysicalTests testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving] : XCTUnwrap failed: expected non-nil value of type \"CapturedPhoto\" - 相机暂时无法恢复，请点击重试重新连接。"
+        }
+      ],
+      "resolutionType": "复测通过；补强PQ/EXIF/任务清空/重复操作，未改生产算法",
+      "resolutionReport": "2026-10-24-ProToneHDR-Resolution.md",
+      "retest": {
+        "test": "ProToneCapturePhysicalTests/testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving()",
+        "seconds": 10.101,
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-ProToneHDR-20261024-Verified.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-016",
+      "test": "SilentShutterPhysicalTests/testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving()",
+      "status": "普通/Live增强复测通过，夜景静音遗漏另已修复并验证",
+      "seconds": 56.25888395309448,
+      "summary": "XCTAssertEqual failed: (\"4\") is not equal to (\"0\")",
+      "observations": [
+        {
+          "logLine": 6763,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SilentShutterPhysicalTests.swift:33: error: -[LumaCameraTests.SilentShutterPhysicalTests testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving] : XCTAssertEqual failed: (\"4\") is not equal to (\"0\")"
+        },
+        {
+          "logLine": 6764,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SilentShutterPhysicalTests.swift:42: error: -[LumaCameraTests.SilentShutterPhysicalTests testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving] : XCTAssertEqual failed: (\"4\") is not equal to (\"1\") - Capture must be accepted before waiting for completion"
+        },
+        {
+          "logLine": 6765,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SilentShutterPhysicalTests.swift:43: error: -[LumaCameraTests.SilentShutterPhysicalTests testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving] : Asynchronous wait failed: Exceeded timeout of 45 seconds, with unfulfilled expectations: \"Shutter sound capture JPG\"."
+        },
+        {
+          "logLine": 6766,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SilentShutterPhysicalTests.swift:44: error: -[LumaCameraTests.SilentShutterPhysicalTests testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving] : XCTUnwrap failed: expected non-nil value of type \"CapturedPhoto\" - 相机暂时无法恢复，请点击重试重新连接。"
+        }
+      ],
+      "resolutionType": "复测原失败；产品修复夜景首批/追加批次统一应用静音",
+      "resolutionReport": "2026-10-24-SilentShutter-Resolution.md",
+      "retest": {
+        "test": "SilentShutterPhysicalTests/testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving()",
+        "result": "Passed",
+        "seconds": 15.412,
+        "resultBundle": "/private/tmp/LumaCamera-SilentShutter-20261024-Fixed.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-017",
+      "test": "SlowMotionLensTransitionPhysicalTests/testSlowMotionFocalSwitchLatencyAndRecording()",
+      "status": "2026-10-25 targeted enhanced device checks passed",
+      "seconds": 237.3357049226761,
+      "summary": "XCTAssertEqual failed: (\"com.apple.avfoundation.avcapturedevice.built-in_video:0:1.0000\") is not equal to (\"com.apple.avfoundation.avcapturedevice.built-in_video:5:1.0000\")",
+      "observations": [
+        {
+          "logLine": 6772,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowMotionLensTransitionPhysicalTests.swift:92: error: -[LumaCameraTests.SlowMotionLensTransitionPhysicalTests testSlowMotionFocalSwitchLatencyAndRecording] : XCTAssertEqual failed: (\"com.apple.avfoundation.avcapturedevice.built-in_video:0:1.0000\") is not equal to (\"com.apple.avfoundation.avcapturedevice.built-in_video:5:1.0000\")"
+        },
+        {
+          "logLine": 6773,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowMotionLensTransitionPhysicalTests.swift:93: error: -[LumaCameraTests.SlowMotionLensTransitionPhysicalTests testSlowMotionFocalSwitchLatencyAndRecording] : XCTAssertNotEqual failed: (\"Optional(782A09E7-2D9A-446D-996E-34B015118772)\") is equal to (\"Optional(782A09E7-2D9A-446D-996E-34B015118772)\")"
+        },
+        {
+          "logLine": 6774,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowMotionLensTransitionPhysicalTests.swift:92: error: -[LumaCameraTests.SlowMotionLensTransitionPhysicalTests testSlowMotionFocalSwitchLatencyAndRecording] : XCTAssertEqual failed: (\"com.apple.avfoundation.avcapturedevice.built-in_video:0:1.0000\") is not equal to (\"com.apple.avfoundation.avcapturedevice.built-in_video:0:2.0000\")"
+        },
+        {
+          "logLine": 6776,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowMotionLensTransitionPhysicalTests.swift:92: error: -[LumaCameraTests.SlowMotionLensTransitionPhysicalTests testSlowMotionFocalSwitchLatencyAndRecording] : XCTAssertEqual failed: (\"com.apple.avfoundation.avcapturedevice.built-in_video:0:1.0000\") is not equal to (\"com.apple.avfoundation.avcapturedevice.built-in_video:2:1.0000\")"
+        },
+        {
+          "logLine": 6778,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowMotionLensTransitionPhysicalTests.swift:92: error: -[LumaCameraTests.SlowMotionLensTransitionPhysicalTests testSlowMotionFocalSwitchLatencyAndRecording] : XCTAssertEqual failed: (\"com.apple.avfoundation.avcapturedevice.built-in_video:0:1.0000\") is not equal to (\"com.apple.avfoundation.avcapturedevice.built-in_video:2:2.0000\")"
+        },
+        {
+          "logLine": 6780,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowMotionLensTransitionPhysicalTests.swift:121: error: -[LumaCameraTests.SlowMotionLensTransitionPhysicalTests testSlowMotionFocalSwitchLatencyAndRecording] : XCTAssertEqualWithAccuracy failed: (\"1.0\") is not equal to (\"1.4583333333333333\") +/- (\"0.02\")"
+        },
+        {
+          "logLine": 6791,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowMotionLensTransitionPhysicalTests.swift:93: error: -[LumaCameraTests.SlowMotionLensTransitionPhysicalTests testSlowMotionFocalSwitchLatencyAndRecording] : XCTAssertNotEqual failed: (\"Optional(CF44498C-DAA0-4337-AD5B-FF902BB69FC8)\") is equal to (\"Optional(CF44498C-DAA0-4337-AD5B-FF902BB69FC8)\")"
+        },
+        {
+          "logLine": 6823,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowMotionLensTransitionPhysicalTests.swift:149: error: -[LumaCameraTests.SlowMotionLensTransitionPhysicalTests testSlowMotionFocalSwitchLatencyAndRecording] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 6824,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowMotionLensTransitionPhysicalTests.swift:156: error: -[LumaCameraTests.SlowMotionLensTransitionPhysicalTests testSlowMotionFocalSwitchLatencyAndRecording] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionReport": "2026-10-25-RemainingVideoFive-Resolution.md",
+      "resolutionType": "031 WB startup/gain snapshot and 017 retimed writer pressure fixed; all five enhanced on device",
+      "retest": {
+        "test": "SlowMotionLensTransitionPhysicalTests/testSlowMotionFocalSwitchLatencyAndRecording()",
+        "date": "2026-10-25",
+        "result": "Passed",
+        "seconds": 18.659,
+        "resultBundle": "/private/tmp/LumaCamera-SlowFocal-20261025-Final.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-018",
+      "test": "SlowShutterPresetTests/testPresetSlotsAlignWithFocalSlotsAndSurviveRapidToggleOnDevice()",
+      "status": "测试前提/断言已修正，定向真机通过；原始失败保留",
+      "seconds": 2.93123996257782,
+      "summary": "failed - Visible camera layout did not report all preset/focal frames: [\"preset.lightTrails\", \"preset.silkyWater\", \"preset.motionBlur\", \"preset.panning\", \"preset.starTrails\"]",
+      "observations": [
+        {
+          "logLine": 6847,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:161: error: -[LumaCameraTests.SlowShutterPresetTests testPresetSlotsAlignWithFocalSlotsAndSurviveRapidToggleOnDevice] : failed - Visible camera layout did not report all preset/focal frames: [\"preset.lightTrails\", \"preset.silkyWater\", \"preset.motionBlur\", \"preset.panning\", \"preset.starTrails\"]"
+        }
+      ],
+      "resolutionType": "测试修正，无生产代码变更",
+      "resolutionReport": "2026-10-24-EasyTwo-Resolution.md",
+      "retest": {
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-EasyTwo-20261024-1.xcresult",
+        "methodSeconds": 3.672
+      }
+    },
+    {
+      "id": "FULL-20261024-019",
+      "test": "SlowShutterPresetTests/testSlowShutterAllowsSwitchingRearLenses()",
+      "status": "测试基线及硬件观测前提修正后定向真机通过；原始失败保留",
+      "seconds": 10.04260802268982,
+      "summary": "XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")",
+      "observations": [
+        {
+          "logLine": 6861,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:274: error: -[LumaCameraTests.SlowShutterPresetTests testSlowShutterAllowsSwitchingRearLenses] : XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")"
+        },
+        {
+          "logLine": 6862,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:286: error: -[LumaCameraTests.SlowShutterPresetTests testSlowShutterAllowsSwitchingRearLenses] : XCTAssertEqual failed: (\"com.apple.avfoundation.avcapturedevice.built-in_video:0:1.0000\") is not equal to (\"com.apple.avfoundation.avcapturedevice.built-in_video:5:1.0000\")"
+        },
+        {
+          "logLine": 6863,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SlowShutterPresetTests.swift:287: error: -[LumaCameraTests.SlowShutterPresetTests testSlowShutterAllowsSwitchingRearLenses] : XCTAssertEqual failed: (\"nil\") is not equal to (\"Optional(LumaCamera.SlowShutterPreset.lightTrails)\")"
+        }
+      ],
+      "resolutionType": "测试修正，无生产代码变更",
+      "resolutionReport": "2026-10-24-PresetZoom-Resolution.md",
+      "retest": {
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PresetZoom-20261024-Continue.xcresult",
+        "log": "/private/tmp/LumaCamera-PresetZoom-20261024-Continue.log",
+        "methodSeconds": 12.791
+      }
+    },
+    {
+      "id": "FULL-20261024-020",
+      "test": "VideoCodecPhysicalTests/testActualCodecsAndColorsRepeatedRecording()",
+      "status": "实际文件/色彩/像素增强验证后定向通过",
+      "seconds": 32.81687605381012,
+      "summary": "XCTAssertFalse failed",
+      "observations": [
+        {
+          "logLine": 8431,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoCodecPhysicalTests.swift:78: error: -[LumaCameraTests.VideoCodecPhysicalTests testActualCodecsAndColorsRepeatedRecording] : XCTAssertFalse failed"
+        },
+        {
+          "logLine": 8432,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoCodecPhysicalTests.swift:79: error: -[LumaCameraTests.VideoCodecPhysicalTests testActualCodecsAndColorsRepeatedRecording] : XCTAssertEqual failed: (\"4\") is not equal to (\"0\")"
+        },
+        {
+          "logLine": 8433,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoCodecPhysicalTests.swift:83: error: -[LumaCameraTests.VideoCodecPhysicalTests testActualCodecsAndColorsRepeatedRecording] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8434,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoCodecPhysicalTests.swift:87: error: -[LumaCameraTests.VideoCodecPhysicalTests testActualCodecsAndColorsRepeatedRecording] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionType": "独立基线复测通过，增强测试隔离与文件/像素/完整解码断言，未改生产实现",
+      "resolutionReport": "2026-10-24-VideoCodecColor-Resolution.md",
+      "retest": {
+        "test": "VideoCodecPhysicalTests/testActualCodecsAndColorsRepeatedRecording()",
+        "result": "Passed",
+        "seconds": 33.732,
+        "resultBundle": "/private/tmp/LumaCamera-VideoCodecColor-20261024-Verified.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-021",
+      "test": "VideoColorPhysicalTests/testAppleLogLUTBurnKeepsLogVideoTagsAndTenBitPixels()",
+      "status": "实际文件/色彩/像素增强验证后定向通过",
+      "seconds": 22.40642499923706,
+      "summary": "XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。",
+      "observations": [
+        {
+          "logLine": 8440,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoColorPhysicalTests.swift:177: error: -[LumaCameraTests.VideoColorPhysicalTests testAppleLogLUTBurnKeepsLogVideoTagsAndTenBitPixels] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8441,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoColorPhysicalTests.swift:182: error: -[LumaCameraTests.VideoColorPhysicalTests testAppleLogLUTBurnKeepsLogVideoTagsAndTenBitPixels] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionType": "独立基线复测通过，增强测试隔离与文件/像素/完整解码断言，未改生产实现",
+      "resolutionReport": "2026-10-24-VideoCodecColor-Resolution.md",
+      "retest": {
+        "test": "VideoColorPhysicalTests/testAppleLogLUTBurnKeepsLogVideoTagsAndTenBitPixels()",
+        "result": "Passed",
+        "seconds": 7.836,
+        "resultBundle": "/private/tmp/LumaCamera-VideoCodecColor-20261024-Verified.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-022",
+      "test": "VideoColorPhysicalTests/testEveryAvailableColorSpaceRecordsRealTagsAndRestoresPhotos()",
+      "status": "实际文件/色彩/像素增强验证后定向通过",
+      "seconds": 26.976192951202393,
+      "summary": "XCTAssertTrue failed - mode=auto color=SDR before=ready=true busy=false configuring=false capturing=true pending=4: 相机暂时无法恢复，请点击重试重新连接。",
+      "observations": [
+        {
+          "logLine": 8446,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoColorPhysicalTests.swift:89: error: -[LumaCameraTests.VideoColorPhysicalTests testEveryAvailableColorSpaceRecordsRealTagsAndRestoresPhotos] : XCTAssertTrue failed - mode=auto color=SDR before=ready=true busy=false configuring=false capturing=true pending=4: 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8447,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoColorPhysicalTests.swift:93: error: -[LumaCameraTests.VideoColorPhysicalTests testEveryAvailableColorSpaceRecordsRealTagsAndRestoresPhotos] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionType": "独立基线复测通过，增强测试隔离与文件/像素/完整解码断言，未改生产实现",
+      "resolutionReport": "2026-10-24-VideoCodecColor-Resolution.md",
+      "retest": {
+        "test": "VideoColorPhysicalTests/testEveryAvailableColorSpaceRecordsRealTagsAndRestoresPhotos()",
+        "result": "Passed",
+        "seconds": 42.652,
+        "resultBundle": "/private/tmp/LumaCamera-VideoCodecColor-20261024-Verified.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-023",
+      "test": "VideoColorPhysicalTests/testSDRAndP3FiltersAreBakedIntoRecordedPixelsWithStableFrameDelivery()",
+      "status": "实际文件/色彩/像素增强验证后定向通过",
+      "seconds": 21.964942932128906,
+      "summary": "XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。",
+      "observations": [
+        {
+          "logLine": 8454,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoColorPhysicalTests.swift:255: error: -[LumaCameraTests.VideoColorPhysicalTests testSDRAndP3FiltersAreBakedIntoRecordedPixelsWithStableFrameDelivery] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8455,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoColorPhysicalTests.swift:259: error: -[LumaCameraTests.VideoColorPhysicalTests testSDRAndP3FiltersAreBakedIntoRecordedPixelsWithStableFrameDelivery] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionType": "独立基线复测通过，增强测试隔离与文件/像素/完整解码断言，未改生产实现",
+      "resolutionReport": "2026-10-24-VideoCodecColor-Resolution.md",
+      "retest": {
+        "test": "VideoColorPhysicalTests/testSDRAndP3FiltersAreBakedIntoRecordedPixelsWithStableFrameDelivery()",
+        "result": "Passed",
+        "seconds": 4.718,
+        "resultBundle": "/private/tmp/LumaCamera-VideoCodecColor-20261024-Verified.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-024",
+      "test": "VideoModeTransitionTests/testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching()",
+      "status": "原生漏回调收尾与恢复机制修复，定向真机通过；原失败保留",
+      "seconds": 15.915337920188904,
+      "summary": "XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。",
+      "observations": [
+        {
+          "logLine": 8626,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoModeTransitionTests.swift:66: error: -[LumaCameraTests.VideoModeTransitionTests testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8627,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoModeTransitionTests.swift:70: error: -[LumaCameraTests.VideoModeTransitionTests testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionType": "产品修复：有界原生请求、一次性收尾、有序交付解堵及旧输出重建",
+      "resolutionReport": "2026-10-24-Portrait-Timeout-Recovery.md",
+      "retest": {
+        "test": "VideoModeTransitionTests/testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching()",
+        "seconds": 11.085,
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PortraitRecovery-20261024-Real.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-025",
+      "test": "VideoModeTransitionTests/testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips()",
+      "status": "曝光提交同步加固后定向真机通过",
+      "seconds": 22.59485900402069,
+      "summary": "XCTAssertTrue failed - Video shutter must become ready for live",
+      "observations": [
+        {
+          "logLine": 8630,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoModeTransitionTests.swift:198: error: -[LumaCameraTests.VideoModeTransitionTests testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips] : XCTAssertTrue failed - Video shutter must become ready for live"
+        },
+        {
+          "logLine": 8631,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoModeTransitionTests.swift:201: error: -[LumaCameraTests.VideoModeTransitionTests testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips] : XCTAssertTrue failed - variant=live: 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8632,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoModeTransitionTests.swift:206: error: -[LumaCameraTests.VideoModeTransitionTests testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionType": "独立基线通过；增强实际文件检查发现间歇性曝光不一致，普通手动照片改为等待官方曝光完成回调",
+      "resolutionReport": "2026-10-24-LiveHDRManualRestore-Resolution.md",
+      "retest": {
+        "test": "VideoModeTransitionTests/testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips()",
+        "result": "Passed",
+        "seconds": 64.158,
+        "resultBundle": "/private/tmp/LumaCamera-LiveHDRManualRestore-20261024-Fixed.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-026",
+      "test": "VideoSpecificationTests/testAllSupportedVideoSpecificationsWriteMatchingTracks()",
+      "status": "2026-10-25 targeted enhanced device checks passed",
+      "seconds": 24.32819700241089,
+      "summary": "XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。",
+      "observations": [
+        {
+          "logLine": 8725,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:699: error: -[LumaCameraTests.VideoSpecificationTests testAllSupportedVideoSpecificationsWriteMatchingTracks] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8726,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:703: error: -[LumaCameraTests.VideoSpecificationTests testAllSupportedVideoSpecificationsWriteMatchingTracks] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionReport": "2026-10-25-RemainingVideoFive-Resolution.md",
+      "resolutionType": "031 WB startup/gain snapshot and 017 retimed writer pressure fixed; all five enhanced on device",
+      "retest": {
+        "test": "VideoSpecificationTests/testAllSupportedVideoSpecificationsWriteMatchingTracks()",
+        "date": "2026-10-25",
+        "result": "Passed",
+        "seconds": 38.864,
+        "resultBundle": "/private/tmp/LumaCamera-VideoMatrix-20261025-Verified.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-027",
+      "test": "VideoSpecificationTests/testHighFrameRateAndFrontCameraRestoreSupportedSpecifications()",
+      "status": "高帧率实际文件/设备周期与预览增强验证后定向通过",
+      "seconds": 21.237264037132263,
+      "summary": "XCTAssertFalse failed - This iPhone main camera should expose high-frame-rate SDR",
+      "observations": [
+        {
+          "logLine": 8742,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:614: error: -[LumaCameraTests.VideoSpecificationTests testHighFrameRateAndFrontCameraRestoreSupportedSpecifications] : XCTAssertFalse failed - This iPhone main camera should expose high-frame-rate SDR"
+        },
+        {
+          "logLine": 8744,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:643: error: -[LumaCameraTests.VideoSpecificationTests testHighFrameRateAndFrontCameraRestoreSupportedSpecifications] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8745,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:647: error: -[LumaCameraTests.VideoSpecificationTests testHighFrameRateAndFrontCameraRestoreSupportedSpecifications] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionType": "独立原用例通过；补强停机重置基线、真实新帧、设备帧周期、完整解码PTS及重复/快速切换，未改正式采集实现",
+      "resolutionReport": "2026-10-24-HighRatePreview-Resolution.md",
+      "retest": {
+        "test": "VideoSpecificationTests/testHighFrameRateAndFrontCameraRestoreSupportedSpecifications()",
+        "result": "Passed",
+        "seconds": 21.192,
+        "resultBundle": "/private/tmp/LumaCamera-HighRatePreview-20261024-Enhanced.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-028",
+      "test": "VideoSpecificationTests/testOpenGateSwitchRecordsOnlyFourByThreeOrSquareOnDevice()",
+      "status": "2026-10-25 targeted enhanced device checks passed",
+      "seconds": 23.092330932617188,
+      "summary": "XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。",
+      "observations": [
+        {
+          "logLine": 8752,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:573: error: -[LumaCameraTests.VideoSpecificationTests testOpenGateSwitchRecordsOnlyFourByThreeOrSquareOnDevice] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8753,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:577: error: -[LumaCameraTests.VideoSpecificationTests testOpenGateSwitchRecordsOnlyFourByThreeOrSquareOnDevice] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionReport": "2026-10-25-RemainingVideoFive-Resolution.md",
+      "resolutionType": "031 WB startup/gain snapshot and 017 retimed writer pressure fixed; all five enhanced on device",
+      "retest": {
+        "test": "VideoSpecificationTests/testOpenGateSwitchRecordsOnlyFourByThreeOrSquareOnDevice()",
+        "date": "2026-10-25",
+        "result": "Passed",
+        "seconds": 10.773,
+        "resultBundle": "/private/tmp/LumaCamera-OpenGate-20261025-Final.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-029",
+      "test": "VideoSpecificationTests/testRenderedVideoPreviewCadenceTracksSupportedRates()",
+      "status": "高帧率实际文件/设备周期与预览增强验证后定向通过",
+      "seconds": 12.02386200428009,
+      "summary": "XCTAssertFalse failed - M mode should expose the available 120 fps SDR route on iPhone 17 Pro",
+      "observations": [
+        {
+          "logLine": 8762,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:502: error: -[LumaCameraTests.VideoSpecificationTests testRenderedVideoPreviewCadenceTracksSupportedRates] : XCTAssertFalse failed - M mode should expose the available 120 fps SDR route on iPhone 17 Pro"
+        }
+      ],
+      "resolutionType": "独立原用例通过；补强停机重置基线、真实新帧、设备帧周期、完整解码PTS及重复/快速切换，未改正式采集实现",
+      "resolutionReport": "2026-10-24-HighRatePreview-Resolution.md",
+      "retest": {
+        "test": "VideoSpecificationTests/testRenderedVideoPreviewCadenceTracksSupportedRates()",
+        "result": "Passed",
+        "seconds": 35.261,
+        "resultBundle": "/private/tmp/LumaCamera-HighRatePreview-20261024-Enhanced.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-030",
+      "test": "VideoSpecificationTests/testSlowMotionAndCinematicRoutesOnDevice()",
+      "status": "2026-10-25 targeted enhanced device checks passed",
+      "seconds": 21.37595796585083,
+      "summary": "XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。",
+      "observations": [
+        {
+          "logLine": 8788,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:384: error: -[LumaCameraTests.VideoSpecificationTests testSlowMotionAndCinematicRoutesOnDevice] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8789,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoSpecificationTests.swift:391: error: -[LumaCameraTests.VideoSpecificationTests testSlowMotionAndCinematicRoutesOnDevice] : XCTUnwrap failed: expected non-nil value of type \"URL\" - Cinematic movie did not finish"
+        }
+      ],
+      "resolutionReport": "2026-10-25-RemainingVideoFive-Resolution.md",
+      "resolutionType": "031 WB startup/gain snapshot and 017 retimed writer pressure fixed; all five enhanced on device",
+      "retest": {
+        "test": "VideoSpecificationTests/testSlowMotionAndCinematicRoutesOnDevice()",
+        "date": "2026-10-25",
+        "result": "Passed",
+        "seconds": 16.623,
+        "resultBundle": "/private/tmp/LumaCamera-VideoSubmodes-20261025-Verified.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-031",
+      "test": "VideoWhiteBalancePhysicalTests/testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording()",
+      "status": "2026-10-25 targeted enhanced device checks passed",
+      "seconds": 19.776901960372925,
+      "summary": "XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。",
+      "observations": [
+        {
+          "logLine": 8800,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoWhiteBalancePhysicalTests.swift:98: error: -[LumaCameraTests.VideoWhiteBalancePhysicalTests testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording] : XCTAssertTrue failed - 相机暂时无法恢复，请点击重试重新连接。"
+        },
+        {
+          "logLine": 8801,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoWhiteBalancePhysicalTests.swift:99: error: -[LumaCameraTests.VideoWhiteBalancePhysicalTests testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording] : XCTAssertLessThan failed: (\"5.2271502500079805\") is not less than (\"3.0\") - WB preference must not delay recording startup beyond 3 seconds"
+        },
+        {
+          "logLine": 8802,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoWhiteBalancePhysicalTests.swift:123: error: -[LumaCameraTests.VideoWhiteBalancePhysicalTests testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording] : XCTUnwrap failed: expected non-nil value of type \"URL\" - Recording completion failed; lock=false"
+        }
+      ],
+      "resolutionReport": "2026-10-25-RemainingVideoFive-Resolution.md",
+      "resolutionType": "031 WB startup/gain snapshot and 017 retimed writer pressure fixed; all five enhanced on device",
+      "retest": {
+        "test": "VideoWhiteBalancePhysicalTests/testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording()",
+        "date": "2026-10-25",
+        "result": "Passed",
+        "seconds": 17.699,
+        "resultBundle": "/private/tmp/LumaCamera-VideoWB-20261025-Final.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-032",
+      "test": "VideoWorkflowTests/testLifecycleStopFreezesClockAndRapidModeRequestsCoalesce()",
+      "status": "生命周期增强及启动取消修复后定向真机通过",
+      "seconds": 15.880452990531921,
+      "summary": "XCTAssertTrue failed",
+      "observations": [
+        {
+          "logLine": 8828,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoWorkflowTests.swift:501: error: -[LumaCameraTests.VideoWorkflowTests testLifecycleStopFreezesClockAndRapidModeRequestsCoalesce] : XCTAssertTrue failed"
+        },
+        {
+          "logLine": 8829,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoWorkflowTests.swift:505: error: -[LumaCameraTests.VideoWorkflowTests testLifecycleStopFreezesClockAndRapidModeRequestsCoalesce] : XCTAssertTrue failed"
+        },
+        {
+          "logLine": 8830,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/VideoWorkflowTests.swift:507: error: -[LumaCameraTests.VideoWorkflowTests testLifecycleStopFreezesClockAndRapidModeRequestsCoalesce] : XCTUnwrap failed: expected non-nil value of type \"URL\""
+        }
+      ],
+      "resolutionType": "原独立基线通过；增强三轮生命周期、解码与回调检查；修复白平衡锁定等待期间取消漏回调/busy残留，迟到回调按请求隔离",
+      "resolutionReport": "2026-10-24-VideoLifecycle-Resolution.md",
+      "retest": {
+        "test": "VideoWorkflowTests/testLifecycleStopFreezesClockAndRapidModeRequestsCoalesce()",
+        "result": "Passed",
+        "seconds": 17.476,
+        "resultBundle": "/private/tmp/LumaCamera-VideoLifecycle-20261024-Final.xcresult"
+      }
+    },
+    {
+      "id": "FULL-20261024-033",
+      "test": "ZoomWheelReopenPhysicalTests/testReopeningKeepsActualZoomAndAnchorAcrossBothModes()",
+      "status": "测试基线及硬件观测前提修正后定向真机通过；原始失败保留",
+      "seconds": 1.7066808938980103,
+      "summary": "XCTAssertLessThan failed: (\"1.0\") is not less than (\"1.0\")",
+      "observations": [
+        {
+          "logLine": 8910,
+          "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/ZoomWheelReopenPhysicalTests.swift:37: error: -[LumaCameraTests.ZoomWheelReopenPhysicalTests testReopeningKeepsActualZoomAndAnchorAcrossBothModes] : XCTAssertLessThan failed: (\"1.0\") is not less than (\"1.0\")"
+        }
+      ],
+      "resolutionType": "测试修正，无生产代码变更",
+      "resolutionReport": "2026-10-24-PresetZoom-Resolution.md",
+      "retest": {
+        "result": "Passed",
+        "resultBundle": "/private/tmp/LumaCamera-PresetZoom-20261024-Continue.xcresult",
+        "log": "/private/tmp/LumaCamera-PresetZoom-20261024-Continue.log",
+        "methodSeconds": 2.121
+      }
+    }
+  ],
+  "skips": [
+    {
+      "test": "CameraRulerMappingTests/testAMToToolsDoesNotMovePreviewForAnyRatio()",
+      "reason": "Layout regression is exercised in the simulator",
+      "logLine": 1287
+    },
+    {
+      "test": "CameraSessionRecoveryTests/testTemporaryInterruptionIsSilentAndEndedCannotRestartStoppedCamera()",
+      "reason": "Use the shared visible engine for physical recovery tests",
+      "logLine": 1492
+    },
+    {
+      "test": "NightAdaptiveCapturePhysicalTests/testNaturallyTriggeredNightUsesActualMeteringAndFrameCount()",
+      "reason": "实际场景尚未触发夜景，不能记成自然触发通过",
+      "logLine": 4576
+    },
+    {
+      "test": "PopupAppearanceAndOrientationTests/testPopupOpenCloseDuringOrientationChangesRemainsResponsive()",
+      "reason": "Full camera UI stress runs in the simulator; the device runs the harness orientation stress",
+      "logLine": 5789
+    },
+    {
+      "test": "SlowShutterPresetTests/testAutomaticModeKeepsApertureModeAndPresetOnlyCapsAutomaticExposure()",
+      "reason": "Requires a live camera route; A-mode cap policy is covered by the model tests",
+      "logLine": 6836
+    },
+    {
+      "test": "SlowShutterPresetTests/testSelectingPresetsConstrainsManualExposureAndRepeatedTogglingClearsState()",
+      "reason": "Requires a live camera route; range/support logic is covered above",
+      "logLine": 6858
+    },
+    {
+      "test": "ToolbarHistogramLayoutTests/testAllRatioTransitionsKeepToolbarFixedAndHistogramClear()",
+      "reason": "Ratio layout is tested in simulator",
+      "logLine": 8424
+    }
+  ],
+  "runtimeErrors": [
+    {
+      "test": "CameraSessionRecoveryTests/testReportedRuntimeErrorsRecoverAndCannotRestartAfterExit()",
+      "logLine": 1305,
+      "text": "2026-10-24 12:38:20.326793+0800 LumaCamera[5466:1901163] Camera capture session runtime error: AVFoundationErrorDomain (-11800): The operation couldn’t be completed. (AVFoundationErrorDomain error -11800.) userInfo=[\"NSUnderlyingError\": Error Domain=NSOSStatusErrorDomain Code=-12780 \"(null)\"]",
+      "injected": true
+    },
+    {
+      "test": "CameraSessionRecoveryTests/testReportedRuntimeErrorsRecoverAndCannotRestartAfterExit()",
+      "logLine": 1339,
+      "text": "2026-10-24 12:38:20.336238+0800 LumaCamera[5466:1901163] Camera capture session runtime error: AVFoundationErrorDomain (-11819): The operation couldn’t be completed. (AVFoundationErrorDomain error -11819.) userInfo=[:]",
+      "injected": true
+    },
+    {
+      "test": "CameraSessionRecoveryTests/testReportedRuntimeErrorsRecoverAndCannotRestartAfterExit()",
+      "logLine": 1373,
+      "text": "2026-10-24 12:38:20.958305+0800 LumaCamera[5466:1901163] Camera capture session runtime error: AVFoundationErrorDomain (-11800): The operation couldn’t be completed. (AVFoundationErrorDomain error -11800.) userInfo=[\"NSUnderlyingError\": Error Domain=NSOSStatusErrorDomain Code=-12780 \"(null)\"]",
+      "injected": true
+    },
+    {
+      "test": "CameraSessionRecoveryTests/testReportedRuntimeErrorsRecoverAndCannotRestartAfterExit()",
+      "logLine": 1374,
+      "text": "2026-10-24 12:38:20.958409+0800 LumaCamera[5466:1901163] Camera capture session runtime error: AVFoundationErrorDomain (-11819): The operation couldn’t be completed. (AVFoundationErrorDomain error -11819.) userInfo=[:]",
+      "injected": true
+    },
+    {
+      "test": "CameraSessionRecoveryTests/testReportedRuntimeErrorsRecoverAndCannotRestartAfterExit()",
+      "logLine": 1375,
+      "text": "2026-10-24 12:38:20.958428+0800 LumaCamera[5466:1901163] Camera capture session runtime error: AVFoundationErrorDomain (-11819): The operation couldn’t be completed. (AVFoundationErrorDomain error -11819.) userInfo=[:]",
+      "injected": true
+    },
+    {
+      "test": "CaptureStatePhysicalTests/testColdRestorationAppliesManualValuesToRealLensAndVideoPipeline()",
+      "logLine": 1977,
+      "text": "2026-10-24 12:39:36.790200+0800 LumaCamera[5466:1901163] Camera capture session runtime error: AVFoundationErrorDomain (-11819): Cannot Complete Action userInfo=[\"NSLocalizedRecoverySuggestion\": Try again later., \"NSLocalizedDescription\": Cannot Complete Action]",
+      "injected": false
+    }
+  ],
+  "metrics": [
+    {
+      "test": "CameraSessionRecoveryTests/testReportedRuntimeErrorsRecoverAndCannotRestartAfterExit()",
+      "logLine": 1475,
+      "text": "RUNTIME-RECOVERY-INJECTED samples=4 p50=0.10698350000893697 max=0.5384063750097994 fresh-frame=true noPhotosWrites=true"
+    },
+    {
+      "test": "FrontWideSelectionTests/testFrontBackFreshFrameLatencyAndRepeatedTaps()",
+      "logLine": 2619,
+      "text": "FLIP-SPEED index=0 to=1 fresh=0.48470000000088476 visible=0.6098303750040941"
+    },
+    {
+      "test": "FrontWideSelectionTests/testFrontBackFreshFrameLatencyAndRepeatedTaps()",
+      "logLine": 2620,
+      "text": "FLIP-SPEED index=1 to=2 fresh=0.6032355833303882 visible=0.7737694999959785"
+    },
+    {
+      "test": "FrontWideSelectionTests/testFrontBackFreshFrameLatencyAndRepeatedTaps()",
+      "logLine": 2621,
+      "text": "FLIP-SPEED index=2 to=1 fresh=0.48761912500776816 visible=0.6170442916627508"
+    },
+    {
+      "test": "FrontWideSelectionTests/testFrontBackFreshFrameLatencyAndRepeatedTaps()",
+      "logLine": 2622,
+      "text": "FLIP-SPEED index=3 to=2 fresh=0.5755394583393354 visible=0.7476035416621016"
+    },
+    {
+      "test": "FrontWideSelectionTests/testFrontBackFreshFrameLatencyAndRepeatedTaps()",
+      "logLine": 2623,
+      "text": "FLIP-SPEED index=4 to=1 fresh=0.4571375000086846 visible=0.585468083343585"
+    },
+    {
+      "test": "FrontWideSelectionTests/testFrontBackFreshFrameLatencyAndRepeatedTaps()",
+      "logLine": 2624,
+      "text": "FLIP-SPEED index=5 to=2 fresh=0.5753250833367929 visible=0.7478575833374634"
+    },
+    {
+      "test": "FrontWideSelectionTests/testFrontBackFreshFrameLatencyAndRepeatedTaps()",
+      "logLine": 2625,
+      "text": "FLIP-SPEED index=6 to=1 fresh=0.6081013750081183 visible=0.7423008333425969"
+    },
+    {
+      "test": "FrontWideSelectionTests/testFrontBackFreshFrameLatencyAndRepeatedTaps()",
+      "logLine": 2626,
+      "text": "FLIP-SPEED index=7 to=2 fresh=0.5724437083408702 visible=0.7437968750018626"
+    },
+    {
+      "test": "ModeSwitchLatencyTests/testModeSwitchFrameAndOverlayLatencyOnDevice()",
+      "logLine": 4450,
+      "text": "MODE-LATENCY 0 manual frame=1.0042079999984708 overlay=1.182162208322552 maxGap=0.9425471249996917"
+    },
+    {
+      "test": "ModeSwitchLatencyTests/testModeSwitchFrameAndOverlayLatencyOnDevice()",
+      "logLine": 4451,
+      "text": "MODE-LATENCY 1 auto frame=1.2446084999974119 overlay=1.418622958328342 maxGap=0.6191728333214996"
+    },
+    {
+      "test": "ModeSwitchLatencyTests/testModeSwitchFrameAndOverlayLatencyOnDevice()",
+      "logLine": 4452,
+      "text": "MODE-LATENCY 2 manual frame=1.1525844583375147 overlay=1.3403608749940759 maxGap=1.1042107499961276"
+    },
+    {
+      "test": "ModeSwitchLatencyTests/testModeSwitchFrameAndOverlayLatencyOnDevice()",
+      "logLine": 4453,
+      "text": "MODE-LATENCY 3 auto frame=1.2537708333256887 overlay=1.433494333323324 maxGap=0.6263179583329475"
+    },
+    {
+      "test": "ModeSwitchLatencyTests/testModeSwitchFrameAndOverlayLatencyOnDevice()",
+      "logLine": 4454,
+      "text": "MODE-LATENCY 4 manual frame=1.1597859999892535 overlay=1.3431973333208589 maxGap=1.105972416655277"
+    },
+    {
+      "test": "ModeSwitchLatencyTests/testModeSwitchFrameAndOverlayLatencyOnDevice()",
+      "logLine": 4455,
+      "text": "MODE-LATENCY 5 auto frame=1.2734785833308706 overlay=1.4577889583306387 maxGap=0.6500834166799905"
+    },
+    {
+      "test": "ModeSwitchLatencyTests/testModeSwitchFrameAndOverlayLatencyOnDevice()",
+      "logLine": 4456,
+      "text": "MODE-LATENCY 6 manual frame=1.132684333337238 overlay=1.3049436666624388 maxGap=1.0754103749932256"
+    },
+    {
+      "test": "ModeSwitchLatencyTests/testModeSwitchFrameAndOverlayLatencyOnDevice()",
+      "logLine": 4457,
+      "text": "MODE-LATENCY 7 auto frame=1.2917180416698102 overlay=1.4730520416633226 maxGap=0.6156916249892674"
+    },
+    {
+      "test": "NightAdaptiveCapturePhysicalTests/testMotionStopsAppendingAndCancelThenReturnCanCaptureAgain()",
+      "logLine": 4572,
+      "text": "NIGHT-ADAPTIVE-STABILITY motion-stops-at=3 cancel-at-submitted=6 cancelled-deliveries=0 ordinary-return=true"
+    },
+    {
+      "test": "NightAdaptiveCapturePhysicalTests/testThreeSixNineFrameBatchesAndActualFileInformation()",
+      "logLine": 4600,
+      "text": "NIGHT-ADAPTIVE target=3 captured=3 帧 merged=3 batches=[3] seconds=1.2419842916715425 hostFootprintMiB=676.8167037963867 injected-scene=true"
+    },
+    {
+      "test": "NightAdaptiveCapturePhysicalTests/testThreeSixNineFrameBatchesAndActualFileInformation()",
+      "logLine": 4643,
+      "text": "NIGHT-ADAPTIVE target=6 captured=6 帧 merged=6 batches=[3, 6] seconds=2.8445162499992875 hostFootprintMiB=811.5667266845703 injected-scene=true"
+    },
+    {
+      "test": "NightAdaptiveCapturePhysicalTests/testThreeSixNineFrameBatchesAndActualFileInformation()",
+      "logLine": 4708,
+      "text": "NIGHT-ADAPTIVE target=9 captured=9 帧 merged=9 batches=[3, 6, 9] seconds=3.878459125000518 hostFootprintMiB=851.7386016845703 injected-scene=true"
+    },
+    {
+      "test": "NightAdaptiveCapturePhysicalTests/testThreeSixNineFrameBatchesAndActualFileInformation()",
+      "logLine": 4751,
+      "text": "NIGHT-ADAPTIVE target=6 captured=6 帧 merged=6 batches=[3, 6] seconds=2.8135935833270196 hostFootprintMiB=851.7386016845703 injected-scene=true"
+    },
+    {
+      "test": "NightAdaptiveCapturePhysicalTests/testThreeSixNineFrameBatchesAndActualFileInformation()",
+      "logLine": 4816,
+      "text": "NIGHT-ADAPTIVE target=9 captured=9 帧 merged=9 batches=[3, 6, 9] seconds=4.105896541674156 hostFootprintMiB=851.7386016845703 injected-scene=true"
+    },
+    {
+      "test": "NightPhotoMergerTests/testRepeatedRenderPerformanceAndBackToBackInputs()",
+      "logLine": 4910,
+      "text": "NIGHT-RENDER fixture=320x240 n=12 median-seconds=0.09814495833416004 p95=0.10373729167622514; includes CPU masks and CI render; not preview FPS/full-resolution latency"
+    },
+    {
+      "test": "NightPhotoMergerTests/testSpeedOptimizationMatchesOriginalPixelReference()",
+      "logLine": 4913,
+      "text": "NIGHT-PIXEL-PARITY frames=3 samples=1200 maxCodeDifference=0"
+    },
+    {
+      "test": "NightPhotoMergerTests/testSpeedOptimizationMatchesOriginalPixelReference()",
+      "logLine": 4914,
+      "text": "NIGHT-PIXEL-PARITY frames=6 samples=1200 maxCodeDifference=0"
+    },
+    {
+      "test": "NightPhotoMergerTests/testSpeedOptimizationMatchesOriginalPixelReference()",
+      "logLine": 4915,
+      "text": "NIGHT-PIXEL-PARITY frames=9 samples=1200 maxCodeDifference=0"
+    },
+    {
+      "test": "PhotoOptionsTests/testNightEnvironmentGateRepeatedReadingsPerformance()",
+      "logLine": 5622,
+      "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PhotoOptionsTests.swift:149: Test Case '-[LumaCameraTests.PhotoOptionsTests testNightEnvironmentGateRepeatedReadingsPerformance]' measured [Clock Monotonic Time, s] average: 0.002, relative standard deviation: 11.314%, values: [0.001545, 0.001462, 0.001823, 0.001964, 0.001567], performanceMetricID:com.apple.dt.XCTMetric_Clock.time.monotonic, baselineName: \"\", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.000, maxStandardDeviation: 0.000"
+    },
+    {
+      "test": "PopupAppearanceAndOrientationTests/testParameterSheetDrawPerformance()",
+      "logLine": 5781,
+      "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PopupAppearanceAndOrientationTests.swift:238: Test Case '-[LumaCameraTests.PopupAppearanceAndOrientationTests testParameterSheetDrawPerformance]' measured [Clock Monotonic Time, s] average: 0.084, relative standard deviation: 15.541%, values: [0.070095, 0.071703, 0.078483, 0.100929, 0.097645], performanceMetricID:com.apple.dt.XCTMetric_Clock.time.monotonic, baselineName: \"\", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.000, maxStandardDeviation: 0.000"
+    },
+    {
+      "test": "PopupAppearanceAndOrientationTests/testPopupGlassDrawPerformance()",
+      "logLine": 5786,
+      "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PopupAppearanceAndOrientationTests.swift:24: Test Case '-[LumaCameraTests.PopupAppearanceAndOrientationTests testPopupGlassDrawPerformance]' measured [Clock Monotonic Time, s] average: 0.067, relative standard deviation: 15.620%, values: [0.058976, 0.057016, 0.060554, 0.083807, 0.074733], performanceMetricID:com.apple.dt.XCTMetric_Clock.time.monotonic, baselineName: \"\", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.000, maxStandardDeviation: 0.000"
+    },
+    {
+      "test": "PopupAppearanceAndOrientationTests/testPopupOrientationSwitchDrawPerformance()",
+      "logLine": 5799,
+      "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PopupAppearanceAndOrientationTests.swift:41: Test Case '-[LumaCameraTests.PopupAppearanceAndOrientationTests testPopupOrientationSwitchDrawPerformance]' measured [Clock Monotonic Time, s] average: 0.111, relative standard deviation: 11.553%, values: [0.088075, 0.105887, 0.121270, 0.119048, 0.121071], performanceMetricID:com.apple.dt.XCTMetric_Clock.time.monotonic, baselineName: \"\", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.000, maxStandardDeviation: 0.000"
+    },
+    {
+      "test": "PopupAppearanceAndOrientationTests/testTopToolbarPopupDrawPerformance()",
+      "logLine": 5826,
+      "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/PopupAppearanceAndOrientationTests.swift:319: Test Case '-[LumaCameraTests.PopupAppearanceAndOrientationTests testTopToolbarPopupDrawPerformance]' measured [Clock Monotonic Time, s] average: 0.086, relative standard deviation: 4.664%, values: [0.085450, 0.085182, 0.082531, 0.084787, 0.094229], performanceMetricID:com.apple.dt.XCTMetric_Clock.time.monotonic, baselineName: \"\", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.000, maxStandardDeviation: 0.000"
+    },
+    {
+      "test": "SlowShutterSequencePhysicalTests/testManualBracketSpeedComparisonAndRepeatedCapture()",
+      "logLine": 7483,
+      "text": "SLOW-SPEED preset=lightTrails baseline=[48.505912583335885] optimized=[13.899624208337627, 12.261008500005119, 12.17394758334558]"
+    },
+    {
+      "test": "SlowShutterSequencePhysicalTests/testManualBracketSpeedComparisonAndRepeatedCapture()",
+      "logLine": 7821,
+      "text": "SLOW-SPEED preset=silkyWater baseline=[37.57619274999888] optimized=[11.931749916664558, 10.502640000006068, 12.667130791669479]"
+    },
+    {
+      "test": "SlowShutterSequencePhysicalTests/testManualBracketSpeedComparisonAndRepeatedCapture()",
+      "logLine": 8206,
+      "text": "SLOW-SPEED preset=motionBlur baseline=[6.1808260416582925] optimized=[3.177141833337373, 3.17798187500739, 3.066905333340401]"
+    },
+    {
+      "test": "SlowShutterSequencePhysicalTests/testPanningLatencyWithAndWithoutPreviewAssist()",
+      "logLine": 8315,
+      "text": "SLOW-PANNING-SPEED assist=false oldPath=true seconds=[0.5259480833337875, 0.21003295831906144, 0.3191462916583987]"
+    },
+    {
+      "test": "SlowShutterSequencePhysicalTests/testPanningLatencyWithAndWithoutPreviewAssist()",
+      "logLine": 8316,
+      "text": "SLOW-PANNING-SPEED assist=false oldPath=false seconds=[0.2655442916729953, 0.2647223333333386, 0.3147000416647643]"
+    },
+    {
+      "test": "SlowShutterSequencePhysicalTests/testPanningLatencyWithAndWithoutPreviewAssist()",
+      "logLine": 8317,
+      "text": "SLOW-PANNING-SPEED assist=true oldPath=true seconds=[0.5828083749947837, 0.8915645416709594, 0.9021352499985369]"
+    },
+    {
+      "test": "SlowShutterSequencePhysicalTests/testPanningLatencyWithAndWithoutPreviewAssist()",
+      "logLine": 8318,
+      "text": "SLOW-PANNING-SPEED assist=true oldPath=false seconds=[0.31727349999709986, 0.3187596250063507, 0.3179960833367659]"
+    },
+    {
+      "test": "SlowShutterSequenceTests/testStreamingLightenRetainsMovingBrightPointsAcross120Frames()",
+      "logLine": 8418,
+      "text": "SLOW-STREAM-ALGORITHM samples=120 size=128x32 seconds=0.049243125002249144"
+    },
+    {
+      "test": "VideoFrameFilterRendererTests/testFoodCubeRendersThirty640pFramesForPerformanceSample()",
+      "logLine": 8584,
+      "text": "/Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Imaging/VideoFrameFilterRendererTests.swift:59: Test Case '-[LumaCameraTests.VideoFrameFilterRendererTests testFoodCubeRendersThirty640pFramesForPerformanceSample]' measured [Clock Monotonic Time, s] average: 0.018, relative standard deviation: 8.535%, values: [0.016310, 0.020143, 0.016369, 0.016497, 0.018184], performanceMetricID:com.apple.dt.XCTMetric_Clock.time.monotonic, baselineName: \"\", baselineAverage: , polarity: prefers smaller, maxPercentRegression: 10.000%, maxPercentRelativeStandardDeviation: 10.000%, maxRegression: 0.000, maxStandardDeviation: 0.000"
+    }
+  ],
+  "testMethods": [
+    {
+      "nodeIdentifier": "AlbumThumbnailTests/testCameraEntryDoesNotRequestNewPermissionOrReadDeniedLibrary()",
+      "result": "Passed",
+      "durationInSeconds": 0.0008950233459472656
+    },
+    {
+      "nodeIdentifier": "AlbumThumbnailTests/testCaptureShowsImmediatelyAndLibraryChangeLoadsLatestAccessibleAsset()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005229711532592773
+    },
+    {
+      "nodeIdentifier": "AlbumThumbnailTests/testDeletedLastPhotoDoesNotKeepStaleCaptureThumbnail()",
+      "result": "Passed",
+      "durationInSeconds": 0.00034296512603759766
+    },
+    {
+      "nodeIdentifier": "AlbumThumbnailTests/testLatestAccessiblePhotoUsesOnlySmallThumbnailRequest()",
+      "result": "Passed",
+      "durationInSeconds": 0.0002969503402709961
+    },
+    {
+      "nodeIdentifier": "AlbumThumbnailTests/testLaunchWithExistingAccessRefreshesListAndClearsConfirmedDeletedCapture()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003540515899658203
+    },
+    {
+      "nodeIdentifier": "AlbumThumbnailTests/testNewerExternalPhotoCanReplaceSavedCaptureThumbnailWithoutWaitingForSameAsset()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003039836883544922
+    },
+    {
+      "nodeIdentifier": "AlbumThumbnailTests/testOldThumbnailCallbackCannotOverwriteNewAssetOrRevokedAccess()",
+      "result": "Passed",
+      "durationInSeconds": 0.0002880096435546875
+    },
+    {
+      "nodeIdentifier": "AlbumThumbnailTests/testSavedCaptureNeverFlashesPreviousAssetWhilePhotosIndexCatchesUp()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003399848937988281
+    },
+    {
+      "nodeIdentifier": "AutomaticLensStabilityPhysicalTests/testAutomaticModeUsesSystemVirtualCameraCandidatesAndWheelRetainsFullRange()",
+      "result": "Passed",
+      "durationInSeconds": 9.880882978439331
+    },
+    {
+      "nodeIdentifier": "AutomaticLensStabilityPhysicalTests/testAutomaticRouteRestoresAfterModeAndFrontSwitches()",
+      "result": "Passed",
+      "durationInSeconds": 24.928390979766846
+    },
+    {
+      "nodeIdentifier": "AutomaticLensStabilityPhysicalTests/testExplicitFocalSwitchClearsPreviousMacroBadgeImmediately()",
+      "result": "Passed",
+      "durationInSeconds": 1.095255970954895
+    },
+    {
+      "nodeIdentifier": "AutomaticLensStabilityPhysicalTests/testExternalLockedStateCannotClampUserZoomOrBlockModeChanges()",
+      "result": "Passed",
+      "durationInSeconds": 2.841686964035034
+    },
+    {
+      "nodeIdentifier": "AutomaticWhiteBalanceExposureTests/testAutomaticWhiteBalanceRemainsAutomaticDuringManualISOSweep()",
+      "result": "Passed",
+      "durationInSeconds": 7.1603440046310425
+    },
+    {
+      "nodeIdentifier": "AutomaticZoomPhysicalTests/testAutomaticWheelChangesActualHardwareZoomThroughFortyAndKeepsFramesMoving()",
+      "result": "Passed",
+      "durationInSeconds": 10.942178964614868
+    },
+    {
+      "nodeIdentifier": "AutomaticZoomPhysicalTests/testIdleAutomaticSessionKeepsSystemPolicyAndFreshPreviewWithoutAppLensTimers()",
+      "result": "Passed",
+      "durationInSeconds": 17.273658990859985
+    },
+    {
+      "nodeIdentifier": "AutomaticZoomPhysicalTests/testPreviewPinchUpdatesActualLensZoomAndRecoversAcrossRepeatedGestures()",
+      "result": "Passed",
+      "durationInSeconds": 2.3783559799194336
+    },
+    {
+      "nodeIdentifier": "BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn()",
+      "result": "Passed",
+      "durationInSeconds": 8.62238597869873
+    },
+    {
+      "nodeIdentifier": "BasicVideoPhysicalTests/testTimeLapseRecordingCreatesSparseSilentMovie()",
+      "result": "Passed",
+      "durationInSeconds": 3.536589026451111
+    },
+    {
+      "nodeIdentifier": "BatchPhotoShareTests/testCancelAndLateCompletionCannotOpenShareOrReplaceNewRequest()",
+      "result": "Passed",
+      "durationInSeconds": 0.021249055862426758
+    },
+    {
+      "nodeIdentifier": "BatchPhotoShareTests/testFailedSecondImageCleansFirstFileAndDoesNotOfferPartialShare()",
+      "result": "Passed",
+      "durationInSeconds": 0.0011010169982910156
+    },
+    {
+      "nodeIdentifier": "BatchPhotoShareTests/testSequentialExportsKeepSameFilenamesSeparateAndCleanAfterDismissal()",
+      "result": "Passed",
+      "durationInSeconds": 0.001304030418395996
+    },
+    {
+      "nodeIdentifier": "BatchPhotoShareTests/testStreamedFileBytesAndCancellationRemovePartialResource()",
+      "result": "Passed",
+      "durationInSeconds": 0.0014230012893676758
+    },
+    {
+      "nodeIdentifier": "BurstCapturePipelineTests/testHeldBurstShutterOnDeviceStopsCleanlyWithoutSavingToPhotos()",
+      "result": "Passed",
+      "durationInSeconds": 6.2309640645980835
+    },
+    {
+      "nodeIdentifier": "BurstCapturePipelineTests/testNativeConsecutiveCapturesKeepSeparateResourcesWithoutSavingPhotos()",
+      "result": "Passed",
+      "durationInSeconds": 3.9631980657577515
+    },
+    {
+      "nodeIdentifier": "BurstCapturePipelineTests/testQueuedSavesRetainEveryShotAndOnlyLatestUpdatesCurrentIdentity()",
+      "result": "Passed",
+      "durationInSeconds": 0.0017060041427612305
+    },
+    {
+      "nodeIdentifier": "CameraControlAlignmentTests/testAutomaticExposureStripSharesSideBoundsWithModeAndAuxiliaryButtons()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003510713577270508
+    },
+    {
+      "nodeIdentifier": "CameraControlMenuTests/testMenuLayoutAndShutterDirection()",
+      "result": "Passed",
+      "durationInSeconds": 0.03478193283081055
+    },
+    {
+      "nodeIdentifier": "CameraControlMenuTests/testPhysicalMenusAndManualBindingsWithoutSavingPhotos()",
+      "result": "Passed",
+      "durationInSeconds": 4.576193928718567
+    },
+    {
+      "nodeIdentifier": "CameraFacingLatencyPhysicalTests/testManualFacingSwitchKeepsPreviewUntilNewRouteFrame()",
+      "result": "Passed",
+      "durationInSeconds": 12.21475100517273
+    },
+    {
+      "nodeIdentifier": "CameraFacingLatencyPhysicalTests/testPhotoAndVideoFacingDirectionLatency()",
+      "result": "Passed",
+      "durationInSeconds": 27.87845504283905
+    },
+    {
+      "nodeIdentifier": "CameraFilmProfileTests/testImportedCatalogAndFavoritesSurviveReload()",
+      "result": "Passed",
+      "durationInSeconds": 0.0020159482955932617
+    },
+    {
+      "nodeIdentifier": "CameraFilmProfileTests/testNewProfilesAreDistinctAndPreserveTransparentImageBounds()",
+      "result": "Passed",
+      "durationInSeconds": 0.03299903869628906
+    },
+    {
+      "nodeIdentifier": "CameraFocalButtonTests/testCancellationAndDisabledButtonDoNotSelect()",
+      "result": "Passed",
+      "durationInSeconds": 0.00039207935333251953
+    },
+    {
+      "nodeIdentifier": "CameraFocalButtonTests/testLongPressDragsAndFinishesWithoutSelectingFocalLength()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003050565719604492
+    },
+    {
+      "nodeIdentifier": "CameraFocalButtonTests/testNativeButtonHasWorkingTapTargetAndLongPressCancelsTapTracking()",
+      "result": "Passed",
+      "durationInSeconds": 0.0008829832077026367
+    },
+    {
+      "nodeIdentifier": "CameraFocalButtonTests/testRotatedShortAndLongFocalTitlesKeepSquareSpaceWithoutEllipsis()",
+      "result": "Passed",
+      "durationInSeconds": 0.0014690160751342773
+    },
+    {
+      "nodeIdentifier": "CameraFocalButtonTests/testShortTapSelectsWithoutOpeningDial()",
+      "result": "Passed",
+      "durationInSeconds": 0.0002989768981933594
+    },
+    {
+      "nodeIdentifier": "CameraMacroPolicyTests/testExplicitLensChangeInvalidatesStaleMacroSampleGeneration()",
+      "result": "Passed",
+      "durationInSeconds": 0.00030303001403808594
+    },
+    {
+      "nodeIdentifier": "CameraMacroPolicyTests/testMacroRequiresActualUltraWideFallbackInAutomaticRearCamera()",
+      "result": "Passed",
+      "durationInSeconds": 0.0002989768981933594
+    },
+    {
+      "nodeIdentifier": "CameraPopupLifecycleTests/testGalleryReviewKeepsPopupState()",
+      "result": "Passed",
+      "durationInSeconds": 0.04988706111907959
+    },
+    {
+      "nodeIdentifier": "CameraPopupLifecycleTests/testLeavingCameraClosesAllFunctionPopups()",
+      "result": "Passed",
+      "durationInSeconds": 0.07218194007873535
+    },
+    {
+      "nodeIdentifier": "CameraPreviewLayoutTests/testAllRatiosFitAboveShutterWithoutChangingAspectAndLongRatiosIncludeToolbar()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004469156265258789
+    },
+    {
+      "nodeIdentifier": "CameraPreviewLayoutTests/testLandscapeSelfieRatiosStayInsidePreviewAndCenterVertically()",
+      "result": "Passed",
+      "durationInSeconds": 0.00041604042053222656
+    },
+    {
+      "nodeIdentifier": "CameraReadingsSafetyTests/testExactReportedNaNShutterCrashAndNumericExtremesAreSafe()",
+      "result": "Passed",
+      "durationInSeconds": 0.0330350399017334
+    },
+    {
+      "nodeIdentifier": "CameraReadingsSafetyTests/testInvalidParameterInputIsIgnoredBeforeChangingManualSettings()",
+      "result": "Passed",
+      "durationInSeconds": 0.030879974365234375
+    },
+    {
+      "nodeIdentifier": "CameraReadingsSafetyTests/testLateFramesFromOldLensOrStoppedCameraCannotPublishReadings()",
+      "result": "Passed",
+      "durationInSeconds": 0.008978962898254395
+    },
+    {
+      "nodeIdentifier": "CameraReadingsSafetyTests/testRapidManualLensModeAndLifecycleChangesKeepReadoutFormattingSafe()",
+      "result": "Passed",
+      "durationInSeconds": 0.3962949514389038
+    },
+    {
+      "nodeIdentifier": "CameraReadingsSafetyTests/testTransientInvalidReadingsAreDiscardedAndUnknownWhiteBalanceIsNotInvented()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003809928894042969
+    },
+    {
+      "nodeIdentifier": "CameraRulerDetentTests/testPhysicalExposureDurationLimits()",
+      "result": "Passed",
+      "durationInSeconds": 0.28040599822998047
+    },
+    {
+      "nodeIdentifier": "CameraRulerDetentTests/testTicksMajorTicksFastDragAndJitterAcrossEveryManualParameterRange()",
+      "result": "Passed",
+      "durationInSeconds": 0.0010449886322021484
+    },
+    {
+      "nodeIdentifier": "CameraRulerMappingTests/testAMToToolsDoesNotMovePreviewForAnyRatio()",
+      "result": "Skipped",
+      "durationInSeconds": 0.001950979232788086
+    },
+    {
+      "nodeIdentifier": "CameraRulerMappingTests/testManualParameterDragAdvancesByVisibleQuantizedTicks()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005040168762207031
+    },
+    {
+      "nodeIdentifier": "CameraRulerMappingTests/testShutterScaleIsSlowOnLeftAndFastOnRight()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004379749298095703
+    },
+    {
+      "nodeIdentifier": "CameraRulerMappingTests/testShutterTickValuesSnapToStandardFractions()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005029439926147461
+    },
+    {
+      "nodeIdentifier": "CameraSessionRecoveryTests/testLateRecoveryNotificationCannotCancelQueuedForegroundStart()",
+      "result": "Passed",
+      "durationInSeconds": 1.943688988685608
+    },
+    {
+      "nodeIdentifier": "CameraSessionRecoveryTests/testReportedRuntimeErrorsRecoverAndCannotRestartAfterExit()",
+      "result": "Passed",
+      "durationInSeconds": 1.9525630474090576
+    },
+    {
+      "nodeIdentifier": "CameraSessionRecoveryTests/testRestartAfterInterruptedFrameGateDeliversFreshPreview()",
+      "result": "Passed",
+      "durationInSeconds": 0.6657960414886475
+    },
+    {
+      "nodeIdentifier": "CameraSessionRecoveryTests/testRuntimeRecoveryRestoresLiveFramesAndManualExposureWithoutWritingPhotos()",
+      "result": "Passed",
+      "durationInSeconds": 6.995496988296509
+    },
+    {
+      "nodeIdentifier": "CameraSessionRecoveryTests/testTemporaryInterruptionIsSilentAndEndedCannotRestartStoppedCamera()",
+      "result": "Skipped",
+      "durationInSeconds": 0.03660702705383301
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testChangingRememberedManualParameterToAutoReplacesItsSavedState()",
+      "result": "Passed",
+      "durationInSeconds": 0.030265092849731445
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testEnteringManualModeDoesNotOverrideAutomaticWhiteBalanceOrFocus()",
+      "result": "Passed",
+      "durationInSeconds": 0.029066085815429688
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testEVSliderDefersPublicationCoalescesAndDropsObsoleteModeWrites()",
+      "result": "Passed",
+      "durationInSeconds": 0.036193013191223145
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testExposureAutoSelectionSurvivesRepeatedModeSwitches()",
+      "result": "Passed",
+      "durationInSeconds": 0.05830097198486328
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testLensChangeClampsExposureWithoutResettingManualChoicesOrEV()",
+      "result": "Passed",
+      "durationInSeconds": 0.02961099147796631
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testManualParameterIndicatorsTrackEachIndependentAutomaticSwitch()",
+      "result": "Passed",
+      "durationInSeconds": 0.034784913063049316
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testManualSettingsSurviveSwitchingPhysicalLensAndModeRoundTrip()",
+      "result": "Passed",
+      "durationInSeconds": 0.028851985931396484
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testManualValuesAndSwitchesRestoreAfterAutomaticMode()",
+      "result": "Passed",
+      "durationInSeconds": 0.029716014862060547
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testMixedAutomaticChoicesSurviveRepeatedLensChanges()",
+      "result": "Passed",
+      "durationInSeconds": 0.035269975662231445
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testOpeningToolsReplacesOtherPanels()",
+      "result": "Passed",
+      "durationInSeconds": 0.03614401817321777
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testPagerUpdateDefersPublicationAndIgnoresObsoleteSelection()",
+      "result": "Passed",
+      "durationInSeconds": 0.03424704074859619
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testSwitchToAutomaticResetsManualControlsAndClosesPanel()",
+      "result": "Passed",
+      "durationInSeconds": 0.029734015464782715
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testTintClampingInvalidValuesAndSharedAutomaticState()",
+      "result": "Passed",
+      "durationInSeconds": 0.029354095458984375
+    },
+    {
+      "nodeIdentifier": "CameraViewModelTests/testVideoModeReturnsToPhotoRatioAndRememberedManualSettings()",
+      "result": "Passed",
+      "durationInSeconds": 0.045835018157958984
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testAlreadyUprightFrontPixelsRemainUprightForEveryOutputRatio()",
+      "result": "Passed",
+      "durationInSeconds": 0.030264973640441895
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testEightTimesUsesNativeTelephotoCropAndRejectsDigitalFallback()",
+      "result": "Passed",
+      "durationInSeconds": 0.00033605098724365234
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testFiveTimesCameraCannotBeUsedToZoomOutToFour()",
+      "result": "Passed",
+      "durationInSeconds": 0.00028502941131591797
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testFourTimesUsesThreeTimesTelephotoWhenNativeFourIsUnavailable()",
+      "result": "Passed",
+      "durationInSeconds": 0.0002789497375488281
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testNativeTwoTimesCropAndFourTimesTelephotoAreSelected()",
+      "result": "Passed",
+      "durationInSeconds": 0.00027298927307128906
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testPortraitFrameIsNotRotatedAgain()",
+      "result": "Passed",
+      "durationInSeconds": 0.00032401084899902344
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testPreviewQuarterTurnsSwapDimensionsAndMapFocusToOriginal()",
+      "result": "Passed",
+      "durationInSeconds": 0.00029408931732177734
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testPreviewRotationCyclesWithoutSwitchingLensOrChangingFilter()",
+      "result": "Passed",
+      "durationInSeconds": 0.032083988189697266
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testSelfieMirroringHappensAfterPortraitOrientation()",
+      "result": "Passed",
+      "durationInSeconds": 0.00902092456817627
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testUnrotatedLandscapeBufferBecomesPortraitWithoutLosingPixels()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003050565719604492
+    },
+    {
+      "nodeIdentifier": "CameraZoomTests/testUnsupportedMagnificationIsNotOffered()",
+      "result": "Passed",
+      "durationInSeconds": 0.0002790689468383789
+    },
+    {
+      "nodeIdentifier": "CaptureControlRotationTests/testAlbumThumbnailKeepsPhotoDirectionWhenControlAngleChanges()",
+      "result": "Passed",
+      "durationInSeconds": 2.382627010345459
+    },
+    {
+      "nodeIdentifier": "CaptureControlRotationTests/testFlatDeviceKeepsLastDirectionAndRotationTakesShortestPath()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006510019302368164
+    },
+    {
+      "nodeIdentifier": "CaptureKindModeLatencyPhysicalTests/testCrossModePhotoVideoLatencyAndRestoration()",
+      "result": "Passed",
+      "durationInSeconds": 35.5679270029068
+    },
+    {
+      "nodeIdentifier": "CaptureKindModeLatencyPhysicalTests/testRapidCrossModeSwitchAndStopRecovery()",
+      "result": "Passed",
+      "durationInSeconds": 10.888418078422546
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testDockKitPreviewMappingAccountsForAspectFillCrop()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006530284881591797
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testDockKitPreviewMappingRejectsInvalidGeometry()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005519390106201172
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testDockKitTrackingPreferenceCanBeChangedWhileCameraIsInactive()",
+      "result": "Passed",
+      "durationInSeconds": 0.041532039642333984
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testExistingPreferencesMigrateWithoutResettingOtherSettings()",
+      "result": "Passed",
+      "durationInSeconds": 0.00039005279541015625
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testFrontMirrorPreferenceAndRealHDRCaptureMetadataWithoutSaving()",
+      "result": "Passed",
+      "durationInSeconds": 5.143338918685913
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testHDRPreviewRetainsExtendedHighlightsInsteadOfEightBitClipping()",
+      "result": "Passed",
+      "durationInSeconds": 0.03024590015411377
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testJPGAndHEIFOriginalCompanionIsUnfilteredAndPreservesCopyright()",
+      "result": "Passed",
+      "durationInSeconds": 0.0663900375366211
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testMetadataPreservesCameraFieldsRemovesLocationWhenOffAndAddsCopyright()",
+      "result": "Passed",
+      "durationInSeconds": 0.00037598609924316406
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testPreferencesPersistAndNewInstallDoesNotRecordLocation()",
+      "result": "Passed",
+      "durationInSeconds": 0.0012569427490234375
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testRAWAttributionAndLocationOffUseCaptureMetadataWithoutSaving()",
+      "result": "Passed",
+      "durationInSeconds": 3.503473997116089
+    },
+    {
+      "nodeIdentifier": "CapturePreferencesTests/testShutterPreferencePropagatesToEachNewCaptureOptionsSnapshot()",
+      "result": "Passed",
+      "durationInSeconds": 0.04312896728515625
+    },
+    {
+      "nodeIdentifier": "CaptureReviewEntryTests/testCaptureOpensDetailsOnceThenAlwaysOpensGridUntilNextCapture()",
+      "result": "Passed",
+      "durationInSeconds": 0.03867495059967041
+    },
+    {
+      "nodeIdentifier": "CaptureReviewEntryTests/testEditingCurrentCaptureDoesNotMakeItAnUnviewedNewCapture()",
+      "result": "Passed",
+      "durationInSeconds": 0.03275501728057861
+    },
+    {
+      "nodeIdentifier": "CaptureReviewEntryTests/testNewSessionHasNoAutomaticCaptureEntry()",
+      "result": "Passed",
+      "durationInSeconds": 0.06308591365814209
+    },
+    {
+      "nodeIdentifier": "CaptureReviewEntryTests/testRejectedCaptureWhileSavingDoesNotRearmViewedPhoto()",
+      "result": "Passed",
+      "durationInSeconds": 0.00038492679595947266
+    },
+    {
+      "nodeIdentifier": "CaptureStatePersistenceTests/testAllCaptureChoicesAndManualFlagsSurviveModelRecreation()",
+      "result": "Passed",
+      "durationInSeconds": 0.20299303531646729
+    },
+    {
+      "nodeIdentifier": "CaptureStatePersistenceTests/testCorruptAndFutureStatesAreIgnoredAndBurstUpdatesFlushLatest()",
+      "result": "Passed",
+      "durationInSeconds": 0.8440530300140381
+    },
+    {
+      "nodeIdentifier": "CaptureStatePersistenceTests/testDisabledUsesRequestedPhotoAndVideoDefaultsAndRetainsPreferences()",
+      "result": "Passed",
+      "durationInSeconds": 0.1137779951095581
+    },
+    {
+      "nodeIdentifier": "CaptureStatePersistenceTests/testIndependentVideoModePersistsWhilePhotoIsSelected()",
+      "result": "Passed",
+      "durationInSeconds": 0.17023801803588867
+    },
+    {
+      "nodeIdentifier": "CaptureStatePersistenceTests/testPhotoManualExposureSurvivesVideoClampAndModelRecreation()",
+      "result": "Passed",
+      "durationInSeconds": 0.09718799591064453
+    },
+    {
+      "nodeIdentifier": "CaptureStatePersistenceTests/testVideoOpenGateChoicePersistsAndLegacyRatioMigrates()",
+      "result": "Passed",
+      "durationInSeconds": 0.09535002708435059
+    },
+    {
+      "nodeIdentifier": "CaptureStatePhysicalTests/testColdRestorationAppliesManualValuesToRealLensAndVideoPipeline()",
+      "result": "Failed",
+      "durationInSeconds": 18.55589997768402
+    },
+    {
+      "nodeIdentifier": "CinemaAspectRatioTests/testPhoto239AndAllVideoRatiosHaveMatchingFileDimensions()",
+      "result": "Passed",
+      "durationInSeconds": 10.960144996643066
+    },
+    {
+      "nodeIdentifier": "CinemaAspectRatioTests/testPhotoAndVideoShareThe239Crop()",
+      "result": "Passed",
+      "durationInSeconds": 0.00627899169921875
+    },
+    {
+      "nodeIdentifier": "ContinuousZoomTests/testDemoZoomCropStaysCenteredAndDoesNotPretendToBeHardware()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003300905227661133
+    },
+    {
+      "nodeIdentifier": "ContinuousZoomTests/testDialGestureUpdatesZoomAndKeepsManualSettings()",
+      "result": "Passed",
+      "durationInSeconds": 0.03246510028839111
+    },
+    {
+      "nodeIdentifier": "ContinuousZoomTests/testFixedFocalTapDoesNotOpenWheelAndClearsPreviewTransition()",
+      "result": "Passed",
+      "durationInSeconds": 0.0020170211791992188
+    },
+    {
+      "nodeIdentifier": "ContinuousZoomTests/testLogarithmicDragIsConsistentAtEveryFixedAnchorAndClamps()",
+      "result": "Passed",
+      "durationInSeconds": 0.00032198429107666016
+    },
+    {
+      "nodeIdentifier": "ContinuousZoomTests/testPreviewPinchZoomUsesContinuousRouteClampsAndReversesAtBounds()",
+      "result": "Passed",
+      "durationInSeconds": 0.0032529830932617188
+    },
+    {
+      "nodeIdentifier": "ContinuousZoomTests/testRangeUsesPhysicalCamerasAndDeviceLimits()",
+      "result": "Passed",
+      "durationInSeconds": 0.00035500526428222656
+    },
+    {
+      "nodeIdentifier": "ContinuousZoomTests/testReopeningWheelPreservesCurrentZoomInBothModes()",
+      "result": "Passed",
+      "durationInSeconds": 0.00045108795166015625
+    },
+    {
+      "nodeIdentifier": "FadeWarmthTests/testFadeAddsCreamyYellowAndWhiteLiftWithoutChangingAlpha()",
+      "result": "Passed",
+      "durationInSeconds": 0.009991049766540527
+    },
+    {
+      "nodeIdentifier": "FilmColorLUTTests/testM9ReferencePNGCoordinatesSurviveConversionAndColourManagement()",
+      "result": "Passed",
+      "durationInSeconds": 0.03287398815155029
+    },
+    {
+      "nodeIdentifier": "FilterAdjustmentRenderingTests/testCombinedEffectsPreserveAlphaExtentAndRAWResources()",
+      "result": "Passed",
+      "durationInSeconds": 0.025954008102416992
+    },
+    {
+      "nodeIdentifier": "FilterAdjustmentRenderingTests/testEveryAdjustmentChangesPixelsWhileNeutralPreservesOriginal()",
+      "result": "Passed",
+      "durationInSeconds": 0.04056906700134277
+    },
+    {
+      "nodeIdentifier": "FilterAdjustmentStateTests/testDefault80BoostMigrationPreservesCustomRecipesAndOnlyRunsOnce()",
+      "result": "Passed",
+      "durationInSeconds": 0.0016559362411499023
+    },
+    {
+      "nodeIdentifier": "FilterAdjustmentStateTests/testMalformedValuesAreClampedAndRecipesRoundTripInPhotoMetadata()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006809234619140625
+    },
+    {
+      "nodeIdentifier": "FilterAdjustmentStateTests/testOriginalDoesNotDisplayOrApplyAFilterConcentration()",
+      "result": "Passed",
+      "durationInSeconds": 0.030817031860351562
+    },
+    {
+      "nodeIdentifier": "FilterAdjustmentStateTests/testReopeningFilterAlwaysShowsListAndPreservesRecipe()",
+      "result": "Passed",
+      "durationInSeconds": 0.03085005283355713
+    },
+    {
+      "nodeIdentifier": "FilterAdjustmentStateTests/testSettingsSurviveFilterModeFormatAndAppRecreationUntilExplicitReset()",
+      "result": "Passed",
+      "durationInSeconds": 0.06474196910858154
+    },
+    {
+      "nodeIdentifier": "FilterAdjustmentStateTests/testVisibleCatalogTabsAndShootingEntriesMatchRequestedScope()",
+      "result": "Passed",
+      "durationInSeconds": 0.05058705806732178
+    },
+    {
+      "nodeIdentifier": "FilterEditorPhysicalTests/testEditedFilterKeepsLiveFramesAndCaptureRecipeWithoutSavingPhotos()",
+      "result": "Passed",
+      "durationInSeconds": 10.802716970443726
+    },
+    {
+      "nodeIdentifier": "FilterEditorPhysicalTests/testRepeatedFilterEditingResetsAndFormatChangesStayBoundedAndRecover()",
+      "result": "Passed",
+      "durationInSeconds": 33.5544970035553
+    },
+    {
+      "nodeIdentifier": "FilterInteractionTests/testInteractiveFramesProgressInOrderAndFinishAtExactLatestRevision()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005869865417480469
+    },
+    {
+      "nodeIdentifier": "FilterInteractionTests/testResetCancelConfirmationLateSliderEventsAndOtherFilterIsolation()",
+      "result": "Passed",
+      "durationInSeconds": 0.042169928550720215
+    },
+    {
+      "nodeIdentifier": "FilterLandscapeTests/testAllFiltersIncludeOriginalRenderTheSameBundledLandscape()",
+      "result": "Passed",
+      "durationInSeconds": 0.010514020919799805
+    },
+    {
+      "nodeIdentifier": "FilterPickerTests/testFavoritesPersistAndCollectionShowsOnlySavedStyles()",
+      "result": "Passed",
+      "durationInSeconds": 0.004388928413391113
+    },
+    {
+      "nodeIdentifier": "FilterPickerTests/testFilterSwipeStopsAtEdgesAndRespectsCategory()",
+      "result": "Passed",
+      "durationInSeconds": 0.0317080020904541
+    },
+    {
+      "nodeIdentifier": "FilterPickerTests/testHorizontalPreviewSwipeMovesThroughFiltersOnlyWhilePickerIsOpen()",
+      "result": "Passed",
+      "durationInSeconds": 0.03614401817321777
+    },
+    {
+      "nodeIdentifier": "FilterPickerTests/testVerticalAndShortDragsDoNotChangeFilter()",
+      "result": "Passed",
+      "durationInSeconds": 0.03642904758453369
+    },
+    {
+      "nodeIdentifier": "FilterStrengthTests/testEightyPercentEqualsOriginalReferenceAndOneHundredHasFiftyPercentBoost()",
+      "result": "Passed",
+      "durationInSeconds": 0.40679097175598145
+    },
+    {
+      "nodeIdentifier": "FilterStrengthTests/testEqualStepsAboveEightyHaveIncreasingColourDifference()",
+      "result": "Passed",
+      "durationInSeconds": 0.006923079490661621
+    },
+    {
+      "nodeIdentifier": "FilterStrengthTests/testInvalidAndOutOfRangeStrengthsHaveStableEndpoints()",
+      "result": "Passed",
+      "durationInSeconds": 0.1606839895248413
+    },
+    {
+      "nodeIdentifier": "FilterStrengthTests/testNaturalSceneBoostSurvivesSDRDisplayRenderingAndKeepsEightyUnchanged()",
+      "result": "Passed",
+      "durationInSeconds": 2.4714419841766357
+    },
+    {
+      "nodeIdentifier": "FilterStrengthTests/testRapidStrengthChangesPublishOnlyTheLatestLook()",
+      "result": "Passed",
+      "durationInSeconds": 0.004520058631896973
+    },
+    {
+      "nodeIdentifier": "FilterStrengthTests/testStrengthIsUniformBelowEightyAndAcceleratesAboveWithoutChangingAlpha()",
+      "result": "Passed",
+      "durationInSeconds": 1.7654889822006226
+    },
+    {
+      "nodeIdentifier": "FilterTextureTests/testAberrationGrowsSmoothlyAndHasClearlyVisibleMaximum()",
+      "result": "Passed",
+      "durationInSeconds": 0.03665506839752197
+    },
+    {
+      "nodeIdentifier": "FilterTextureTests/testGrainChangesBetweenPreviewFramesButStillEditsAreRepeatable()",
+      "result": "Passed",
+      "durationInSeconds": 0.0038400888442993164
+    },
+    {
+      "nodeIdentifier": "FilterTextureTests/testGrainRespectsDensityHasNoGrayVeilAndEntersContinuously()",
+      "result": "Passed",
+      "durationInSeconds": 0.043835997581481934
+    },
+    {
+      "nodeIdentifier": "FilterTextureTests/testGrainSaturationChangesChromaClearlyAndFadeHasStrongerLinearWarmth()",
+      "result": "Passed",
+      "durationInSeconds": 0.03192603588104248
+    },
+    {
+      "nodeIdentifier": "FilterTextureTests/testHalationCreatesWarmEdgeSpillAndKeepsDistantShadowsClean()",
+      "result": "Passed",
+      "durationInSeconds": 0.12033796310424805
+    },
+    {
+      "nodeIdentifier": "FocusExposureTests/testLockedTargetIgnoresRepeatedTapsAcrossAllRatios()",
+      "result": "Passed",
+      "durationInSeconds": 0.00203704833984375
+    },
+    {
+      "nodeIdentifier": "FocusExposureTests/testLongPressRetargetsExistingLockAndRejectsInvalidOrBusyInput()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005140304565429688
+    },
+    {
+      "nodeIdentifier": "FocusExposureTests/testLongPressSelectsAndLocksWithoutAnExistingFocusFrameAcrossEveryRatio()",
+      "result": "Passed",
+      "durationInSeconds": 0.00045609474182128906
+    },
+    {
+      "nodeIdentifier": "FocusExposureTests/testNativeLensPresetsFitEveryRatioIncludingXpan()",
+      "result": "Passed",
+      "durationInSeconds": 0.00039696693420410156
+    },
+    {
+      "nodeIdentifier": "FocusExposureTests/testOldDismissTimerCannotHideLockedFrame()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004329681396484375
+    },
+    {
+      "nodeIdentifier": "FocusExposureTests/testPhysicalAELockSurvivesOtherTargetsUntilExplicitUnlock()",
+      "result": "Passed",
+      "durationInSeconds": 0.6483280658721924
+    },
+    {
+      "nodeIdentifier": "FocusExposureTests/testRapidFocusLockUnlockAndEVExtremesStayFinite()",
+      "result": "Passed",
+      "durationInSeconds": 0.0028090476989746094
+    },
+    {
+      "nodeIdentifier": "FocusExposureTests/testSelectTargetLockAdjustEVAndDoubleTapUnlock()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005619525909423828
+    },
+    {
+      "nodeIdentifier": "FocusExposureTests/testSingleTapPreservesLockUntilExplicitUnlockAndRatioChangeClearsIt()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005179643630981445
+    },
+    {
+      "nodeIdentifier": "FocusExposureTests/testSunControlFitsAllRatiosAndAvoidsToolbarAndExposureStrip()",
+      "result": "Passed",
+      "durationInSeconds": 0.00044596195220947266
+    },
+    {
+      "nodeIdentifier": "FocusNavigatorCapabilityTests/testVideoOnlyLowResolutionMultiCamPressureCandidates()",
+      "result": "Passed",
+      "durationInSeconds": 0.6804099082946777
+    },
+    {
+      "nodeIdentifier": "FocusNavigatorCapabilityTests/testWideAndTelephotoNavigationCaptureCapabilities()",
+      "result": "Passed",
+      "durationInSeconds": 0.6613990068435669
+    },
+    {
+      "nodeIdentifier": "FocusPeakingTests/testSharpEdgesAreMarkedFlatAreasStayCleanAndDefocusReducesPeaks()",
+      "result": "Passed",
+      "durationInSeconds": 0.04933905601501465
+    },
+    {
+      "nodeIdentifier": "FoodFilterTests/testFoodIsTheImportedCubeAndReplacesTheOldBuiltInEntry()",
+      "result": "Passed",
+      "durationInSeconds": 0.00536799430847168
+    },
+    {
+      "nodeIdentifier": "FoodFilterTests/testImportedFoodLookKeepsFavoriteAndPhotoEditRoundTrip()",
+      "result": "Passed",
+      "durationInSeconds": 0.024184107780456543
+    },
+    {
+      "nodeIdentifier": "FrontNativeFramingDiagnosticTests/testNativeFrontBuffersAndPhotoWithoutAppProcessing()",
+      "result": "Passed",
+      "durationInSeconds": 3.5593109130859375
+    },
+    {
+      "nodeIdentifier": "FrontPhotoAspectRatioPhysicalTests/testFrontAspectChoiceIsPhotoOnlyAndWideToggleRemainsAvailable()",
+      "result": "Passed",
+      "durationInSeconds": 3.577660918235779
+    },
+    {
+      "nodeIdentifier": "FrontPhotoAspectRatioPhysicalTests/testManualHEIFSmoothFrontAspectChangesKeepPreviewReady()",
+      "result": "Passed",
+      "durationInSeconds": 6.182765960693359
+    },
+    {
+      "nodeIdentifier": "FrontPhotoAspectRatioPhysicalTests/testRepeatedFrontPhotoAspectChangesKeepPreviewReady()",
+      "result": "Passed",
+      "durationInSeconds": 5.825339078903198
+    },
+    {
+      "nodeIdentifier": "FrontPhotoOrientationTests/testEncodedFileAndPreviewKeepSameAlreadyDecodedPixelDirection()",
+      "result": "Passed",
+      "durationInSeconds": 0.11337399482727051
+    },
+    {
+      "nodeIdentifier": "FrontPhotoOrientationTests/testIntrinsicCorrectionRestoresBothAxesWithoutChangingUprightPixels()",
+      "result": "Passed",
+      "durationInSeconds": 0.0041130781173706055
+    },
+    {
+      "nodeIdentifier": "FrontPhotoOrientationTests/testNativeFrontPreviewAndPhotoKeepTopInBothSystemFramings()",
+      "result": "Passed",
+      "durationInSeconds": 0.005753040313720703
+    },
+    {
+      "nodeIdentifier": "FrontSubmodeFramingPhysicalTests/testFrontPhotoAndVideoFramingAfterSubmodes()",
+      "result": "Passed",
+      "durationInSeconds": 39.966081976890564
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testCurrentOrientationFramingAndRecordingGuard()",
+      "result": "Failed",
+      "durationInSeconds": 42.46233403682709
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testFrontBackFreshFrameLatencyAndRepeatedTaps()",
+      "result": "Passed",
+      "durationInSeconds": 7.088545918464661
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testFrontBackManualExposureAndCancellation()",
+      "result": "Passed",
+      "durationInSeconds": 5.948799967765808
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testFrontLiveFramingsRetainPairingAndFileMetadata()",
+      "result": "Passed",
+      "durationInSeconds": 16.2415109872818
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testFrontPhotoAspectToggleAndWideRegression()",
+      "result": "Passed",
+      "durationInSeconds": 1.488882064819336
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testFrontPhotoFilesKeepUprightPixelsAndSystemFocalLengths()",
+      "result": "Failed",
+      "durationInSeconds": 5.414664030075073
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testFrontSwitchManualExposureMirrorCaptureAndCancellation()",
+      "result": "Failed",
+      "durationInSeconds": 2.707568049430847
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testFrontWideArrowSymbolsExist()",
+      "result": "Passed",
+      "durationInSeconds": 0.004708051681518555
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testFrontWideSwitchDoesNotCrashAndTogglesBack()",
+      "result": "Passed",
+      "durationInSeconds": 0.9165850877761841
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testOrientationChoosesWideFramingOnlyInLandscape()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003319978713989258
+    },
+    {
+      "nodeIdentifier": "FrontWideSelectionTests/testRepeatedFrontSwitchFreshPreviewLatency()",
+      "result": "Passed",
+      "durationInSeconds": 3.466760039329529
+    },
+    {
+      "nodeIdentifier": "GalleryPhotoPagingTests/testDeletionAlwaysUsesOlderPhotoAndNeverWrapsToNewer()",
+      "result": "Passed",
+      "durationInSeconds": 0.0010260343551635742
+    },
+    {
+      "nodeIdentifier": "GalleryPhotoPagingTests/testFreshCaptureCanPageToLibraryAndBackWithoutDuplicateAfterIndexing()",
+      "result": "Passed",
+      "durationInSeconds": 0.0007649660110473633
+    },
+    {
+      "nodeIdentifier": "GalleryPhotoPagingTests/testPagesFollowGridOrderWithoutWrappingAtEitherEnd()",
+      "result": "Passed",
+      "durationInSeconds": 0.0007230043411254883
+    },
+    {
+      "nodeIdentifier": "GalleryPhotoPagingTests/testPagingDoesNotStealPinchOrEnlargedPhotoPanAndReplacementResetsZoom()",
+      "result": "Passed",
+      "durationInSeconds": 0.002418994903564453
+    },
+    {
+      "nodeIdentifier": "GalleryPhotoPagingTests/testRefreshDeletionLimitedListAndInvalidStepsCannotSelectUnrelatedPhoto()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006079673767089844
+    },
+    {
+      "nodeIdentifier": "GalleryPhotoPagingTests/testSavedCaptureNotIndexedOrAlreadyClearedStillUsesFirstDisplayedNeighbor()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006140470504760742
+    },
+    {
+      "nodeIdentifier": "GalleryPhotoPagingTests/testStillAndVideoPagesUseMatchingLeftAndRightTransitionGeometry()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005800724029541016
+    },
+    {
+      "nodeIdentifier": "GalleryPhotoPagingTests/testVideoCanvasPagingUsesHorizontalSwipesOnly()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005730390548706055
+    },
+    {
+      "nodeIdentifier": "GalleryPhotoPagingTests/testVideoPageDoesNotWaitForPhotoPosterLoading()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005640983581542969
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testBatchDeleteUsesOneRequestAndCancellationPreservesSelection()",
+      "result": "Passed",
+      "durationInSeconds": 0.0011330842971801758
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testConfirmedMissingRowsArePrunedBeforeSlowMetadataAndCannotBeReinserted()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006670951843261719
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testDecliningBatchDeleteConfirmationKeepsSelectionWithoutAlert()",
+      "result": "Passed",
+      "durationInSeconds": 0.015239953994750977
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testDecliningSystemDeleteConfirmationIsSilentAndCanRetryAfterReentry()",
+      "result": "Passed",
+      "durationInSeconds": 0.0031120777130126953
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testDeleteFailureKeepsSystemAndCurrentPhoto()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006890296936035156
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testDeletingSavedCurrentPhotoClearsBothViewsAndBlocksDuplicateDelete()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006979703903198242
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testDeletingUnrelatedSystemPhotoPreservesCurrentCapture()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006649494171142578
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testDeniedAccessDoesNotFetchSystemPhotos()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005869865417480469
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testEachGalleryEntryRequeriesSavedBurstEvenWithoutChangeNotification()",
+      "result": "Passed",
+      "durationInSeconds": 0.036538004875183105
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testEachQueuedSaveRefreshesEvenBeforeNewestCaptureFinishes()",
+      "result": "Passed",
+      "durationInSeconds": 0.0026029348373413086
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testExternalDeletionClearsSavedCaptureAndSelectionInsteadOfReinsertingGhost()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004500150680541992
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testForegroundRefreshFindsExternalImportsWhenChangeNotificationWasMissed()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003609657287597656
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testForegroundWithUnrequestedAccessDoesNotAskForPhotoPermission()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003260374069213867
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testLateMissingResultCannotClearNewerCapture()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003960132598876953
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testLibraryChangeReloadsAvailablePhotos()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004520416259765625
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testLibraryRefreshKeepsLoadedPagesAndPrunesMissingSelections()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005879402160644531
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testLimitedAccessLoadsOnlyProvidedPhotosAndPaginates()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004820823669433594
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testOldFetchCannotOverwriteNewPermissionState()",
+      "result": "Passed",
+      "durationInSeconds": 0.00041103363037109375
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testSaveCompletionRefreshesListWithoutPhotoKitChangeNotification()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005309581756591797
+    },
+    {
+      "nodeIdentifier": "GalleryViewModelTests/testUnavailableThumbnailOnlyRemovesConfirmedDeletionNotOfflineOrLimitedPhotos()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003590583801269531
+    },
+    {
+      "nodeIdentifier": "HDRPreviewPhysicalTests/testProbeCurrentCameraHDRPreviewFormats()",
+      "result": "Passed",
+      "durationInSeconds": 0.3922649621963501
+    },
+    {
+      "nodeIdentifier": "HEIFHDRPhysicalTests/testHEIFHDRUsesTenBitLivePreviewAndRestoresRAWPhotoQualityWithoutSaving()",
+      "result": "Passed",
+      "durationInSeconds": 34.1489599943161
+    },
+    {
+      "nodeIdentifier": "HEIFHDRPhysicalTests/testTurningHDRBackOffDoesNotPublishBlackPreviewFrames()",
+      "result": "Passed",
+      "durationInSeconds": 12.786017060279846
+    },
+    {
+      "nodeIdentifier": "HistogramAnimationTests/testTransitionRejectsFramesCapturedBeforeConnectionWasReady()",
+      "result": "Passed",
+      "durationInSeconds": 0.00040400028228759766
+    },
+    {
+      "nodeIdentifier": "HistogramAnimationTests/testWaveformInterpolatesWithoutDroppingBinsOrInvalidNumbers()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004799365997314453
+    },
+    {
+      "nodeIdentifier": "ImagingTests/testAllFiltersRenderEveryRatioAndBorderAddsCanvas()",
+      "result": "Passed",
+      "durationInSeconds": 3.4472570419311523
+    },
+    {
+      "nodeIdentifier": "ImagingTests/testHistogramCountsTranslatedBlackAndWhiteImage()",
+      "result": "Passed",
+      "durationInSeconds": 0.0017960071563720703
+    },
+    {
+      "nodeIdentifier": "ImagingTests/testLandscapeCropsAreReciprocalAndStayInsideSource()",
+      "result": "Passed",
+      "durationInSeconds": 0.00034999847412109375
+    },
+    {
+      "nodeIdentifier": "ImagingTests/testLandscapeLookRendersTheRequestedOrientation()",
+      "result": "Passed",
+      "durationInSeconds": 0.006851077079772949
+    },
+    {
+      "nodeIdentifier": "ImagingTests/testMonochromeProducesEqualColorChannels()",
+      "result": "Passed",
+      "durationInSeconds": 0.003141045570373535
+    },
+    {
+      "nodeIdentifier": "ImagingTests/testPortraitCropsStayCenteredAndInsideSource()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003299713134765625
+    },
+    {
+      "nodeIdentifier": "ImagingTests/testRawOutputKeepsSensorOrientationInsteadOfAspectCrop()",
+      "result": "Passed",
+      "durationInSeconds": 0.00028395652770996094
+    },
+    {
+      "nodeIdentifier": "ImagingTests/testZeroIntensityPreservesOriginalPixels()",
+      "result": "Passed",
+      "durationInSeconds": 0.01931607723236084
+    },
+    {
+      "nodeIdentifier": "ImportedFilterTests/testAll45TablesMatchOriginalPNGAndCUBEGridSamplesAndManagedP3Input()",
+      "result": "Passed",
+      "durationInSeconds": 0.522239089012146
+    },
+    {
+      "nodeIdentifier": "ImportedFilterTests/testAllImportedTablesInterpolateOffGridAndBlendInManagedColorSpaces()",
+      "result": "Passed",
+      "durationInSeconds": 5.726728081703186
+    },
+    {
+      "nodeIdentifier": "ImportedFilterTests/testEveryImportedFilterRetainsIndependentEditsAndFavorites()",
+      "result": "Passed",
+      "durationInSeconds": 0.005540966987609863
+    },
+    {
+      "nodeIdentifier": "InteractionStressTests/testCancelledDetailRequestsCannotRestoreOldPhotoUnderRapidNavigation()",
+      "result": "Passed",
+      "durationInSeconds": 0.0033310651779174805
+    },
+    {
+      "nodeIdentifier": "InteractionStressTests/testGalleryEntryTracksCaptureAndReturnsToGridAfterDeletion()",
+      "result": "Passed",
+      "durationInSeconds": 0.4909149408340454
+    },
+    {
+      "nodeIdentifier": "InteractionStressTests/testPhotoZoomRepeatedPinchesImageReplacementAndViewportResize()",
+      "result": "Passed",
+      "durationInSeconds": 0.01274406909942627
+    },
+    {
+      "nodeIdentifier": "InteractionStressTests/testRapidDuplicateSaveDeleteAndRetryOnlySubmitOneOperation()",
+      "result": "Passed",
+      "durationInSeconds": 0.008012890815734863
+    },
+    {
+      "nodeIdentifier": "InteractionStressTests/testRAWPreviewIsBoundedAndOriginalResourcesArePreserved()",
+      "result": "Passed",
+      "durationInSeconds": 0.03566098213195801
+    },
+    {
+      "nodeIdentifier": "InteractionStressTests/testRepeatedEncodingAllFormatsPreservesResourcesAndFinitePreview()",
+      "result": "Passed",
+      "durationInSeconds": 2.0768589973449707
+    },
+    {
+      "nodeIdentifier": "InteractionStressTests/testRepeatedPopupSwitchesAlwaysReplacePreviousPanel()",
+      "result": "Passed",
+      "durationInSeconds": 0.16641604900360107
+    },
+    {
+      "nodeIdentifier": "InteractionStressTests/testWhiteBalanceTransientAndMalformedValuesNeverReachConversion()",
+      "result": "Passed",
+      "durationInSeconds": 0.024729013442993164
+    },
+    {
+      "nodeIdentifier": "LevelHapticGateTests/testOnlyStableEntryTriggersAndJitterCannotRepeatFeedback()",
+      "result": "Passed",
+      "durationInSeconds": 0.00039005279541015625
+    },
+    {
+      "nodeIdentifier": "LibraryQueryPhysicalTests/testReadOnlyGalleryQueryMatchesAccessibleRecentCaptures()",
+      "result": "Passed",
+      "durationInSeconds": 0.9672690629959106
+    },
+    {
+      "nodeIdentifier": "LivePhotoEditorTests/testExistingLiveRendersCopyAndReplacementWithoutSavingToLibrary()",
+      "result": "Passed",
+      "durationInSeconds": 1.5190199613571167
+    },
+    {
+      "nodeIdentifier": "LivePhotoEditorTests/testFrameGeometryMatchesStillEditorAcrossOrientationsAndCrops()",
+      "result": "Passed",
+      "durationInSeconds": 0.0008970499038696289
+    },
+    {
+      "nodeIdentifier": "LivePhotoEditorTests/testSaveModeRoutingAndDuplicateSaveGuard()",
+      "result": "Passed",
+      "durationInSeconds": 0.004220008850097656
+    },
+    {
+      "nodeIdentifier": "LivePhotoGestureTests/testLongPressBlocksPagingAndReleaseRestoresSwipeWithoutBlockingPinch()",
+      "result": "Passed",
+      "durationInSeconds": 0.0019800662994384766
+    },
+    {
+      "nodeIdentifier": "LivePhotoOptionsTests/testLiveNeverRequestsAnUnsupportedRAWOrHighResolutionCombination()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003279447555541992
+    },
+    {
+      "nodeIdentifier": "LivePhotoOptionsTests/testOnlyHEIFProAppliesProToneAndSwitchingFormatClosesItsPanel()",
+      "result": "Passed",
+      "durationInSeconds": 0.030095934867858887
+    },
+    {
+      "nodeIdentifier": "LivePhotoOptionsTests/testUnavailableLiveToggleDoesNotShowAnInstructionToCloseFeatures()",
+      "result": "Passed",
+      "durationInSeconds": 0.02998805046081543
+    },
+    {
+      "nodeIdentifier": "LivePhotoPhysicalTests/testManualParametersSurviveRepeatedSessionStopsAndRestarts()",
+      "result": "Passed",
+      "durationInSeconds": 11.376614928245544
+    },
+    {
+      "nodeIdentifier": "LivePhotoPhysicalTests/testNativeJPEGAndHEIFLivePairsDecodeWithoutWritingPhotos()",
+      "result": "Passed",
+      "durationInSeconds": 14.137633919715881
+    },
+    {
+      "nodeIdentifier": "LivePhotoPhysicalTests/testRearLiveTogglePreserves24mmAnd35mmFraming()",
+      "result": "Passed",
+      "durationInSeconds": 2.658076047897339
+    },
+    {
+      "nodeIdentifier": "LivePhotoPlaybackPhysicalTests/testDetailLongPressPlaysSavedLiveWithSoundAndReleaseRestoresStill()",
+      "result": "Passed",
+      "durationInSeconds": 4.875229001045227
+    },
+    {
+      "nodeIdentifier": "LogLUTCubeTests/testBundledLUTsRetainTheirOriginal33Or65Grid()",
+      "result": "Passed",
+      "durationInSeconds": 2.390866994857788
+    },
+    {
+      "nodeIdentifier": "LogLUTCubeTests/testCubeCanBeAppliedToImage()",
+      "result": "Passed",
+      "durationInSeconds": 0.008885025978088379
+    },
+    {
+      "nodeIdentifier": "LogLUTCubeTests/testDisplayNamesAreSeparatedForRec709AndBohemianLUTs()",
+      "result": "Passed",
+      "durationInSeconds": 0.0017620325088500977
+    },
+    {
+      "nodeIdentifier": "LogLUTCubeTests/testOriginalChoiceIsAvailableAlongsideBundledLUTs()",
+      "result": "Passed",
+      "durationInSeconds": 0.001526951789855957
+    },
+    {
+      "nodeIdentifier": "LogLUTCubeTests/testRecordingBadgesRetainFilterRecipeForVideoEditing()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003470182418823242
+    },
+    {
+      "nodeIdentifier": "LogLUTCubeTests/testVideoBadgeStoreRetainsLogAndFilterFlagsAcrossReads()",
+      "result": "Passed",
+      "durationInSeconds": 0.0015240907669067383
+    },
+    {
+      "nodeIdentifier": "MacroOpticsDiagnosticTests/testRepeatedSceneChangesDoNotRestartCenteredContinuousFocusButRecenterTappedTarget()",
+      "result": "Passed",
+      "durationInSeconds": 2.2257310152053833
+    },
+    {
+      "nodeIdentifier": "MainFocalPresetPhysicalTests/testRepeatedMainCameraTapsToggle24And35mmWithoutChangingAnchorOrFreezingFrames()",
+      "result": "Passed",
+      "durationInSeconds": 1.69308602809906
+    },
+    {
+      "nodeIdentifier": "ManualFocalSpeedPhysicalTests/testAutoManualSwitchRevealsFreshFramesWithoutWaitingForAnOverlayTimeout()",
+      "result": "Passed",
+      "durationInSeconds": 10.03766393661499
+    },
+    {
+      "nodeIdentifier": "ManualFocalSpeedPhysicalTests/testRepeatedManualFocalChangesDeliverFreshFramesWithoutLosingExposure()",
+      "result": "Passed",
+      "durationInSeconds": 9.580431938171387
+    },
+    {
+      "nodeIdentifier": "ManualPinnedZoomPhysicalTests/testEveryManualPresetKeepsItsPhysicalCameraAndExposureAcrossWheelRange()",
+      "result": "Passed",
+      "durationInSeconds": 11.980515956878662
+    },
+    {
+      "nodeIdentifier": "ManualPinnedZoomPhysicalTests/testRapidWheelReversalsKeepFramesMovingAndApplyFinalValueForEveryPreset()",
+      "result": "Passed",
+      "durationInSeconds": 11.595558047294617
+    },
+    {
+      "nodeIdentifier": "ManualZoomPolicyTests/testEachPresetGetsItsOwnFivefoldRangeOnTheSamePhysicalLens()",
+      "result": "Passed",
+      "durationInSeconds": 0.00046503543853759766
+    },
+    {
+      "nodeIdentifier": "ManualZoomPolicyTests/testHardwareLimitsNeverRequestAnUnsupportedZoomFactor()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003819465637207031
+    },
+    {
+      "nodeIdentifier": "MetalKernelTests/testEveryCompiledKernelLoadsFromApplicationBundle()",
+      "result": "Passed",
+      "durationInSeconds": 0.001103043556213379
+    },
+    {
+      "nodeIdentifier": "ModeSwitchLatencyTests/testModeSwitchFrameAndOverlayLatencyOnDevice()",
+      "result": "Passed",
+      "durationInSeconds": 21.46666395664215
+    },
+    {
+      "nodeIdentifier": "NightAdaptiveCapturePhysicalTests/testActualSceneMeasurementAndMotionDecision()",
+      "result": "Passed",
+      "durationInSeconds": 5.133844971656799
+    },
+    {
+      "nodeIdentifier": "NightAdaptiveCapturePhysicalTests/testMotionStopsAppendingAndCancelThenReturnCanCaptureAgain()",
+      "result": "Passed",
+      "durationInSeconds": 6.173290967941284
+    },
+    {
+      "nodeIdentifier": "NightAdaptiveCapturePhysicalTests/testNaturallyTriggeredNightUsesActualMeteringAndFrameCount()",
+      "result": "Skipped",
+      "durationInSeconds": 5.069272994995117
+    },
+    {
+      "nodeIdentifier": "NightAdaptiveCapturePhysicalTests/testThreeSixNineFrameBatchesAndActualFileInformation()",
+      "result": "Passed",
+      "durationInSeconds": 20.16963505744934
+    },
+    {
+      "nodeIdentifier": "NightAdaptiveCapturePolicyTests/testDarknessPlansThreeSixAndNineFramesWithoutEVBiasInflation()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003720521926879883
+    },
+    {
+      "nodeIdentifier": "NightAdaptiveCapturePolicyTests/testMotionMissingFramesBudgetsAndResourcePressureStopAdditionalBatches()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003230571746826172
+    },
+    {
+      "nodeIdentifier": "NightCapturePhysicalTests/testNightRapidToggleAndReturnKeepOrdinaryPhotoPath()",
+      "result": "Passed",
+      "durationInSeconds": 4.0743629932403564
+    },
+    {
+      "nodeIdentifier": "NightCapturePhysicalTests/testThreeNightCapturesCompleteInMemoryAndReportHonestMergeState()",
+      "result": "Passed",
+      "durationInSeconds": 7.966755986213684
+    },
+    {
+      "nodeIdentifier": "NightPhotoMergerTests/testExposureNormalizationPreservesReferenceBrightness()",
+      "result": "Passed",
+      "durationInSeconds": 0.21015501022338867
+    },
+    {
+      "nodeIdentifier": "NightPhotoMergerTests/testMergedImageEncodesEveryPhotoRatioAndOrientation()",
+      "result": "Passed",
+      "durationInSeconds": 0.15025293827056885
+    },
+    {
+      "nodeIdentifier": "NightPhotoMergerTests/testMotionAssessmentUsesAlignmentAndRejectsUnknownScene()",
+      "result": "Passed",
+      "durationInSeconds": 0.10515189170837402
+    },
+    {
+      "nodeIdentifier": "NightPhotoMergerTests/testMovingObjectUsesReferenceRatherThanGhostCopies()",
+      "result": "Passed",
+      "durationInSeconds": 0.26728498935699463
+    },
+    {
+      "nodeIdentifier": "NightPhotoMergerTests/testPartialMergeAndSingleFrameFallbackKeepReferenceProperties()",
+      "result": "Passed",
+      "durationInSeconds": 0.09164392948150635
+    },
+    {
+      "nodeIdentifier": "NightPhotoMergerTests/testRepeatedRenderPerformanceAndBackToBackInputs()",
+      "result": "Passed",
+      "durationInSeconds": 2.0007059574127197
+    },
+    {
+      "nodeIdentifier": "NightPhotoMergerTests/testSpeedOptimizationMatchesOriginalPixelReference()",
+      "result": "Passed",
+      "durationInSeconds": 1.0739150047302246
+    },
+    {
+      "nodeIdentifier": "NightPhotoMergerTests/testStaticDarkNoiseDropsWithoutBlowingHighlights()",
+      "result": "Passed",
+      "durationInSeconds": 0.17301404476165771
+    },
+    {
+      "nodeIdentifier": "NightPhotoMergerTests/testTransparentProbeSafelyRejectsFusion()",
+      "result": "Passed",
+      "durationInSeconds": 0.006051063537597656
+    },
+    {
+      "nodeIdentifier": "OpenGateCapabilityTests/testOnlySquareOrFourByThreeNativeVideoFormatsQualify()",
+      "result": "Passed",
+      "durationInSeconds": 0.00034809112548828125
+    },
+    {
+      "nodeIdentifier": "OpenGateCapabilityTests/testOpenGatePhotoCropLeavesTheWholeNativeFrame()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003300905227661133
+    },
+    {
+      "nodeIdentifier": "OpenGateCapabilityTests/testOutputDimensionsPreserveNativeGateAspectAndUseEvenPixels()",
+      "result": "Passed",
+      "durationInSeconds": 0.00032591819763183594
+    },
+    {
+      "nodeIdentifier": "OpenGateCapabilityTests/testSupportedSpecsSummaryGroupsFrameRateRangeByColorSpaceAndResolution()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003739595413208008
+    },
+    {
+      "nodeIdentifier": "PhotoCaptureDiagnosticsTests/testCaptureReviewRetainsDiagnosticsAfterEditingAndUsesFileSize()",
+      "result": "Passed",
+      "durationInSeconds": 0.04409801959991455
+    },
+    {
+      "nodeIdentifier": "PhotoCaptureDiagnosticsTests/testDiagnosticsSurviveStoreRecreationAndAssetIdentifiersDoNotCollide()",
+      "result": "Passed",
+      "durationInSeconds": 0.0024520158767700195
+    },
+    {
+      "nodeIdentifier": "PhotoCaptureDiagnosticsTests/testFailedOrCorruptedStoreIsNotReportedAsKnownInformation()",
+      "result": "Passed",
+      "durationInSeconds": 0.0007259845733642578
+    },
+    {
+      "nodeIdentifier": "PhotoCaptureDiagnosticsTests/testMalformedMetadataDoesNotCrashOrInventValues()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004069805145263672
+    },
+    {
+      "nodeIdentifier": "PhotoCaptureDiagnosticsTests/testMergingPreservesActualFileValuesAndDoesNotDuplicateTitles()",
+      "result": "Passed",
+      "durationInSeconds": 0.00032901763916015625
+    },
+    {
+      "nodeIdentifier": "PhotoCaptureDiagnosticsTests/testNightBadgeRequiresActualMultiFrameMergeAndPersists()",
+      "result": "Passed",
+      "durationInSeconds": 0.006414055824279785
+    },
+    {
+      "nodeIdentifier": "PhotoCaptureDiagnosticsTests/testNumericParametersPersistWithoutFormattingLossAndRAWDoesNotOverwriteProcessedEXIF()",
+      "result": "Passed",
+      "durationInSeconds": 0.000392913818359375
+    },
+    {
+      "nodeIdentifier": "PhotoCaptureDiagnosticsTests/testOldRecordsRemainReadableAndUnavailableEXIFStaysUnknown()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003349781036376953
+    },
+    {
+      "nodeIdentifier": "PhotoCaptureDiagnosticsTests/testOriginalEXIFProvidesLensAndExposureWithoutInferringLensFromZoom()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003420114517211914
+    },
+    {
+      "nodeIdentifier": "PhotoCaptureDiagnosticsTests/testOutputDimensionsComeFromEncodedFileAndAllRatios()",
+      "result": "Passed",
+      "durationInSeconds": 0.06176793575286865
+    },
+    {
+      "nodeIdentifier": "PhotoCropTests/testCropAndFlipDirectionsMatchDisplayedImagePixels()",
+      "result": "Passed",
+      "durationInSeconds": 0.00698399543762207
+    },
+    {
+      "nodeIdentifier": "PhotoCropTests/testCropCancelRestoresEntryAndDoneCommitsWithoutResettingFilterRecipe()",
+      "result": "Passed",
+      "durationInSeconds": 0.004613041877746582
+    },
+    {
+      "nodeIdentifier": "PhotoCropTests/testCropRotationFlipsRenderCorrectDimensionsAndMetadataRoundTrip()",
+      "result": "Passed",
+      "durationInSeconds": 0.11107897758483887
+    },
+    {
+      "nodeIdentifier": "PhotoCropTests/testCropUsesDisplayedTopLeftAndHandlesInvalidOrExcessiveGestures()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003560781478881836
+    },
+    {
+      "nodeIdentifier": "PhotoCropTests/testStraighteningMaintainsExtentAndDoesNotExposeBlackCorners()",
+      "result": "Passed",
+      "durationInSeconds": 0.006712079048156738
+    },
+    {
+      "nodeIdentifier": "PhotoCropTests/testSwitchingEditorToolsKeepsCropAndAllSharedParametersThroughSave()",
+      "result": "Passed",
+      "durationInSeconds": 0.004397988319396973
+    },
+    {
+      "nodeIdentifier": "PhotoCurrentFilterTests/testCopiesAndReversibleOverwriteShowCurrentFilterWithoutLosingCaptureFacts()",
+      "result": "Passed",
+      "durationInSeconds": 0.004987001419067383
+    },
+    {
+      "nodeIdentifier": "PhotoCurrentFilterTests/testExternalPhotosAndLegacyRecordsShowEditedFilterWithoutInventingCaptureFacts()",
+      "result": "Passed",
+      "durationInSeconds": 0.0010520219802856445
+    },
+    {
+      "nodeIdentifier": "PhotoDeletionRaceTests/testExternalCacheClearDoesNotAlsoReportALocalDeletion()",
+      "result": "Passed",
+      "durationInSeconds": 0.021915078163146973
+    },
+    {
+      "nodeIdentifier": "PhotoDeletionRaceTests/testLocalDeletionCompletionOnlyFollowsSuccessfulMatchingDeletion()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005609989166259766
+    },
+    {
+      "nodeIdentifier": "PhotoDeletionRaceTests/testMixedMediaDeletionCanContinueAfterEachCommittedPageAndRejectLateCallbacks()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005469322204589844
+    },
+    {
+      "nodeIdentifier": "PhotoDeletionRaceTests/testRepeatedAndDelayedDeletionCallbacksCannotSkipTheImmediateNeighbor()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003230571746826172
+    },
+    {
+      "nodeIdentifier": "PhotoDetailHeaderTests/testAddressFormattingDeduplicatesAndHasFallback()",
+      "result": "Passed",
+      "durationInSeconds": 0.00033092498779296875
+    },
+    {
+      "nodeIdentifier": "PhotoDetailHeaderTests/testPhotoInfoParameterGridLayoutAndRepeatedDrawCost()",
+      "result": "Passed",
+      "durationInSeconds": 0.5955480337142944
+    },
+    {
+      "nodeIdentifier": "PhotoDetailHeaderTests/testRAWBadgeFitsAllRatiosAndRejectsInvalidDimensions()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003510713577270508
+    },
+    {
+      "nodeIdentifier": "PhotoEditMetadataTests/testCroppedRotatedJPEGKeepsCaptureFactsButUpdatesGeometry()",
+      "result": "Passed",
+      "durationInSeconds": 0.02288496494293213
+    },
+    {
+      "nodeIdentifier": "PhotoEditMetadataTests/testNewAssetCopiesCaptureDiagnosticsWithoutAlteringOriginal()",
+      "result": "Passed",
+      "durationInSeconds": 0.0024489164352416992
+    },
+    {
+      "nodeIdentifier": "PhotoEditorTests/testEditorCompletionReleasesGuardEvenAfterEditorIsDismissed()",
+      "result": "Passed",
+      "durationInSeconds": 0.005491971969604492
+    },
+    {
+      "nodeIdentifier": "PhotoEditorTests/testEditorFailureReleasesBusyGuardAndAllowsRetry()",
+      "result": "Passed",
+      "durationInSeconds": 0.005440950393676758
+    },
+    {
+      "nodeIdentifier": "PhotoEditorTests/testExposureChangesImageAndAdjustmentDataCanRoundTrip()",
+      "result": "Passed",
+      "durationInSeconds": 0.007239937782287598
+    },
+    {
+      "nodeIdentifier": "PhotoEditorTests/testRotatedEditBakesOrientationIntoFullResolutionJPEG()",
+      "result": "Passed",
+      "durationInSeconds": 0.007350921630859375
+    },
+    {
+      "nodeIdentifier": "PhotoEditorZoomTests/testFilterRendersPreserveMagnificationAndPanWhileDetailsStillResetForNextPhoto()",
+      "result": "Passed",
+      "durationInSeconds": 0.004465937614440918
+    },
+    {
+      "nodeIdentifier": "PhotoFilterEditorTests/testContinuousPhotoEditingPublishesThenSettlesAtExactSavedRecipeWithoutAccumulation()",
+      "result": "Passed",
+      "durationInSeconds": 1.789175033569336
+    },
+    {
+      "nodeIdentifier": "PhotoFilterEditorTests/testSaveChoicesPreserveRecipeRouteAndRejectRepeatedSave()",
+      "result": "Passed",
+      "durationInSeconds": 0.007095932960510254
+    },
+    {
+      "nodeIdentifier": "PhotoFilterEditorTests/testSavedFilterRecipeRoundTripsAndOldPhotoEditsRemainDecodable()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003631114959716797
+    },
+    {
+      "nodeIdentifier": "PhotoFilterEditorTests/testSwitchingFiltersRestoresLocalRecipesAndResetRejectsLateSliderWrites()",
+      "result": "Passed",
+      "durationInSeconds": 0.006947994232177734
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryStagedResourcesTests/testAbandonedOrFailedTransactionCleansTemporaryResources()",
+      "result": "Passed",
+      "durationInSeconds": 0.0014129877090454102
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryStagedResourcesTests/testKindsFileTypesAndBytesSurviveUntilTransactionCompletes()",
+      "result": "Passed",
+      "durationInSeconds": 0.0022759437561035156
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testAutomaticSaveFailureRetainsResourcesAndSupportsRetry()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005220174789428711
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testBusyOperationProtectsCurrentPhoto()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003910064697265625
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testCaptureAutomaticallySavesEncodedResourcesWithoutSuccessPrompt()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003750324249267578
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testCaptureBlocksSaveAndDeleteUntilProcessingFinishes()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003629922866821289
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testDeleteCancellationOrLimitedAccessPreservesSavedPhoto()",
+      "result": "Passed",
+      "durationInSeconds": 0.00035500526428222656
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testEarlierSaveCompletionDoesNotReleaseNewestUnsavedCapture()",
+      "result": "Passed",
+      "durationInSeconds": 0.00026702880859375
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testEditingProtectsCaptureAndOnlyUpdatesMatchingSavedPhoto()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004589557647705078
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testPermissionFailurePreservesPhotoAndAllowsRetry()",
+      "result": "Passed",
+      "durationInSeconds": 0.00036394596099853516
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testSavedCaptureReleasesFullSizeBytesButRetainsFlagsMetadataAndOneTimeReview()",
+      "result": "Passed",
+      "durationInSeconds": 0.017575979232788086
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testSaveTracksAssetAndPreventsDuplicateWrites()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004309415817260742
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testUnsavedDeleteDoesNotAccessSystemLibrary()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003719329833984375
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testVideoSaveFailureKeepsFileForRetryAndPublishesSavedAsset()",
+      "result": "Passed",
+      "durationInSeconds": 0.0007120370864868164
+    },
+    {
+      "nodeIdentifier": "PhotoLibraryViewModelTests/testWriteOnlyAccessRetainsResourcesUntilSavedPhotoCanBeRead()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003129243850708008
+    },
+    {
+      "nodeIdentifier": "PhotoLocationTests/testCaptureSaveRetryAndEditKeepLocationAndShutterTime()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003609657287597656
+    },
+    {
+      "nodeIdentifier": "PhotoLocationTests/testEncodedFilesKeepGPSAcrossFormatsAndAllRatiosWithoutChangingRawBytes()",
+      "result": "Passed",
+      "durationInSeconds": 0.2723970413208008
+    },
+    {
+      "nodeIdentifier": "PhotoLocationTests/testFreshFixPolicyRejectsInvalidStaleAndUncertainReadings()",
+      "result": "Passed",
+      "durationInSeconds": 0.00043904781341552734
+    },
+    {
+      "nodeIdentifier": "PhotoLocationTests/testGPSAndJSONRoundTripPreserveSouthernWesternCoordinates()",
+      "result": "Passed",
+      "durationInSeconds": 0.00047004222869873047
+    },
+    {
+      "nodeIdentifier": "PhotoLocationTests/testGPSIsKeptInHDRHEIFAndRawJPEGCompanion()",
+      "result": "Passed",
+      "durationInSeconds": 0.037417054176330566
+    },
+    {
+      "nodeIdentifier": "PhotoLocationTests/testInfoPresentationHidesRequestedPixelsAndSaveStatusButKeepsCaptureValues()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003941059112548828
+    },
+    {
+      "nodeIdentifier": "PhotoLocationTests/testPhotoInfoPresentsExposureFieldsAndRecordedShootingType()",
+      "result": "Passed",
+      "durationInSeconds": 0.00035309791564941406
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testBurstPolicyAllowsOnlyStandardJpegAndHEIFWithoutLiveOrHDR()",
+      "result": "Passed",
+      "durationInSeconds": 0.00032198429107666016
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testEncodedFormatsMatchTheirFileContainersAndCrop()",
+      "result": "Passed",
+      "durationInSeconds": 0.03209102153778076
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testFlashCyclesThroughAllThreeStates()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003349781036376953
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testHDRHEIFUsesTenBitEncoding()",
+      "result": "Passed",
+      "durationInSeconds": 0.025268912315368652
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testLiveFilterColorsMatchSavedTIFFAcrossStylesAndTones()",
+      "result": "Passed",
+      "durationInSeconds": 1.6351330280303955
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testMeanMeteringMeasuresEntireFrameInLinearLight()",
+      "result": "Passed",
+      "durationInSeconds": 0.0013229846954345703
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testNewRatiosAreCenteredAndXPANUsesFilmGateRatio()",
+      "result": "Failed",
+      "durationInSeconds": 0.0013419389724731445
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testNightEnvironmentGateNormalizesExposureCompensationAndResets()",
+      "result": "Passed",
+      "durationInSeconds": 0.00030303001403808594
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testNightEnvironmentGateRepeatedReadingsPerformance()",
+      "result": "Passed",
+      "durationInSeconds": 0.0129319429397583
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testNightEnvironmentGateRequiresStableLowLightAndUsesHysteresis()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003139972686767578
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testNightIndicatorMapsClosedWaitingTriggeredAndUnsupportedStates()",
+      "result": "Passed",
+      "durationInSeconds": 0.00029909610748291016
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testNightMergerRepeatedSyntheticThreeFrameBracket()",
+      "result": "Passed",
+      "durationInSeconds": 1.09368097782135
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testNightPolicyRequiresThreeFrameAEBracketAndCompatiblePhotoSettings()",
+      "result": "Passed",
+      "durationInSeconds": 0.00040602684020996094
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testNightTapWaitsForAReadyCameraBeforeChangingCaptureState()",
+      "result": "Passed",
+      "durationInSeconds": 0.039839982986450195
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testPhotoSubmodePoliciesExposeSafeFormatsAndResolutionFallbacks()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004519224166870117
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testPortraitPolicyAllows48MPWhenCurrentCameraFormatProvidesIt()",
+      "result": "Passed",
+      "durationInSeconds": 0.00037300586700439453
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testRAWPairPreservesDNGBytesAndJPEGPrimary()",
+      "result": "Passed",
+      "durationInSeconds": 0.003981113433837891
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testSoftwarePortraitDoesNotRequireNativeDepthDelivery()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003609657287597656
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testToneChangesPixelsButNaturalPreservesSource()",
+      "result": "Passed",
+      "durationInSeconds": 0.004593014717102051
+    },
+    {
+      "nodeIdentifier": "PhotoOptionsTests/testToolbarPanelCoexistsWithFiltersAndReplacesManualPanel()",
+      "result": "Passed",
+      "durationInSeconds": 0.037940025329589844
+    },
+    {
+      "nodeIdentifier": "PhotoPageLoaderTests/testCancelSupersededRequestsAndFailuresKeepCurrentPage()",
+      "result": "Passed",
+      "durationInSeconds": 0.0038579702377319336
+    },
+    {
+      "nodeIdentifier": "PhotoPageLoaderTests/testDestinationIsOnlyCommittedAfterImageArrivesAndOnlyOnce()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005469322204589844
+    },
+    {
+      "nodeIdentifier": "PhotoPageLoaderTests/testSeededDetailNeverStartsWithAnEmptyImage()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004169940948486328
+    },
+    {
+      "nodeIdentifier": "PhotoPagingAnimationTests/testRAWBadgeAndLocationHeaderAcrossEveryPhotoRatio()",
+      "result": "Passed",
+      "durationInSeconds": 3.332866072654724
+    },
+    {
+      "nodeIdentifier": "PhotoPagingAnimationTests/testVisiblePhotoSurvivesDelayedLoadThenBothPagesParticipateInTransition()",
+      "result": "Passed",
+      "durationInSeconds": 2.6247869729995728
+    },
+    {
+      "nodeIdentifier": "PhotoResourceKindTests/testRawUTIAndCaseInsensitiveFilenameFallback()",
+      "result": "Passed",
+      "durationInSeconds": 0.0008889436721801758
+    },
+    {
+      "nodeIdentifier": "PhysicalCameraSwitchingTests/testManualPresetsThenAutomaticModeOnPhysicalCamera()",
+      "result": "Failed",
+      "durationInSeconds": 24.332031965255737
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testFocalPresetSelectionGlassStabilityAndDrawCost()",
+      "result": "Passed",
+      "durationInSeconds": 1.7355200052261353
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testLogVideoFilterNameStaysLeadingAlignedOnDevice()",
+      "result": "Passed",
+      "durationInSeconds": 3.186158061027527
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testParameterPopupKeepsFocalControlsFixed()",
+      "result": "Passed",
+      "durationInSeconds": 1.5200179815292358
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testParameterPopupRapidOpenCloseRotationStress()",
+      "result": "Passed",
+      "durationInSeconds": 2.67979896068573
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testParameterPopupStaysPortraitAtLandscapeAngle()",
+      "result": "Passed",
+      "durationInSeconds": 1.546049952507019
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testParameterSheetDrawPerformance()",
+      "result": "Passed",
+      "durationInSeconds": 1.7542330026626587
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testPopupGlassDrawPerformance()",
+      "result": "Passed",
+      "durationInSeconds": 0.7359989881515503
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testPopupOpenCloseDuringOrientationChangesRemainsResponsive()",
+      "result": "Skipped",
+      "durationInSeconds": 0.0013759136199951172
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testPopupOrientationFramePacingOnDevice()",
+      "result": "Passed",
+      "durationInSeconds": 1.0295710563659668
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testPopupOrientationRapidStressEndsVisible()",
+      "result": "Passed",
+      "durationInSeconds": 3.2481610774993896
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testPopupOrientationSwitchDrawPerformance()",
+      "result": "Passed",
+      "durationInSeconds": 1.0078020095825195
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testSlowShutterPresetGroupGlassStabilityAndDrawCost()",
+      "result": "Passed",
+      "durationInSeconds": 1.7838400602340698
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testSubmodePopupUsesCompactOptionHeightWithoutStatusText()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003650188446044922
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testToolbarOverlapGlassStabilityAndDrawCost()",
+      "result": "Passed",
+      "durationInSeconds": 1.4340490102767944
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testToolbarOverlapGlassTracksEveryPhotoRatioOnDevice()",
+      "result": "Passed",
+      "durationInSeconds": 2.2687870264053345
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testTopToolbarPopupDrawPerformance()",
+      "result": "Passed",
+      "durationInSeconds": 1.7550749778747559
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testTopToolbarPopupRapidOpenCloseRotationStress()",
+      "result": "Passed",
+      "durationInSeconds": 1.7649550437927246
+    },
+    {
+      "nodeIdentifier": "PopupAppearanceAndOrientationTests/testTopToolbarPopupStaysPortraitAtLandscapeAngle()",
+      "result": "Passed",
+      "durationInSeconds": 1.1567410230636597
+    },
+    {
+      "nodeIdentifier": "PortraitCapturePhysicalTests/testAutomaticMacroSuspendsPortraitCaptureAndRecovers()",
+      "result": "Passed",
+      "durationInSeconds": 5.984717011451721
+    },
+    {
+      "nodeIdentifier": "PortraitCapturePhysicalTests/testPortraitModeKeepsAutomaticVirtualCameraAvailableForMacro()",
+      "result": "Passed",
+      "durationInSeconds": 3.288516044616699
+    },
+    {
+      "nodeIdentifier": "PortraitCapturePhysicalTests/testPortraitProcessedAndProRAWCapturesWithoutSaving()",
+      "result": "Failed",
+      "durationInSeconds": 55.592265009880066
+    },
+    {
+      "nodeIdentifier": "PortraitDepthControlTests/testBlurAppearanceScalesWithImageResolutionAndMeasuresRendering()",
+      "result": "Passed",
+      "durationInSeconds": 0.12302398681640625
+    },
+    {
+      "nodeIdentifier": "PortraitDepthControlTests/testBlurSliderMapsFromSharpToStrongerBlur()",
+      "result": "Passed",
+      "durationInSeconds": 0.00035500526428222656
+    },
+    {
+      "nodeIdentifier": "PortraitDepthControlTests/testNormalizedBackgroundBlurPreservesForegroundAndAvoidsColorHalo()",
+      "result": "Passed",
+      "durationInSeconds": 0.012130022048950195
+    },
+    {
+      "nodeIdentifier": "PortraitDepthControlTests/testPhotoEncoderBakesSelectedBlurStrengthIntoProcessedImage()",
+      "result": "Passed",
+      "durationInSeconds": 0.011183023452758789
+    },
+    {
+      "nodeIdentifier": "PortraitDepthControlTests/testPreviewMaskSurvivesTransientSegmentationMissesDuringSliderDrag()",
+      "result": "Passed",
+      "durationInSeconds": 0.00034999847412109375
+    },
+    {
+      "nodeIdentifier": "PortraitDepthControlTests/testPreviewProcessorInvalidatesMaskWhenPortraitStops()",
+      "result": "Passed",
+      "durationInSeconds": 0.00027298927307128906
+    },
+    {
+      "nodeIdentifier": "PortraitDepthControlTests/testPreviewRefinesPersonMaskBeforeApplyingBlur()",
+      "result": "Passed",
+      "durationInSeconds": 0.038160085678100586
+    },
+    {
+      "nodeIdentifier": "PortraitDepthControlTests/testStrengthChangesConvergeWithoutResettingMask()",
+      "result": "Passed",
+      "durationInSeconds": 0.00033605098724365234
+    },
+    {
+      "nodeIdentifier": "PortraitOptimizationPhysicalTests/testFrontPortraitContinuousAdjustmentAndCapture()",
+      "result": "Failed",
+      "durationInSeconds": 20.586843967437744
+    },
+    {
+      "nodeIdentifier": "PortraitOptimizationPhysicalTests/testManualMainHEIFPortraitCanBeEnabledAndCaptured()",
+      "result": "Failed",
+      "durationInSeconds": 0.701309084892273
+    },
+    {
+      "nodeIdentifier": "PortraitOptimizationPhysicalTests/testRearPortraitContinuousAdjustmentAndCapture()",
+      "result": "Failed",
+      "durationInSeconds": 15.717583894729614
+    },
+    {
+      "nodeIdentifier": "PortraitOptimizationPhysicalTests/testRearPortraitSameFrameReference()",
+      "result": "Failed",
+      "durationInSeconds": 1.5492899417877197
+    },
+    {
+      "nodeIdentifier": "PreviewBufferConfigurationTests/testActiveFormatsRetainExactAspectAndStayWithinProcessingBudget()",
+      "result": "Passed",
+      "durationInSeconds": 0.0007309913635253906
+    },
+    {
+      "nodeIdentifier": "PreviewBufferConfigurationTests/testInvalidAndUnrepresentableSizesDoNotRequestIllegalBufferDimensions()",
+      "result": "Passed",
+      "durationInSeconds": 0.000616908073425293
+    },
+    {
+      "nodeIdentifier": "PreviewExposureAssistPhysicalTests/testAutomaticSlowShutterCapsOnlyTheLivePreviewAndRestoresOnExit()",
+      "result": "Failed",
+      "durationInSeconds": 5.465810060501099
+    },
+    {
+      "nodeIdentifier": "PreviewExposureAssistPhysicalTests/testSlowShutterPresetAutomaticallyOptimizesSlowPreviewAndRestoresStillExposure()",
+      "result": "Failed",
+      "durationInSeconds": 42.67169892787933
+    },
+    {
+      "nodeIdentifier": "PreviewExposureAssistPhysicalTests/testSmoothPreviewKeepsRequestedStillExposureAndSurvivesRapidToggles()",
+      "result": "Failed",
+      "durationInSeconds": 45.7782928943634
+    },
+    {
+      "nodeIdentifier": "PreviewIsolationTests/testBlockedPreviewDoesNotBlockZoomOrCaptureAndThenResumesLatestFrame()",
+      "result": "Passed",
+      "durationInSeconds": 0.02108895778656006
+    },
+    {
+      "nodeIdentifier": "PreviewWorkReuseTests/testConcurrentPickersAndReopenedEditorsShareSameRenderedThumbnails()",
+      "result": "Passed",
+      "durationInSeconds": 0.001453995704650879
+    },
+    {
+      "nodeIdentifier": "PreviewWorkReuseTests/testRenderedSDRHistogramMatchesGraphAndAvoidsRepeatedFilterWork()",
+      "result": "Passed",
+      "durationInSeconds": 0.20246398448944092
+    },
+    {
+      "nodeIdentifier": "ProResCompatibilityPhysicalTests/testActualCameraFrameEncodesWithAllConventionalProfiles()",
+      "result": "Passed",
+      "durationInSeconds": 2.369292974472046
+    },
+    {
+      "nodeIdentifier": "ProResCompatibilityPhysicalTests/testDeviceEncodersProduceDecodableProResFiles()",
+      "result": "Passed",
+      "durationInSeconds": 5.95633602142334
+    },
+    {
+      "nodeIdentifier": "ProResOptionsLayoutTests/testRAWRemainsUnselectableAndRepeatedPanelChangesFitNarrowScreens()",
+      "result": "Passed",
+      "durationInSeconds": 5.734149932861328
+    },
+    {
+      "nodeIdentifier": "ProResRAWPhysicalTests/testRAWMetadataAfterWhiteBalanceLockWithoutWritingFiles()",
+      "result": "Passed",
+      "durationInSeconds": 1.4185459613800049
+    },
+    {
+      "nodeIdentifier": "ProToneCapturePhysicalTests/testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving()",
+      "result": "Failed",
+      "durationInSeconds": 35.38104796409607
+    },
+    {
+      "nodeIdentifier": "ProToneTests/testCurvesRemainMonotonicNeutralAndRetainExtendedHighlights()",
+      "result": "Passed",
+      "durationInSeconds": 0.044775962829589844
+    },
+    {
+      "nodeIdentifier": "ProToneTests/testEachToneIsEncodedInTenBitHDRHEIFWithoutSavingToPhotos()",
+      "result": "Passed",
+      "durationInSeconds": 0.14106905460357666
+    },
+    {
+      "nodeIdentifier": "ProToneTests/testReferenceDirectionsAndNaturalBaseline()",
+      "result": "Passed",
+      "durationInSeconds": 0.013626933097839355
+    },
+    {
+      "nodeIdentifier": "RAWFilterPolicyTests/testRAWDisablesFilterPanelAndPreservesSelectionForProcessedFormats()",
+      "result": "Passed",
+      "durationInSeconds": 0.03922390937805176
+    },
+    {
+      "nodeIdentifier": "RAWFilterPolicyTests/testRAWPreviewBypassesFilmAndPairOnlyFiltersJPEGWhilePreservingDNGBytes()",
+      "result": "Passed",
+      "durationInSeconds": 0.01238703727722168
+    },
+    {
+      "nodeIdentifier": "SilentShutterPhysicalTests/testNativeShutterSuppressionAcrossFormatsAndLiveWithoutSaving()",
+      "result": "Failed",
+      "durationInSeconds": 56.25888395309448
+    },
+    {
+      "nodeIdentifier": "SlowMotionLensTransitionPhysicalTests/testSlowMotionFocalSwitchLatencyAndRecording()",
+      "result": "Failed",
+      "durationInSeconds": 237.3357049226761
+    },
+    {
+      "nodeIdentifier": "SlowShutterPresetTests/testAutomaticModeKeepsApertureModeAndPresetOnlyCapsAutomaticExposure()",
+      "result": "Skipped",
+      "durationInSeconds": 0.03321099281311035
+    },
+    {
+      "nodeIdentifier": "SlowShutterPresetTests/testLongPresetNamesUseTwoLinesAndShortNamesRemainSingleLine()",
+      "result": "Passed",
+      "durationInSeconds": 0.00039398670196533203
+    },
+    {
+      "nodeIdentifier": "SlowShutterPresetTests/testPresetCellsAlignWithFiveLensButtonSlots()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003560781478881836
+    },
+    {
+      "nodeIdentifier": "SlowShutterPresetTests/testPresetIsUnsupportedWhenHardwareCannotFitIt()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003390312194824219
+    },
+    {
+      "nodeIdentifier": "SlowShutterPresetTests/testPresetRangesAndSuggestionsAreValidAndClampToHardware()",
+      "result": "Passed",
+      "durationInSeconds": 0.00032806396484375
+    },
+    {
+      "nodeIdentifier": "SlowShutterPresetTests/testPresetSlotsAlignWithFocalSlotsAndSurviveRapidToggleOnDevice()",
+      "result": "Failed",
+      "durationInSeconds": 2.93123996257782
+    },
+    {
+      "nodeIdentifier": "SlowShutterPresetTests/testPreviewOptimizationOnlyActivatesWhenSlowShutterWouldExceedPreviewCadence()",
+      "result": "Passed",
+      "durationInSeconds": 0.0009770393371582031
+    },
+    {
+      "nodeIdentifier": "SlowShutterPresetTests/testSelectingPresetsConstrainsManualExposureAndRepeatedTogglingClearsState()",
+      "result": "Skipped",
+      "durationInSeconds": 0.05421805381774902
+    },
+    {
+      "nodeIdentifier": "SlowShutterPresetTests/testSlowShutterAllowsSwitchingRearLenses()",
+      "result": "Failed",
+      "durationInSeconds": 10.04260802268982
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testAutomaticLightTrailsAndWaterCompleteOrRejectUnsafeExposure()",
+      "result": "Passed",
+      "durationInSeconds": 17.443830013275146
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testAutomaticNewPresetsPreserveModeAndValidateMeteredExposure()",
+      "result": "Passed",
+      "durationInSeconds": 16.784008979797363
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testAutomaticSequencesWithMeteredExposureCompensation()",
+      "result": "Passed",
+      "durationInSeconds": 41.89588391780853
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testEarlyFinishCancellationAndRepeatedSelectionRecover()",
+      "result": "Passed",
+      "durationInSeconds": 11.707749962806702
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testManualBracketSpeedComparisonAndRepeatedCapture()",
+      "result": "Passed",
+      "durationInSeconds": 188.8201038837433
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testManualLightTrailsAndWaterCompleteWithMetadata()",
+      "result": "Passed",
+      "durationInSeconds": 25.933021903038025
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testManualMotionBlurCompletesWithShortSourceExposures()",
+      "result": "Passed",
+      "durationInSeconds": 5.13421893119812
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testPanningLatencyWithAndWithoutPreviewAssist()",
+      "result": "Passed",
+      "durationInSeconds": 8.009595036506653
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testSingleFramePresetsCaptureRequestedExposureWithoutStartingSequence()",
+      "result": "Passed",
+      "durationInSeconds": 2.5981030464172363
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testStarTrailsEarlyFinishCancellationAndRepeatedSelection()",
+      "result": "Passed",
+      "durationInSeconds": 14.279358983039856
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequencePhysicalTests/testStarTrailsFull120FrameStreamingSequence()",
+      "result": "Passed",
+      "durationInSeconds": 155.58546698093414
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequenceTests/testAverageBlendsFrames()",
+      "result": "Passed",
+      "durationInSeconds": 0.005743980407714844
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequenceTests/testFourPresetsUseCorrectSequenceExposureAndBlend()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003070831298828125
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequenceTests/testLightenKeepsBrightestChannels()",
+      "result": "Passed",
+      "durationInSeconds": 0.004993081092834473
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequenceTests/testStreamingAverageMatchesLazyAverageAndRejectsInvalidFrame()",
+      "result": "Passed",
+      "durationInSeconds": 0.013192057609558105
+    },
+    {
+      "nodeIdentifier": "SlowShutterSequenceTests/testStreamingLightenRetainsMovingBrightPointsAcross120Frames()",
+      "result": "Passed",
+      "durationInSeconds": 0.05356705188751221
+    },
+    {
+      "nodeIdentifier": "ToolbarHistogramLayoutTests/testAllRatioTransitionsKeepToolbarFixedAndHistogramClear()",
+      "result": "Skipped",
+      "durationInSeconds": 0.0006500482559204102
+    },
+    {
+      "nodeIdentifier": "VideoCodecPhysicalTests/testActualCodecsAndColorsRepeatedRecording()",
+      "result": "Failed",
+      "durationInSeconds": 32.81687605381012
+    },
+    {
+      "nodeIdentifier": "VideoColorPhysicalTests/testAppleLogLUTBurnKeepsLogVideoTagsAndTenBitPixels()",
+      "result": "Failed",
+      "durationInSeconds": 22.40642499923706
+    },
+    {
+      "nodeIdentifier": "VideoColorPhysicalTests/testColorSettingsAndFallbackNeverConfuseLogWithHDR()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004049539566040039
+    },
+    {
+      "nodeIdentifier": "VideoColorPhysicalTests/testEveryAvailableColorSpaceRecordsRealTagsAndRestoresPhotos()",
+      "result": "Failed",
+      "durationInSeconds": 26.976192951202393
+    },
+    {
+      "nodeIdentifier": "VideoColorPhysicalTests/testSDRAndP3FiltersAreBakedIntoRecordedPixelsWithStableFrameDelivery()",
+      "result": "Failed",
+      "durationInSeconds": 21.964942932128906
+    },
+    {
+      "nodeIdentifier": "VideoDetailLayoutTests/testDraggingTrimHandlesSeeksThePreviewToEachCutPoint()",
+      "result": "Passed",
+      "durationInSeconds": 0.24746692180633545
+    },
+    {
+      "nodeIdentifier": "VideoDetailLayoutTests/testEditedVideoCanBeExportedAsAStandaloneFilesCopy()",
+      "result": "Passed",
+      "durationInSeconds": 0.12479794025421143
+    },
+    {
+      "nodeIdentifier": "VideoDetailLayoutTests/testLevelStaysInsideAllPhotoAndVideoRatioPreviews()",
+      "result": "Passed",
+      "durationInSeconds": 15.210430979728699
+    },
+    {
+      "nodeIdentifier": "VideoDetailLayoutTests/testLivePanelPresentationRepeatedlyAndCaptureLayout()",
+      "result": "Passed",
+      "durationInSeconds": 2.7198519706726074
+    },
+    {
+      "nodeIdentifier": "VideoDetailLayoutTests/testLiveSelectionMovesThreeSecondsAndRestoresVideoTrim()",
+      "result": "Passed",
+      "durationInSeconds": 0.9281470775604248
+    },
+    {
+      "nodeIdentifier": "VideoDetailLayoutTests/testVideoEditorCanOpenFromFullscreenCoverWithStoredFilter()",
+      "result": "Passed",
+      "durationInSeconds": 3.1709409952163696
+    },
+    {
+      "nodeIdentifier": "VideoDetailLayoutTests/testVideoInfoAndLandscapeLevelFitCompactAndRegularScreens()",
+      "result": "Passed",
+      "durationInSeconds": 2.243067979812622
+    },
+    {
+      "nodeIdentifier": "VideoDetailLayoutTests/testVideoPlaybackRotatesWithoutMovingHeaderOrActions()",
+      "result": "Passed",
+      "durationInSeconds": 6.235484004020691
+    },
+    {
+      "nodeIdentifier": "VideoEditorWorkflowTests/testLivePhotoSelectionUsesPlayheadAndNeverExceedsThreeSeconds()",
+      "result": "Passed",
+      "durationInSeconds": 0.0012339353561401367
+    },
+    {
+      "nodeIdentifier": "VideoEditorWorkflowTests/testLogVideosExposeTrimAndLogFiltersButNoAdjustmentTool()",
+      "result": "Passed",
+      "durationInSeconds": 0.0010460615158081055
+    },
+    {
+      "nodeIdentifier": "VideoEditorWorkflowTests/testSDRAndP3ExposeAdjustmentTool()",
+      "result": "Passed",
+      "durationInSeconds": 0.0008240938186645508
+    },
+    {
+      "nodeIdentifier": "VideoEditorWorkflowTests/testTrimPanelUsesCompactHeightWithoutMovingToolPanelForOtherModes()",
+      "result": "Passed",
+      "durationInSeconds": 0.0008139610290527344
+    },
+    {
+      "nodeIdentifier": "VideoEditorWorkflowTests/testTrimSelectionClampsToVideoAndKeepsMinimumDuration()",
+      "result": "Passed",
+      "durationInSeconds": 0.0008111000061035156
+    },
+    {
+      "nodeIdentifier": "VideoEditorWorkflowTests/testTrimSelectionHandlesInvalidValuesAndShortClips()",
+      "result": "Passed",
+      "durationInSeconds": 0.0008220672607421875
+    },
+    {
+      "nodeIdentifier": "VideoEditorWorkflowTests/testVideoTransferMetadataMapsLogHDRP3AndSDR()",
+      "result": "Passed",
+      "durationInSeconds": 0.0009069442749023438
+    },
+    {
+      "nodeIdentifier": "VideoEncodingPolicyTests/testBitratePresetAppliesOnlyToHEVCAndH264()",
+      "result": "Passed",
+      "durationInSeconds": 0.0009859800338745117
+    },
+    {
+      "nodeIdentifier": "VideoEncodingPolicyTests/testExternalRAWCapacityShowsSpaceAndApproximateRemainingTime()",
+      "result": "Passed",
+      "durationInSeconds": 0.0010190010070800781
+    },
+    {
+      "nodeIdentifier": "VideoEncodingPolicyTests/testExternalRecordingAccessCanBeReleasedAtWriterCompletionAndOnlyOnce()",
+      "result": "Passed",
+      "durationInSeconds": 0.0008410215377807617
+    },
+    {
+      "nodeIdentifier": "VideoEncodingPolicyTests/testExternalRecordingAccessReleasesScopeWhenRecorderSetupFails()",
+      "result": "Passed",
+      "durationInSeconds": 0.0008540153503417969
+    },
+    {
+      "nodeIdentifier": "VideoEncodingPolicyTests/testH264FallsBackToSDRWithoutDiscardingCodec()",
+      "result": "Passed",
+      "durationInSeconds": 0.0007330179214477539
+    },
+    {
+      "nodeIdentifier": "VideoEncodingPolicyTests/testRAWConfigurationDoesNotQueryMetadataForRejectedDestination()",
+      "result": "Passed",
+      "durationInSeconds": 0.0007430315017700195
+    },
+    {
+      "nodeIdentifier": "VideoEncodingPolicyTests/testRAWConfigurationNeverQueriesSystemMetadataBeforeWhiteBalanceLocks()",
+      "result": "Passed",
+      "durationInSeconds": 0.0009779930114746094
+    },
+    {
+      "nodeIdentifier": "VideoEncodingPolicyTests/testRAWConfigurationPreservesRecommendedSettingsAndMetadataInOrder()",
+      "result": "Passed",
+      "durationInSeconds": 0.0007309913635253906
+    },
+    {
+      "nodeIdentifier": "VideoEncodingPolicyTests/testStorageRejectsUnknownSpaceDisconnectionAndSystemWarnings()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006740093231201172
+    },
+    {
+      "nodeIdentifier": "VideoEncodingPolicyTests/testVideoWhiteBalanceLockIsOptInExceptForRAWRequirements()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006829500198364258
+    },
+    {
+      "nodeIdentifier": "VideoFrameFilterRendererTests/testFoodCubeLookIsBakedIntoSDRAndP3VideoFrames()",
+      "result": "Passed",
+      "durationInSeconds": 0.02749502658843994
+    },
+    {
+      "nodeIdentifier": "VideoFrameFilterRendererTests/testFoodCubeRendersThirty640pFramesForPerformanceSample()",
+      "result": "Passed",
+      "durationInSeconds": 0.11934006214141846
+    },
+    {
+      "nodeIdentifier": "VideoFrameFilterRendererTests/testLogLUTRenderKeepsTenBitEncoderPixelFormat()",
+      "result": "Passed",
+      "durationInSeconds": 0.018952012062072754
+    },
+    {
+      "nodeIdentifier": "VideoFrameFilterRendererTests/testLogLUTRenderPerformanceAt640x360ForThirtyFrames()",
+      "result": "Passed",
+      "durationInSeconds": 0.6496009826660156
+    },
+    {
+      "nodeIdentifier": "VideoFrameFilterRendererTests/testStillPhotoFilterIsRenderedIntoEncoderPixelBufferInSDRAndP3()",
+      "result": "Passed",
+      "durationInSeconds": 0.012279987335205078
+    },
+    {
+      "nodeIdentifier": "VideoMacroIndicatorTests/testMacroIndicatorReplacesPortraitDepthControlAndSliderGrowsUpward()",
+      "result": "Passed",
+      "durationInSeconds": 1.3896089792251587
+    },
+    {
+      "nodeIdentifier": "VideoMacroIndicatorTests/testRecordingControlsKeepPositionsAcrossRatiosAndRotation()",
+      "result": "Passed",
+      "durationInSeconds": 11.363343000411987
+    },
+    {
+      "nodeIdentifier": "VideoModeTransitionTests/testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching()",
+      "result": "Failed",
+      "durationInSeconds": 15.915337920188904
+    },
+    {
+      "nodeIdentifier": "VideoModeTransitionTests/testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips()",
+      "result": "Failed",
+      "durationInSeconds": 22.59485900402069
+    },
+    {
+      "nodeIdentifier": "VideoModeTransitionTests/testRepeatedModeTransitionPreviewLatency()",
+      "result": "Passed",
+      "durationInSeconds": 9.070527076721191
+    },
+    {
+      "nodeIdentifier": "VideoOverlayLayoutTests/testHUDAndHistogramStayInsideEveryVideoRatioAndFrameRatePopupFits()",
+      "result": "Passed",
+      "durationInSeconds": 11.59627103805542
+    },
+    {
+      "nodeIdentifier": "VideoSpecificationTests/testAllSupportedVideoSpecificationsWriteMatchingTracks()",
+      "result": "Failed",
+      "durationInSeconds": 24.32819700241089
+    },
+    {
+      "nodeIdentifier": "VideoSpecificationTests/testCinematicOutputGraphsAgainstAppleCapturePatternOnDevice()",
+      "result": "Passed",
+      "durationInSeconds": 16.07733404636383
+    },
+    {
+      "nodeIdentifier": "VideoSpecificationTests/testHighFrameRateAndFrontCameraRestoreSupportedSpecifications()",
+      "result": "Failed",
+      "durationInSeconds": 21.237264037132263
+    },
+    {
+      "nodeIdentifier": "VideoSpecificationTests/testLevelUsesAllFourUprightEdgesAndLandscapeFeedback()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004849433898925781
+    },
+    {
+      "nodeIdentifier": "VideoSpecificationTests/testOpenGateSwitchLimitsVideoRatiosAndPreviewCadenceFollowsSelectedRate()",
+      "result": "Passed",
+      "durationInSeconds": 0.00043010711669921875
+    },
+    {
+      "nodeIdentifier": "VideoSpecificationTests/testOpenGateSwitchRecordsOnlyFourByThreeOrSquareOnDevice()",
+      "result": "Failed",
+      "durationInSeconds": 23.092330932617188
+    },
+    {
+      "nodeIdentifier": "VideoSpecificationTests/testRenderedVideoPreviewCadenceTracksSupportedRates()",
+      "result": "Failed",
+      "durationInSeconds": 12.02386200428009
+    },
+    {
+      "nodeIdentifier": "VideoSpecificationTests/testSlowMotionAndCinematicRoutesOnDevice()",
+      "result": "Failed",
+      "durationInSeconds": 21.37595796585083
+    },
+    {
+      "nodeIdentifier": "VideoSpecificationTests/testUnsupportedFrameRateFallsBackWithinSameResolution()",
+      "result": "Passed",
+      "durationInSeconds": 0.00037097930908203125
+    },
+    {
+      "nodeIdentifier": "VideoSpecificationTests/testUnsupportedRateCannotLeaveToolbarAndCaptureOutOfSync()",
+      "result": "Passed",
+      "durationInSeconds": 7.318258047103882
+    },
+    {
+      "nodeIdentifier": "VideoWhiteBalancePhysicalTests/testVideoWhiteBalanceLockIsOptionalAndRestoredAfterRecording()",
+      "result": "Failed",
+      "durationInSeconds": 19.776901960372925
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testCinematicPolicyAndAutomaticSubmodeSpecificationSelection()",
+      "result": "Passed",
+      "durationInSeconds": 0.0005059242248535156
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testCinematicResolutionAndFrameRateCanBeSelectedAsApplePairs()",
+      "result": "Passed",
+      "durationInSeconds": 0.11706292629241943
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testFrameRateChoicesHaveThirtySelectedByDefault()",
+      "result": "Passed",
+      "durationInSeconds": 0.12942397594451904
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testLifecycleStopFreezesClockAndRapidModeRequestsCoalesce()",
+      "result": "Failed",
+      "durationInSeconds": 15.880452990531921
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testPhotoFilterLookAndEditsAreAvailableOnlyForSDRAndP3Video()",
+      "result": "Passed",
+      "durationInSeconds": 0.16730093955993652
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testSlowMotionPickerShowsCaptureFormatsAndKeepsPlaybackRateSeparate()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003579854965209961
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testSlowMotionPolicyOnlyAllowsSupportedNormalVideoCombinations()",
+      "result": "Passed",
+      "durationInSeconds": 0.0002999305725097656
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testSlowMotionSchedulerRetimes120FPSCaptureAndRejectsInvalidTime()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003319978713989258
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testSlowMotionSchedulerThroughputAndRepeatedStartStopState()",
+      "result": "Passed",
+      "durationInSeconds": 0.004930973052978516
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testSubmodeFocalChoicesOnlyIncludeLensesSupportingTheSelectedVideoSettings()",
+      "result": "Passed",
+      "durationInSeconds": 0.00032401084899902344
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testTimeLapsePresetBarMatchesFocalBarAndSurvivesRapidChanges()",
+      "result": "Passed",
+      "durationInSeconds": 1.222517967224121
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testTimeLapsePresetsSchedulerAndModeStability()",
+      "result": "Passed",
+      "durationInSeconds": 0.43192601203918457
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testTimeLapseSchedulerThroughput()",
+      "result": "Passed",
+      "durationInSeconds": 0.0036950111389160156
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testVideoLensCapabilitiesExposeOnlyTheRequestedSubmodeRoutes()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003459453582763672
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testVideoSubmodeFallsBackToTheNearestSafeDefaultAndPreservesValidChoice()",
+      "result": "Passed",
+      "durationInSeconds": 0.00028395652770996094
+    },
+    {
+      "nodeIdentifier": "VideoWorkflowTests/testVideoSubmodeSwitchesAreExclusiveAndKeepOnlySupportedSettings()",
+      "result": "Passed",
+      "durationInSeconds": 1.1836540699005127
+    },
+    {
+      "nodeIdentifier": "WhiteBalanceRouteSafetyTests/testStaleCustomWhiteBalanceDuringRouteChangesDoesNotCrashVirtualCamera()",
+      "result": "Passed",
+      "durationInSeconds": 1.2767670154571533
+    },
+    {
+      "nodeIdentifier": "ZoomDialDetentTests/testEveryAnchorIsStrongerInBothDirections()",
+      "result": "Passed",
+      "durationInSeconds": 0.0004260540008544922
+    },
+    {
+      "nodeIdentifier": "ZoomDialDetentTests/testFastDragCoalescesTicksAndPrioritizesAnchor()",
+      "result": "Passed",
+      "durationInSeconds": 0.0003579854965209961
+    },
+    {
+      "nodeIdentifier": "ZoomDialDetentTests/testJitterAndStationaryValuesDoNotRepeatFeedback()",
+      "result": "Passed",
+      "durationInSeconds": 0.00031507015228271484
+    },
+    {
+      "nodeIdentifier": "ZoomDialDetentTests/testOrdinaryTicksInBothDirections()",
+      "result": "Passed",
+      "durationInSeconds": 0.00031197071075439453
+    },
+    {
+      "nodeIdentifier": "ZoomThrottleTests/testCancelDiscardsOldTargetAndAllowsNewGesture()",
+      "result": "Passed",
+      "durationInSeconds": 0.020940065383911133
+    },
+    {
+      "nodeIdentifier": "ZoomThrottleTests/testFlushAppliesFinalZoomBeforeCaptureAndDoesNotDeliverTwice()",
+      "result": "Passed",
+      "durationInSeconds": 0.10756397247314453
+    },
+    {
+      "nodeIdentifier": "ZoomThrottleTests/testLensBoundaryHysteresisAvoidsRepeatedPhysicalSwitches()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006799697875976562
+    },
+    {
+      "nodeIdentifier": "ZoomThrottleTests/testPreviewKeepsUpdatingThroughoutRapidZoomDragAndRecovers()",
+      "result": "Passed",
+      "durationInSeconds": 0.0006909370422363281
+    },
+    {
+      "nodeIdentifier": "ZoomThrottleTests/testThousandsOfDragEventsDeliverOnlyTheLatestPendingValue()",
+      "result": "Passed",
+      "durationInSeconds": 0.0222170352935791
+    },
+    {
+      "nodeIdentifier": "ZoomWheelReopenPhysicalTests/testReopeningKeepsActualZoomAndAnchorAcrossBothModes()",
+      "result": "Failed",
+      "durationInSeconds": 1.7066808938980103
+    }
+  ],
+  "limitations": [
+    "未重跑失败项，未修改功能或测试代码；多个失败可能受共享相机状态影响，根因未确认。",
+    "未执行系统相册写入/删除、外接 RAW 实盘录制和指定手持姿态用例。",
+    "自然暗光夜景本轮未触发；受控注入测试不等于自然环境验证。",
+    "无功耗仪测量、无正式 App 独立内存/屏幕扫描帧率测量、无人像复杂边缘主观验收。"
+  ],
+  "assertionFailureCount": 133,
+  "unexpectedFailureCount": 8,
+  "normalAppRestored": {
+    "build": "succeeded",
+    "installed": true,
+    "launched": true,
+    "bundleID": "com.shurrikann.LumaCamera",
+    "log": "/private/tmp/LumaCamera-FullDevice-20261024-FinalApp.log",
+    "note": "恢复普通版本，不是失败功能复测"
+  }
+}

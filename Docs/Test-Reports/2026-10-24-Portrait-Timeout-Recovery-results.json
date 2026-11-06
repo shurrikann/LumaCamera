@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-24",
+  "device": "iPhone 17 Pro / iOS 27.0.1 (24A446)",
+  "testMethods": [
+    {
+      "test": "PortraitCapturePhysicalTests/testPortraitProcessedAndProRAWCapturesWithoutSaving()",
+      "seconds": 16.238,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitRecovery-20261024-Real.xcresult"
+    },
+    {
+      "test": "PortraitOptimizationPhysicalTests/testManualMainHEIFPortraitCanBeEnabledAndCaptured()",
+      "seconds": 11.196,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitRecovery-20261024-Real.xcresult"
+    },
+    {
+      "test": "VideoModeTransitionTests/testAutomaticVideoRouteRestoresPhotoFormatAndLensSwitching()",
+      "seconds": 11.085,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitRecovery-20261024-Real.xcresult"
+    },
+    {
+      "test": "PortraitCapturePhysicalTests/testAutomaticMacroSuspendsPortraitCaptureAndRecovers()",
+      "seconds": 5.668,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PortraitRecovery-20261024-Near.xcresult"
+    },
+    {
+      "test": "LivePhotoPhysicalTests/testNativeJPEGAndHEIFLivePairsDecodeWithoutWritingPhotos()",
+      "seconds": 12.708,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PhotoTimeout-20261024-Final.xcresult"
+    },
+    {
+      "test": "NightAdaptiveCapturePhysicalTests/testThreeSixNineFrameBatchesAndActualFileInformation()",
+      "seconds": 18.666,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PhotoTimeout-20261024-Final.xcresult"
+    },
+    {
+      "test": "PhotoCaptureTimeoutPhysicalTests/testMissingPortraitFinalReleasesOrderedResultsAndVideoCanRecord()",
+      "seconds": 8.96,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PhotoTimeout-20261024-Final.xcresult"
+    },
+    {
+      "test": "PhotoCaptureTimeoutPhysicalTests/testTimeoutAfterLeavingCameraCannotRestartUntilUserReturns()",
+      "seconds": 6.55,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PhotoTimeout-20261024-Final.xcresult"
+    },
+    {
+      "test": "PhotoCaptureTimeoutPhysicalTests/testFourUnfinishedRequestsReleaseAllCapacityAndCanCaptureAgain()",
+      "seconds": 13.017,
+      "result": "Passed",
+      "resultBundle": "/private/tmp/LumaCamera-PhotoTimeout-20261024-Four.xcresult"
+    }
+  ],
+  "passed": 9,
+  "failed": 0,
+  "skipped": 0,
+  "metrics": [
+    "PORTRAIT-CAPTURE case=HEIF-12MP dimensions=3000x4000 matte=未生成可用人物遮罩，保留清晰原片 callback-seconds=1.2435461666755145",
+    "PORTRAIT-CAPTURE case=HEIF-48MP-control dimensions=3024x4032 pixels=12192768 callback-seconds=0.777412416660809",
+    "PORTRAIT-CAPTURE case=HEIF-48MP dimensions=6000x8000 matte=未生成可用人物遮罩，保留清晰原片",
+    "PORTRAIT-CAPTURE case=ProRAW-48MP dimensions=8064x6048 embeddedMatte=false decodedMatte=false reported=未生成可用人物遮罩，保留清晰原片",
+    "PORTRAIT-MACRO-CAPTURE samples=3 p50=0.5991913333418779 max=1.076783875003457 noPhotosWrites=true",
+    "NIGHT-ADAPTIVE target=3 captured=3 帧 merged=3 batches=[3] seconds=1.1443675416667247 hostFootprintMiB=502.48656463623047 injected-scene=true",
+    "NIGHT-ADAPTIVE target=6 captured=6 帧 merged=6 batches=[3, 6] seconds=2.579502666660119 hostFootprintMiB=609.8147354125977 injected-scene=true",
+    "NIGHT-ADAPTIVE target=9 captured=9 帧 merged=9 batches=[3, 6, 9] seconds=3.6407965416728985 hostFootprintMiB=609.8147354125977 injected-scene=true",
+    "NIGHT-ADAPTIVE target=6 captured=6 帧 merged=6 batches=[3, 6] seconds=2.6496988750004675 hostFootprintMiB=609.8147354125977 injected-scene=true",
+    "NIGHT-ADAPTIVE target=9 captured=9 帧 merged=9 batches=[3, 6, 9] seconds=3.751120416665799 hostFootprintMiB=652.8616561889648 injected-scene=true",
+    "2026-10-24 18:04:24.553978+0800 LumaCamera[6161:2139492] Photo capture timed out: request=16 unfinished=1; retire old photo output",
+    "PHOTO-TIMEOUT-RECOVERY injected=true releasedSeconds=6.1591943749954225 photosAfterRecovery=2 reorderedSuccessRetained=true oldCompletionReplayed=2 portraitFallback=true videoRecorded=true noPhotosWrites=true",
+    "2026-10-24 18:04:32.249748+0800 LumaCamera[6161:2139493] Photo capture timed out: request=21 unfinished=1; retire old photo output",
+    "PHOTO-TIMEOUT-LIFECYCLE injected=true backgroundRestart=false pending=0 returnedPhoto=1 noPhotosWrites=true",
+    "2026-10-24 18:07:37.215446+0800 LumaCamera[6174:2143083] Photo capture timed out: request=3 unfinished=4; retire old photo output",
+    "PHOTO-TIMEOUT-FOUR injected=true unfinishedBefore=4 unfinishedAfter=0 resumedPhoto=1 totalSeconds=11.993029166667839 noPhotosWrites=true"
+  ],
+  "scope": "真实远景人像/ProRAW/M挡与视频回归、真实近距微距优先，以及注入漏最终回调的收尾恢复；不等于复现平台内部卡死原因"
+}

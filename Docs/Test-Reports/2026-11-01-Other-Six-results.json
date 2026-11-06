@@ -1,0 +1,276 @@
+{
+  "status": "completed_targeted_validation",
+  "device": "iPhone 17 Pro (iPhone18,1), iOS 27.2 (24B119)",
+  "finalBatches": [
+    "Final2",
+    "Gesture3",
+    "RearPortrait",
+    "Macro"
+  ],
+  "uniqueMethods": 12,
+  "passed": 12,
+  "failed": 0,
+  "skipped": 0,
+  "testExecutionSeconds": 163.627,
+  "releaseBuild": "Release2.log: BUILD SUCCEEDED; no source warnings; AppIntents metadata warning",
+  "notFullSuite": true,
+  "diagnosticPhotosWrittenToSystemLibrary": false,
+  "batches": {
+    "Baseline": {
+      "tests": [
+        {
+          "name": "AutomaticLensStabilityPhysicalTests/testAutomaticModeUsesSystemVirtualCameraCandidatesAndWheelRetainsFullRange",
+          "status": "passed",
+          "seconds": 10.677
+        },
+        {
+          "name": "Smart48CompatibilityTests/test48MPSmartFramingHDRAndNightBoundaries",
+          "status": "passed",
+          "seconds": 12.428
+        },
+        {
+          "name": "SmartAutoFramingTests/testAutomaticHardwareFramingOnceAndCancelPendingWork",
+          "status": "failed",
+          "seconds": 4.714
+        },
+        {
+          "name": "VirtualAperturePhysicalTests/testLensRestrictionsContinuousSliderAndRealPhotoInformation",
+          "status": "failed",
+          "seconds": 20.598
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/Baseline.xcresult"
+    },
+    "Quick": {
+      "tests": [
+        {
+          "name": "AutomaticLensStabilityPhysicalTests/testAutomaticModeUsesSystemVirtualCameraCandidatesAndWheelRetainsFullRange",
+          "status": "passed",
+          "seconds": 6.596
+        },
+        {
+          "name": "Smart48CompatibilityTests/test48MPSmartFramingHDRAndNightBoundaries",
+          "status": "passed",
+          "seconds": 12.457
+        },
+        {
+          "name": "SmartAutoFramingTests/testAutomaticHardwareFramingOnceAndCancelPendingWork",
+          "status": "passed",
+          "seconds": 4.558
+        },
+        {
+          "name": "VirtualAperturePhysicalTests/testLensRestrictionsContinuousSliderAndRealPhotoInformation",
+          "status": "failed",
+          "seconds": 20.681
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/Quick.xcresult"
+    },
+    "Aperture": {
+      "tests": [
+        {
+          "name": "VirtualAperturePhysicalTests/testLensRestrictionsContinuousSliderAndRealPhotoInformation",
+          "status": "failed",
+          "seconds": 21.122
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/Aperture.xcresult"
+    },
+    "Gesture": {
+      "tests": [
+        {
+          "name": "VirtualAperturePhysicalTests/testRealFingerToolbarApertureChangesBinding",
+          "status": "failed",
+          "seconds": 122.42
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/Gesture.xcresult"
+    },
+    "Automated": {
+      "tests": [
+        {
+          "name": "AutomaticLensStabilityPhysicalTests/testAutomaticModeUsesSystemVirtualCameraCandidatesAndWheelRetainsFullRange",
+          "status": "passed",
+          "seconds": 6.189
+        },
+        {
+          "name": "CameraFocalButtonTests/testHostedFocalStripHitTargetsAfterRepeatedSelections",
+          "status": "passed",
+          "seconds": 20.977
+        },
+        {
+          "name": "CaptureStatePersistenceTests/testAllCaptureChoicesAndManualFlagsSurviveModelRecreation",
+          "status": "passed",
+          "seconds": 0.109
+        },
+        {
+          "name": "Smart48CompatibilityTests/test48MPSmartFramingHDRAndNightBoundaries",
+          "status": "failed",
+          "seconds": 11.27
+        },
+        {
+          "name": "SmartAutoFramingTests/testActualVisionCandidateScoringPerformanceAndCancellation",
+          "status": "passed",
+          "seconds": 0.549
+        },
+        {
+          "name": "SmartAutoFramingTests/testAutomaticHardwareFramingOnceAndCancelPendingWork",
+          "status": "passed",
+          "seconds": 4.799
+        },
+        {
+          "name": "VirtualAperturePhysicalTests/testLensRestrictionsContinuousSliderAndRealPhotoInformation",
+          "status": "passed",
+          "seconds": 16.068
+        },
+        {
+          "name": "VirtualAperturePhysicalTests/testVirtualAperturePreservesAutoTapAndManualFocus",
+          "status": "failed",
+          "seconds": 21.917
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/Automated.xcresult"
+    },
+    "Gesture2": {
+      "tests": [
+        {
+          "name": "VirtualAperturePhysicalTests/testRealFingerToolbarApertureChangesBinding",
+          "status": "failed",
+          "seconds": 22.244
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/Gesture2.xcresult"
+    },
+    "Gesture3": {
+      "tests": [
+        {
+          "name": "VirtualAperturePhysicalTests/testRealFingerToolbarApertureChangesBinding",
+          "status": "passed",
+          "seconds": 20.506
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/Gesture3.xcresult"
+    },
+    "Final": {
+      "tests": [
+        {
+          "name": "AutomaticLensStabilityPhysicalTests/testAutomaticModeUsesSystemVirtualCameraCandidatesAndWheelRetainsFullRange",
+          "status": "passed",
+          "seconds": 6.285
+        },
+        {
+          "name": "CameraFocalButtonTests/testHostedFocalStripHitTargetsAfterRepeatedSelections",
+          "status": "passed",
+          "seconds": 21.039
+        },
+        {
+          "name": "CaptureStatePersistenceTests/testAllCaptureChoicesAndManualFlagsSurviveModelRecreation",
+          "status": "passed",
+          "seconds": 0.105
+        },
+        {
+          "name": "Smart48CompatibilityTests/test48MPSmartFramingHDRAndNightBoundaries",
+          "status": "passed",
+          "seconds": 12.567
+        },
+        {
+          "name": "SmartAutoFramingTests/testActualVisionCandidateScoringPerformanceAndCancellation",
+          "status": "passed",
+          "seconds": 0.584
+        },
+        {
+          "name": "SmartAutoFramingTests/testAutomaticHardwareFramingOnceAndCancelPendingWork",
+          "status": "passed",
+          "seconds": 4.582
+        },
+        {
+          "name": "VirtualAperturePhysicalTests/testLensRestrictionsContinuousSliderAndRealPhotoInformation",
+          "status": "failed",
+          "seconds": 24.44
+        },
+        {
+          "name": "VirtualAperturePhysicalTests/testVirtualAperturePreservesAutoTapAndManualFocus",
+          "status": "passed",
+          "seconds": 23.367
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/Final.xcresult"
+    },
+    "RearPortrait": {
+      "tests": [
+        {
+          "name": "PortraitOptimizationPhysicalTests/testRearPortraitContinuousAdjustmentAndCapture",
+          "status": "passed",
+          "seconds": 11.056
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/RearPortrait.xcresult"
+    },
+    "Macro": {
+      "tests": [
+        {
+          "name": "PortraitCapturePhysicalTests/testAutomaticMacroSuspendsPortraitCaptureAndRecovers",
+          "status": "passed",
+          "seconds": 5.3
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/Macro.xcresult"
+    },
+    "Final2": {
+      "tests": [
+        {
+          "name": "AutomaticLensStabilityPhysicalTests/testAutomaticModeUsesSystemVirtualCameraCandidatesAndWheelRetainsFullRange",
+          "status": "passed",
+          "seconds": 6.189
+        },
+        {
+          "name": "CameraFocalButtonTests/testHostedFocalStripHitTargetsAfterRepeatedSelections",
+          "status": "passed",
+          "seconds": 21.079
+        },
+        {
+          "name": "CaptureStatePersistenceTests/testAllCaptureChoicesAndManualFlagsSurviveModelRecreation",
+          "status": "passed",
+          "seconds": 0.107
+        },
+        {
+          "name": "DepthToolbarPhysicalTests/testHEIFProToolbarPopupLayoutsLifecycleAndCapture",
+          "status": "passed",
+          "seconds": 43.45
+        },
+        {
+          "name": "Smart48CompatibilityTests/test48MPSmartFramingHDRAndNightBoundaries",
+          "status": "passed",
+          "seconds": 12.348
+        },
+        {
+          "name": "SmartAutoFramingTests/testActualVisionCandidateScoringPerformanceAndCancellation",
+          "status": "passed",
+          "seconds": 0.572
+        },
+        {
+          "name": "SmartAutoFramingTests/testAutomaticHardwareFramingOnceAndCancelPendingWork",
+          "status": "passed",
+          "seconds": 4.749
+        },
+        {
+          "name": "VirtualAperturePhysicalTests/testLensRestrictionsContinuousSliderAndRealPhotoInformation",
+          "status": "passed",
+          "seconds": 15.656
+        },
+        {
+          "name": "VirtualAperturePhysicalTests/testVirtualAperturePreservesAutoTapAndManualFocus",
+          "status": "passed",
+          "seconds": 22.615
+        }
+      ],
+      "artifact": "/tmp/LumaCamera-OtherSix-20261101/Final2.xcresult"
+    }
+  },
+  "limits": [
+    "RearPortrait 55 preview segmentation samples: accepted 3, unavailable 52; not a stable segmentation accuracy measurement",
+    "No long thermal soak or display FPS measurement",
+    "One RearPortrait summary export denied by automatic approval; raw XCTest log retained"
+  ],
+  "normalAppRestored": true
+}

@@ -1,0 +1,37 @@
+{
+  "device": "iPhone17 Pro",
+  "os": "iOS27.0.1",
+  "passedMethods": 3,
+  "continuousUpdates": 270,
+  "previewPublishedFrames": [
+    47,
+    46,
+    47
+  ],
+  "previewWindowSeconds": [
+    1.56184154,
+    1.55247675,
+    1.56010408
+  ],
+  "maxPublicationGapSeconds": [
+    0.04775138,
+    0.04799308,
+    0.05204404
+  ],
+  "shapeAddedRedEnergy": {
+    "point": 353.609569,
+    "panel": 0,
+    "disc": 0.008194,
+    "horizontalEdge": 0,
+    "verticalEdge": 0,
+    "diagonalEdge": 0.399342
+  },
+  "captureSeconds": [
+    1.18582321,
+    0.7616625
+  ],
+  "resultBundle": "/private/tmp/LumaCamera-VirtualAperture-PointOnly.xcresult",
+  "normalBuild": "passed",
+  "installationSequence": 12560,
+  "normalLaunch": "succeeded"
+}

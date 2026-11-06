@@ -1,0 +1,152 @@
+{
+  "issue": "SLOW-RESUME-001",
+  "status": "open_not_reproduced",
+  "reportedSymptoms": [
+    "idle slow shutter preset",
+    "long unspecified time away",
+    "frozen preview and all buttons"
+  ],
+  "device": "iPhone 17 Pro iPhone18,1 iOS27.2 24B119",
+  "finalTargetedPassed": 11,
+  "finalTargetedFailed": 0,
+  "testExecutionSeconds": 84.398,
+  "coldReady": {
+    "samples": 5,
+    "medianSeconds": 9.364021249988582,
+    "maxSeconds": 9.38569395832019,
+    "scope": "isolated model/engine saved-state reconstruction, not process launch"
+  },
+  "warmReturn": {
+    "samples": 10,
+    "medianSeconds": 0.5661468541657086,
+    "maxSeconds": 0.6506292499834672,
+    "scope": "explicit lifecycle calls, not OS suspension"
+  },
+  "actualBackground": {
+    "seconds": 186.00482387500233,
+    "newFrameSeconds": 0.43158737500198185,
+    "userConfirmedDurationButton": true,
+    "automaticGestureAssertionPassed": false
+  },
+  "actualNormalColdLaunchUserConfirmedDurationAndSettings": true,
+  "batches": {
+    "Baseline": [
+      {
+        "name": "SlowShutterLifecyclePhysicalTests/testAllIdlePresetsRestoreIntoResponsiveCamera",
+        "status": "passed",
+        "seconds": 50.364
+      }
+    ],
+    "UserState": [
+      {
+        "name": "SlowShutterLifecyclePhysicalTests/testAllIdlePresetsRestoreIntoResponsiveCamera",
+        "status": "failed",
+        "seconds": 53.438
+      }
+    ],
+    "RealBackground": [
+      {
+        "name": "SlowShutterLifecyclePhysicalTests/testActualBackgroundReturnWithIdleLightTrailsPreset",
+        "status": "failed",
+        "seconds": 373.589
+      }
+    ],
+    "Final": [
+      {
+        "name": "CameraPopupLifecycleTests/testGalleryReviewKeepsPopupState",
+        "status": "passed",
+        "seconds": 0.054
+      },
+      {
+        "name": "CameraPopupLifecycleTests/testLeavingCameraClosesAllFunctionPopups",
+        "status": "passed",
+        "seconds": 0.05
+      },
+      {
+        "name": "CameraResumeDiagnosticsTests/testBlockedProbeIsBoundedAndRecoveryAndStopInvalidateOldReplies",
+        "status": "passed",
+        "seconds": 0.035
+      },
+      {
+        "name": "CameraResumeDiagnosticsTests/testBoundedPersistenceAndEnqueuePerformance",
+        "status": "passed",
+        "seconds": 0.28
+      },
+      {
+        "name": "CameraResumeDiagnosticsTests/testMissingFramesWithResponsiveQueuesIsDistinguishedFromBlockedMain",
+        "status": "passed",
+        "seconds": 0.009
+      },
+      {
+        "name": "CameraSessionRecoveryTests/testLateRecoveryNotificationCannotCancelQueuedForegroundStart",
+        "status": "passed",
+        "seconds": 2.827
+      },
+      {
+        "name": "CameraSessionRecoveryTests/testRestartAfterInterruptedFrameGateDeliversFreshPreview",
+        "status": "passed",
+        "seconds": 0.635
+      },
+      {
+        "name": "CameraSessionRecoveryTests/testRuntimeRecoveryRestoresLiveFramesAndManualExposureWithoutWritingPhotos",
+        "status": "passed",
+        "seconds": 6.03
+      },
+      {
+        "name": "SlowShutterLifecyclePhysicalTests/testAllIdlePresetsRestoreIntoResponsiveCamera",
+        "status": "passed",
+        "seconds": 53.056
+      },
+      {
+        "name": "SlowShutterLifecyclePhysicalTests/testIdlePresetsRepeatedAndRapidSessionReturn",
+        "status": "passed",
+        "seconds": 7.178
+      },
+      {
+        "name": "SlowShutterPresetTests/testSlowShutterModeRoundTripRestoresAutomaticPresetAndResetsManualDuration",
+        "status": "passed",
+        "seconds": 14.244
+      }
+    ],
+    "FinalFields": [
+      {
+        "name": "CameraResumeDiagnosticsTests/testBlockedProbeIsBoundedAndRecoveryAndStopInvalidateOldReplies",
+        "status": "passed",
+        "seconds": 0.045
+      },
+      {
+        "name": "CameraResumeDiagnosticsTests/testBoundedPersistenceAndEnqueuePerformance",
+        "status": "passed",
+        "seconds": 0.202
+      },
+      {
+        "name": "CameraResumeDiagnosticsTests/testMissingFramesWithResponsiveQueuesIsDistinguishedFromBlockedMain",
+        "status": "passed",
+        "seconds": 0.007
+      },
+      {
+        "name": "SlowShutterLifecyclePhysicalTests/testIdlePresetsRepeatedAndRapidSessionReturn",
+        "status": "passed",
+        "seconds": 7.764
+      }
+    ]
+  },
+  "finalFieldReplay": {
+    "passed": 4,
+    "failed": 0,
+    "executionSeconds": 8.018,
+    "uniqueMethodsAcrossFinalBatches": 11
+  },
+  "diagnosticVersionInstalled": true,
+  "normalAppRestored": true,
+  "releaseBuild": "Release2.log: BUILD SUCCEEDED; no source warnings; AppIntents metadata extraction warning",
+  "productionFixForReportedFreeze": false,
+  "actualDiagnosticFile": {
+    "events": 64,
+    "bytes": 28572,
+    "latestCompletedWindowPreset": "none",
+    "mainReady": true,
+    "mainZoomTarget": 2.0,
+    "scope": "final field persistence and responsiveness only"
+  }
+}

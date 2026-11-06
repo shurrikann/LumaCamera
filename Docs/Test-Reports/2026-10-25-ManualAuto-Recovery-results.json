@@ -1,0 +1,422 @@
+{
+  "date": "2026-10-25",
+  "device": "iPhone 17 Pro",
+  "os": "iOS 27.0.1",
+  "finalMethods": 4,
+  "finalSeconds": 47.789,
+  "measurements": [
+    {
+      "run": "Baseline2",
+      "parameter": "shutter",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 1.4201162499957718,
+      "firstReadingsPublicationSeconds": 1.4202232083189301,
+      "newPreviewConfirmedBySeconds": 1.4340212083188817,
+      "activeMaxFrameSeconds": 0.5,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Baseline2",
+      "parameter": "iso",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 1.4282644166669343,
+      "firstReadingsPublicationSeconds": 1.428304333356209,
+      "newPreviewConfirmedBySeconds": 1.4395575000089593,
+      "activeMaxFrameSeconds": 0.5,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Baseline2",
+      "parameter": "wb",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.01832170833949931,
+      "firstReadingsPublicationSeconds": 0.21506662500905804,
+      "newPreviewConfirmedBySeconds": 0.21958158334018663,
+      "activeMaxFrameSeconds": 0.5,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Baseline2",
+      "parameter": "tint",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.012897916662041098,
+      "firstReadingsPublicationSeconds": 0.25411179166985676,
+      "newPreviewConfirmedBySeconds": 0.2724687500158325,
+      "activeMaxFrameSeconds": 0.5,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Baseline2",
+      "parameter": "focus",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.0209152500028722,
+      "firstReadingsPublicationSeconds": 0.2438162500038743,
+      "newPreviewConfirmedBySeconds": 0.249678958352888,
+      "activeMaxFrameSeconds": 0.5,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Baseline2",
+      "parameter": "shutter",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.021404875005828217,
+      "firstReadingsPublicationSeconds": 0.24701358334277757,
+      "newPreviewConfirmedBySeconds": 0.2628544583567418,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Baseline2",
+      "parameter": "iso",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.021969041641568765,
+      "firstReadingsPublicationSeconds": 0.24175891664344817,
+      "newPreviewConfirmedBySeconds": 0.25917387497611344,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Baseline2",
+      "parameter": "wb",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.008741625002585351,
+      "firstReadingsPublicationSeconds": 0.24554983334382996,
+      "newPreviewConfirmedBySeconds": 0.2652587083284743,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Baseline2",
+      "parameter": "tint",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.021446500002639368,
+      "firstReadingsPublicationSeconds": 0.24347533332183957,
+      "newPreviewConfirmedBySeconds": 0.26164308332954533,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Baseline2",
+      "parameter": "focus",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.018253541667945683,
+      "firstReadingsPublicationSeconds": 0.23542941667255946,
+      "newPreviewConfirmedBySeconds": 0.2481381249963306,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Fix",
+      "parameter": "shutter",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 1.4039847083331551,
+      "firstReadingsPublicationSeconds": 1.4124955416482408,
+      "newPreviewConfirmedBySeconds": 1.4180187083256897,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Fix",
+      "parameter": "iso",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 1.4407673749956302,
+      "firstReadingsPublicationSeconds": 1.4491747916617896,
+      "newPreviewConfirmedBySeconds": 1.453230208309833,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Fix",
+      "parameter": "wb",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.018856791662983596,
+      "firstReadingsPublicationSeconds": 0.05104462499730289,
+      "newPreviewConfirmedBySeconds": 0.054829333326779306,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Fix",
+      "parameter": "tint",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.021964624989777803,
+      "firstReadingsPublicationSeconds": 0.02570912500959821,
+      "newPreviewConfirmedBySeconds": 0.034580125007778406,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Fix",
+      "parameter": "focus",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.021273624995956197,
+      "firstReadingsPublicationSeconds": 0.02431974999490194,
+      "newPreviewConfirmedBySeconds": 0.03253524997853674,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Fix",
+      "parameter": "shutter",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.019977624993771315,
+      "firstReadingsPublicationSeconds": 0.02575525001157075,
+      "newPreviewConfirmedBySeconds": 0.033422041655285284,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Fix",
+      "parameter": "iso",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.005788874987047166,
+      "firstReadingsPublicationSeconds": 0.040873041667509824,
+      "newPreviewConfirmedBySeconds": 0.04985591667355038,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Fix",
+      "parameter": "wb",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.006522375013446435,
+      "firstReadingsPublicationSeconds": 0.03306845834595151,
+      "newPreviewConfirmedBySeconds": 0.047384750010678545,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Fix",
+      "parameter": "tint",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.003565958351828158,
+      "firstReadingsPublicationSeconds": 0.03950204167631455,
+      "newPreviewConfirmedBySeconds": 0.047580125014064834,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Fix",
+      "parameter": "focus",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.018408291653031483,
+      "firstReadingsPublicationSeconds": 0.04883862499264069,
+      "newPreviewConfirmedBySeconds": 0.06124079166329466,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Order",
+      "parameter": "shutter",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.8430496666405816,
+      "firstReadingsPublicationSeconds": 0.8635435416654218,
+      "newPreviewConfirmedBySeconds": 0.8804704166541342,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Order",
+      "parameter": "iso",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.8373951249814127,
+      "firstReadingsPublicationSeconds": 0.8600786249735393,
+      "newPreviewConfirmedBySeconds": 0.8657000833190978,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Order",
+      "parameter": "wb",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.012941333319758996,
+      "firstReadingsPublicationSeconds": 0.31253437499981374,
+      "newPreviewConfirmedBySeconds": 0.3256832916813437,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Order",
+      "parameter": "tint",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.007646541693247855,
+      "firstReadingsPublicationSeconds": 0.028487958334153518,
+      "newPreviewConfirmedBySeconds": 0.03584987501380965,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Order",
+      "parameter": "focus",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.005622083321213722,
+      "firstReadingsPublicationSeconds": 0.03195120830787346,
+      "newPreviewConfirmedBySeconds": 0.040374833304667845,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Order",
+      "parameter": "shutter",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.015160208335146308,
+      "firstReadingsPublicationSeconds": 0.019315874989842996,
+      "newPreviewConfirmedBySeconds": 0.026402541669085622,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Order",
+      "parameter": "iso",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.003933666681405157,
+      "firstReadingsPublicationSeconds": 0.0328562916838564,
+      "newPreviewConfirmedBySeconds": 0.03826454168302007,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Order",
+      "parameter": "wb",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.009071874985238537,
+      "firstReadingsPublicationSeconds": 0.03853445831919089,
+      "newPreviewConfirmedBySeconds": 0.050702708336757496,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Order",
+      "parameter": "tint",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.005325208330759779,
+      "firstReadingsPublicationSeconds": 0.04399633331922814,
+      "newPreviewConfirmedBySeconds": 0.05217008333420381,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Order",
+      "parameter": "focus",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.007808791648130864,
+      "firstReadingsPublicationSeconds": 0.026807208312675357,
+      "newPreviewConfirmedBySeconds": 0.03419208331615664,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Final",
+      "parameter": "shutter",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.84098633332178,
+      "firstReadingsPublicationSeconds": 0.8635458333301358,
+      "newPreviewConfirmedBySeconds": 0.8805302499968093,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Final",
+      "parameter": "iso",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.8517522499896586,
+      "firstReadingsPublicationSeconds": 0.8783662499918137,
+      "newPreviewConfirmedBySeconds": 0.8854137916641776,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Final",
+      "parameter": "wb",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.014849250001134351,
+      "firstReadingsPublicationSeconds": 0.3154930000018794,
+      "newPreviewConfirmedBySeconds": 0.3331437500019092,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Final",
+      "parameter": "tint",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.009041000012075529,
+      "firstReadingsPublicationSeconds": 0.027604583330685273,
+      "newPreviewConfirmedBySeconds": 0.03723941667703912,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Final",
+      "parameter": "focus",
+      "smoothPreview": false,
+      "hardwareAutomaticSeconds": 0.017687666666461155,
+      "firstReadingsPublicationSeconds": 0.024955000000772998,
+      "newPreviewConfirmedBySeconds": 0.030355041672009975,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Final",
+      "parameter": "shutter",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.021890875010285527,
+      "firstReadingsPublicationSeconds": 0.026985875010723248,
+      "newPreviewConfirmedBySeconds": 0.03492279167403467,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Final",
+      "parameter": "iso",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.01921212501474656,
+      "firstReadingsPublicationSeconds": 0.047917500021867454,
+      "newPreviewConfirmedBySeconds": 0.05474962500738911,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Final",
+      "parameter": "wb",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.011895333329448476,
+      "firstReadingsPublicationSeconds": 0.029033583326963708,
+      "newPreviewConfirmedBySeconds": 0.03615808332688175,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Final",
+      "parameter": "tint",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.005258374992990866,
+      "firstReadingsPublicationSeconds": 0.039240666665136814,
+      "newPreviewConfirmedBySeconds": 0.04989341666805558,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    },
+    {
+      "run": "Final",
+      "parameter": "focus",
+      "smoothPreview": true,
+      "hardwareAutomaticSeconds": 0.0052284583216533065,
+      "firstReadingsPublicationSeconds": 0.041871124994941056,
+      "newPreviewConfirmedBySeconds": 0.05242641665972769,
+      "activeMaxFrameSeconds": 0.06666666666666667,
+      "activeMinFrameSeconds": 0.03333333333333333
+    }
+  ],
+  "rapidCyclesPerRun": 20,
+  "quietWindow": {
+    "seconds": 1.2,
+    "readings": 3,
+    "afterFastWindowExpired": true
+  },
+  "systemPhotosWrites": 0,
+  "limits": [
+    "First readings publication is not AE/AWB/AF final convergence",
+    "newPreviewConfirmedBySeconds is a polling/reading-wait upper bound, not first automatic pixel/display latency",
+    "Half-second physical exposure can still take approximately 0.85s to leave manual state",
+    "No instrumented display FPS/power/independent App memory/long thermal test"
+  ]
+}

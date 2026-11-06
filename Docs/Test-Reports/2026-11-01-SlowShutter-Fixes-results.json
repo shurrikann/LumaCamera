@@ -1,0 +1,1374 @@
+{
+  "date": "2026-11-01",
+  "device": "iPhone17Pro / iPhone18,1",
+  "os": "iOS27.2 (24B119)",
+  "xcode": "27.1",
+  "summary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64e",
+          "deviceId": "00008150-001934280220401C",
+          "deviceName": "笨笨波尔霸&iPhone Pro",
+          "modelName": "iPhone 17 Pro",
+          "osBuildNumber": "24B119",
+          "osVersion": "27.2",
+          "platform": "iOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 43,
+        "skippedTests": 2,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "LumaCamera · Built with macOS 27.2",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1793493385.43,
+    "passedTests": 43,
+    "result": "Passed",
+    "runtimeWarnings": [
+      {
+        "issueType": "Runtime Warning",
+        "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+      },
+      {
+        "issueType": "Runtime Warning",
+        "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+      }
+    ],
+    "skippedTests": 2,
+    "startTime": 1793492476.601,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - LumaCamera",
+    "topInsights": [
+      {
+        "category": "Longest Test Runs",
+        "impact": "20% of duration",
+        "text": "1 longest test run with outlier durations exceeding 117.64s (three standard deviations)"
+      }
+    ],
+    "totalTestCount": 45
+  },
+  "baselineSummary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64e",
+          "deviceId": "00008150-001934280220401C",
+          "deviceName": "笨笨波尔霸&iPhone Pro",
+          "modelName": "iPhone 17 Pro",
+          "osBuildNumber": "24B119",
+          "osVersion": "27.2",
+          "platform": "iOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 4,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "LumaCamera · Built with macOS 27.2",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1793491964.473,
+    "passedTests": 4,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1793491837.941,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - LumaCamera",
+    "topInsights": [],
+    "totalTestCount": 4
+  },
+  "quickSummary": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64e",
+          "deviceId": "00008150-001934280220401C",
+          "deviceName": "笨笨波尔霸&iPhone Pro",
+          "modelName": "iPhone 17 Pro",
+          "osBuildNumber": "24B119",
+          "osVersion": "27.2",
+          "platform": "iOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 10,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "LumaCamera · Built with macOS 27.2",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1793492465.855,
+    "passedTests": 10,
+    "result": "Passed",
+    "runtimeWarnings": [
+      {
+        "issueType": "Runtime Warning",
+        "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update."
+      }
+    ],
+    "skippedTests": 0,
+    "startTime": 1793492415.424,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - LumaCamera",
+    "topInsights": [],
+    "totalTestCount": 10
+  },
+  "cases": [
+    {
+      "class": "AdaptiveWaterComposerTests",
+      "method": "testHandheldAlignmentPreservesStaticDetailAndRejectsUnrelatedFrame",
+      "result": "passed",
+      "seconds": 0.508
+    },
+    {
+      "class": "AdaptiveWaterComposerTests",
+      "method": "testStreamingAveragePreservesStaticBrightnessAndMovingTrace",
+      "result": "passed",
+      "seconds": 0.019
+    },
+    {
+      "class": "AdaptiveWaterExposureTests",
+      "method": "testBrightIndoorAndDarkPlansPreserveMeteredExposure",
+      "result": "passed",
+      "seconds": 0.0
+    },
+    {
+      "class": "AdaptiveWaterExposureTests",
+      "method": "testHandheldWaterPrefersShorterAutomaticFrameExposure",
+      "result": "passed",
+      "seconds": 0.0
+    },
+    {
+      "class": "AdaptiveWaterExposureTests",
+      "method": "testManualExposureIsPreservedAndInvalidReadingsRejected",
+      "result": "passed",
+      "seconds": 0.0
+    },
+    {
+      "class": "SlowShutterHandheldTests",
+      "method": "testAccumulationPreviewUsesRealBlendAndDoesNotMutateFullResolutionResult",
+      "result": "passed",
+      "seconds": 0.395
+    },
+    {
+      "class": "SlowShutterHandheldTests",
+      "method": "testAlignedAccumulationKeepsReferenceCanvasAndOpaqueEdgesAcrossRepeatedShifts",
+      "result": "passed",
+      "seconds": 2.265
+    },
+    {
+      "class": "SlowShutterHandheldTests",
+      "method": "testAlignedSlowShutterEncodesEveryRatioAndOrientation",
+      "result": "passed",
+      "seconds": 0.135
+    },
+    {
+      "class": "SlowShutterHandheldTests",
+      "method": "testAllPresetsPreferHandheldExposureAndKeepManualValues",
+      "result": "passed",
+      "seconds": 0.0
+    },
+    {
+      "class": "SlowShutterHandheldTests",
+      "method": "testFlowAndLightTrailsPreserveBackgroundAcrossRotationAndRejectedFrame",
+      "result": "passed",
+      "seconds": 1.837
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testAutomaticModeKeepsApertureModeAndPresetOnlyCapsAutomaticExposure",
+      "result": "skipped",
+      "seconds": 0.024
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testLongPresetNamesUseTwoLinesAndShortNamesRemainSingleLine",
+      "result": "passed",
+      "seconds": 0.0
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testManualISORangeUsesPresetSuggestionAndHardwareIntersection",
+      "result": "passed",
+      "seconds": 0.0
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testMKeepsSlowModeButClearsAndHidesPreset",
+      "result": "passed",
+      "seconds": 1.047
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testMShutterSliderUsesHardwareRangeAfterClearingAutomaticPreset",
+      "result": "passed",
+      "seconds": 0.629
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testPresetCellsAlignWithFiveLensButtonSlots",
+      "result": "passed",
+      "seconds": 0.001
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testPresetIsUnsupportedWhenHardwareCannotFitIt",
+      "result": "passed",
+      "seconds": 0.001
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testPresetRangesAndSuggestionsAreValidAndClampToHardware",
+      "result": "passed",
+      "seconds": 0.0
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testPresetSlotsAlignWithFocalSlotsAndSurviveRapidToggleOnDevice",
+      "result": "passed",
+      "seconds": 3.631
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testPreviewOptimizationOnlyActivatesWhenSlowShutterWouldExceedPreviewCadence",
+      "result": "passed",
+      "seconds": 0.001
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testSelectingPresetsConstrainsManualExposureAndRepeatedTogglingClearsState",
+      "result": "skipped",
+      "seconds": 0.029
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testSelectingSamePresetAgainTurnsItOff",
+      "result": "passed",
+      "seconds": 0.612
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testSlowShutterAllowsSwitchingRearLenses",
+      "result": "passed",
+      "seconds": 3.534
+    },
+    {
+      "class": "SlowShutterPresetTests",
+      "method": "testSlowShutterModeRoundTripRestoresAutomaticPresetAndResetsManualDuration",
+      "result": "passed",
+      "seconds": 21.416
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAdaptiveOtherPresetsAutomaticFullSequences",
+      "result": "passed",
+      "seconds": 34.347
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAdaptiveOtherPresetsManualEarlyFinishAndCancellation",
+      "result": "passed",
+      "seconds": 57.208
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAdaptiveStarTrailsFullDuration",
+      "result": "passed",
+      "seconds": 71.021
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAdaptiveWaterAutomaticAndManualRestoration",
+      "result": "passed",
+      "seconds": 45.49
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAdaptiveWaterEarlyFinishCancelAndRestart",
+      "result": "passed",
+      "seconds": 18.192
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAdaptiveWaterSceneExposureWithJPEG",
+      "result": "passed",
+      "seconds": 21.183
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAutomaticLightTrailsAndWaterCompleteOrRejectUnsafeExposure",
+      "result": "passed",
+      "seconds": 48.687
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAutomaticNewPresetsPreserveModeAndValidateMeteredExposure",
+      "result": "passed",
+      "seconds": 27.178
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAutomaticSequencesWithMeteredExposureCompensation",
+      "result": "passed",
+      "seconds": 55.572
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testCancelFromIntermediatePublicationCannotReviveSequenceOrPublishLatePreview",
+      "result": "passed",
+      "seconds": 14.01
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testEarlyFinishCancellationAndRepeatedSelectionRecover",
+      "result": "passed",
+      "seconds": 19.36
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testGenericManualDurationAndInfiniteCancellation",
+      "result": "passed",
+      "seconds": 4.404
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testManualBracketSpeedComparisonAndRepeatedCapture",
+      "result": "passed",
+      "seconds": 186.303
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testManualLightTrailsAndWaterCompleteWithMetadata",
+      "result": "passed",
+      "seconds": 52.225
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testManualMotionBlurCompletesWithShortSourceExposures",
+      "result": "passed",
+      "seconds": 24.544
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testPanningLatencyWithAndWithoutPreviewAssist",
+      "result": "passed",
+      "seconds": 28.842
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testRealAccumulationPreviewAndCancelOnPhysicalViewfinder",
+      "result": "passed",
+      "seconds": 26.105
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testSingleFramePresetsCaptureRequestedExposureWithoutStartingSequence",
+      "result": "passed",
+      "seconds": 22.365
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testSlowShutterPreviewAndFallbackResumeRepeatedly",
+      "result": "passed",
+      "seconds": 18.339
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testStarTrailsEarlyFinishCancellationAndRepeatedSelection",
+      "result": "passed",
+      "seconds": 20.752
+    },
+    {
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testStarTrailsFull120FrameStreamingSequence",
+      "result": "passed",
+      "seconds": 72.902
+    }
+  ],
+  "originalNine": [
+    {
+      "id": "FULL-20261030-001",
+      "class": "AdaptiveWaterComposerTests",
+      "method": "testHandheldAlignmentPreservesStaticDetailAndRejectsUnrelatedFrame",
+      "result": "passed",
+      "seconds": 0.508
+    },
+    {
+      "id": "FULL-20261030-054",
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAdaptiveStarTrailsFullDuration",
+      "result": "passed",
+      "seconds": 71.021
+    },
+    {
+      "id": "FULL-20261030-055",
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAdaptiveWaterAutomaticAndManualRestoration",
+      "result": "passed",
+      "seconds": 45.49
+    },
+    {
+      "id": "FULL-20261030-058",
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAutomaticLightTrailsAndWaterCompleteOrRejectUnsafeExposure",
+      "result": "passed",
+      "seconds": 48.687
+    },
+    {
+      "id": "FULL-20261030-060",
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testAutomaticSequencesWithMeteredExposureCompensation",
+      "result": "passed",
+      "seconds": 55.572
+    },
+    {
+      "id": "FULL-20261030-063",
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testManualBracketSpeedComparisonAndRepeatedCapture",
+      "result": "passed",
+      "seconds": 186.303
+    },
+    {
+      "id": "FULL-20261030-064",
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testManualLightTrailsAndWaterCompleteWithMetadata",
+      "result": "passed",
+      "seconds": 52.225
+    },
+    {
+      "id": "FULL-20261030-065",
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testManualMotionBlurCompletesWithShortSourceExposures",
+      "result": "passed",
+      "seconds": 24.544
+    },
+    {
+      "id": "FULL-20261030-071",
+      "class": "SlowShutterSequencePhysicalTests",
+      "method": "testStarTrailsFull120FrameStreamingSequence",
+      "result": "passed",
+      "seconds": 72.902
+    }
+  ],
+  "fullSequences": [
+    {
+      "preset": "lightTrails",
+      "mode": "auto",
+      "seconds": 16.638413375010714,
+      "hostBaselineMiB": 116.93968963623047,
+      "hostSampledPeakMiB": 649.3151016235352,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:21:58, \"BrightnessValue\": 0.4566549787622224, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x12acbcc90>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x12acbff90>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 688, \"LensSpecification\": <__NSArrayM 0x12acbcf30>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 0.05859375, \"ComponentsConfiguration\": <__NSArrayM 0x12acbe580>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 688, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x12acbff30>(\n320\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 0, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:21:58, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.03333333333333333, \"ShutterSpeedValue\": 4.906602084868906, \"ExposureProgram\": 2, \"PixelYDimension\": 3024] row=光轨 · 40 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "motionBlur",
+      "mode": "auto",
+      "seconds": 3.7993761250108946,
+      "hostBaselineMiB": 258.8930435180664,
+      "hostSampledPeakMiB": 660.1275787353516,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:22:15, \"BrightnessValue\": 0.4779568292627097, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x12acbf0c0>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x12acbcc30>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 943, \"LensSpecification\": <__NSArrayM 0x12acbe850>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 0.03515625, \"ComponentsConfiguration\": <__NSArrayM 0x12acbf390>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 943, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x12acbdb60>(\n640\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 0, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:22:15, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.01666666666666667, \"ShutterSpeedValue\": 5.906948304613675, \"ExposureProgram\": 2, \"PixelYDimension\": 3024] row=动态模糊 · 9 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "panning",
+      "mode": "auto",
+      "seconds": 1.6597230416664388,
+      "hostBaselineMiB": 375.4244079589844,
+      "hostSampledPeakMiB": 564.1275787353516,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:22:20, \"BrightnessValue\": 0.4779568292627097, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x12acbf900>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x12acbc5d0>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 973, \"LensSpecification\": <__NSArrayM 0x12acbd980>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 0.046875, \"ComponentsConfiguration\": <__NSArrayM 0x12acbd200>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 973, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x12acbd8c0>(\n640\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 0, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:22:20, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.01666666666666667, \"ShutterSpeedValue\": 5.906948304613675, \"ExposureProgram\": 2, \"PixelYDimension\": 3024] row=摇拍追焦 · 4 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "lightTrails",
+      "mode": "auto",
+      "seconds": 16.623004166671308,
+      "hostBaselineMiB": 122.50232696533203,
+      "hostSampledPeakMiB": 646.0807037353516,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:22:43, \"BrightnessValue\": 0.4725965230747748, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x111a01980>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x111a008d0>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 468, \"LensSpecification\": <__NSArrayM 0x111a00e70>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 0.08984375, \"ComponentsConfiguration\": <__NSArrayM 0x111a02730>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 468, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x111a00870>(\n320\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 0, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:22:43, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.03333333333333333, \"ShutterSpeedValue\": 4.906602084868906, \"ExposureProgram\": 2, \"PixelYDimension\": 3024] row=光轨 · 40 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "motionBlur",
+      "mode": "auto",
+      "seconds": 4.3794369583483785,
+      "hostBaselineMiB": 146.6898956298828,
+      "hostSampledPeakMiB": 667.5338745117188,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:23:04, \"BrightnessValue\": 0.4858620277379244, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x111a01980>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x111a03360>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 086, \"LensSpecification\": <__NSArrayM 0x111a00e70>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 0.07421875, \"ComponentsConfiguration\": <__NSArrayM 0x111a03b10>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 086, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x111a00870>(\n640\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 0, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:23:04, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.01666666666666667, \"ShutterSpeedValue\": 5.906948304613675, \"ExposureProgram\": 2, \"PixelYDimension\": 3024] row=动态模糊 · 9 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "panning",
+      "mode": "auto",
+      "seconds": 2.2766338333312888,
+      "hostBaselineMiB": 147.2523956298828,
+      "hostSampledPeakMiB": 650.7995681762695,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:23:12, \"BrightnessValue\": 0.4858620277379244, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x111a03b10>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x111a024c0>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 439, \"LensSpecification\": <__NSArrayM 0x111a03ed0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 0.09090909090909091, \"ComponentsConfiguration\": <__NSArrayM 0x111a03450>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 439, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x111a00e10>(\n640\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 0, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:23:12, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.01666666666666667, \"ShutterSpeedValue\": 5.906948304613675, \"ExposureProgram\": 2, \"PixelYDimension\": 3024] row=摇拍追焦 · 4 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "starTrails",
+      "mode": "auto",
+      "seconds": 61.438462916674325,
+      "hostBaselineMiB": 145.8773956298828,
+      "hostSampledPeakMiB": 548.7993850708008,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"BrightnessValue\": 0.475822772986269, \"PixelXDimension\": 4032, \"ExposureTime\": 0.125, \"Flash\": 16, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x10ffcd890>(\n80\n)\n, \"FlashPixVersion\": <__NSArrayM 0x10ffceb80>(\n1,\n0\n)\n, \"ShutterSpeedValue\": 2.999942293265624, \"FocalLength\": 6.764999865652793, \"SensingMethod\": 2, \"OffsetTimeOriginal\": +08:00, \"OffsetTimeDigitized\": +08:00, \"LensMake\": Apple, \"WhiteBalance\": 1, \"SubsecTimeDigitized\": 061, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ComponentsConfiguration\": <__NSArrayM 0x10ffcd830>(\n1,\n2,\n3,\n0\n)\n, \"DateTimeDigitized\": 2026:11:01 08:23:30, \"ExposureProgram\": 2, \"SceneCaptureType\": 0, \"OffsetTime\": +08:00, \"ColorSpace\": 65535, \"FNumber\": 1.779999971388065, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 061, \"PixelYDimension\": 3024, \"ExifVersion\": <__NSArrayM 0x10ffcfb70>(\n2,\n3,\n2\n)\n, \"DateTimeOriginal\": 2026:11:01 08:23:30, \"ExposureBiasValue\": -0.0078125, \"SceneType\": 1, \"LensSpecification\": <__NSArrayM 0x10ffcd8c0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n] row=星轨 · 181 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 11.563449916662648,
+      "hostBaselineMiB": 129.20549774169922,
+      "hostSampledPeakMiB": 647.1432952880859,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"Flash\": 16, \"PixelXDimension\": 3000, \"ExposureTime\": 0.008, \"BrightnessValue\": 0.5135178243879097, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x11337a730>(\n1250\n)\n, \"ShutterSpeedValue\": 6.965243381725021, \"FocalLength\": 6.764999865652793, \"SensingMethod\": 2, \"OffsetTimeOriginal\": +08:00, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"SubsecTimeDigitized\": 836, \"WhiteBalance\": 1, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"SubsecTimeOriginal\": 836, \"OffsetTime\": +08:00, \"ExposureProgram\": 2, \"MeteringMode\": 5, \"ColorSpace\": 65535, \"DateTimeDigitized\": 2026:11:01 08:24:49, \"FNumber\": 1.779999971388065, \"PixelYDimension\": 4000, \"ExifVersion\": <__NSArrayM 0x113379980>(\n2,\n3,\n2\n)\n, \"DateTimeOriginal\": 2026:11:01 08:24:49, \"LensSpecification\": <__NSArrayM 0x113379140>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"SceneType\": 1, \"ExposureBiasValue\": 0.015625] row=流水 · 27 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 11.709277416666737,
+      "hostBaselineMiB": 151.4086685180664,
+      "hostSampledPeakMiB": 669.0026473999023,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"Flash\": 16, \"PixelXDimension\": 3000, \"ExposureTime\": 0.008, \"BrightnessValue\": 0.5217383308198772, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x113379650>(\n1250\n)\n, \"ShutterSpeedValue\": 6.965243381725021, \"FocalLength\": 6.764999865652793, \"SensingMethod\": 2, \"OffsetTimeOriginal\": +08:00, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"SubsecTimeDigitized\": 418, \"WhiteBalance\": 1, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"SubsecTimeOriginal\": 418, \"OffsetTime\": +08:00, \"ExposureProgram\": 2, \"MeteringMode\": 5, \"ColorSpace\": 65535, \"DateTimeDigitized\": 2026:11:01 08:25:05, \"FNumber\": 1.779999971388065, \"PixelYDimension\": 4000, \"ExifVersion\": <__NSArrayM 0x11337af40>(\n2,\n3,\n2\n)\n, \"DateTimeOriginal\": 2026:11:01 08:25:05, \"LensSpecification\": <__NSArrayM 0x11337a340>(\n6.765,\n6.765,\n\n1.78,\n1.78\n)\n, \"SceneType\": 1, \"ExposureBiasValue\": 0.0234375] row=流水 · 27 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 11.631115666677942,
+      "hostBaselineMiB": 146.0492935180664,
+      "hostSampledPeakMiB": 663.5182952880859,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"BrightnessValue\": 0.5380401437461653, \"PixelXDimension\": 4032, \"ExposureTime\": 0.008, \"Flash\": 16, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x113379cb0>(\n1250\n)\n, \"FlashPixVersion\": <__NSArrayM 0x113379950>(\n1,\n0\n)\n, \"ShutterSpeedValue\": 6.965243381725021, \"FocalLength\": 6.764999865652793, \"SensingMethod\": 2, \"OffsetTimeOriginal\": +08:00, \"OffsetTimeDigitized\": +08:00, \"LensMake\": Apple, \"WhiteBalance\": 1, \"SubsecTimeDigitized\": 836, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ComponentsConfiguration\": <__NSArrayM 0x113379e90>(\n1,\n2,\n3,\n0\n)\n, \"DateTimeDigitized\": 2026:11:01 08:25:44, \"ExposureProgram\": 2, \"SceneCaptureType\": 0, \"OffsetTime\": +08:00, \"ColorSpace\": 65535, \"FNumber\": 1.779999971388065, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 836, \"PixelYDimension\": 3024, \"ExifVersion\": <__NSArrayM 0x113379f20>(\n2,\n3,\n2\n)\n, \"DateTimeOriginal\": 2026:11:01 08:25:44, \"ExposureBiasValue\": 0.04296875, \"SceneType\": 1, \"LensSpecification\": <__NSArrayM 0x113379e00>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n] row=流水 · 27 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "lightTrails",
+      "mode": "auto",
+      "seconds": 16.446739208331564,
+      "hostBaselineMiB": 137.48688507080078,
+      "hostSampledPeakMiB": 671.6432952880859,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"BrightnessValue\": 0.5461224900608928, \"PixelXDimension\": 4032, \"ExposureTime\": 0.008, \"Flash\": 16, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x11102d9e0>(\n1250\n)\n, \"FlashPixVersion\": <__NSArrayM 0x11102f420>(\n1,\n0\n)\n, \"ShutterSpeedValue\": 6.965243381725021, \"FocalLength\": 6.764999865652793, \"SensingMethod\": 2, \"OffsetTimeOriginal\": +08:00, \"OffsetTimeDigitized\": +08:00, \"LensMake\": Apple, \"WhiteBalance\": 1, \"SubsecTimeDigitized\": 817, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ComponentsConfiguration\": <__NSArrayM 0x11102d920>(\n1,\n2,\n3,\n0\n)\n, \"DateTimeDigitized\": 2026:11:01 08:26:14, \"ExposureProgram\": 2, \"SceneCaptureType\": 0, \"OffsetTime\": +08:00, \"ColorSpace\": 65535, \"FNumber\": 1.779999971388065, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 817, \"PixelYDimension\": 3024, \"ExifVersion\": <__NSArrayM 0x11102f6c0>(\n2,\n3,\n2\n)\n, \"DateTimeOriginal\": 2026:11:01 08:26:14, \"ExposureBiasValue\": 0.05078125, \"SceneType\": 1, \"LensSpecification\": <__NSArrayM 0x11102e070>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n] row=光轨 · 39 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 11.838556708360557,
+      "hostBaselineMiB": 266.31514739990234,
+      "hostSampledPeakMiB": 687.7841262817383,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"Flash\": 16, \"PixelXDimension\": 3000, \"ExposureTime\": 0.008, \"BrightnessValue\": 0.5541598092231216, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x11102ffc0>(\n1250\n)\n, \"ShutterSpeedValue\": 6.965243381725021, \"FocalLength\": 6.764999865652793, \"SensingMethod\": 2, \"OffsetTimeOriginal\": +08:00, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"SubsecTimeDigitized\": 454, \"WhiteBalance\": 1, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"SubsecTimeOriginal\": 454, \"OffsetTime\": +08:00, \"ExposureProgram\": 2, \"MeteringMode\": 5, \"ColorSpace\": 65535, \"DateTimeDigitized\": 2026:11:01 08:26:33, \"FNumber\": 1.779999971388065, \"PixelYDimension\": 4000, \"ExifVersion\": <__NSArrayM 0x11102ff30>(\n2,\n3,\n2\n)\n, \"DateTimeOriginal\": 2026:11:01 08:26:33, \"LensSpecification\": <__NSArrayM 0x11102ddd0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"SceneType\": 1, \"ExposureBiasValue\": 0.05859375] row=流水 · 27 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "motionBlur",
+      "mode": "auto",
+      "seconds": 4.46222883334849,
+      "hostBaselineMiB": 145.83070373535156,
+      "hostSampledPeakMiB": 670.5966033935547,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"BrightnessValue\": 0.5701013526052237, \"PixelXDimension\": 4032, \"ExposureTime\": 0.008, \"Flash\": 16, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x11102d440>(\n1250\n)\n, \"FlashPixVersion\": <__NSArrayM 0x11102d290>(\n1,\n0\n)\n, \"ShutterSpeedValue\": 6.965243381725021, \"FocalLength\": 6.764999865652793, \"SensingMethod\": 2, \"OffsetTimeOriginal\": +08:00, \"OffsetTimeDigitized\": +08:00, \"LensMake\": Apple, \"WhiteBalance\": 1, \"SubsecTimeDigitized\": 512, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ComponentsConfiguration\": <__NSArrayM 0x11102de60>(\n1,\n2,\n3,\n0\n)\n, \"DateTimeDigitized\": 2026:11:01 08:27:03, \"ExposureProgram\": 2, \"SceneCaptureType\": 0, \"OffsetTime\": +08:00, \"ColorSpace\": 65535, \"FNumber\": 1.779999971388065, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 512, \"PixelYDimension\": 3024, \"ExifVersion\": <__NSArrayM 0x11102ee80>(\n2,\n3,\n2\n)\n, \"DateTimeOriginal\": 2026:11:01 08:27:03, \"ExposureBiasValue\": 0.07421875, \"SceneType\": 1, \"LensSpecification\": <__NSArrayM 0x11102d4a0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n] row=动态模糊 · 9 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "lightTrails",
+      "mode": "auto",
+      "seconds": 16.493332166661276,
+      "hostBaselineMiB": 147.08081817626953,
+      "hostSampledPeakMiB": 673.3155136108398,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:27:33, \"BrightnessValue\": -1.883826089577885, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102ce40>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x11102fea0>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 617, \"LensSpecification\": <__NSArrayM 0x11102efd0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 4.304825878114681, \"ComponentsConfiguration\": <__NSArrayM 0x11102ccf0>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 617, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x11102f060>(\n8000\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 0, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:27:33, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.03333333333333333, \"ShutterSpeedValue\": 4.906602084868906, \"ExposureProgram\": 2, \"PixelYDimension\": 3024] row=光轨 · 31 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 12.2673605416785,
+      "hostBaselineMiB": 187.6746826171875,
+      "hostSampledPeakMiB": 690.690559387207,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:27:55, \"BrightnessValue\": -1.640276947057437, \"WhiteBalance\": 0, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102fa50>(\n2,\n3,\n2\n)\n, \"SubsecTimeDigitized\": 912, \"LensSpecification\": <__NSArrayM 0x11102f690>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 2.946520783271128, \"SubsecTimeOriginal\": 912, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"Flash\": 16, \"PixelXDimension\": 3000, \"ExposureMode\": 0, \"ISOSpeedRatings\": <__NSArrayM 0x11102cff0>(\n6400\n)\n, \"OffsetTimeDigitized\": +08:00, \"OffsetTimeOriginal\": +08:00, \"SensingMethod\": 2, \"LensMake\": Apple, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:27:55, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ApertureValue\": 1.663754436600491, \"ExposureTime\": 0.03333333333333333, \"ShutterSpeedValue\": 4.906602084868906, \"ExposureProgram\": 2, \"PixelYDimension\": 4000] row=流水 · 25 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "lightTrails",
+      "mode": "auto",
+      "seconds": 16.776347333332524,
+      "hostBaselineMiB": 180.2684555053711,
+      "hostSampledPeakMiB": 683.4249801635742,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:28:56, \"BrightnessValue\": 0.5775325222170512, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102ffc0>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x11102ed90>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 910, \"LensSpecification\": <__NSArrayM 0x11102dc20>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 0, \"ComponentsConfiguration\": <__NSArrayM 0x11102e280>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 910, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x11102c240>(\n1250\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 1, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:28:56, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.008, \"ShutterSpeedValue\": 6.966325397804367, \"ExposureProgram\": 1, \"PixelYDimension\": 3024] row=光轨 · 39 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "lightTrails",
+      "mode": "auto",
+      "seconds": 16.405400124989683,
+      "hostBaselineMiB": 184.33100128173828,
+      "hostSampledPeakMiB": 705.628173828125,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:29:17, \"BrightnessValue\": 0.5780065512400562, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102e280>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x11102f1e0>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 613, \"LensSpecification\": <__NSArrayM 0x11102d7a0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 0.0703125, \"ComponentsConfiguration\": <__NSArrayM 0x11102d290>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 613, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x11102d500>(\n1250\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 0, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:29:17, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.008, \"ShutterSpeedValue\": 6.965243381725021, \"ExposureProgram\": 2, \"PixelYDimension\": 3024] row=光轨 · 39 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "lightTrails",
+      "mode": "auto",
+      "seconds": 16.410138875013217,
+      "hostBaselineMiB": 193.86227416992188,
+      "hostSampledPeakMiB": 712.4407196044922,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:29:37, \"BrightnessValue\": 0.562152599440735, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102e280>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x11102d290>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 952, \"LensSpecification\": <__NSArrayM 0x11102d7a0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 0.0703125, \"ComponentsConfiguration\": <__NSArrayM 0x11102fb10>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 952, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x11102d500>(\n1250\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 0, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:29:37, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.008, \"ShutterSpeedValue\": 6.965243381725021, \"ExposureProgram\": 2, \"PixelYDimension\": 3024] row=光轨 · 39 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "lightTrails",
+      "mode": "auto",
+      "seconds": 16.395032291678945,
+      "hostBaselineMiB": 198.79977416992188,
+      "hostSampledPeakMiB": 716.1125259399414,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeOriginal\": 2026:11:01 08:29:58, \"BrightnessValue\": 0.5461224900608928, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102fb10>(\n2,\n3,\n2\n)\n, \"FlashPixVersion\": <__NSArrayM 0x11102d770>(\n1,\n0\n)\n, \"SubsecTimeDigitized\": 426, \"LensSpecification\": <__NSArrayM 0x11102ef10>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ExposureBiasValue\": 0.0546875, \"ComponentsConfiguration\": <__NSArrayM 0x11102e9a0>(\n1,\n2,\n3,\n0\n)\n, \"ColorSpace\": 65535, \"MeteringMode\": 5, \"SubsecTimeOriginal\": 426, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"Flash\": 16, \"ISOSpeedRatings\": <__NSArrayM 0x11102e130>(\n1250\n)\n, \"OffsetTimeOriginal\": +08:00, \"SceneCaptureType\": 0, \"ExposureMode\": 0, \"LensMake\": Apple, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"DateTimeDigitized\": 2026:11:01 08:29:58, \"SceneType\": 1, \"FocalLenIn35mmFilm\": 24, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureTime\": 0.008, \"ShutterSpeedValue\": 6.965243381725021, \"ExposureProgram\": 2, \"PixelYDimension\": 3024] row=光轨 · 39 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 11.800260291667655,
+      "hostBaselineMiB": 201.3466033935547,
+      "hostSampledPeakMiB": 719.8938217163086,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeDigitized\": 2026:11:01 08:30:19, \"BrightnessValue\": 0.5375661146275904, \"FocalLength\": 6.764999865652793, \"LensSpecification\": <__NSArrayM 0x11102fab0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ISOSpeedRatings\": <__NSArrayM 0x11102e3d0>(\n1250\n)\n, \"MeteringMode\": 5, \"SensingMethod\": 2, \"LensMake\": Apple, \"OffsetTime\": +08:00, \"ShutterSpeedValue\": 6.966325397804367, \"ExposureBiasValue\": 0, \"ApertureValue\": 1.663754436600491, \"WhiteBalance\": 1, \"DateTimeOriginal\": 2026:11:01 08:30:19, \"OffsetTimeDigitized\": +08:00, \"SubsecTimeOriginal\": 023, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"OffsetTimeOriginal\": +08:00, \"ExifVersion\": <__NSArrayM 0x11102e730>(\n2,\n3,\n2\n)\n, \"ExposureMode\": 1, \"PixelYDimension\": 4000, \"SubsecTimeDigitized\": 023, \"FocalLenIn35mmFilm\": 24, \"FNumber\": 1.779999971388065, \"ExposureTime\": 0.008, \"PixelXDimension\": 3000, \"ExposureProgram\": 1, \"SceneType\": 1, \"ColorSpace\": 65535, \"Flash\": 16] row=流水 · 24 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 11.808017125003971,
+      "hostBaselineMiB": 201.89352416992188,
+      "hostSampledPeakMiB": 757.3312759399414,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"Flash\": 16, \"SceneType\": 1, \"SensingMethod\": 2, \"LensSpecification\": <__NSArrayM 0x11102fe10>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"FocalLenIn35mmFilm\": 24, \"ISOSpeedRatings\": <__NSArrayM 0x11102d0b0>(\n1250\n)\n, \"BrightnessValue\": 0.5380401437461653, \"DateTimeOriginal\": 2026:11:01 08:30:34, \"ShutterSpeedValue\": 6.965243381725021, \"ExposureBiasValue\": 0.03125, \"DateTimeDigitized\": 2026:11:01 08:30:34, \"ColorSpace\": 65535, \"LensMake\": Apple, \"MeteringMode\": 5, \"OffsetTimeDigitized\": +08:00, \"PixelYDimension\": 4000, \"ExposureTime\": 0.008, \"OffsetTimeOriginal\": +08:00, \"FocalLength\": 6.764999865652793, \"ExposureProgram\": 2, \"SubsecTimeDigitized\": 622, \"ExposureMode\": 0, \"PixelXDimension\": 3000, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 622, \"ExifVersion\": <__NSArrayM 0x11102ce70>(\n2,\n3,\n2\n)\n, \"WhiteBalance\": 1, \"FNumber\": 1.779999971388065, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78] row=流水 · 27 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 11.836460624996107,
+      "hostBaselineMiB": 207.45604705810547,
+      "hostSampledPeakMiB": 735.1906509399414,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"DateTimeDigitized\": 2026:11:01 08:30:50, \"BrightnessValue\": 0.5299122628035094, \"FocalLength\": 6.764999865652793, \"LensSpecification\": <__NSArrayM 0x11102df80>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ISOSpeedRatings\": <__NSArrayM 0x11102e010>(\n1250\n)\n, \"MeteringMode\": 5, \"SensingMethod\": 2, \"LensMake\": Apple, \"OffsetTime\": +08:00, \"ShutterSpeedValue\": 6.965243381725021, \"ExposureBiasValue\": 0.0234375, \"ApertureValue\": 1.663754436600491, \"WhiteBalance\": 1, \"DateTimeOriginal\": 2026:11:01 08:30:50, \"OffsetTimeDigitized\": +08:00, \"SubsecTimeOriginal\": 455, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"OffsetTimeOriginal\": +08:00, \"ExifVersion\": <__NSArrayM 0x11102fb40>(\n2,\n3,\n2\n)\n, \"ExposureMode\": 0, \"PixelYDimension\": 4000, \"SubsecTimeDigitized\": 455, \"FocalLenIn35mmFilm\": 24, \"FNumber\": 1.779999971388065, \"ExposureTime\": 0.008, \"PixelXDimension\": 3000, \"ExposureProgram\": 2, \"SceneType\": 1, \"ColorSpace\": 65535, \"Flash\": 16] row=流水 · 27 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 11.834430124989012,
+      "hostBaselineMiB": 210.64354705810547,
+      "hostSampledPeakMiB": 722.1438446044922,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"Flash\": 16, \"SceneType\": 1, \"SensingMethod\": 2, \"LensSpecification\": <__NSArrayM 0x11102f8a0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"FocalLenIn35mmFilm\": 24, \"ISOSpeedRatings\": <__NSArrayM 0x11102c450>(\n1250\n)\n, \"BrightnessValue\": 0.5299122628035094, \"DateTimeOriginal\": 2026:11:01 08:31:06, \"ShutterSpeedValue\": 6.965243381725021, \"ExposureBiasValue\": 0.02734375, \"DateTimeDigitized\": 2026:11:01 08:31:06, \"ColorSpace\": 65535, \"LensMake\": Apple, \"MeteringMode\": 5, \"OffsetTimeDigitized\": +08:00, \"PixelYDimension\": 4000, \"ExposureTime\": 0.008, \"OffsetTimeOriginal\": +08:00, \"FocalLength\": 6.764999865652793, \"ExposureProgram\": 2, \"SubsecTimeDigitized\": 297, \"ExposureMode\": 0, \"PixelXDimension\": 3000, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 297, \"ExifVersion\": <__NSArrayM 0x11102daa0>(\n2,\n3,\n2\n)\n, \"WhiteBalance\": 1, \"FNumber\": 1.779999971388065, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78] row=流水 · 27 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "motionBlur",
+      "mode": "auto",
+      "seconds": 4.640683874982642,
+      "hostBaselineMiB": 212.17479705810547,
+      "hostSampledPeakMiB": 807.706298828125,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"Flash\": 16, \"SceneCaptureType\": 0, \"SceneType\": 1, \"SensingMethod\": 2, \"FlashPixVersion\": <__NSArrayM 0x11102fba0>(\n1,\n0\n)\n, \"LensSpecification\": <__NSArrayM 0x11102e4f0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"FocalLenIn35mmFilm\": 24, \"ISOSpeedRatings\": <__NSArrayM 0x11102e7c0>(\n1250\n)\n, \"BrightnessValue\": 0.5130437964216458, \"DateTimeOriginal\": 2026:11:01 08:31:22, \"ComponentsConfiguration\": <__NSArrayM 0x11102f840>(\n1,\n2,\n3,\n0\n)\n, \"ShutterSpeedValue\": 6.966325397804367, \"ExposureBiasValue\": 0, \"DateTimeDigitized\": 2026:11:01 08:31:22, \"ColorSpace\": 65535, \"LensMake\": Apple, \"MeteringMode\": 5, \"OffsetTimeDigitized\": +08:00, \"PixelYDimension\": 3024, \"ExposureTime\": 0.008, \"FocalLength\": 6.764999865652793, \"OffsetTimeOriginal\": +08:00, \"ExposureProgram\": 1, \"SubsecTimeDigitized\": 140, \"ExposureMode\": 1, \"PixelXDimension\": 4032, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 140, \"ExifVersion\": <__NSArrayM 0x11102ce40>(\n2,\n3,\n2\n)\n, \"WhiteBalance\": 1, \"FNumber\": 1.779999971388065, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78] row=动态模糊 · 9 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "motionBlur",
+      "mode": "auto",
+      "seconds": 4.438622708315961,
+      "hostBaselineMiB": 213.40919494628906,
+      "hostSampledPeakMiB": 732.8938217163086,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"Flash\": 16, \"SceneCaptureType\": 0, \"SceneType\": 1, \"SensingMethod\": 2, \"FlashPixVersion\": <__NSArrayM 0x11102dbf0>(\n1,\n0\n)\n, \"LensSpecification\": <__NSArrayM 0x11102e4f0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"FocalLenIn35mmFilm\": 24, \"ISOSpeedRatings\": <__NSArrayM 0x11102e7c0>(\n1250\n)\n, \"BrightnessValue\": 0.5135178243879097, \"DateTimeOriginal\": 2026:11:01 08:31:30, \"ComponentsConfiguration\": <__NSArrayM 0x11102eca0>(\n1,\n2,\n3,\n0\n)\n, \"ShutterSpeedValue\": 6.965243381725021, \"ExposureBiasValue\": 0.015625, \"DateTimeDigitized\": 2026:11:01 08:31:30, \"ColorSpace\": 65535, \"LensMake\": Apple, \"MeteringMode\": 5, \"OffsetTimeDigitized\": +08:00, \"PixelYDimension\": 3024, \"ExposureTime\": 0.008, \"FocalLength\": 6.764999865652793, \"OffsetTimeOriginal\": +08:00, \"ExposureProgram\": 2, \"SubsecTimeDigitized\": 636, \"ExposureMode\": 0, \"PixelXDimension\": 4032, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 636, \"ExifVersion\": <__NSArrayM 0x11102ce40>(\n2,\n3,\n2\n)\n, \"WhiteBalance\": 1, \"FNumber\": 1.779999971388065, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78] row=动态模糊 · 9 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "motionBlur",
+      "mode": "auto",
+      "seconds": 4.393707166658714,
+      "hostBaselineMiB": 217.37796783447266,
+      "hostSampledPeakMiB": 738.8782424926758,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"SceneCaptureType\": 0, \"FocalLenIn35mmFilm\": 24, \"ExposureProgram\": 2, \"FocalLength\": 6.764999865652793, \"MeteringMode\": 5, \"OffsetTimeDigitized\": +08:00, \"LensSpecification\": <__NSArrayM 0x11102fb10>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"SubsecTimeDigitized\": 097, \"SceneType\": 1, \"ShutterSpeedValue\": 6.965243381725021, \"LensMake\": Apple, \"FNumber\": 1.779999971388065, \"FlashPixVersion\": <__NSArrayM 0x11102e9a0>(\n1,\n0\n)\n, \"WhiteBalance\": 1, \"ExposureTime\": 0.008, \"ComponentsConfiguration\": <__NSArrayM 0x11102fa20>(\n1,\n2,\n3,\n0\n)\n, \"PixelXDimension\": 4032, \"PixelYDimension\": 3024, \"DateTimeDigitized\": 2026:11:01 08:31:39, \"OffsetTimeOriginal\": +08:00, \"SubsecTimeOriginal\": 097, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x11102dc80>(\n1250\n)\n, \"ExposureMode\": 0, \"SensingMethod\": 2, \"BrightnessValue\": 0.5052502086903036, \"OffsetTime\": +08:00, \"DateTimeOriginal\": 2026:11:01 08:31:39, \"ApertureValue\": 1.663754436600491, \"ExifVersion\": <__NSArrayM 0x11102eca0>(\n2,\n3,\n2\n)\n, \"ExposureBiasValue\": 0, \"ColorSpace\": 65535, \"Flash\": 16] row=动态模糊 · 9 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "motionBlur",
+      "mode": "auto",
+      "seconds": 4.4251339999900665,
+      "hostBaselineMiB": 217.53424072265625,
+      "hostSampledPeakMiB": 734.7688903808594,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"ShutterSpeedValue\": 5.906948304613675, \"OffsetTimeDigitized\": +08:00, \"ColorSpace\": 65535, \"ExposureMode\": 0, \"MeteringMode\": 5, \"SubsecTimeDigitized\": 528, \"DateTimeOriginal\": 2026:11:01 08:31:47, \"FlashPixVersion\": <__NSArrayM 0x11102d170>(\n1,\n0\n)\n, \"PixelYDimension\": 3024, \"FocalLength\": 6.764999865652793, \"ComponentsConfiguration\": <__NSArrayM 0x11102f510>(\n1,\n2,\n3,\n0\n)\n, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExifVersion\": <__NSArrayM 0x11102fa20>(\n2,\n3,\n2\n)\n, \"LensSpecification\": <__NSArrayM 0x11102e340>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"FocalLenIn35mmFilm\": 24, \"PixelXDimension\": 4032, \"SensingMethod\": 2, \"ExposureProgram\": 2, \"LensMake\": Apple, \"BrightnessValue\": 0.4858620277379244, \"Flash\": 16, \"ApertureValue\": 1.663754436600491, \"SceneCaptureType\": 0, \"SceneType\": 1, \"ExposureTime\": 0.01666666666666667, \"ISOSpeedRatings\": <__NSArrayM 0x11102f7b0>(\n640\n)\n, \"FNumber\": 1.779999971388065, \"ExposureBiasValue\": 0.09765625, \"DateTimeDigitized\": 2026:11:01 08:31:47, \"SubsecTimeOriginal\": 528, \"WhiteBalance\": 1, \"OffsetTimeOriginal\": +08:00, \"OffsetTime\": +08:00] row=动态模糊 · 9 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "lightTrails",
+      "mode": "auto",
+      "seconds": 16.447672000009334,
+      "hostBaselineMiB": 199.94044494628906,
+      "hostSampledPeakMiB": 766.2063217163086,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"SceneCaptureType\": 0, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ExifVersion\": <__NSArrayM 0x11102e190>(\n2,\n3,\n2\n)\n, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"MeteringMode\": 5, \"ComponentsConfiguration\": <__NSArrayM 0x11102d7a0>(\n1,\n2,\n3,\n0\n)\n, \"BrightnessValue\": 0.4566549787622224, \"DateTimeOriginal\": 2026:11:01 08:32:12, \"OffsetTimeOriginal\": +08:00, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"DateTimeDigitized\": 2026:11:01 08:32:12, \"ColorSpace\": 65535, \"FlashPixVersion\": <__NSArrayM 0x11102e370>(\n1,\n0\n)\n, \"WhiteBalance\": 1, \"ExposureTime\": 0.03333333333333333, \"ShutterSpeedValue\": 4.906602084868906, \"LensSpecification\": <__NSArrayM 0x11102f6c0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ApertureValue\": 1.663754436600491, \"ISOSpeedRatings\": <__NSArrayM 0x11102cf00>(\n320\n)\n, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 097, \"SubsecTimeDigitized\": 097, \"LensMake\": Apple, \"SceneType\": 1, \"Flash\": 16, \"ExposureBiasValue\": 0.0625, \"PixelXDimension\": 4032, \"PixelYDimension\": 3024, \"ExposureProgram\": 2, \"SensingMethod\": 2, \"FNumber\": 1.779999971388065] row=光轨 · 39 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 11.830468041647691,
+      "hostBaselineMiB": 225.81551361083984,
+      "hostSampledPeakMiB": 751.7376403808594,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ExifVersion\": <__NSArrayM 0x11102db00>(\n2,\n3,\n2\n)\n, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"MeteringMode\": 5, \"BrightnessValue\": 0.4539779660117774, \"OffsetTimeOriginal\": +08:00, \"DateTimeOriginal\": 2026:11:01 08:32:32, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"DateTimeDigitized\": 2026:11:01 08:32:32, \"LensSpecification\": <__NSArrayM 0x11102f4b0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ColorSpace\": 65535, \"WhiteBalance\": 1, \"ExposureTime\": 0.01666666666666667, \"ShutterSpeedValue\": 5.906948304613675, \"ApertureValue\": 1.663754436600491, \"ISOSpeedRatings\": <__NSArrayM 0x11102e580>(\n640\n)\n, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 472, \"SubsecTimeDigitized\": 472, \"LensMake\": Apple, \"SceneType\": 1, \"Flash\": 16, \"PixelXDimension\": 3000, \"ExposureBiasValue\": 0.05859375, \"PixelYDimension\": 4000, \"ExposureProgram\": 2, \"SensingMethod\": 2, \"FNumber\": 1.779999971388065] row=流水 · 27 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "motionBlur",
+      "mode": "auto",
+      "seconds": 4.448178166669095,
+      "hostBaselineMiB": 207.98741149902344,
+      "hostSampledPeakMiB": 728.597038269043,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"Flash\": 16, \"SceneCaptureType\": 0, \"SceneType\": 1, \"SensingMethod\": 2, \"FlashPixVersion\": <__NSArrayM 0x11102d290>(\n1,\n0\n)\n, \"LensSpecification\": <__NSArrayM 0x11102e340>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"FocalLenIn35mmFilm\": 24, \"ISOSpeedRatings\": <__NSArrayM 0x11102ee20>(\n640\n)\n, \"BrightnessValue\": 0.4213733008016731, \"DateTimeOriginal\": 2026:11:01 08:33:04, \"ComponentsConfiguration\": <__NSArrayM 0x11102de60>(\n1,\n2,\n3,\n0\n)\n, \"ShutterSpeedValue\": 5.906948304613675, \"ExposureBiasValue\": 0.015625, \"DateTimeDigitized\": 2026:11:01 08:33:04, \"ColorSpace\": 65535, \"LensMake\": Apple, \"MeteringMode\": 5, \"OffsetTimeDigitized\": +08:00, \"PixelYDimension\": 3024, \"ExposureTime\": 0.01666666666666667, \"FocalLength\": 6.764999865652793, \"OffsetTimeOriginal\": +08:00, \"ExposureProgram\": 2, \"SubsecTimeDigitized\": 312, \"ExposureMode\": 0, \"PixelXDimension\": 4032, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 312, \"ExifVersion\": <__NSArrayM 0x11102e3d0>(\n2,\n3,\n2\n)\n, \"WhiteBalance\": 1, \"FNumber\": 1.779999971388065, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78] row=动态模糊 · 9 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "panning",
+      "mode": "auto",
+      "seconds": 2.322684708342422,
+      "hostBaselineMiB": 208.94053649902344,
+      "hostSampledPeakMiB": 709.3783340454102,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"SceneCaptureType\": 0, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ExifVersion\": <__NSArrayM 0x11102e670>(\n2,\n3,\n2\n)\n, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"MeteringMode\": 5, \"ComponentsConfiguration\": <__NSArrayM 0x11102d230>(\n1,\n2,\n3,\n0\n)\n, \"BrightnessValue\": 0.396426943760824, \"DateTimeOriginal\": 2026:11:01 08:33:28, \"OffsetTimeOriginal\": +08:00, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"DateTimeDigitized\": 2026:11:01 08:33:28, \"ColorSpace\": 65535, \"FlashPixVersion\": <__NSArrayM 0x11102dfe0>(\n1,\n0\n)\n, \"WhiteBalance\": 1, \"ExposureTime\": 0.01666666666666667, \"ShutterSpeedValue\": 5.906948304613675, \"LensSpecification\": <__NSArrayM 0x11102f4b0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ApertureValue\": 1.663754436600491, \"ISOSpeedRatings\": <__NSArrayM 0x11102f1b0>(\n640\n)\n, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 812, \"SubsecTimeDigitized\": 812, \"LensMake\": Apple, \"SceneType\": 1, \"Flash\": 16, \"ExposureBiasValue\": 0, \"PixelXDimension\": 4032, \"PixelYDimension\": 3024, \"ExposureProgram\": 2, \"SensingMethod\": 2, \"FNumber\": 1.779999971388065] row=摇拍追焦 · 4 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "panning",
+      "mode": "auto",
+      "seconds": 2.327952166670002,
+      "hostBaselineMiB": 228.08118438720703,
+      "hostSampledPeakMiB": 785.284538269043,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"SceneCaptureType\": 0, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ExifVersion\": <__NSArrayM 0x11102e670>(\n2,\n3,\n2\n)\n, \"OffsetTimeDigitized\": +08:00, \"FocalLength\": 6.764999865652793, \"MeteringMode\": 5, \"ComponentsConfiguration\": <__NSArrayM 0x11102e7f0>(\n1,\n2,\n3,\n0\n)\n, \"BrightnessValue\": 0.3880147039377992, \"DateTimeOriginal\": 2026:11:01 08:33:35, \"OffsetTimeOriginal\": +08:00, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"DateTimeDigitized\": 2026:11:01 08:33:35, \"ColorSpace\": 65535, \"FlashPixVersion\": <__NSArrayM 0x11102f660>(\n1,\n0\n)\n, \"WhiteBalance\": 1, \"ExposureTime\": 0.01666666666666667, \"ShutterSpeedValue\": 5.906948304613675, \"LensSpecification\": <__NSArrayM 0x11102f4b0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"ApertureValue\": 1.663754436600491, \"ISOSpeedRatings\": <__NSArrayM 0x11102f1b0>(\n640\n)\n, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 254, \"SubsecTimeDigitized\": 254, \"LensMake\": Apple, \"SceneType\": 1, \"Flash\": 16, \"ExposureBiasValue\": 0, \"PixelXDimension\": 4032, \"PixelYDimension\": 3024, \"ExposureProgram\": 2, \"SensingMethod\": 2, \"FNumber\": 1.779999971388065] row=摇拍追焦 · 4 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "seconds": 11.512562791671371,
+      "hostBaselineMiB": 267.2843551635742,
+      "hostSampledPeakMiB": 823.8784484863281,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"Flash\": 16, \"SceneType\": 1, \"SensingMethod\": 2, \"LensSpecification\": <__NSArrayM 0x12acbf9c0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"FocalLenIn35mmFilm\": 24, \"ISOSpeedRatings\": <__NSArrayM 0x12acbdad0>(\n640\n)\n, \"BrightnessValue\": 0.3710416251742681, \"DateTimeOriginal\": 2026:11:01 08:33:55, \"ShutterSpeedValue\": 5.906948304613675, \"ExposureBiasValue\": -0.04296875, \"DateTimeDigitized\": 2026:11:01 08:33:55, \"ColorSpace\": 65535, \"LensMake\": Apple, \"MeteringMode\": 5, \"OffsetTimeDigitized\": +08:00, \"PixelYDimension\": 4000, \"ExposureTime\": 0.01666666666666667, \"OffsetTimeOriginal\": +08:00, \"FocalLength\": 6.764999865652793, \"ExposureProgram\": 2, \"SubsecTimeDigitized\": 882, \"ExposureMode\": 0, \"PixelXDimension\": 3000, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 882, \"ExifVersion\": <__NSArrayM 0x12acbcd80>(\n2,\n3,\n2\n)\n, \"WhiteBalance\": 1, \"FNumber\": 1.779999971388065, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78] row=流水 · 27 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "panning",
+      "mode": "auto",
+      "seconds": 2.290587666677311,
+      "hostBaselineMiB": 235.01873016357422,
+      "hostSampledPeakMiB": 743.8002548217773,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"ComponentsConfiguration\": <__NSArrayM 0x12acbd230>(\n1,\n2,\n3,\n0\n)\n, \"SubsecTimeOriginal\": 719, \"SubsecTimeDigitized\": 719, \"ShutterSpeedValue\": 5.906948304613675, \"DateTimeDigitized\": 2026:11:01 08:34:23, \"PixelXDimension\": 4032, \"Flash\": 16, \"FocalLength\": 6.764999865652793, \"SceneType\": 1, \"MeteringMode\": 5, \"DateTimeOriginal\": 2026:11:01 08:34:23, \"FlashPixVersion\": <__NSArrayM 0x12acbec40>(\n1,\n0\n)\n, \"OffsetTimeOriginal\": +08:00, \"LensSpecification\": <__NSArrayM 0x12acbf9c0>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"SceneCaptureType\": 0, \"ISOSpeedRatings\": <__NSArrayM 0x12acbdad0>(\n640\n)\n, \"ExifVersion\": <__NSArrayM 0x12acbcd50>(\n2,\n3,\n2\n)\n, \"ColorSpace\": 65535, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"SensingMethod\": 2, \"BrightnessValue\": 0.3452016200035217, \"OffsetTimeDigitized\": +08:00, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ExposureProgram\": 2, \"ApertureValue\": 1.663754436600491, \"ExposureTime\": 0.01666666666666667, \"OffsetTime\": +08:00, \"WhiteBalance\": 1, \"ExposureBiasValue\": -0.03515625, \"FNumber\": 1.779999971388065, \"LensMake\": Apple, \"PixelYDimension\": 3024] row=摇拍追焦 · 4 帧",
+      "thermal": 0
+    },
+    {
+      "preset": "starTrails",
+      "mode": "auto",
+      "seconds": 61.52785345833399,
+      "hostBaselineMiB": 238.14373016357422,
+      "hostSampledPeakMiB": 741.6751403808594,
+      "width": 3000,
+      "height": 4000,
+      "EXIFAndDiagnosticText": "[\"Flash\": 16, \"SceneCaptureType\": 0, \"SceneType\": 1, \"SensingMethod\": 2, \"FlashPixVersion\": <__NSArrayM 0x1133e69d0>(\n1,\n0\n)\n, \"LensSpecification\": <__NSArrayM 0x1133e5170>(\n6.765,\n6.765,\n1.78,\n1.78\n)\n, \"FocalLenIn35mmFilm\": 24, \"ISOSpeedRatings\": <__NSArrayM 0x1133e4930>(\n100\n)\n, \"BrightnessValue\": 0.3068632246529593, \"DateTimeOriginal\": 2026:11:01 08:35:16, \"ComponentsConfiguration\": <__NSArrayM 0x1133e7c00>(\n1,\n2,\n3,\n0\n)\n, \"ShutterSpeedValue\": 2.999942293265624, \"ExposureBiasValue\": 0.16796875, \"DateTimeDigitized\": 2026:11:01 08:35:16, \"ColorSpace\": 65535, \"LensMake\": Apple, \"MeteringMode\": 5, \"OffsetTimeDigitized\": +08:00, \"PixelYDimension\": 3024, \"ExposureTime\": 0.125, \"FocalLength\": 6.764999865652793, \"OffsetTimeOriginal\": +08:00, \"ExposureProgram\": 2, \"SubsecTimeDigitized\": 419, \"ExposureMode\": 0, \"PixelXDimension\": 4032, \"OffsetTime\": +08:00, \"SubsecTimeOriginal\": 419, \"ExifVersion\": <__NSArrayM 0x1133e5ec0>(\n2,\n3,\n2\n)\n, \"WhiteBalance\": 1, \"FNumber\": 1.779999971388065, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78] row=星轨 · 174 帧",
+      "thermal": 0
+    }
+  ],
+  "intermediatePreviews": [
+    {
+      "preset": "lightTrails",
+      "count": 20,
+      "minimumPublicationIntervalSeconds": 0.7813807916536462
+    },
+    {
+      "preset": "motionBlur",
+      "count": 5,
+      "minimumPublicationIntervalSeconds": 0.791280541656306
+    },
+    {
+      "preset": "panning",
+      "count": 2,
+      "minimumPublicationIntervalSeconds": 0.7096832499955781
+    },
+    {
+      "preset": "lightTrails",
+      "count": 20,
+      "minimumPublicationIntervalSeconds": 0.7831714583153371
+    },
+    {
+      "preset": "motionBlur",
+      "count": 5,
+      "minimumPublicationIntervalSeconds": 0.7857608750055078
+    },
+    {
+      "preset": "panning",
+      "count": 2,
+      "minimumPublicationIntervalSeconds": 0.7238194999808911
+    },
+    {
+      "preset": "starTrails",
+      "count": 91,
+      "minimumPublicationIntervalSeconds": 0.6307219583541155
+    },
+    {
+      "preset": "silkyWater",
+      "count": 14,
+      "minimumPublicationIntervalSeconds": 0.7806647499965038
+    },
+    {
+      "preset": "silkyWater",
+      "count": 14,
+      "minimumPublicationIntervalSeconds": 0.7863685416523367
+    },
+    {
+      "preset": "silkyWater",
+      "count": 14,
+      "minimumPublicationIntervalSeconds": 0.7857470416638535
+    },
+    {
+      "preset": "lightTrails",
+      "count": 20,
+      "minimumPublicationIntervalSeconds": 0.7887949166470207
+    },
+    {
+      "preset": "silkyWater",
+      "count": 14,
+      "minimumPublicationIntervalSeconds": 0.7915448333369568
+    },
+    {
+      "preset": "motionBlur",
+      "count": 5,
+      "minimumPublicationIntervalSeconds": 0.7848064999852795
+    },
+    {
+      "preset": "lightTrails",
+      "count": 30,
+      "minimumPublicationIntervalSeconds": 0.5048893750063144
+    },
+    {
+      "preset": "silkyWater",
+      "count": 13,
+      "minimumPublicationIntervalSeconds": 0.8672007916611619
+    },
+    {
+      "preset": "lightTrails",
+      "count": 20,
+      "minimumPublicationIntervalSeconds": 0.6879409166867845
+    },
+    {
+      "preset": "lightTrails",
+      "count": 20,
+      "minimumPublicationIntervalSeconds": 0.7893698750121985
+    },
+    {
+      "preset": "lightTrails",
+      "count": 20,
+      "minimumPublicationIntervalSeconds": 0.7876078333356418
+    },
+    {
+      "preset": "lightTrails",
+      "count": 20,
+      "minimumPublicationIntervalSeconds": 0.7853652499907184
+    },
+    {
+      "preset": "silkyWater",
+      "count": 14,
+      "minimumPublicationIntervalSeconds": 0.5095675000047777
+    },
+    {
+      "preset": "silkyWater",
+      "count": 14,
+      "minimumPublicationIntervalSeconds": 0.7920233333425131
+    },
+    {
+      "preset": "silkyWater",
+      "count": 14,
+      "minimumPublicationIntervalSeconds": 0.7930810833349824
+    },
+    {
+      "preset": "silkyWater",
+      "count": 14,
+      "minimumPublicationIntervalSeconds": 0.7932257499778643
+    },
+    {
+      "preset": "motionBlur",
+      "count": 5,
+      "minimumPublicationIntervalSeconds": 0.793971541657811
+    },
+    {
+      "preset": "motionBlur",
+      "count": 5,
+      "minimumPublicationIntervalSeconds": 0.7961521249962971
+    },
+    {
+      "preset": "motionBlur",
+      "count": 5,
+      "minimumPublicationIntervalSeconds": 0.7966395833354909
+    },
+    {
+      "preset": "motionBlur",
+      "count": 5,
+      "minimumPublicationIntervalSeconds": 0.7955430000147317
+    },
+    {
+      "preset": "lightTrails",
+      "count": 20,
+      "minimumPublicationIntervalSeconds": 0.7886167083343025
+    },
+    {
+      "preset": "silkyWater",
+      "count": 14,
+      "minimumPublicationIntervalSeconds": 0.7918811666895635
+    },
+    {
+      "preset": "motionBlur",
+      "count": 5,
+      "minimumPublicationIntervalSeconds": 0.7924357500160113
+    },
+    {
+      "preset": "panning",
+      "count": 2,
+      "minimumPublicationIntervalSeconds": 0.7532116250076797
+    },
+    {
+      "preset": "panning",
+      "count": 2,
+      "minimumPublicationIntervalSeconds": 0.7424909166584257
+    },
+    {
+      "preset": "silkyWater",
+      "count": 14,
+      "minimumPublicationIntervalSeconds": 0.502789791644318
+    },
+    {
+      "preset": "panning",
+      "count": 2,
+      "minimumPublicationIntervalSeconds": 0.7477114166831598
+    },
+    {
+      "preset": "starTrails",
+      "count": 87,
+      "minimumPublicationIntervalSeconds": 0.6369692500156816
+    }
+  ],
+  "metricLines": [
+    "SLOW-ACCUMULATION-RENDER n=12 source=320x240 previewMax=180 medianSeconds=0.0011385416437406093 maxSeconds=0.0015972083492670208 resultUnchanged=true notFPS=true",
+    "SLOW-ACCUMULATION-FULL n=12 source=4032x3024 previewMax=900 medianSeconds=0.0022519999765791 maxSeconds=0.010965000023134053 notFPS=true",
+    "SLOW-CANVAS blend=handheldAlignedAverage frames=20 accepted=20 size=320x240 renderedSeconds=1.1198946666554548",
+    "SLOW-CANVAS blend=handheldAlignedLighten frames=20 accepted=20 size=320x240 renderedSeconds=1.1215130833443254",
+    "SLOW-HANDHELD-LAYOUT actualJPEGs=14 ratios=7 contentOrientations=2 noPhotosWrites=true",
+    "SLOW-HANDHELD blend=handheldAlignedAverage sources=8 effective=8 rejected=1 staticLinearError=0.0152130126953125 unaligned=0.02362060546875",
+    "SLOW-HANDHELD blend=handheldAlignedLighten sources=8 effective=8 rejected=1 staticLinearError=0.0086669921875 unaligned=0.0704345703125",
+    "SLOW-HANDHELD-PERF samples=16 medianSeconds=0.1053822499816306 maxSeconds=0.10969862501951866 size=320x240 includesRegistrationAndRenderedCheckpoint=true notFPS=true",
+    "SLOW-LAYOUT device=iPhone 17 Pro; liveAppCameraSession=true; readyAfterStartup=true; rearFocalSlots=5; alignedPresets=5; rapidToggleCount=20; rapidToggleWallTime=0.44673450000118464s; ratios=7; ratioChecksWallTime=2.358564166672295s; focalWidth=212.0; no captures; touch-slot geometry only, not camera preview FPS",
+    "SLOW-AM-RESTORE presets=5 roundTripConfigurationSeconds=[2.4482612916617654, 2.0885259583592415, 2.08700574998511, 2.080154333350947, 2.1269711249915417] rapidRoundTrips=10 cancelledPreset=cleared reentry=1s pending=0; includes queue/overlay wait, not screen FPS",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=117.90843963623047",
+    "SLOW-PROGRESS preset=lightTrails frames=10 retainedSources=1 hostFootprintMB=367.2212142944336",
+    "SLOW-PROGRESS preset=lightTrails frames=20 retainedSources=1 hostFootprintMB=368.2837142944336",
+    "SLOW-PROGRESS preset=lightTrails frames=30 retainedSources=1 hostFootprintMB=369.8306121826172",
+    "SLOW-PROGRESS preset=lightTrails frames=40 retainedSources=0 hostFootprintMB=557.1587142944336",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=349.0962371826172",
+    "SLOW-ACCUMULATION preset=lightTrails previews=20 minPublicationInterval=0.7813807916536462 final=true",
+    "SLOW-PHASE-TIMES preset=lightTrails sourceSeconds=[1.1236705416522454, 1.4283700416563079, 1.855336416658247, 2.2573151666729245, 2.650370874995133, 3.05396754166577, 3.439092166663613, 3.8384722500049975, 4.22361912499764, 4.629952791670803, 5.018205750006018, 5.423697999998694, 5.813697458332172, 6.20960937498603, 6.596003333339468, 7.002693916670978, 7.383525874989573, 7.79184062499553, 8.177807208325248, 8.579749249998713, 8.96495458332356, 9.365683541662293, 9.747839124989696, 10.1502027916722, 10.539341708325082, 10.94295904165483, 11.334556333342334, 11.729967166669667, 12.115184833324747, 12.517821916670073, 12.907498708344065, 13.312852875009412, 13.697278333333088, 14.102380041673314, 14.483847625000635, 14.885670208343072, 15.268905958335381, 15.666541416663677, 16.05445079167839, 16.45978679167456] finalEncodeSeconds=0.178626583336154 ISO=[320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0] previewPublicationMaxGap=0.14925320833572187",
+    "SLOW-SOURCE-EXPOSURES preset=lightTrails seconds=[0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333]",
+    "SLOW-FULL preset=lightTrails mode=auto seconds=16.638413375010714 baselineMB=116.93968963623047 peakMB=649.3151016235352 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:21:58, \"BrightnessValue\": 0.4566549787622224, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x12acbcc90>(",
+    "SLOW-PROGRESS preset=motionBlur frames=0 retainedSources=0 hostFootprintMB=258.9086685180664",
+    "SLOW-ACCUMULATION preset=motionBlur previews=5 minPublicationInterval=0.791280541656306 final=true",
+    "SLOW-PHASE-TIMES preset=motionBlur sourceSeconds=[0.49884591667796485, 0.7982650833437219, 1.2061493333312683, 1.606486083328491, 1.9928241249872372, 2.398455249989638, 2.7951246666780207, 3.2006298750056885, 3.592318291659467] finalEncodeSeconds=0.2070578333514277 ISO=[640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.13580283333430998",
+    "SLOW-SOURCE-EXPOSURES preset=motionBlur seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=motionBlur mode=auto seconds=3.7993761250108946 baselineMB=258.8930435180664 peakMB=660.1275787353516 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:22:15, \"BrightnessValue\": 0.4779568292627097, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x12acbf0c0>(",
+    "SLOW-PROGRESS preset=panning frames=0 retainedSources=0 hostFootprintMB=375.4400329589844",
+    "SLOW-ACCUMULATION preset=panning previews=2 minPublicationInterval=0.7096832499955781 final=true",
+    "SLOW-PHASE-TIMES preset=panning sourceSeconds=[0.4898199583403766, 0.7915134583308827, 1.1409240833309013, 1.5022910833358765] finalEncodeSeconds=0.15743195833056234 ISO=[640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.10532695834990591",
+    "SLOW-SOURCE-EXPOSURES preset=panning seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=panning mode=auto seconds=1.6597230416664388 baselineMB=375.4244079589844 peakMB=564.1275787353516 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:22:20, \"BrightnessValue\": 0.4779568292627097, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x12acbf900>(",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=118.37732696533203",
+    "SLOW-PROGRESS preset=lightTrails frames=10 retainedSources=1 hostFootprintMB=549.6900100708008",
+    "SLOW-PROGRESS preset=lightTrails frames=20 retainedSources=1 hostFootprintMB=550.6743850708008",
+    "SLOW-PROGRESS preset=lightTrails frames=30 retainedSources=1 hostFootprintMB=368.2993850708008",
+    "SLOW-PROGRESS preset=lightTrails frames=40 retainedSources=0 hostFootprintMB=374.9400329589844",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=354.8306579589844",
+    "SLOW-ACCUMULATION preset=lightTrails previews=20 minPublicationInterval=0.7831714583153371 final=true",
+    "SLOW-PHASE-TIMES preset=lightTrails sourceSeconds=[1.1141863333177753, 1.4194992916600313, 1.8207611666584853, 2.224843250005506, 2.6147340000024997, 3.0139370000106283, 3.402898833330255, 3.8059882916568313, 4.192546000005677, 4.603506374987774, 4.992666375008412, 5.387498625001172, 5.771291041659424, 6.175599958340172, 6.564802499982761, 6.96407512499718, 7.352452874998562, 7.7567710833391175, 8.148290416662348, 8.55535033333581, 8.944111999997403, 9.345711208326975, 9.735406791674905, 10.135992958326824, 10.522364250005921, 10.924797916668467, 11.316133541666204, 11.719335291651078, 12.105405999987852, 12.505394541658461, 12.890633416653145, 13.295471499994164, 13.679151666670805, 14.080179291660897, 14.46590695832856, 14.872616375010693, 15.257893791655079, 15.65518841665471, 16.04273216665024, 16.447350500005996] finalEncodeSeconds=0.1756536666653119 ISO=[320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0] previewPublicationMaxGap=0.14711341666406952",
+    "SLOW-SOURCE-EXPOSURES preset=lightTrails seconds=[0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333]",
+    "SLOW-FULL preset=lightTrails mode=auto seconds=16.623004166671308 baselineMB=122.50232696533203 peakMB=646.0807037353516 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:22:43, \"BrightnessValue\": 0.4725965230747748, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x111a01980>(",
+    "SLOW-PROGRESS preset=motionBlur frames=0 retainedSources=0 hostFootprintMB=142.5648956298828",
+    "SLOW-ACCUMULATION preset=motionBlur previews=5 minPublicationInterval=0.7857608750055078 final=true",
+    "SLOW-PHASE-TIMES preset=motionBlur sourceSeconds=[1.1161014583485667, 1.4184831250167917, 1.8209283333271742, 2.22332762501901, 2.607525250001345, 3.0104673750174697, 3.395349291677121, 3.8023136666743085, 4.186716416676063] finalEncodeSeconds=0.19272054167231545 ISO=[640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.13715816667536274",
+    "SLOW-SOURCE-EXPOSURES preset=motionBlur seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=motionBlur mode=auto seconds=4.3794369583483785 baselineMB=146.6898956298828 peakMB=667.5338745117188 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:23:04, \"BrightnessValue\": 0.4858620277379244, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x111a01980>(",
+    "SLOW-PROGRESS preset=panning frames=0 retainedSources=0 hostFootprintMB=143.1273956298828",
+    "SLOW-ACCUMULATION preset=panning previews=2 minPublicationInterval=0.7238194999808911 final=true",
+    "SLOW-PHASE-TIMES preset=panning sourceSeconds=[1.1196101666719187, 1.4238707083277404, 1.789582416677149, 2.146996625000611] finalEncodeSeconds=0.12963720833067782 ISO=[640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.1367478333413601",
+    "SLOW-SOURCE-EXPOSURES preset=panning seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=panning mode=auto seconds=2.2766338333312888 baselineMB=147.2523956298828 peakMB=650.7995681762695 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:23:12, \"BrightnessValue\": 0.4858620277379244, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x111a03b10>(",
+    "SLOW-PROGRESS preset=starTrails frames=0 retainedSources=0 hostFootprintMB=136.4867706298828",
+    "SLOW-PROGRESS preset=starTrails frames=10 retainedSources=1 hostFootprintMB=544.3618850708008",
+    "SLOW-PROGRESS preset=starTrails frames=20 retainedSources=1 hostFootprintMB=451.3931350708008",
+    "SLOW-PROGRESS preset=starTrails frames=30 retainedSources=1 hostFootprintMB=544.5493850708008",
+    "SLOW-PROGRESS preset=starTrails frames=40 retainedSources=1 hostFootprintMB=544.9087600708008",
+    "SLOW-PROGRESS preset=starTrails frames=50 retainedSources=1 hostFootprintMB=358.9243850708008",
+    "SLOW-PROGRESS preset=starTrails frames=60 retainedSources=1 hostFootprintMB=359.0025100708008",
+    "SLOW-PROGRESS preset=starTrails frames=70 retainedSources=1 hostFootprintMB=359.0650100708008",
+    "SLOW-PROGRESS preset=starTrails frames=80 retainedSources=1 hostFootprintMB=359.2056350708008",
+    "SLOW-PROGRESS preset=starTrails frames=90 retainedSources=1 hostFootprintMB=521.5650787353516",
+    "SLOW-PROGRESS preset=starTrails frames=100 retainedSources=1 hostFootprintMB=545.4243850708008",
+    "SLOW-PROGRESS preset=starTrails frames=110 retainedSources=1 hostFootprintMB=545.5181350708008",
+    "SLOW-PROGRESS preset=starTrails frames=120 retainedSources=1 hostFootprintMB=545.6275100708008",
+    "SLOW-PROGRESS preset=starTrails frames=130 retainedSources=1 hostFootprintMB=355.7681350708008",
+    "SLOW-PROGRESS preset=starTrails frames=140 retainedSources=1 hostFootprintMB=546.0962600708008",
+    "SLOW-PROGRESS preset=starTrails frames=150 retainedSources=1 hostFootprintMB=546.2056350708008",
+    "SLOW-PROGRESS preset=starTrails frames=160 retainedSources=1 hostFootprintMB=542.1743850708008",
+    "SLOW-PROGRESS preset=starTrails frames=170 retainedSources=1 hostFootprintMB=546.4243850708008",
+    "SLOW-PROGRESS preset=starTrails frames=180 retainedSources=1 hostFootprintMB=360.4556350708008",
+    "SLOW-PROGRESS preset=starTrails frames=0 retainedSources=0 hostFootprintMB=349.0650329589844",
+    "SLOW-ACCUMULATION preset=starTrails previews=91 minPublicationInterval=0.6307219583541155 final=true",
+    "SLOW-PHASE-TIMES preset=starTrails sourceSeconds=[1.0244064999860711, 1.3165170416468754, 1.6507159166503698, 1.982500791666098, 2.282204624993028, 2.6160884166602045, 2.9142594166623894, 3.251345083321212, 3.5513557916565333, 3.8849915000027977, 4.219945208315039, 4.583820625004591, 4.919521000003442, 5.252101458318066, 5.584961749991635, 5.919970916671446, 6.2532394166628364, 6.620574000000488, 6.952302791672992, 7.319345541647635, 7.653731166647049, 7.987111875001574, 8.32050441665342, 8.654109541646903, 8.987994583323598, 9.321545499988133, 9.65547420832445, 9.988103291660082, 10.32070441666292, 10.656204166647512, 10.987910875002854, 11.322076333337463, 11.655535249999957, 11.988834624993615, 12.324138458323432, 12.65625095833093, 12.99080162498285, 13.323226958338637, 13.660301083320519, 13.9913735416485, 14.325407416647067, 14.656503125006566, 14.993880041671218, 15.35799958332791, 15.692576291650767, 16.026090416649822, 16.35877433331916, 16.724710958340438, 17.059771875006845, 17.3941667083418, 17.725474083330482, 18.059824374999152, 18.393763875006698, 18.724892333324533, 19.061914874997456, 19.426065583335003, 19.759597875003237, 20.094641125004273, 20.43201383331325, 20.793736708321376, 21.13089458332979, 21.462307458336, 21.79647874998045, 22.131936624995433, 22.464664041646756, 22.79878962499788, 23.130676125001628, 23.49705191666726, 23.83208708334132, 24.16346725000767, 24.497264166653622, 24.83157829166157, 25.163159499992616, 25.498885874985717, 25.831942333315965, 26.165724416670855, 26.49946829167311, 26.83286504165153, 27.165615041652927, 27.49905700000818, 27.833831583324354, 28.165527583332732, 28.4998507083219, 28.833284166670637, 29.16597670831834, 29.500587083341088, 29.834989041672088, 30.167537958332105, 30.499894291657256, 30.836665874987375, 31.16945091667003, 31.534112749999622, 31.867926583334338, 32.20357883331599, 32.534063250001054, 32.86972366666305, 33.16847129166126, 33.5021026666509, 33.83656508332933, 34.17102204167168, 34.50464825000381, 34.83798675000435, 35.173559791670414, 35.537102291651536, 35.873668083339, 36.20056150000892, 36.50517416666844, 36.83639808333828, 37.17161274998216, 37.50829412500025, 37.838012624997646, 38.17395804164698, 38.50729620832135, 38.866312708327314, 39.17156195832649, 39.512222374993144, 39.84256533332518, 40.17781162500614, 40.50551195832668, 40.84420108332415, 41.17448508332018, 41.507463083340554, 41.84270799998194, 42.17528741667047, 42.5082792500034, 42.84294370832504, 43.17621016665362, 43.508847291668644, 43.84461566666141, 44.20797462499468, 44.54618149998714, 44.90885708332644, 45.24437412500265, 45.57858754164772, 45.91072445831378, 46.245353416656144, 46.57827862500562, 46.91135516666691, 47.24815662499168, 47.61265391667257, 47.947730416664854, 48.279837083333405, 48.61333054167335, 48.94420054164948, 49.24634762498317, 49.580769916647114, 49.91199312498793, 50.24742208333919, 50.54520150000462, 50.880962666647974, 51.21425904164789, 51.54741033332539, 51.88171349998447, 52.21541324999998, 52.55007091665175, 52.88296087499475, 53.21476174998679, 53.54796166665619, 53.88301712498651, 54.21505333331879, 54.54945866667549, 54.88362637499813, 55.21613104167045, 55.551429166662274, 55.88355587498518, 56.21639841666911, 56.55235283332877, 56.91680899998755, 57.25066929165041, 57.585819166648434, 57.918814125005156, 58.25194650000776, 58.58785650000209, 58.95343087500078, 59.28635912499158, 59.61943570832955, 59.954264958330896, 60.28658516667201, 60.62153237499297, 60.99259491666453, 61.32069129165029] finalEncodeSeconds=0.11777162502403371 ISO=[80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0] previewPublicationMaxGap=0.23666504165157676",
+    "SLOW-SOURCE-EXPOSURES preset=starTrails seconds=[0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125]",
+    "SLOW-FULL preset=starTrails mode=auto seconds=61.438462916674325 baselineMB=145.8773956298828 peakMB=548.7993850708008 size=3000x4000 EXIF=[\"BrightnessValue\": 0.475822772986269, \"PixelXDimension\": 4032, \"ExposureTime\": 0.125, \"Flash\": 16, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x10ffcd890>(",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=129.22112274169922",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=373.7837600708008",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=375.0494079589844",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=399.72132873535156",
+    "SLOW-ACCUMULATION preset=silkyWater previews=14 minPublicationInterval=0.7806647499965038 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.0967035833455157, 1.412063208350446, 1.8345050000061747, 2.2414820416888688, 2.628754500008654, 3.036041250015842, 3.4205553750216495, 3.8140332083567046, 4.195954083348624, 4.60080370833748, 4.987009625008795, 5.381254583335249, 5.770058499998413, 6.17373054169002, 6.560071625019191, 6.960015833348734, 7.341306958347559, 7.744437500019558, 8.131782583339373, 8.534663583355723, 8.9156177083496, 9.313838500005659, 9.706820583349327, 10.115139541681856, 10.503939999995055, 10.907328250003047, 11.292029416683363] finalEncodeSeconds=0.2714204999792855 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.1363720416848082",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=11.563449916662648 baselineMB=129.20549774169922 peakMB=647.1432952880859 size=3000x4000 EXIF=[\"Flash\": 16, \"PixelXDimension\": 3000, \"ExposureTime\": 0.008, \"BrightnessValue\": 0.5135178243879097, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x11337a730>(",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=147.2836685180664",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=575.6432037353516",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=386.64320373535156",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=421.15887451171875",
+    "SLOW-ACCUMULATION preset=silkyWater previews=14 minPublicationInterval=0.7863685416523367 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.173741708335001, 1.4900559583329596, 1.8923575833323412, 2.2903416250192095, 2.677443958353251, 3.0819580833485816, 3.47379825002281, 3.874421333341161, 4.2607570416876115, 4.665199750015745, 5.05336683333735, 5.458030625013635, 5.8454155000217725, 6.249730333336629, 6.6395345000200905, 7.04468912500306, 7.4238897083560005, 7.828652208350832, 8.220484083343763, 8.627462708333042, 9.014951125020161, 9.419849541678559, 9.811339666688582, 10.20388258335879, 10.591156333335675, 10.996699708339293, 11.38816775000305] finalEncodeSeconds=0.3211096666636877 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.14102954167174175",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=11.709277416666737 baselineMB=151.4086685180664 peakMB=669.0026473999023 size=3000x4000 EXIF=[\"Flash\": 16, \"PixelXDimension\": 3000, \"ExposureTime\": 0.008, \"BrightnessValue\": 0.5217383308198772, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x113379650>(",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=136.6586685180664",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=472.39329528808594",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=380.79954528808594",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=370.73706817626953",
+    "SLOW-ACCUMULATION preset=silkyWater previews=14 minPublicationInterval=0.7857470416638535 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.1966740833595395, 1.500472958345199, 1.9058842500089668, 2.311986541666556, 2.700870375003433, 3.1072187083482277, 3.494796541664982, 3.894939375022659, 4.2829410416889, 4.6858740000170656, 5.070303541666362, 5.484682208334561, 5.8674535833415575, 6.285747083340539, 6.673591791681247, 7.086650625016773, 7.469670166668948, 7.881772375025321, 8.266196833341382, 8.669219041679753, 9.059382000006735, 9.465463291679043, 9.849998541671084, 10.254125541687245, 10.637136500008637, 11.0450577083393, 11.429297166672768] finalEncodeSeconds=0.20181850000517443 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.1420830416609533",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=11.631115666677942 baselineMB=146.0492935180664 peakMB=663.5182952880859 size=3000x4000 EXIF=[\"BrightnessValue\": 0.5380401437461653, \"PixelXDimension\": 4032, \"ExposureTime\": 0.008, \"Flash\": 16, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x113379cb0>(",
+    "SLOW-AUTO-METER preset=lightTrails ISO=584.5848999023438 seconds=0.016575 targetISO=9.689494715881347 allowed=54.0...200.0",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=137.50251007080078",
+    "SLOW-PROGRESS preset=lightTrails frames=10 retainedSources=1 hostFootprintMB=382.75264739990234",
+    "SLOW-PROGRESS preset=lightTrails frames=20 retainedSources=1 hostFootprintMB=574.3932952880859",
+    "SLOW-PROGRESS preset=lightTrails frames=30 retainedSources=1 hostFootprintMB=389.64331817626953",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=378.1433410644531",
+    "SLOW-ACCUMULATION preset=lightTrails previews=20 minPublicationInterval=0.7887949166470207 final=true",
+    "SLOW-PHASE-TIMES preset=lightTrails sourceSeconds=[1.1986359583388548, 1.5033193333365489, 1.8994733750005253, 2.306705625000177, 2.700090916681802, 3.111674416664755, 3.4998933333263267, 3.9062427083263174, 4.293490958341863, 4.70203141667298, 5.092060374998255, 5.501851833338151, 5.886732916667825, 6.293563000013819, 6.68504316668259, 7.0921701666666195, 7.474533833330497, 7.889300666662166, 8.280194083345123, 8.694887291669147, 9.08585716667585, 9.490476833336288, 9.87583312499919, 10.283515791670652, 10.668923624994932, 11.070850791671546, 11.460620458354242, 11.86930716666393, 12.257061041687848, 12.661653250019299, 13.05215666667209, 13.461296083347406, 13.853794291673694, 14.26195158335031, 14.653322250000201, 15.060105041688075, 15.445779958332423, 15.862300125008915, 16.25745299999835] finalEncodeSeconds=0.18928620833321474 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.14264354165061377",
+    "SLOW-SOURCE-EXPOSURES preset=lightTrails seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=lightTrails mode=auto seconds=16.446739208331564 baselineMB=137.48688507080078 peakMB=671.6432952880859 size=3000x4000 EXIF=[\"BrightnessValue\": 0.5461224900608928, \"PixelXDimension\": 4032, \"ExposureTime\": 0.008, \"Flash\": 16, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x11102d9e0>(",
+    "SLOW-AUTO-METER preset=silkyWater ISO=589.4161376953125 seconds=0.016575 targetISO=9.769572482299804 allowed=54.0...200.0",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=255.34639739990234",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=594.2996139526367",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=591.1433639526367",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=431.4090347290039",
+    "SLOW-ACCUMULATION preset=silkyWater previews=14 minPublicationInterval=0.7915448333369568 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.254975000018021, 1.5759813333570492, 1.9844660833477974, 2.390350583358668, 2.779598666675156, 3.1909470000246074, 3.587694875022862, 3.987932041694876, 4.377873125020415, 4.786890250019496, 5.179157041682629, 5.585494916682364, 5.978949000011198, 6.3854757500230335, 6.774310541688465, 7.187174083344871, 7.575069000013173, 7.978641250025248, 8.370313875027932, 8.776757291692775, 9.162890791689279, 9.569829291693168, 9.951411208341597, 10.367067208338995, 10.746208875003504, 11.158723708358593, 11.552609458332881] finalEncodeSeconds=0.2859472500276752 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.14170620832010172",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=11.838556708360557 baselineMB=266.31514739990234 peakMB=687.7841262817383 size=3000x4000 EXIF=[\"Flash\": 16, \"PixelXDimension\": 3000, \"ExposureTime\": 0.008, \"BrightnessValue\": 0.5541598092231216, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x11102ffc0>(",
+    "SLOW-PROGRESS preset=motionBlur frames=0 retainedSources=0 hostFootprintMB=145.84632873535156",
+    "SLOW-ACCUMULATION preset=motionBlur previews=5 minPublicationInterval=0.7848064999852795 final=true",
+    "SLOW-PHASE-TIMES preset=motionBlur sourceSeconds=[1.200810416659806, 1.5058635833265726, 1.898245374992257, 2.3052533750014845, 2.691949708329048, 3.1016035416687373, 3.495471666654339, 3.902229458326474, 4.290749958337983] finalEncodeSeconds=0.17147887501050718 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.14441016665659845",
+    "SLOW-SOURCE-EXPOSURES preset=motionBlur seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=motionBlur mode=auto seconds=4.46222883334849 baselineMB=145.83070373535156 peakMB=670.5966033935547 size=3000x4000 EXIF=[\"BrightnessValue\": 0.5701013526052237, \"PixelXDimension\": 4032, \"ExposureTime\": 0.008, \"Flash\": 16, \"ApertureValue\": 1.663754436600491, \"LensModel\": iPhone 17 Pro back camera 6.765mm f/1.78, \"ISOSpeedRatings\": <__NSArrayM 0x11102d440>(",
+    "SLOW-AUTO-COMPENSATION EV=3.371414571250177 readings=Optional(LumaCamera.CameraReadings(iso: 7564.984375, seconds: 0.03334, kelvin: 4413.1494140625, focus: 0.7215685844421387, tint: Optional(4.722695827484131), adjustingFocus: false, customExposure: false, exposureTargetOffsetEV: Optional(0.021619997918605804), sampleHostTime: Optional(233603.748205083), recommendationFocusPosition: Optional(0.7137254476547241), recommendationFocusDeviceID: Optional(\"com.apple.avfoundation.avcapturedevice.built-in_video:0\")))",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=147.09644317626953",
+    "SLOW-PROGRESS preset=lightTrails frames=10 retainedSources=1 hostFootprintMB=394.9872512817383",
+    "SLOW-PROGRESS preset=lightTrails frames=20 retainedSources=1 hostFootprintMB=411.58106994628906",
+    "SLOW-PROGRESS preset=lightTrails frames=30 retainedSources=1 hostFootprintMB=399.87794494628906",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=388.19046783447266",
+    "SLOW-ACCUMULATION preset=lightTrails previews=30 minPublicationInterval=0.5048893750063144 final=true",
+    "SLOW-PHASE-TIMES preset=lightTrails sourceSeconds=[1.034708374994807, 1.3381621666485444, 1.7926034999836702, 2.3113362083095126, 2.8213964166643564, 3.332311124977423, 3.851089874980971, 4.36761687498074, 4.878610666666646, 5.3992649166611955, 5.90957749998779, 6.427209916670108, 6.939036458323244, 7.45045995831606, 7.968648999987636, 8.474363874993287, 8.986086249991786, 9.503290958324214, 10.016965083312243, 10.531094833335374, 11.046892083337298, 11.56301416666247, 12.078827166667907, 12.591354000003776, 13.10137395831407, 13.617705958313309, 14.12900049999007, 14.64068949999637, 15.155616541655036, 15.676802374975523, 16.18651337499614] finalEncodeSeconds=0.3068187916651368 ISO=[8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0, 8000.0] previewPublicationMaxGap=0.13833145835087635",
+    "SLOW-SOURCE-EXPOSURES preset=lightTrails seconds=[0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333]",
+    "SLOW-FULL preset=lightTrails mode=auto seconds=16.493332166661276 baselineMB=147.08081817626953 peakMB=673.3155136108398 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:27:33, \"BrightnessValue\": -1.883826089577885, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102ce40>(",
+    "SLOW-AUTO-COMPENSATION EV=3.1537584301447743 readings=Optional(LumaCamera.CameraReadings(iso: 6054.64599609375, seconds: 0.03334, kelvin: 4558.6962890625, focus: 0.7294117212295532, tint: Optional(8.703547477722168), adjustingFocus: false, customExposure: false, exposureTargetOffsetEV: Optional(0.01572912372648716), sampleHostTime: Optional(233625.615848708), recommendationFocusPosition: Optional(0.7215685844421387), recommendationFocusDeviceID: Optional(\"com.apple.avfoundation.avcapturedevice.built-in_video:0\")))",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=187.6903076171875",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=445.40921783447266",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=415.19046783447266",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=441.25301361083984",
+    "SLOW-ACCUMULATION preset=silkyWater previews=13 minPublicationInterval=0.8672007916611619 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.5355662916845176, 1.847085416666232, 2.318316249991767, 2.784661583340494, 3.2019042083411478, 3.6561119583493564, 4.083571541676065, 4.527412833325798, 4.955696000019088, 5.408862250013044, 5.827086000004783, 6.270438333333004, 6.697370833338937, 7.146957166667562, 7.5718369166716, 8.020662499999162, 8.445730666659074, 8.893435708334437, 9.31509133335203, 9.764457875018707, 10.183561458339682, 10.629077249992406, 11.053853583347518, 11.4986732499965, 11.922004499996547] finalEncodeSeconds=0.3453560416819528 ISO=[6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0, 6400.0] previewPublicationMaxGap=0.13771312500466593",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=12.2673605416785 baselineMB=187.6746826171875 peakMB=690.690559387207 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:27:55, \"BrightnessValue\": -1.640276947057437, \"WhiteBalance\": 0, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102fa50>(",
+    "SLOW-PREVIEW-REENTRANT-CANCEL latePublications=0 savedPhotos=0 returnedLive=true",
+    "SLOW-EARLY rows=Optional([LumaCamera.PhotoInfoRow(title: \"相机\", value: \"iPhone 17 Pro\"), LumaCamera.PhotoInfoRow(title: \"镜头型号\", value: \"iPhone 17 Pro back camera 6.765mm f/1.78\"), LumaCamera.PhotoInfoRow(title: \"实际焦距\", value: \"6.76 mm\"), LumaCamera.PhotoInfoRow(title: \"35mm 等效焦距\", value: \"24 mm\"), LumaCamera.PhotoInfoRow(title: \"ISO\", value: \"1250\"), LumaCamera.PhotoInfoRow(title: \"快门\", value: \"1/125 s\"), LumaCamera.PhotoInfoRow(title: \"成片曝光补偿\", value: \"+0.1 EV\"), LumaCamera.PhotoInfoRow(title: \"光圈\", value: \"f/1.8\"), LumaCamera.PhotoInfoRow(title: \"拍摄倍率\", value: \"1.00×\"), LumaCamera.PhotoInfoRow(title: \"快门时主镜头\", value: \"主摄\"), LumaCamera.PhotoInfoRow(title: \"镜头设备\", value: \"Back Camera\"), LumaCamera.PhotoInfoRow(title: \"镜头内变焦倍率\", value: \"1.00×\"), LumaCamera.PhotoInfoRow(title: \"档位能力匹配\", value: \"物理镜头基准档位\"), LumaCamera.PhotoInfoRow(title: \"原生分辨率倍率\", value: \"1.00×、2.00×\"), LumaCamera.PhotoInfoRow(title: \"诊断说明\", value: \"主镜头为快门时状态快照；系统可能融合多个镜头。档位能力匹配不代表最终处理结果。\"), LumaCamera.PhotoInfoRow(title: \"系统照片输出\", value: \"4032 × 3024\"), LumaCamera.PhotoInfoRow(title: \"拍摄模式\", value: \"A\"), LumaCamera.PhotoInfoRow(title: \"慢门合成\", value: \"光轨 · 3 帧\"), LumaCamera.PhotoInfoRow(title: \"合成方式\", value: \"手持背景对齐亮部叠加\"), LumaCamera.PhotoInfoRow(title: \"实际采集\", value: \"3 帧\"), LumaCamera.PhotoInfoRow(title: \"对齐剔除\", value: \"0 帧\"), LumaCamera.PhotoInfoRow(title: \"采集时长\", value: \"0.87 秒\"), LumaCamera.PhotoInfoRow(title: \"累计曝光\", value: \"0.024 秒（3 帧）\")])",
+    "SLOW-RECOVERY early=1 cancel-in-flight=1 cancel-pending-finish=1 rapid-cycles=10 saves=1",
+    "SLOW-GENERIC manualExposure=200,1/125 finite=1 infiniteCancel=1 noPhotosWrites=true",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=176.1590805053711",
+    "SLOW-PROGRESS preset=lightTrails frames=10 retainedSources=1 hostFootprintMB=402.73738861083984",
+    "SLOW-PROGRESS preset=lightTrails frames=20 retainedSources=1 hostFootprintMB=590.0499114990234",
+    "SLOW-PROGRESS preset=lightTrails frames=30 retainedSources=1 hostFootprintMB=591.2530364990234",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=390.64368438720703",
+    "SLOW-ACCUMULATION preset=lightTrails previews=20 minPublicationInterval=0.6879409166867845 final=true",
+    "SLOW-PHASE-TIMES preset=lightTrails sourceSeconds=[1.2329122500086669, 1.5624478750105482, 1.894560624990845, 2.379588458337821, 2.8374453333381098, 3.2040928333299235, 3.5313152500020806, 4.010032458318165, 4.471094000007724, 4.835018416662933, 5.3050379999913275, 5.665874041675124, 5.995976708334638, 6.476042583322851, 6.933982541668229, 7.30834441666957, 7.770937875000527, 8.143540541670518, 8.60247704165522, 8.97720504165045, 9.43460966667044, 9.798601916671032, 10.134379625000292, 10.511108083330328, 10.967902458331082, 11.432979291654192, 11.769698374992004, 12.138885541673517, 12.601323833339848, 12.967275916656945, 13.434141791658476, 13.796185458340915, 14.139992041658843, 14.496455458342098, 14.829467041650787, 15.309262416674756, 15.766384333343012, 16.134751041652635, 16.60189483332215] finalEncodeSeconds=0.17445250001037493 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.0",
+    "SLOW-SOURCE-EXPOSURES preset=lightTrails seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=lightTrails mode=auto seconds=16.776347333332524 baselineMB=180.2684555053711 peakMB=683.4249801635742 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:28:56, \"BrightnessValue\": 0.5775325222170512, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102ffc0>(",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=180.20600128173828",
+    "SLOW-PROGRESS preset=lightTrails frames=10 retainedSources=1 hostFootprintMB=425.87803649902344",
+    "SLOW-PROGRESS preset=lightTrails frames=20 retainedSources=1 hostFootprintMB=430.81553649902344",
+    "SLOW-PROGRESS preset=lightTrails frames=30 retainedSources=1 hostFootprintMB=427.87803649902344",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=416.70618438720703",
+    "SLOW-ACCUMULATION preset=lightTrails previews=20 minPublicationInterval=0.7893698750121985 final=true",
+    "SLOW-PHASE-TIMES preset=lightTrails sourceSeconds=[1.119655624992447, 1.4242399166396353, 1.8330928333161864, 2.2418074999877717, 2.6289818333170842, 3.03703674999997, 3.428006499976618, 3.8289359166519716, 4.217877541639609, 4.629205666657072, 5.014329833327793, 5.418747333314968, 5.80825116665801, 6.218017958308337, 6.608559458312811, 7.017184999975143, 7.403148874989711, 7.816508583317045, 8.209082791639958, 8.620021416660165, 9.008825791650452, 9.418158999993466, 9.805496458313428, 10.219058249989757, 10.600959291652543, 11.012857041641837, 11.396792083309265, 11.808632541651605, 12.193436541652773, 12.604641041660216, 12.992556958313799, 13.398259583307663, 13.78947099999641, 14.202356916648569, 14.59328037497471, 15.008991749986308, 15.39809083333239, 15.808690416655736, 16.19765574997291] finalEncodeSeconds=0.20774437501677312 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.13870754165691324",
+    "SLOW-SOURCE-EXPOSURES preset=lightTrails seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=lightTrails mode=auto seconds=16.405400124989683 baselineMB=184.33100128173828 peakMB=705.628173828125 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:29:17, \"BrightnessValue\": 0.5780065512400562, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102e280>(",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=189.73727416992188",
+    "SLOW-PROGRESS preset=lightTrails frames=10 retainedSources=1 hostFootprintMB=435.2374572753906",
+    "SLOW-PROGRESS preset=lightTrails frames=20 retainedSources=1 hostFootprintMB=436.2999572753906",
+    "SLOW-PROGRESS preset=lightTrails frames=30 retainedSources=1 hostFootprintMB=619.6280822753906",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=428.3468322753906",
+    "SLOW-ACCUMULATION preset=lightTrails previews=20 minPublicationInterval=0.7876078333356418 final=true",
+    "SLOW-PHASE-TIMES preset=lightTrails sourceSeconds=[1.1264458333316725, 1.4326020416629035, 1.8417647916649003, 2.255115708336234, 2.6409029999922495, 3.0524635416804813, 3.4376347083307337, 3.8542860000161454, 4.2416295833245385, 4.649431916681351, 5.0369118333328515, 5.450409583339933, 5.842142666660948, 6.256454583344748, 6.645439500018256, 7.052844000019832, 7.436044458328979, 7.849075958336471, 8.230301500007045, 8.642639833327848, 9.033480999991298, 9.448697666666703, 9.840036875015358, 10.253250750014558, 10.638541583350161, 11.050463249994209, 11.438573624996934, 11.848979625006905, 12.24153341667261, 12.650936208345229, 13.032400541676907, 13.436548375000712, 13.816687458340311, 14.230131541669834, 14.617320208344609, 15.025923583336407, 15.41101441666251, 15.8205719999969, 16.208704583346844] finalEncodeSeconds=0.2014342916663736 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.13655620833742432",
+    "SLOW-SOURCE-EXPOSURES preset=lightTrails seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=lightTrails mode=auto seconds=16.410138875013217 baselineMB=193.86227416992188 peakMB=712.4407196044922 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:29:37, \"BrightnessValue\": 0.562152599440735, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102e280>(",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=194.67477416992188",
+    "SLOW-PROGRESS preset=lightTrails frames=10 retainedSources=1 hostFootprintMB=441.9405822753906",
+    "SLOW-PROGRESS preset=lightTrails frames=20 retainedSources=1 hostFootprintMB=443.1593322753906",
+    "SLOW-PROGRESS preset=lightTrails frames=30 retainedSources=1 hostFootprintMB=444.22180938720703",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=432.94053649902344",
+    "SLOW-ACCUMULATION preset=lightTrails previews=20 minPublicationInterval=0.7853652499907184 final=true",
+    "SLOW-PHASE-TIMES preset=lightTrails sourceSeconds=[1.12156974998652, 1.427265708334744, 1.8384345833328553, 2.249992375000147, 2.638122000003932, 3.05013724998571, 3.4390373333299067, 3.842718125000829, 4.22954983334057, 4.641909416677663, 5.033077583328122, 5.4427353749924805, 5.824468166654697, 6.236748291674303, 6.632622041652212, 7.043214875011472, 7.428515750012593, 7.83422762498958, 8.228373416670365, 8.639664541668026, 9.026466749986866, 9.43723474998842, 9.81983845832292, 10.22180045832647, 10.613515500008361, 11.019967833330156, 11.411133708345005, 11.819915916654281, 12.211484791652765, 12.61819325000397, 13.001546708343085, 13.414679083332885, 13.795387083344394, 14.200995083345333, 14.59129983332241, 15.006476416660007, 15.389197041658917, 15.798378750012489, 16.18710137499147] finalEncodeSeconds=0.20793091668747365 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.1380304166523274",
+    "SLOW-SOURCE-EXPOSURES preset=lightTrails seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=lightTrails mode=auto seconds=16.395032291678945 baselineMB=198.79977416992188 peakMB=716.1125259399414 size=3000x4000 EXIF=[\"DateTimeOriginal\": 2026:11:01 08:29:58, \"BrightnessValue\": 0.5461224900608928, \"WhiteBalance\": 1, \"OffsetTime\": +08:00, \"FNumber\": 1.779999971388065, \"ExifVersion\": <__NSArrayM 0x11102fb10>(",
+    "SLOW-SPEED preset=lightTrails baseline=[16.776347333332524] optimized=[16.405400124989683, 16.410138875013217, 16.395032291678945]",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=197.2216033935547",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=535.4092864990234",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=536.6905364990234",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=466.6280822753906",
+    "SLOW-ACCUMULATION preset=silkyWater previews=14 minPublicationInterval=0.5095675000047777 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.3047772083373275, 1.6758043333538808, 2.1751350833510514, 2.69607437500963, 3.1078920416766778, 3.493637833336834, 3.906508375017438, 4.29294137499528, 4.699069916678127, 5.177445125009399, 5.695029208349297, 6.096324500016635, 6.596227208327036, 6.996064875012962, 7.494909083354287, 7.891777708340669, 8.395389500015881, 8.936694291682215, 9.324489958351478, 9.828850125020836, 10.223630833352217, 10.729930083325598, 11.105940541659947, 11.504043333348818] finalEncodeSeconds=0.296216958318837 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.0",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=11.800260291667655 baselineMB=201.3466033935547 peakMB=719.8938217163086 size=3000x4000 EXIF=[\"DateTimeDigitized\": 2026:11:01 08:30:19, \"BrightnessValue\": 0.5375661146275904, \"FocalLength\": 6.764999865652793, \"LensSpecification\": <__NSArrayM 0x11102fab0>(",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=197.76852416992188",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=444.22180938720703",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=445.50305938720703",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=467.6281280517578",
+    "SLOW-ACCUMULATION preset=silkyWater previews=14 minPublicationInterval=0.7920233333425131 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.1879028333351016, 1.5085363749822136, 1.9193420833325945, 2.3306990416604094, 2.718710999994073, 3.1305572083219886, 3.514772583323065, 3.9254749166721012, 4.3145852083398495, 4.723352291650372, 5.1111559583223425, 5.520070333324838, 5.912745333334897, 6.3222994999960065, 6.710701916657854, 7.121739541675197, 7.51311408332549, 7.921467083331663, 8.312251124996692, 8.720796874986263, 9.108365791675169, 9.514277458336437, 9.895361791655887, 10.306491541676223, 10.69178491664934, 11.100088583334582, 11.491810291656293] finalEncodeSeconds=0.3162068333476782 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.1365384583186824",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=11.808017125003971 baselineMB=201.89352416992188 peakMB=757.3312759399414 size=3000x4000 EXIF=[\"Flash\": 16, \"SceneType\": 1, \"SensingMethod\": 2, \"LensSpecification\": <__NSArrayM 0x11102fe10>(",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=203.34667205810547",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=447.51868438720703",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=448.7062072753906",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=475.0187759399414",
+    "SLOW-ACCUMULATION preset=silkyWater previews=14 minPublicationInterval=0.7930810833349824 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.189229041658109, 1.5101573333377019, 1.9174765833304264, 2.3304096666688565, 2.723425625008531, 3.137533875007648, 3.5288932916591875, 3.9357728750037495, 4.326842750015203, 4.732892583328066, 5.123051791655598, 5.5331040833261795, 5.926942583348136, 6.333619125012774, 6.723651166656055, 7.137874791660579, 7.527234333334491, 7.939473125006771, 8.324243541661417, 8.732371124991914, 9.12479162501404, 9.536175749992253, 9.925577291665832, 10.33522129166522, 10.72574487500242, 11.13705962500535, 11.529146624990972] finalEncodeSeconds=0.3073140000051353 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.13686020832392387",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=11.836460624996107 baselineMB=207.45604705810547 peakMB=735.1906509399414 size=3000x4000 EXIF=[\"DateTimeDigitized\": 2026:11:01 08:30:50, \"BrightnessValue\": 0.5299122628035094, \"FocalLength\": 6.764999865652793, \"LensSpecification\": <__NSArrayM 0x11102df80>(",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=206.51854705810547",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=450.9406051635742",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=449.97180938720703",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=476.6437530517578",
+    "SLOW-ACCUMULATION preset=silkyWater previews=14 minPublicationInterval=0.7932257499778643 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.1913282499881461, 1.5129983333172277, 1.9217947500001173, 2.332342791662086, 2.7158940416702535, 3.1259355833171867, 3.520864874997642, 3.933963124989532, 4.323487499990733, 4.740881499979878, 5.123774333333131, 5.536737333313795, 5.92123441665899, 6.332211666653166, 6.723917208320927, 7.13418279166217, 7.519994250003947, 7.930312624986982, 8.32283649998135, 8.736650791659486, 9.124728499999037, 9.534780083311489, 9.924297916644718, 10.330981166654965, 10.71614579166635, 11.12780008331174, 11.516001541662263] finalEncodeSeconds=0.3184285833267495 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.13673595833824947",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=11.834430124989012 baselineMB=210.64354705810547 peakMB=722.1438446044922 size=3000x4000 EXIF=[\"Flash\": 16, \"SceneType\": 1, \"SensingMethod\": 2, \"LensSpecification\": <__NSArrayM 0x11102f8a0>(",
+    "SLOW-SPEED preset=silkyWater baseline=[11.800260291667655] optimized=[11.808017125003971, 11.836460624996107, 11.834430124989012]",
+    "SLOW-PROGRESS preset=motionBlur frames=0 retainedSources=0 hostFootprintMB=208.04979705810547",
+    "SLOW-ACCUMULATION preset=motionBlur previews=5 minPublicationInterval=0.793971541657811 final=true",
+    "SLOW-PHASE-TIMES preset=motionBlur sourceSeconds=[1.2363894166483078, 1.5661582500033546, 2.0302952916536015, 2.494251333322609, 2.8276060416537803, 3.2972722916747443, 3.6263522499939427, 4.101353833335452, 4.429803125007311] finalEncodeSeconds=0.21088074997533113 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.0",
+    "SLOW-SOURCE-EXPOSURES preset=motionBlur seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=motionBlur mode=auto seconds=4.640683874982642 baselineMB=212.17479705810547 peakMB=807.706298828125 size=3000x4000 EXIF=[\"Flash\": 16, \"SceneCaptureType\": 0, \"SceneType\": 1, \"SensingMethod\": 2, \"FlashPixVersion\": <__NSArrayM 0x11102fba0>(",
+    "SLOW-PROGRESS preset=motionBlur frames=0 retainedSources=0 hostFootprintMB=209.28419494628906",
+    "SLOW-ACCUMULATION preset=motionBlur previews=5 minPublicationInterval=0.7961521249962971 final=true",
+    "SLOW-PHASE-TIMES preset=motionBlur sourceSeconds=[1.1178198333072942, 1.4248767083336134, 1.8334664999856614, 2.2444313333253376, 2.629620083316695, 3.04143687497708, 3.4329073333065026, 3.84479258331703, 4.241923333320301] finalEncodeSeconds=0.19669937499566004 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.1380466666596476",
+    "SLOW-SOURCE-EXPOSURES preset=motionBlur seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=motionBlur mode=auto seconds=4.438622708315961 baselineMB=213.40919494628906 peakMB=732.8938217163086 size=3000x4000 EXIF=[\"Flash\": 16, \"SceneCaptureType\": 0, \"SceneType\": 1, \"SensingMethod\": 2, \"FlashPixVersion\": <__NSArrayM 0x11102dbf0>(",
+    "SLOW-PROGRESS preset=motionBlur frames=0 retainedSources=0 hostFootprintMB=213.25296783447266",
+    "SLOW-ACCUMULATION preset=motionBlur previews=5 minPublicationInterval=0.7966395833354909 final=true",
+    "SLOW-PHASE-TIMES preset=motionBlur sourceSeconds=[1.0771874583442695, 1.3839937083248515, 1.793054416659288, 2.2011687500053085, 2.593433791655116, 3.005822666658787, 3.3996783749898896, 3.814798666659044, 4.203486583341146] finalEncodeSeconds=0.19022058331756853 ISO=[1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0, 1250.0] previewPublicationMaxGap=0.13762824999867007",
+    "SLOW-SOURCE-EXPOSURES preset=motionBlur seconds=[0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008, 0.008]",
+    "SLOW-FULL preset=motionBlur mode=auto seconds=4.393707166658714 baselineMB=217.37796783447266 peakMB=738.8782424926758 size=3000x4000 EXIF=[\"SceneCaptureType\": 0, \"FocalLenIn35mmFilm\": 24, \"ExposureProgram\": 2, \"FocalLength\": 6.764999865652793, \"MeteringMode\": 5, \"OffsetTimeDigitized\": +08:00, \"LensSpecification\": <__NSArrayM 0x11102fb10>(",
+    "SLOW-PROGRESS preset=motionBlur frames=0 retainedSources=0 hostFootprintMB=213.40924072265625",
+    "SLOW-ACCUMULATION preset=motionBlur previews=5 minPublicationInterval=0.7955430000147317 final=true",
+    "SLOW-PHASE-TIMES preset=motionBlur sourceSeconds=[1.1293012916576117, 1.4350372916669585, 1.8468522083130665, 2.256761833326891, 2.645412291662069, 3.0573769166658167, 3.4501949999830686, 3.8588576249894686, 4.242758708336623] finalEncodeSeconds=0.18237529165344313 ISO=[640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.13705441667116247",
+    "SLOW-SOURCE-EXPOSURES preset=motionBlur seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=motionBlur mode=auto seconds=4.4251339999900665 baselineMB=217.53424072265625 peakMB=734.7688903808594 size=3000x4000 EXIF=[\"ShutterSpeedValue\": 5.906948304613675, \"OffsetTimeDigitized\": +08:00, \"ColorSpace\": 65535, \"ExposureMode\": 0, \"MeteringMode\": 5, \"SubsecTimeDigitized\": 528, \"DateTimeOriginal\": 2026:11:01 08:31:47, \"FlashPixVersion\": <__NSArrayM 0x11102d170>(",
+    "SLOW-SPEED preset=motionBlur baseline=[4.640683874982642] optimized=[4.438622708315961, 4.393707166658714, 4.4251339999900665]",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=195.81544494628906",
+    "SLOW-PROGRESS preset=lightTrails frames=10 retainedSources=1 hostFootprintMB=445.0187530517578",
+    "SLOW-PROGRESS preset=lightTrails frames=20 retainedSources=1 hostFootprintMB=628.0968780517578",
+    "SLOW-PROGRESS preset=lightTrails frames=30 retainedSources=1 hostFootprintMB=447.4875030517578",
+    "SLOW-PROGRESS preset=lightTrails frames=0 retainedSources=0 hostFootprintMB=436.143798828125",
+    "SLOW-ACCUMULATION preset=lightTrails previews=20 minPublicationInterval=0.7886167083343025 final=true",
+    "SLOW-PHASE-TIMES preset=lightTrails sourceSeconds=[1.1527980833488982, 1.4609141249966342, 1.8668293750088196, 2.2779807500191964, 2.660510791669367, 3.0707473333459347, 3.462450083345175, 3.866661041683983, 4.255035875015892, 4.663587833347265, 5.053569666662952, 5.463369541685097, 5.848362333344994, 6.263613250019262, 6.652924083347898, 7.071551666682353, 7.465582250006264, 7.87331075000111, 8.266373249993194, 8.674506541661685, 9.060192375007318, 9.463866166683147, 9.847985750006046, 10.259929416672094, 10.650583000009647, 11.06457845834666, 11.450119208340766, 11.869604291685391, 12.255581916659139, 12.658192666684045, 13.04755579167977, 13.454968083329732, 13.842288999992888, 14.25374812501832, 14.642116291681305, 15.04924300001585, 15.43889200000558, 15.850081250013318, 16.241865458345274] finalEncodeSeconds=0.2058065416640602 ISO=[320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0, 320.0] previewPublicationMaxGap=0.14708458335371688",
+    "SLOW-SOURCE-EXPOSURES preset=lightTrails seconds=[0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.03333333333333333]",
+    "SLOW-FULL preset=lightTrails mode=auto seconds=16.447672000009334 baselineMB=199.94044494628906 peakMB=766.2063217163086 size=3000x4000 EXIF=[\"SceneCaptureType\": 0, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ExifVersion\": <__NSArrayM 0x11102e190>(",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=225.83113861083984",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=464.315673828125",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=643.237548828125",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=491.8157424926758",
+    "SLOW-ACCUMULATION preset=silkyWater previews=14 minPublicationInterval=0.7918811666895635 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.1939215833263006, 1.51772233331576, 1.930281583336182, 2.341476416651858, 2.7284240833250806, 3.1345717500080355, 3.5263669999840204, 3.934101124992594, 4.318605166656198, 4.727712416672148, 5.119098791648867, 5.531738999998197, 5.926015916658798, 6.334126291651046, 6.722069708339404, 7.136111208325019, 7.5309259583300445, 7.941546708316309, 8.331867541652173, 8.745554916647961, 9.135157958313357, 9.542804416647414, 9.92958987498423, 10.336270791653078, 10.72263433333137, 11.141378583328333, 11.5277181249985] finalEncodeSeconds=0.3027499166491907 ISO=[640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.1368595833191648",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=11.830468041647691 baselineMB=225.81551361083984 peakMB=751.7376403808594 size=3000x4000 EXIF=[\"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ExifVersion\": <__NSArrayM 0x11102db00>(",
+    "SLOW-PROGRESS preset=motionBlur frames=0 retainedSources=0 hostFootprintMB=203.86241149902344",
+    "SLOW-ACCUMULATION preset=motionBlur previews=5 minPublicationInterval=0.7924357500160113 final=true",
+    "SLOW-PHASE-TIMES preset=motionBlur sourceSeconds=[1.1561899166554213, 1.4606517916545272, 1.8695806250034366, 2.277728416665923, 2.6575607916747686, 3.071742666652426, 3.45803466666257, 3.8649176666513085, 4.254647124995245] finalEncodeSeconds=0.19353104167385027 ISO=[640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.13799904167535715",
+    "SLOW-SOURCE-EXPOSURES preset=motionBlur seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=motionBlur mode=auto seconds=4.448178166669095 baselineMB=207.98741149902344 peakMB=728.597038269043 size=3000x4000 EXIF=[\"Flash\": 16, \"SceneCaptureType\": 0, \"SceneType\": 1, \"SensingMethod\": 2, \"FlashPixVersion\": <__NSArrayM 0x11102d290>(",
+    "SLOW-PROGRESS preset=panning frames=0 retainedSources=0 hostFootprintMB=204.81553649902344",
+    "SLOW-ACCUMULATION preset=panning previews=2 minPublicationInterval=0.7532116250076797 final=true",
+    "SLOW-PHASE-TIMES preset=panning sourceSeconds=[1.1159174583444837, 1.4269383750215638, 1.812608000007458, 2.178914625023026] finalEncodeSeconds=0.14377008331939578 ISO=[640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.13496270834002644",
+    "SLOW-SOURCE-EXPOSURES preset=panning seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=panning mode=auto seconds=2.322684708342422 baselineMB=208.94053649902344 peakMB=709.3783340454102 size=3000x4000 EXIF=[\"SceneCaptureType\": 0, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ExifVersion\": <__NSArrayM 0x11102e670>(",
+    "SLOW-PANNING-SPEED assist=false sequenceSeconds=2.322684708342422",
+    "SLOW-PROGRESS preset=panning frames=0 retainedSources=0 hostFootprintMB=223.95618438720703",
+    "SLOW-ACCUMULATION preset=panning previews=2 minPublicationInterval=0.7424909166584257 final=true",
+    "SLOW-PHASE-TIMES preset=panning sourceSeconds=[1.1217730000207666, 1.4298196250165347, 1.8060763333342038, 2.1716494583524764] finalEncodeSeconds=0.15630270831752568 ISO=[640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.13809645833680406",
+    "SLOW-SOURCE-EXPOSURES preset=panning seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=panning mode=auto seconds=2.327952166670002 baselineMB=228.08118438720703 peakMB=785.284538269043 size=3000x4000 EXIF=[\"SceneCaptureType\": 0, \"ExposureMode\": 0, \"FocalLenIn35mmFilm\": 24, \"ExifVersion\": <__NSArrayM 0x11102e670>(",
+    "SLOW-PANNING-SPEED assist=true sequenceSeconds=2.327952166670002",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=267.4718551635742",
+    "SLOW-PROGRESS preset=silkyWater frames=10 retainedSources=1 hostFootprintMB=569.706413269043",
+    "SLOW-PROGRESS preset=silkyWater frames=20 retainedSources=1 hostFootprintMB=478.2688903808594",
+    "SLOW-PROGRESS preset=silkyWater frames=0 retainedSources=0 hostFootprintMB=504.75333404541016",
+    "SLOW-ACCUMULATION preset=silkyWater previews=14 minPublicationInterval=0.502789791644318 final=true",
+    "SLOW-PHASE-TIMES preset=silkyWater sourceSeconds=[1.096730541670695, 1.412605874997098, 1.8038402083329856, 2.313411749986699, 2.6819358750071842, 3.059194708330324, 3.437555541662732, 3.813234375003958, 4.21873041667277, 4.5992536249978, 4.9954302916594315, 5.368440458318219, 5.767146875004983, 6.143054916668916, 6.546513458335539, 6.932357458339538, 7.326964541658526, 7.696733041666448, 8.089357499993639, 8.464699041651329, 8.864380208338844, 9.242807500006165, 9.643874333327403, 10.033862624986796, 10.436210166662931, 10.813756666670088, 11.213480791659094] finalEncodeSeconds=0.2990820000122767 ISO=[640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.19891570834442973",
+    "SLOW-SOURCE-EXPOSURES preset=silkyWater seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=silkyWater mode=auto seconds=11.512562791671371 baselineMB=267.2843551635742 peakMB=823.8784484863281 size=3000x4000 EXIF=[\"Flash\": 16, \"SceneType\": 1, \"SensingMethod\": 2, \"LensSpecification\": <__NSArrayM 0x12acbf9c0>(",
+    "SLOW-ACCUMULATION-PHYSICAL intermediateUpdates=17 realComposite=true cancelClears=true noPhotosWrites=true",
+    "SLOW-PROGRESS preset=panning frames=0 retainedSources=0 hostFootprintMB=230.89373016357422",
+    "SLOW-ACCUMULATION preset=panning previews=2 minPublicationInterval=0.7477114166831598 final=true",
+    "SLOW-PHASE-TIMES preset=panning sourceSeconds=[1.119864583335584, 1.4287765416665934, 1.8112404583371244, 2.175926708325278] finalEncodeSeconds=0.11466095835203305 ISO=[640.0, 640.0, 640.0, 640.0] previewPublicationMaxGap=0.1358536249899771",
+    "SLOW-SOURCE-EXPOSURES preset=panning seconds=[0.016666666666666666, 0.016666666666666666, 0.016666666666666666, 0.016666666666666666]",
+    "SLOW-FULL preset=panning mode=auto seconds=2.290587666677311 baselineMB=235.01873016357422 peakMB=743.8002548217773 size=3000x4000 EXIF=[\"ComponentsConfiguration\": <__NSArrayM 0x12acbd230>(",
+    "SLOW-PREVIEW fallback=false publications=40 maxGapSeconds=0.1446705416601617 resumeSeconds=0.053707500017480925 noPhotosWrites=true",
+    "SLOW-PREVIEW fallback=true publications=3 maxGapSeconds=1.6475625416496769 resumeSeconds=0.1046644166635815 noPhotosWrites=true",
+    "SLOW-PREVIEW fallback=false publications=35 maxGapSeconds=0.1520370416692458 resumeSeconds=0.05348250002134591 noPhotosWrites=true",
+    "SLOW-PREVIEW fallback=true publications=1 maxGapSeconds=1.9050555833382532 resumeSeconds=0.10395962500479072 noPhotosWrites=true",
+    "SLOW-PREVIEW-STABILITY completed=4 fallbackExit=1 returnedLive=true cancelledPhotos=0",
+    "SLOW-PROGRESS preset=starTrails frames=0 retainedSources=0 hostFootprintMB=238.15935516357422",
+    "SLOW-PROGRESS preset=starTrails frames=10 retainedSources=1 hostFootprintMB=653.8470153808594",
+    "SLOW-PROGRESS preset=starTrails frames=20 retainedSources=1 hostFootprintMB=653.9720153808594",
+    "SLOW-PROGRESS preset=starTrails frames=30 retainedSources=1 hostFootprintMB=654.0657653808594",
+    "SLOW-PROGRESS preset=starTrails frames=40 retainedSources=1 hostFootprintMB=654.1282653808594",
+    "SLOW-PROGRESS preset=starTrails frames=50 retainedSources=1 hostFootprintMB=468.4251403808594",
+    "SLOW-PROGRESS preset=starTrails frames=60 retainedSources=1 hostFootprintMB=654.6126403808594",
+    "SLOW-PROGRESS preset=starTrails frames=70 retainedSources=1 hostFootprintMB=468.6282653808594",
+    "SLOW-PROGRESS preset=starTrails frames=80 retainedSources=1 hostFootprintMB=650.6438903808594",
+    "SLOW-PROGRESS preset=starTrails frames=90 retainedSources=1 hostFootprintMB=464.6438903808594",
+    "SLOW-PROGRESS preset=starTrails frames=100 retainedSources=1 hostFootprintMB=654.9563903808594",
+    "SLOW-PROGRESS preset=starTrails frames=110 retainedSources=1 hostFootprintMB=655.0813903808594",
+    "SLOW-PROGRESS preset=starTrails frames=120 retainedSources=1 hostFootprintMB=465.2063903808594",
+    "SLOW-PROGRESS preset=starTrails frames=130 retainedSources=1 hostFootprintMB=655.5188903808594",
+    "SLOW-PROGRESS preset=starTrails frames=140 retainedSources=1 hostFootprintMB=655.8782653808594",
+    "SLOW-PROGRESS preset=starTrails frames=150 retainedSources=1 hostFootprintMB=469.9563903808594",
+    "SLOW-PROGRESS preset=starTrails frames=160 retainedSources=1 hostFootprintMB=656.1595153808594",
+    "SLOW-PROGRESS preset=starTrails frames=170 retainedSources=1 hostFootprintMB=656.2532653808594",
+    "SLOW-PROGRESS preset=starTrails frames=0 retainedSources=0 hostFootprintMB=456.56578826904297",
+    "SLOW-ACCUMULATION preset=starTrails previews=87 minPublicationInterval=0.6369692500156816 final=true",
+    "SLOW-PHASE-TIMES preset=starTrails sourceSeconds=[1.1169390416471288, 1.439783041656483, 1.772769666655222, 2.1393778333149385, 2.439151458325796, 2.771378833334893, 3.0711207916610874, 3.4388862083142158, 3.737877583334921, 4.107421083317604, 4.442153208336094, 4.807353208336281, 5.141146624984685, 5.506499499984784, 5.84185837500263, 6.207584958319785, 6.508595333318226, 6.874456458317582, 7.211607291654218, 7.576649166672723, 7.909447249985533, 8.275983875006204, 8.61052229165216, 8.97887299998547, 9.309901083324803, 9.677520291646942, 10.010967208334478, 10.375264624977717, 10.711302124982467, 11.078877916646888, 11.412021625001216, 11.77911954166484, 12.112896791659296, 12.478829666652018, 12.813188708329108, 13.17859487500391, 13.51421279166243, 13.873217999993358, 14.17213620833354, 14.514100083324593, 14.849899166671094, 15.21457579167327, 15.548299208312528, 15.914693083323073, 16.25242429165519, 16.614906500006327, 16.949444833328016, 17.315367624978535, 17.652373583317967, 18.014849166647764, 18.34862245831755, 18.71603691665223, 19.05192850000458, 19.41550199998892, 19.75211658331682, 20.11712491666549, 20.45180487498874, 20.816538916667923, 21.152125041669933, 21.517799833323807, 21.84961441665655, 22.2185055000009, 22.555873041652376, 22.91839937499026, 23.252118333330145, 23.618692124990048, 23.95157145833946, 24.319805374980206, 24.653731083322782, 25.020392541657202, 25.344765416666633, 25.687249541661004, 26.021778416645247, 26.388023749983404, 26.722338874998968, 27.08931979164481, 27.421915166662075, 27.786844958318397, 28.12423637500615, 28.491205041646026, 28.82200958332396, 29.189283041661838, 29.525266833312344, 29.891769749985542, 30.223790291667683, 30.59062479165732, 30.923489249980776, 31.292916124977637, 31.62586995831225, 31.991651874996023, 32.3260420000006, 32.690553541644476, 33.024090541672194, 33.39070662498125, 33.72802670832607, 34.092083374998765, 34.42753287497908, 34.79317112499848, 35.12549974999274, 35.4925792083377, 35.82678083333303, 36.19293258333346, 36.52682258331333, 36.89652258332353, 37.2298449583177, 37.594337166665355, 37.929427958326414, 38.29445404166472, 38.63031829165993, 38.99775920831598, 39.32949787500547, 39.696358749992214, 40.03073137497995, 40.396042041655164, 40.73225354164606, 41.09860254166415, 41.43085862498265, 41.79927424999187, 42.13061804167228, 42.497183541650884, 42.831197666644584, 43.19948795833625, 43.53105591665371, 43.898562208312796, 44.23595920833759, 44.59838512499118, 44.933309624990216, 45.298714166652644, 45.63281208332046, 45.998629249981605, 46.335070000001, 46.70182808331447, 47.0376319999923, 47.40032954164781, 47.73362145831925, 48.10071295831585, 48.43452804166009, 48.80278820832609, 49.13489529164508, 49.50131320831133, 49.83504479166004, 50.202804416650906, 50.53547337499913, 50.9025585000054, 51.238093666645, 51.60543475000304, 51.93817991667311, 52.30243370833341, 52.63749875000212, 53.00167345831869, 53.34053474999382, 53.70543549998547, 54.03947649998008, 54.405877291661454, 54.7383937916602, 55.10515433331602, 55.43992845833418, 55.80682374999742, 56.138980291667394, 56.50678333331598, 56.839279791660374, 57.20755462499801, 57.54261158333975, 57.90696762499283, 58.240830333321355, 58.60669187500025, 58.94259733331273, 59.30876383333816, 59.6436394166667, 60.00788950000424, 60.34157708333805, 60.708706041652476, 61.04369966665399, 61.41021499998169] finalEncodeSeconds=0.11763845835230313 ISO=[100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0] previewPublicationMaxGap=0.23712808333220892",
+    "SLOW-SOURCE-EXPOSURES preset=starTrails seconds=[0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125]",
+    "SLOW-FULL preset=starTrails mode=auto seconds=61.52785345833399 baselineMB=238.14373016357422 peakMB=741.6751403808594 size=3000x4000 EXIF=[\"Flash\": 16, \"SceneCaptureType\": 0, \"SceneType\": 1, \"SensingMethod\": 2, \"FlashPixVersion\": <__NSArrayM 0x1133e69d0>("
+  ],
+  "runtimeLogOccurrences": {
+    "MDB_MAP_FULL": 2280,
+    "AVFoundationErrorDomain/-11819": 0,
+    "IOSurface creation failed": 0,
+    "Failed to allocate": 0
+  },
+  "hashes": {
+    "LumaCamera/Core/Imaging/SlowShutterComposer.swift": "68a1a54093692a16eb9909162fd17e465866a53c666ec403b84c52449430c1ba",
+    "LumaCamera/Core/Imaging/SlowShutterGlobalAlignment.swift": "7575e74e4bdc48848ba0b13c06b3f238a060646fa7fed2ec602ea2b663d64523",
+    "LumaCamera/Core/Imaging/SlowShutterSubjectAlignment.swift": "34b1216deee3f370264f30ae6f14af159600064e9449bf59ce2fa07dc073793c",
+    "LumaCamera/Features/Camera/ViewModels/CameraViewModel.swift": "f63571fb88b00ab49be9897a0705fe29d2414b2ee9843b5573d32fe080799696",
+    "LumaCameraTests/Camera/SlowShutterHandheldTests.swift": "6dc0e316fbc5cecac9d2a3d87cbee8f28a7e30310b20cd707939e971eb362924",
+    "LumaCameraTests/Camera/SlowShutterSequencePhysicalTests.swift": "5e156690108a6145378dae3bde62b7f5f659a6ecd5d8b056ab89154a9a7e2fe0"
+  },
+  "artifacts": {
+    "directory": "/tmp/LumaCamera-SlowFix-20261101",
+    "baseline": "Baseline.xcresult",
+    "quick": "Quick.xcresult",
+    "final": "Final.xcresult",
+    "debugBuild": "Build.log",
+    "releaseBuild": "Release.log"
+  }
+}

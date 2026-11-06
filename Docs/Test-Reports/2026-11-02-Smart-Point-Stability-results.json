@@ -1,0 +1,1663 @@
+{
+  "device": "iPhone 17 Pro / iOS27.2 (24B119)",
+  "phases": [
+    {
+      "phase": "AlignedFocus",
+      "bundle": "/private/tmp/LumaSmartVisibility/AlignedFocus.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 3,
+            "skippedTests": 1,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793606074.599,
+        "passedTests": 3,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 1,
+        "startTime": 1793606045.308,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 4
+      },
+      "methods": [
+        {
+          "test": "SmartAutoFramingTests/testAutomaticHardwareFramingOnceAndCancelPendingWork",
+          "status": "passed",
+          "seconds": 5.026
+        },
+        {
+          "test": "SmartAutoFramingTests/testSmartFocusWaitsForAlignmentAndReleasesToNormalControls",
+          "status": "passed",
+          "seconds": 4.648
+        },
+        {
+          "test": "SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility",
+          "status": "skipped",
+          "seconds": 13.996
+        },
+        {
+          "test": "SmartLocalCompositionAITests/testOnDeviceModelAvailabilityAndFallback",
+          "status": "passed",
+          "seconds": 0.072
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "AlignedFocusLive",
+      "bundle": "/private/tmp/LumaSmartVisibility/AlignedFocusLive.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793606171.256,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793606152.114,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "methods": [
+        {
+          "test": "SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility",
+          "status": "passed",
+          "seconds": 14.444
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "AppearanceLive",
+      "bundle": "/private/tmp/LumaSmartVisibility/AppearanceLive.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 0,
+            "skippedTests": 1,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793604400.044,
+        "passedTests": 0,
+        "result": "Skipped",
+        "runtimeWarnings": [],
+        "skippedTests": 1,
+        "startTime": 1793604381.451,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "methods": [
+        {
+          "test": "SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility",
+          "status": "skipped",
+          "seconds": 14.257
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "AppearanceRelated",
+      "bundle": "/private/tmp/LumaSmartVisibility/AppearanceRelated.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 28,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793604345.063,
+        "passedTests": 28,
+        "result": "Passed",
+        "runtimeWarnings": [
+          {
+            "issueType": "Runtime Warning",
+            "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update.",
+            "sourceURL": "file:///Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SmartCompositionGeometryTests.swift"
+          }
+        ],
+        "skippedTests": 0,
+        "startTime": 1793604314.359,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [
+          {
+            "category": "Longest Test Runs",
+            "impact": "35% of duration",
+            "text": "1 longest test run with outlier durations exceeding 6.59s (three standard deviations)"
+          }
+        ],
+        "totalTestCount": 28
+      },
+      "methods": [
+        {
+          "test": "SmartAutoFramingTests/testHandheldAlignmentSurvivesBriefMissesWithoutCountingThemAsConfirmed",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartAutoFramingTests/testPredictedMarkerCannotTriggerAutomaticFraming",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartAutoFramingTests/testStableAlignmentAndJitterDoNotRepeatZoom",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testAnalyzerReturnsNightForDarkPreview",
+          "status": "passed",
+          "seconds": 0.081
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testStructuralCompletenessAndSubjectRoomApplyBeforeKindPreference",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testStructureFiltersIncidentalPatchClippedObjectAndBackgroundBeforeNomination",
+          "status": "passed",
+          "seconds": 0.032
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testStructureRejectsRepeatedBackgroundTextureAndNoSubjectScene",
+          "status": "passed",
+          "seconds": 0.005
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testEarlyAlignedPointsFadeBeforeFramingAndRetainJitterTolerance",
+          "status": "passed",
+          "seconds": 6.032
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testPortraitDisplayMapsCentreAndCropOffset",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testShortPointTransitionEndpointsAcrossRatiosAndReduceMotion",
+          "status": "passed",
+          "seconds": 8.239
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testSquareDisplayMapsFourThreeSourceWithVerticalCrop",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testWhitePointAndThickerRingRendering",
+          "status": "passed",
+          "seconds": 1.748
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testDirectionChangeWaitsWithoutDelayingTrackedPoint",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testMissingGuideClearsAfterGrace",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testStageChangeWaitsForDwell",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testAnchorFollowsTextureAndRejectsBlankReplacement",
+          "status": "passed",
+          "seconds": 0.296
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testBriefMissRetainsIdentityAndLongLossRemovesMarker",
+          "status": "passed",
+          "seconds": 0.44
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testCandidateBatchDoesNotRefillImmediatelyDuringAlignment",
+          "status": "passed",
+          "seconds": 0.155
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding",
+          "status": "passed",
+          "seconds": 0.684
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testTrackedDotFollowsSmallPanWithoutScreenSpaceSmoothing",
+          "status": "passed",
+          "seconds": 3.245
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testWholeSubjectStructureConfirmsSameObjectButRejectsReplacement",
+          "status": "passed",
+          "seconds": 0.124
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testModelHidesNearPointsButRestoresLargeFarSceneAndCancelsPendingWork",
+          "status": "passed",
+          "seconds": 1.955
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testNearMacroAndStableFarRecoveryWithHysteresis",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testRepeatedNearFarPolicyPerformance",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testRepeatedSampleUnknownAndNewDeviceCannotPretendConfirmedFar",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testAnyVerifiedCandidateInsideCircleOverridesNearbyUnalignedSelection",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testDisplayGraceRequiresBoundedLossAndContinuousOnscreenObject",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testThreeStableIdentitiesDoNotFollowDetectionOrder",
+          "status": "passed",
+          "seconds": 0.379
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "Baseline",
+      "bundle": "/private/tmp/LumaSmartVisibility/Baseline.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 2,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793603172.402,
+        "passedTests": 2,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793603112.581,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTUnwrap failed: expected non-nil value of type \"SmartCompositionGuide\" - 物体仍在，只是局部纹理复核失败，不应立刻闪灭：t=0.24",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 3,
+            "testIdentifierString": "SmartFeatureAnchorTests/testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SmartFeatureAnchorTests/testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding",
+            "testName": "testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 3
+      },
+      "methods": [
+        {
+          "test": "CaptureReviewEntryTests/testDiagnosticEnvironmentProtectsDefaultModelCallbacks",
+          "status": "passed",
+          "seconds": 0.094
+        },
+        {
+          "test": "CaptureReviewEntryTests/testDiagnosticPhotoIsolationBlocksAllMutationEntrypoints",
+          "status": "passed",
+          "seconds": 0.089
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding",
+          "status": "failed",
+          "seconds": 0.688
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "Continuity",
+      "bundle": "/private/tmp/LumaSmartVisibility/Continuity.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 11,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793603526.517,
+        "passedTests": 11,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793603494.681,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [
+          {
+            "category": "Longest Test Runs",
+            "impact": "60% of duration",
+            "text": "1 longest test run with outlier durations exceeding 3.38s (three standard deviations)"
+          }
+        ],
+        "totalTestCount": 11
+      },
+      "methods": [
+        {
+          "test": "SmartCompositionStabilizerTests/testDirectionChangeWaitsWithoutDelayingTrackedPoint",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testMissingGuideClearsAfterGrace",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testStageChangeWaitsForDwell",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testAnchorFollowsTextureAndRejectsBlankReplacement",
+          "status": "passed",
+          "seconds": 0.299
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testBriefMissRetainsIdentityAndLongLossRemovesMarker",
+          "status": "passed",
+          "seconds": 0.54
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testCandidateBatchDoesNotRefillImmediatelyDuringAlignment",
+          "status": "passed",
+          "seconds": 0.187
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding",
+          "status": "passed",
+          "seconds": 0.77
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testTrackedDotFollowsSmallPanWithoutScreenSpaceSmoothing",
+          "status": "passed",
+          "seconds": 3.427
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testAnyVerifiedCandidateInsideCircleOverridesNearbyUnalignedSelection",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testDisplayGraceRequiresBoundedLossAndContinuousOnscreenObject",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testThreeStableIdentitiesDoNotFollowDetectionOrder",
+          "status": "passed",
+          "seconds": 0.404
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "Distribution",
+      "bundle": "/private/tmp/LumaSmartVisibility/Distribution.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 14,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793604774.299,
+        "passedTests": 14,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793604760.319,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 14
+      },
+      "methods": [
+        {
+          "test": "SmartCaptureAnalyzerTests/testAnalyzerReturnsNightForDarkPreview",
+          "status": "passed",
+          "seconds": 0.081
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testStructuralCompletenessAndSubjectRoomApplyBeforeKindPreference",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testStructureFiltersIncidentalPatchClippedObjectAndBackgroundBeforeNomination",
+          "status": "passed",
+          "seconds": 0.038
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testStructureRejectsRepeatedBackgroundTextureAndNoSubjectScene",
+          "status": "passed",
+          "seconds": 0.006
+        },
+        {
+          "test": "SmartCapturePhysicalTests/testRealPreviewStructureAndStaticTrackingDiagnostic",
+          "status": "passed",
+          "seconds": 2.035
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testAnchorFollowsTextureAndRejectsBlankReplacement",
+          "status": "passed",
+          "seconds": 0.278
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testBriefMissRetainsIdentityAndLongLossRemovesMarker",
+          "status": "passed",
+          "seconds": 0.423
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testCandidateBatchDoesNotRefillImmediatelyDuringAlignment",
+          "status": "passed",
+          "seconds": 0.156
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding",
+          "status": "passed",
+          "seconds": 0.701
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testTrackedDotFollowsSmallPanWithoutScreenSpaceSmoothing",
+          "status": "passed",
+          "seconds": 3.25
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testWholeSubjectStructureConfirmsSameObjectButRejectsReplacement",
+          "status": "passed",
+          "seconds": 0.124
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testAnyVerifiedCandidateInsideCircleOverridesNearbyUnalignedSelection",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testDisplayGraceRequiresBoundedLossAndContinuousOnscreenObject",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testThreeStableIdentitiesDoNotFollowDetectionOrder",
+          "status": "passed",
+          "seconds": 0.385
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "IdentityLive",
+      "bundle": "/private/tmp/LumaSmartVisibility/IdentityLive.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793605644.301,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793605625.287,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertEqual failed: (\"1\") is not equal to (\"0\") - 固定现场未对齐主体不应反复改成新的推荐身份",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility",
+            "testName": "testLiveUnalignedStructureRecommendationVisibility()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "methods": [
+        {
+          "test": "SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility",
+          "status": "failed",
+          "seconds": 14.387
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "IdentityRelated",
+      "bundle": "/private/tmp/LumaSmartVisibility/IdentityRelated.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 26,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793605529.921,
+        "passedTests": 26,
+        "result": "Passed",
+        "runtimeWarnings": [
+          {
+            "issueType": "Runtime Warning",
+            "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update.",
+            "sourceURL": "file:///Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SmartCompositionGeometryTests.swift"
+          }
+        ],
+        "skippedTests": 0,
+        "startTime": 1793605500.224,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [
+          {
+            "category": "Longest Test Runs",
+            "impact": "35% of duration",
+            "text": "1 longest test run with outlier durations exceeding 6.86s (three standard deviations)"
+          }
+        ],
+        "totalTestCount": 26
+      },
+      "methods": [
+        {
+          "test": "SmartAutoFramingTests/testHandheldAlignmentSurvivesBriefMissesWithoutCountingThemAsConfirmed",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartAutoFramingTests/testPredictedMarkerCannotTriggerAutomaticFraming",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartAutoFramingTests/testStableAlignmentAndJitterDoNotRepeatZoom",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testAnalyzerReturnsNightForDarkPreview",
+          "status": "passed",
+          "seconds": 0.097
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testEarlyAlignedPointsFadeBeforeFramingAndRetainJitterTolerance",
+          "status": "passed",
+          "seconds": 6.207
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testPortraitDisplayMapsCentreAndCropOffset",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testShortPointTransitionEndpointsAcrossRatiosAndReduceMotion",
+          "status": "passed",
+          "seconds": 8.226
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testSquareDisplayMapsFourThreeSourceWithVerticalCrop",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testWhitePointAndThickerRingRendering",
+          "status": "passed",
+          "seconds": 1.752
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testDirectionChangeWaitsWithoutDelayingTrackedPoint",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testMissingGuideClearsAfterGrace",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testStageChangeWaitsForDwell",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testAnchorFollowsTextureAndRejectsBlankReplacement",
+          "status": "passed",
+          "seconds": 0.293
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testBriefMissRetainsIdentityAndLongLossRemovesMarker",
+          "status": "passed",
+          "seconds": 0.436
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testCandidateBatchDoesNotRefillImmediatelyDuringAlignment",
+          "status": "passed",
+          "seconds": 0.151
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding",
+          "status": "passed",
+          "seconds": 0.69
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testTrackedDotFollowsSmallPanWithoutScreenSpaceSmoothing",
+          "status": "passed",
+          "seconds": 3.128
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testWholeSubjectStructureConfirmsSameObjectButRejectsReplacement",
+          "status": "passed",
+          "seconds": 0.123
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testModelHidesNearPointsButRestoresLargeFarSceneAndCancelsPendingWork",
+          "status": "passed",
+          "seconds": 1.95
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testNearMacroAndStableFarRecoveryWithHysteresis",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testRepeatedNearFarPolicyPerformance",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testRepeatedSampleUnknownAndNewDeviceCannotPretendConfirmedFar",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testAnyVerifiedCandidateInsideCircleOverridesNearbyUnalignedSelection",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testChangingPrimaryKeepsAllPointIdentitiesInOneStableCollection",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testDisplayGraceRequiresBoundedLossAndContinuousOnscreenObject",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testThreeStableIdentitiesDoNotFollowDetectionOrder",
+          "status": "passed",
+          "seconds": 0.382
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "Live",
+      "bundle": "/private/tmp/LumaSmartVisibility/Live.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793603957.265,
+        "passedTests": 1,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793603915.017,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertEqual failed: (\"1\") is not equal to (\"0\") - 固定现场未对齐主体不应反复改成新的推荐身份",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 2,
+            "testIdentifierString": "SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility",
+            "testName": "testLiveUnalignedStructureRecommendationVisibility()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 2
+      },
+      "methods": [
+        {
+          "test": "SmartCapturePhysicalTests/testLiveTrackingCadenceDismissalAndRepeatedPopupCancellation",
+          "status": "passed",
+          "seconds": 11.3
+        },
+        {
+          "test": "SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility",
+          "status": "failed",
+          "seconds": 14.094
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "StabilityReplay",
+      "bundle": "/private/tmp/LumaSmartVisibility/StabilityReplay.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793605050.739,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793605044.077,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "methods": [
+        {
+          "test": "SmartCapturePhysicalTests/testRecordedRealPreviewSubjectContinuity",
+          "status": "passed",
+          "seconds": 0.416
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "StableLive",
+      "bundle": "/private/tmp/LumaSmartVisibility/StableLive.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 1,
+            "passedTests": 0,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 1,
+        "finishTime": 1793605135.228,
+        "passedTests": 0,
+        "result": "Failed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793605116.288,
+        "statistics": [],
+        "testFailures": [
+          {
+            "failureText": "XCTAssertEqual failed: (\"1\") is not equal to (\"0\") - 固定现场未对齐主体不应反复改成新的推荐身份",
+            "targetName": "LumaCameraTests",
+            "testIdentifier": 1,
+            "testIdentifierString": "SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility()",
+            "testIdentifierURL": "test://com.apple.xcode/LumaCamera/LumaCameraTests/SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility",
+            "testName": "testLiveUnalignedStructureRecommendationVisibility()"
+          }
+        ],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "methods": [
+        {
+          "test": "SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility",
+          "status": "failed",
+          "seconds": 14.4
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "StaticDiagnostic",
+      "bundle": "/private/tmp/LumaSmartVisibility/StaticDiagnostic.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793604625.261,
+        "passedTests": 1,
+        "result": "Passed",
+        "runtimeWarnings": [],
+        "skippedTests": 0,
+        "startTime": 1793604617.58,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [],
+        "totalTestCount": 1
+      },
+      "methods": [
+        {
+          "test": "SmartCapturePhysicalTests/testRealPreviewStructureAndStaticTrackingDiagnostic",
+          "status": "passed",
+          "seconds": 2.207
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "StructureRelated",
+      "bundle": "/private/tmp/LumaSmartVisibility/StructureRelated.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 27,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793603786.071,
+        "passedTests": 27,
+        "result": "Passed",
+        "runtimeWarnings": [
+          {
+            "issueType": "Runtime Warning",
+            "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update.",
+            "sourceURL": "file:///Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SmartCompositionGeometryTests.swift"
+          }
+        ],
+        "skippedTests": 0,
+        "startTime": 1793603743.168,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [
+          {
+            "category": "Longest Test Runs",
+            "impact": "35% of duration",
+            "text": "1 longest test run with outlier durations exceeding 6.67s (three standard deviations)"
+          }
+        ],
+        "totalTestCount": 27
+      },
+      "methods": [
+        {
+          "test": "SmartAutoFramingTests/testHandheldAlignmentSurvivesBriefMissesWithoutCountingThemAsConfirmed",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartAutoFramingTests/testPredictedMarkerCannotTriggerAutomaticFraming",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartAutoFramingTests/testStableAlignmentAndJitterDoNotRepeatZoom",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testAnalyzerReturnsNightForDarkPreview",
+          "status": "passed",
+          "seconds": 0.102
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testStructuralCompletenessAndSubjectRoomApplyBeforeKindPreference",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testStructureFiltersIncidentalPatchClippedObjectAndBackgroundBeforeNomination",
+          "status": "passed",
+          "seconds": 0.032
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testStructureRejectsRepeatedBackgroundTextureAndNoSubjectScene",
+          "status": "passed",
+          "seconds": 0.005
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testEarlyAlignedPointsFadeBeforeFramingAndRetainJitterTolerance",
+          "status": "passed",
+          "seconds": 5.948
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testPortraitDisplayMapsCentreAndCropOffset",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testShortPointTransitionEndpointsAcrossRatiosAndReduceMotion",
+          "status": "passed",
+          "seconds": 8.202
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testSquareDisplayMapsFourThreeSourceWithVerticalCrop",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testWhitePointAndThickerRingRendering",
+          "status": "passed",
+          "seconds": 1.758
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testDirectionChangeWaitsWithoutDelayingTrackedPoint",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testMissingGuideClearsAfterGrace",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testStageChangeWaitsForDwell",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testAnchorFollowsTextureAndRejectsBlankReplacement",
+          "status": "passed",
+          "seconds": 0.291
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testBriefMissRetainsIdentityAndLongLossRemovesMarker",
+          "status": "passed",
+          "seconds": 0.445
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testCandidateBatchDoesNotRefillImmediatelyDuringAlignment",
+          "status": "passed",
+          "seconds": 0.151
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding",
+          "status": "passed",
+          "seconds": 0.699
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testTrackedDotFollowsSmallPanWithoutScreenSpaceSmoothing",
+          "status": "passed",
+          "seconds": 3.27
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testModelHidesNearPointsButRestoresLargeFarSceneAndCancelsPendingWork",
+          "status": "passed",
+          "seconds": 1.955
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testNearMacroAndStableFarRecoveryWithHysteresis",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testRepeatedNearFarPolicyPerformance",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testRepeatedSampleUnknownAndNewDeviceCannotPretendConfirmedFar",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testAnyVerifiedCandidateInsideCircleOverridesNearbyUnalignedSelection",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testDisplayGraceRequiresBoundedLossAndContinuousOnscreenObject",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testThreeStableIdentitiesDoNotFollowDetectionOrder",
+          "status": "passed",
+          "seconds": 0.393
+        }
+      ],
+      "readOnlyConfirmed": true
+    },
+    {
+      "phase": "FinalRelated",
+      "bundle": "/private/tmp/LumaSmartVisibility/FinalRelated.xcresult",
+      "summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64e",
+              "deviceId": "00008150-001934280220401C",
+              "deviceName": "笨笨波尔霸&iPhone Pro",
+              "modelName": "iPhone 17 Pro",
+              "osBuildNumber": "24B119",
+              "osVersion": "27.2",
+              "platform": "iOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 27,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "LumaCamera · Built with macOS 27.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1793606293.055,
+        "passedTests": 27,
+        "result": "Passed",
+        "runtimeWarnings": [
+          {
+            "issueType": "Runtime Warning",
+            "message": "Accessing Environment<Bool>'s value outside of being installed on a View. This will always read the default value and will not update.",
+            "sourceURL": "file:///Users/shurrikann/MyProject/iOS/LumaCamera/LumaCameraTests/Camera/SmartCompositionGeometryTests.swift"
+          }
+        ],
+        "skippedTests": 0,
+        "startTime": 1793606254.728,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - LumaCamera",
+        "topInsights": [
+          {
+            "category": "Longest Test Runs",
+            "impact": "33% of duration",
+            "text": "1 longest test run with outlier durations exceeding 9.63s (three standard deviations)"
+          }
+        ],
+        "totalTestCount": 27
+      },
+      "methods": [
+        {
+          "test": "SmartAutoFramingTests/testHandheldAlignmentSurvivesBriefMissesWithoutCountingThemAsConfirmed",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartAutoFramingTests/testPredictedMarkerCannotTriggerAutomaticFraming",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartAutoFramingTests/testStableAlignmentAndJitterDoNotRepeatZoom",
+          "status": "passed",
+          "seconds": 0.0
+        },
+        {
+          "test": "SmartCaptureAnalyzerTests/testAnalyzerReturnsNightForDarkPreview",
+          "status": "passed",
+          "seconds": 0.081
+        },
+        {
+          "test": "SmartCapturePhysicalTests/testLiveTrackingCadenceDismissalAndRepeatedPopupCancellation",
+          "status": "passed",
+          "seconds": 11.575
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testEarlyAlignedPointsFadeBeforeFramingAndRetainJitterTolerance",
+          "status": "passed",
+          "seconds": 5.837
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testPortraitDisplayMapsCentreAndCropOffset",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testShortPointTransitionEndpointsAcrossRatiosAndReduceMotion",
+          "status": "passed",
+          "seconds": 8.233
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testSquareDisplayMapsFourThreeSourceWithVerticalCrop",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionGeometryTests/testWhitePointAndThickerRingRendering",
+          "status": "passed",
+          "seconds": 1.761
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testDirectionChangeWaitsWithoutDelayingTrackedPoint",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testMissingGuideClearsAfterGrace",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartCompositionStabilizerTests/testStageChangeWaitsForDwell",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testAnchorFollowsTextureAndRejectsBlankReplacement",
+          "status": "passed",
+          "seconds": 0.29
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testBriefMissRetainsIdentityAndLongLossRemovesMarker",
+          "status": "passed",
+          "seconds": 0.434
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testCandidateBatchDoesNotRefillImmediatelyDuringAlignment",
+          "status": "passed",
+          "seconds": 0.15
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding",
+          "status": "passed",
+          "seconds": 0.685
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testTrackedDotFollowsSmallPanWithoutScreenSpaceSmoothing",
+          "status": "passed",
+          "seconds": 3.117
+        },
+        {
+          "test": "SmartFeatureAnchorTests/testWholeSubjectStructureConfirmsSameObjectButRejectsReplacement",
+          "status": "passed",
+          "seconds": 0.121
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testModelHidesNearPointsButRestoresLargeFarSceneAndCancelsPendingWork",
+          "status": "passed",
+          "seconds": 1.958
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testNearMacroAndStableFarRecoveryWithHysteresis",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testRepeatedNearFarPolicyPerformance",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartRecommendationRangeTests/testRepeatedSampleUnknownAndNewDeviceCannotPretendConfirmedFar",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testAnyVerifiedCandidateInsideCircleOverridesNearbyUnalignedSelection",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testChangingPrimaryKeepsAllPointIdentitiesInOneStableCollection",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testDisplayGraceRequiresBoundedLossAndContinuousOnscreenObject",
+          "status": "passed",
+          "seconds": 0.001
+        },
+        {
+          "test": "SmartSubjectTrackerTests/testThreeStableIdentitiesDoNotFollowDetectionOrder",
+          "status": "passed",
+          "seconds": 0.38
+        }
+      ],
+      "readOnlyConfirmed": true
+    }
+  ],
+  "finalMethods": [
+    {
+      "test": "SmartAutoFramingTests/testAutomaticHardwareFramingOnceAndCancelPendingWork",
+      "status": "passed",
+      "seconds": 5.026
+    },
+    {
+      "test": "SmartAutoFramingTests/testSmartFocusWaitsForAlignmentAndReleasesToNormalControls",
+      "status": "passed",
+      "seconds": 4.648
+    },
+    {
+      "test": "SmartLocalCompositionAITests/testOnDeviceModelAvailabilityAndFallback",
+      "status": "passed",
+      "seconds": 0.072
+    },
+    {
+      "test": "SmartCapturePhysicalTests/testLiveUnalignedStructureRecommendationVisibility",
+      "status": "passed",
+      "seconds": 14.444
+    },
+    {
+      "test": "SmartAutoFramingTests/testHandheldAlignmentSurvivesBriefMissesWithoutCountingThemAsConfirmed",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartAutoFramingTests/testPredictedMarkerCannotTriggerAutomaticFraming",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartAutoFramingTests/testStableAlignmentAndJitterDoNotRepeatZoom",
+      "status": "passed",
+      "seconds": 0.0
+    },
+    {
+      "test": "SmartCaptureAnalyzerTests/testAnalyzerReturnsNightForDarkPreview",
+      "status": "passed",
+      "seconds": 0.081
+    },
+    {
+      "test": "SmartCapturePhysicalTests/testLiveTrackingCadenceDismissalAndRepeatedPopupCancellation",
+      "status": "passed",
+      "seconds": 11.575
+    },
+    {
+      "test": "SmartCompositionGeometryTests/testEarlyAlignedPointsFadeBeforeFramingAndRetainJitterTolerance",
+      "status": "passed",
+      "seconds": 5.837
+    },
+    {
+      "test": "SmartCompositionGeometryTests/testPortraitDisplayMapsCentreAndCropOffset",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartCompositionGeometryTests/testShortPointTransitionEndpointsAcrossRatiosAndReduceMotion",
+      "status": "passed",
+      "seconds": 8.233
+    },
+    {
+      "test": "SmartCompositionGeometryTests/testSquareDisplayMapsFourThreeSourceWithVerticalCrop",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartCompositionGeometryTests/testWhitePointAndThickerRingRendering",
+      "status": "passed",
+      "seconds": 1.761
+    },
+    {
+      "test": "SmartCompositionStabilizerTests/testDirectionChangeWaitsWithoutDelayingTrackedPoint",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartCompositionStabilizerTests/testMissingGuideClearsAfterGrace",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartCompositionStabilizerTests/testStageChangeWaitsForDwell",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartFeatureAnchorTests/testAnchorFollowsTextureAndRejectsBlankReplacement",
+      "status": "passed",
+      "seconds": 0.29
+    },
+    {
+      "test": "SmartFeatureAnchorTests/testBriefMissRetainsIdentityAndLongLossRemovesMarker",
+      "status": "passed",
+      "seconds": 0.434
+    },
+    {
+      "test": "SmartFeatureAnchorTests/testCandidateBatchDoesNotRefillImmediatelyDuringAlignment",
+      "status": "passed",
+      "seconds": 0.15
+    },
+    {
+      "test": "SmartFeatureAnchorTests/testLocalTextureMissKeepsSameSubjectVisibleAndRecoversWithoutReseeding",
+      "status": "passed",
+      "seconds": 0.685
+    },
+    {
+      "test": "SmartFeatureAnchorTests/testTrackedDotFollowsSmallPanWithoutScreenSpaceSmoothing",
+      "status": "passed",
+      "seconds": 3.117
+    },
+    {
+      "test": "SmartFeatureAnchorTests/testWholeSubjectStructureConfirmsSameObjectButRejectsReplacement",
+      "status": "passed",
+      "seconds": 0.121
+    },
+    {
+      "test": "SmartRecommendationRangeTests/testModelHidesNearPointsButRestoresLargeFarSceneAndCancelsPendingWork",
+      "status": "passed",
+      "seconds": 1.958
+    },
+    {
+      "test": "SmartRecommendationRangeTests/testNearMacroAndStableFarRecoveryWithHysteresis",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartRecommendationRangeTests/testRepeatedNearFarPolicyPerformance",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartRecommendationRangeTests/testRepeatedSampleUnknownAndNewDeviceCannotPretendConfirmedFar",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartSubjectTrackerTests/testAnyVerifiedCandidateInsideCircleOverridesNearbyUnalignedSelection",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartSubjectTrackerTests/testChangingPrimaryKeepsAllPointIdentitiesInOneStableCollection",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartSubjectTrackerTests/testDisplayGraceRequiresBoundedLossAndContinuousOnscreenObject",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "test": "SmartSubjectTrackerTests/testThreeStableIdentitiesDoNotFollowDetectionOrder",
+      "status": "passed",
+      "seconds": 0.38
+    }
+  ],
+  "sourceSHA256": {
+    "LumaCamera/Features/Camera/Models/SmartSubjectTracker.swift": "3c298a4538ff453d366132a541dc21a910d5f67567eb9efae412796a90bcdcd5",
+    "LumaCamera/Features/Camera/Models/SmartFeatureAnchor.swift": "e6bca8bc89bb87c410f1553139a381a6faf702d85ccafcaa0e1794e4112d490e",
+    "LumaCamera/Features/Camera/ViewModels/CameraViewModel.swift": "894fe48baf14bd19a3eaa2d1e947e3a8e0e5a1c547ed01300e5edbd457aca76c",
+    "LumaCamera/Features/Camera/Views/SmartCompositionGuideOverlay.swift": "fb063fccabd0afe708fd90c917db10212b86c79932b25a59144748454345615e",
+    "LumaCameraTests/Camera/SmartSubjectTrackerTests.swift": "c401f6f5c4902327ab7f2efb6a36c885bbe8f97a6992a374dbd282c5c2ee3111",
+    "LumaCameraTests/Camera/SmartFeatureAnchorTests.swift": "535e2074a27c2b95009de6834b30b34841629f9bbcecde8a829ac379d6310499",
+    "LumaCameraTests/Camera/SmartAutoFramingTests.swift": "88732e52d0b8a43635c715fee58bfa559f141cf81edc70eb50c52292b818a659",
+    "LumaCameraTests/Camera/SmartCapturePhysicalTests.swift": "00d36bb843b6491aa0b8968f262b9b9aa41da903dca77c6d515f5f0d1d4d673a"
+  },
+  "scope": "智拍未对齐点位显示稳定性；结构质量筛选实验已撤下，未全量测试"
+}

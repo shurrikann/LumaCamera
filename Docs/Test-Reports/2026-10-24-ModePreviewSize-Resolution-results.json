@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-24",
+  "device": "iPhone 17 Pro / iOS 27.0.1 (24A446)",
+  "passed": 8,
+  "failed": 0,
+  "skipped": 0,
+  "seconds": 53.641,
+  "methods": [
+    {
+      "test": "FrontPhotoAspectRatioPhysicalTests/testManualHEIFSmoothFrontAspectChangesKeepPreviewReady()",
+      "seconds": 6.263,
+      "result": "Passed"
+    },
+    {
+      "test": "FrontPhotoAspectRatioPhysicalTests/testRepeatedFrontPhotoAspectChangesKeepPreviewReady()",
+      "seconds": 5.814,
+      "result": "Passed"
+    },
+    {
+      "test": "FrontPhotoOrientationTests/testEncodedFileAndPreviewKeepSameAlreadyDecodedPixelDirection()",
+      "seconds": 0.112,
+      "result": "Passed"
+    },
+    {
+      "test": "FrontPhotoOrientationTests/testFrontCropAxisFollowsCaptureRotationWithoutChangingSensorChoice()",
+      "seconds": 0.0,
+      "result": "Passed"
+    },
+    {
+      "test": "FrontPhotoOrientationTests/testIntrinsicCorrectionRestoresBothAxesWithoutChangingUprightPixels()",
+      "seconds": 0.004,
+      "result": "Passed"
+    },
+    {
+      "test": "FrontPhotoOrientationTests/testNativeFrontPreviewAndPhotoKeepTopInBothSystemFramings()",
+      "seconds": 0.004,
+      "result": "Passed"
+    },
+    {
+      "test": "PhysicalCameraSwitchingTests/testManualPresetsThenAutomaticModeOnPhysicalCamera()",
+      "seconds": 20.791,
+      "result": "Passed"
+    },
+    {
+      "test": "PhysicalCameraSwitchingTests/testManualToAutomaticPreviewMatchesAllPhotoRatiosAndFrontFraming()",
+      "seconds": 20.652,
+      "result": "Passed"
+    }
+  ],
+  "rearModeSwitchSamples": 7,
+  "frontModeSwitchChecks": 28,
+  "rearMedianSeconds": 0.9835312500072177,
+  "rearMaxSeconds": 1.1035400416731136,
+  "nativeAspectMedianSeconds": [
+    0.04573541665740777,
+    0.05549975000030827
+  ],
+  "runtimeErrors": 0,
+  "resultBundle": "/private/tmp/LumaCamera-ModePreviewSize-20261024-Final.xcresult",
+  "log": "/private/tmp/LumaCamera-ModePreviewSize-20261024-Final.log",
+  "limitations": [
+    "同一设备方向未人工固定，未做人物朝向目视验收",
+    "耗时含轮询与队列等待，不是 FPS/动画完成/功耗指标",
+    "未复测其余全量失败项"
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-24",
+  "device": "iPhone 17 Pro / iOS 27.0.1",
+  "productionChanged": true,
+  "distinctPassed": 4,
+  "originalFailure": "FULL-20261024-032",
+  "baseline": {
+    "seconds": 4.754,
+    "result": "Passed"
+  },
+  "final": {
+    "methods": 2,
+    "seconds": 20.211,
+    "resultBundle": "/private/tmp/LumaCamera-VideoLifecycle-20261024-Final.xcresult"
+  },
+  "resource": {
+    "methods": 3,
+    "seconds": 2.774,
+    "resultBundle": "/private/tmp/LumaCamera-VideoLifecycle-20261024-Resource.xcresult"
+  },
+  "preFixCancelFailure": {
+    "seconds": 10.148,
+    "waitLimitSeconds": 8,
+    "callbacks": 0,
+    "busyRemained": true,
+    "resultBundle": "/private/tmp/LumaCamera-VideoLifecycle-20261024-WBCancelBaseline.xcresult"
+  },
+  "metrics": {
+    "modeRequests": 300,
+    "configurationsPer100": [
+      1,
+      1,
+      1
+    ],
+    "queuedModeCompletionSeconds": [
+      2.63609741666005,
+      2.733304333349224,
+      3.3974432083487045
+    ],
+    "fileFinishSeconds": [
+      0.034987416671356186,
+      0.04566274999524467,
+      0.0338539166841656
+    ],
+    "resumeNewFrameSeconds": [
+      0.30076516667031683,
+      0.25706358335446566,
+      0.3054475416720379
+    ],
+    "stoppedClockDeltaSeconds": [
+      0,
+      0,
+      0
+    ],
+    "normalFileDecodedFrames": [
+      16,
+      16,
+      16
+    ],
+    "cancelCompletionSeconds": [
+      0.021555333310971037,
+      0.02120254165492952,
+      0.024304916674736887
+    ],
+    "resourceRetestCancelCompletionSeconds": [
+      0.021621791645884514,
+      0.021572333324002102,
+      0.021115000010468066
+    ],
+    "postCancelNewFileFrames": 12
+  },
+  "runtimeErrorNotificationsWithError": 0,
+  "systemPhotosWrites": 0,
+  "cumulativeOriginalFailuresPassed": 26,
+  "remainingOriginalFailures": 7,
+  "limitations": [
+    "Lifecycle entrypoint exercised, no actual Home/lock/phone interruption",
+    "Not standalone power, memory or display FPS",
+    "Resource unit checks do not validate external RAW disk",
+    "Original historical platform root cause not established",
+    "031 WB matrix remains pending"
+  ]
+}

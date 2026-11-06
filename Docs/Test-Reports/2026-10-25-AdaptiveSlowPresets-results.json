@@ -1,0 +1,225 @@
+{
+  "date": "2026-10-25",
+  "device": "iPhone 17 Pro",
+  "os": "iOS 27.0.1 (24A446)",
+  "distinctPassingMethods": 16,
+  "systemPhotosWrites": 0,
+  "fullSequences": [
+    {
+      "preset": "lightTrails",
+      "mode": "auto",
+      "sourceFrames": 31,
+      "sourceSpanSeconds": 10.171741041674977,
+      "actualISO": [
+        80.0
+      ],
+      "actualExposureSeconds": [
+        0.125
+      ],
+      "totalSeconds": 11.502221833332442,
+      "lastSourceToEncodedSeconds": 0.1575872499961406,
+      "testHostBaselineMiB": 85.59575653076172,
+      "testHostPeakMiB": 492.2367248535156,
+      "outputSize": "3000x4000",
+      "diagnosticRow": "光轨 · 31 帧",
+      "thermalState": 0,
+      "previewPublicationMaxGapSeconds": 0.24986220832215622
+    },
+    {
+      "preset": "motionBlur",
+      "mode": "auto",
+      "sourceFrames": 7,
+      "sourceSpanSeconds": 2.095712125010323,
+      "actualISO": [
+        80.0
+      ],
+      "actualExposureSeconds": [
+        0.125
+      ],
+      "totalSeconds": 3.347452624992002,
+      "lastSourceToEncodedSeconds": 0.12459462499828078,
+      "testHostBaselineMiB": 107.0958023071289,
+      "testHostPeakMiB": 469.7367248535156,
+      "outputSize": "3000x4000",
+      "diagnosticRow": "动态模糊 · 7 帧",
+      "thermalState": 0,
+      "previewPublicationMaxGapSeconds": 0.2511440000089351
+    },
+    {
+      "preset": "panning",
+      "mode": "auto",
+      "sourceFrames": 4,
+      "sourceSpanSeconds": 1.0046785833255854,
+      "actualISO": [
+        250.0
+      ],
+      "actualExposureSeconds": [
+        0.03333333333333333
+      ],
+      "totalSeconds": 2.332878375018481,
+      "lastSourceToEncodedSeconds": 0.1907362083438784,
+      "testHostBaselineMiB": 109.36140441894531,
+      "testHostPeakMiB": 540.0805435180664,
+      "outputSize": "3000x4000",
+      "diagnosticRow": "摇拍追焦 · 4 帧",
+      "thermalState": 0,
+      "previewPublicationMaxGapSeconds": 0.1477430000086315
+    },
+    {
+      "preset": "lightTrails",
+      "mode": "manual",
+      "sourceFrames": 32,
+      "sourceSpanSeconds": 10.22663683333667,
+      "actualISO": [
+        200.0
+      ],
+      "actualExposureSeconds": [
+        0.008
+      ],
+      "totalSeconds": 10.66752004166483,
+      "lastSourceToEncodedSeconds": 0.16104337500291876,
+      "testHostBaselineMiB": 87.40827941894531,
+      "testHostPeakMiB": 488.1430206298828,
+      "outputSize": "3000x4000",
+      "diagnosticRow": "光轨 · 32 帧",
+      "thermalState": 0,
+      "previewPublicationMaxGapSeconds": 0.14678837498649955
+    },
+    {
+      "preset": "motionBlur",
+      "mode": "manual",
+      "sourceFrames": 8,
+      "sourceSpanSeconds": 2.2671055833343416,
+      "actualISO": [
+        200.0
+      ],
+      "actualExposureSeconds": [
+        0.008
+      ],
+      "totalSeconds": 2.7441324166720733,
+      "lastSourceToEncodedSeconds": 0.15741904167225584,
+      "testHostBaselineMiB": 121.6583023071289,
+      "testHostPeakMiB": 494.6586685180664,
+      "outputSize": "3000x4000",
+      "diagnosticRow": "动态模糊 · 8 帧",
+      "thermalState": 0,
+      "previewPublicationMaxGapSeconds": 0.14096516664722003
+    },
+    {
+      "preset": "panning",
+      "mode": "manual",
+      "sourceFrames": 4,
+      "sourceSpanSeconds": 1.0442946249968372,
+      "actualISO": [
+        200.0
+      ],
+      "actualExposureSeconds": [
+        0.008
+      ],
+      "totalSeconds": 1.4947832916514017,
+      "lastSourceToEncodedSeconds": 0.17067008331650868,
+      "testHostBaselineMiB": 104.7208251953125,
+      "testHostPeakMiB": 609.3775100708008,
+      "outputSize": "3000x4000",
+      "diagnosticRow": "摇拍追焦 · 4 帧",
+      "thermalState": 0,
+      "previewPublicationMaxGapSeconds": 0.1338942083530128
+    },
+    {
+      "preset": "starTrails",
+      "mode": "auto",
+      "sourceFrames": 343,
+      "sourceSpanSeconds": 120.14077995833941,
+      "actualISO": [
+        80.0
+      ],
+      "actualExposureSeconds": [
+        0.125
+      ],
+      "totalSeconds": 121.48399270832306,
+      "lastSourceToEncodedSeconds": 0.1582369999960065,
+      "testHostBaselineMiB": 110.0958023071289,
+      "testHostPeakMiB": 501.7992935180664,
+      "outputSize": "3000x4000",
+      "diagnosticRow": "星轨 · 343 帧",
+      "thermalState": 0,
+      "previewPublicationMaxGapSeconds": 0.2520607083279174
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "auto",
+      "sourceFrames": 22,
+      "sourceSpanSeconds": 8.315569458325626,
+      "actualISO": [
+        80.0
+      ],
+      "actualExposureSeconds": [
+        0.125
+      ],
+      "totalSeconds": 9.711213583330391,
+      "lastSourceToEncodedSeconds": 0.26686900001368485,
+      "testHostBaselineMiB": 83.37700653076172,
+      "testHostPeakMiB": 494.2523727416992,
+      "outputSize": "3000x4000",
+      "diagnosticRow": "流水 · 22 帧",
+      "thermalState": 0,
+      "previewPublicationMaxGapSeconds": 0.24484270831453614
+    },
+    {
+      "preset": "silkyWater",
+      "mode": "manual",
+      "sourceFrames": 26,
+      "sourceSpanSeconds": 8.316760666668415,
+      "actualISO": [
+        200.0
+      ],
+      "actualExposureSeconds": [
+        0.008
+      ],
+      "totalSeconds": 8.909780208341544,
+      "lastSourceToEncodedSeconds": 0.2596929583523888,
+      "testHostBaselineMiB": 101.5958023071289,
+      "testHostPeakMiB": 496.0023956298828,
+      "outputSize": "3000x4000",
+      "diagnosticRow": "流水 · 26 帧",
+      "thermalState": 0,
+      "previewPublicationMaxGapSeconds": 0.1359777083271183
+    }
+  ],
+  "runs": [
+    {
+      "name": "Algorithm",
+      "outcome": "compile failed: Int/CGFloat in synthetic test"
+    },
+    {
+      "name": "Algorithm2",
+      "tests": 10,
+      "seconds": 0.695,
+      "outcome": "passed"
+    },
+    {
+      "name": "Device",
+      "tests": 4,
+      "outcome": "three methods passed; manual motion-blur source span short by approximately 0.057s"
+    },
+    {
+      "name": "Final",
+      "tests": 8,
+      "seconds": 225.537,
+      "outcome": "passed"
+    },
+    {
+      "name": "SelectionGuard",
+      "tests": 1,
+      "seconds": 23.614,
+      "outcome": "passed, repeated manual/early/cancel with in-flight preset change guard"
+    }
+  ],
+  "limitations": [
+    "Indoor textured subject; real sky/light trails/action panning visual quality not accepted",
+    "Central 40-percent translation alignment only, not semantic tracking, rotation/perspective or focus-depth correction",
+    "Rendered test-host footprint is not standalone App memory; no instrumented power/long-duration thermal test",
+    "Native stills are discrete samples with gaps; not continuous ND exposure",
+    "Full runs cover rear main JPEG and water HEIF; not all lenses/brightness extremes/format combinations"
+  ]
+}

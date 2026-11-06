@@ -1,0 +1,8 @@
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.DS_Store
+
+# Large local media/work products, not source
+VideoProjects/
+Preview/
