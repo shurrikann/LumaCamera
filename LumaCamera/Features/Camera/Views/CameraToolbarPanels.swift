@@ -89,15 +89,6 @@ extension CameraView {
                 }
                 .frame(width: formatColumnWidth)
                 .captureControlGeometry("format.heifPro", model: model)
-                Text("通过 RAW 格式转换 HEIF，保留更多细节并降低锐化，支持 Pro 影调。")
-                    .font(.system(size: 9))
-                    .lineSpacing(1)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(nil)
-                    .foregroundStyle(.white.opacity(0.6))
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityIdentifier("camera.format.heifPro.explanation")
                 if model.photoFormat == .heifPro {
                     choicePill("Pro 影调", selected: false, enabled: !model.isPreparingSubmode) {
                         // choicePill 已提供触感和淡入淡出；格式浮层已完成其他弹窗收起。
@@ -107,6 +98,15 @@ extension CameraView {
                     .accessibilityIdentifier("camera.format.proTone")
                     .captureControlGeometry("format.proTone", model: model)
                 }
+                Text("通过 RAW 格式转换 HEIF，保留更多细节并降低锐化，支持 Pro 影调。")
+                    .font(.system(size: 9))
+                    .lineSpacing(1)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(nil)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("camera.format.heifPro.explanation")
             }
             if model.photoFormat != .heifPro, let formatExplanation {
                 Text(formatExplanation).font(.system(size: 11)).foregroundStyle(.white.opacity(0.6)).fixedSize(horizontal: false, vertical: true)

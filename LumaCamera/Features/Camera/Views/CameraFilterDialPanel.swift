@@ -1,29 +1,66 @@
 import SwiftUI
 import UIKit
 
-/// Filter editor with the optional dial-pad layout. Legacy sliders remain in CameraFilterAdjustmentPanel.
+/// 调色盘仅替换编辑控件；参数 key、渲染与旧版滑条共用，设置默认关闭。
+struct FilterDialLayout {
+    let x: FilterParameter
+    let y: FilterParameter
+    let left: FilterParameter
+    let right: FilterParameter
+    let bottom: [FilterParameter]
+
+    static func layout(for tab: FilterEditorTab) -> Self {
+        switch tab {
+        case .color: return .init(x: .temperature, y: .tint, left: .strength, right: .saturation, bottom: [.fade])
+        case .light: return .init(x: .exposure, y: .contrast, left: .highlights, right: .shadows, bottom: [.brightness])
+        case .effects: return .init(x: .softness, y: .halation, left: .detail, right: .vignette,
+                                   bottom: [.aberration, .grainSize, .grainSaturation])
+        }
+    }
+    var parameters: [FilterParameter] { [x, y, left, right] + bottom }
+    static func title(_ parameter: FilterParameter) -> String {
+        switch parameter {
+        case .exposure: return "曝光"
+        case .detail: return "细节"
+        case .halation: return "胶片光晕"
+        default: return parameter.title
+        }
+    }
+}
+
 struct FilterDialEditor: View {
     @ObservedObject var model: CameraViewModel
     let tab: FilterEditorTab
-
-    private var enabled: Bool { model.filterControlsEnabled && !model.camera.videoBusy }
+    @State private var textureParameter: FilterParameter = .aberration
+    private var layout: FilterDialLayout { .layout(for: tab) }
+    private var enabled: Bool { model.filterControlsEnabled && !model.camera.videoBusy && !model.filterResetVisible }
+    private var bottomParameter: FilterParameter { tab == .effects ? textureParameter : layout.bottom[0] }
 
     var body: some View {
         VStack(spacing: 9) {
             parameterReadout
-            HStack(spacing: 10) {
-                rail(leftSpec)
-                pad
-                rail(rightSpec)
+            // 两侧轨道嵌在同一个横向区域内；宽度随弹窗适配，不扩大弹窗或移动焦段条。
+            HStack(spacing: 8) {
+                rail(layout.left)
+                FilterDialPad(style: padStyle, point: model.filterParameterPairBinding(layout.x, layout.y),
+                              xParameter: layout.x, yParameter: layout.y,
+                              xLabel: padXLabel, yLabel: padYLabel, enabled: enabled,
+                              onEditingChanged: { model.setFilterParameterEditing($0) })
+                rail(layout.right)
             }
+            .padding(8)
+            .frame(height: 140)
+            .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            bottomSelector
+            bottomSlider
         }
-        .padding(.top, 8)
-        .padding(.bottom, 10)
+        .padding(.top, 8).padding(.bottom, 10)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("filter.dialPad")
         #if DEBUG
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.filterDialPadFrameForTesting = $0 }
         #endif
+        .onChange(of: tab) { _, _ in model.setFilterParameterEditing(false) }
         .onDisappear {
             model.setFilterParameterEditing(false)
             #if DEBUG
@@ -32,211 +69,153 @@ struct FilterDialEditor: View {
         }
     }
 
-    private var parameters: [FilterParameter] {
-        switch tab {
-        case .color: return [.temperature, .tint, .saturation]
-        case .light: return [.exposure, .contrast, .highlights, .shadows]
-        case .effects: return [.detail, .grainSize]
-        }
-    }
-
     private var parameterReadout: some View {
-        HStack(spacing: 0) {
-            ForEach(parameters) { parameter in
-                Spacer(minLength: 2)
-                VStack(spacing: 1) {
-                    Text(displayName(parameter)).font(.system(size: 9)).foregroundStyle(.white.opacity(0.52))
-                    Text(readoutText(parameter)).font(.system(size: 13, weight: .semibold, design: .monospaced))
-                        .monospacedDigit().foregroundStyle(parameter == .strength ? AppTheme.accent : .white)
-                }
-                Spacer(minLength: 2)
+        HStack(spacing: 4) {
+            ForEach([layout.x, layout.y, layout.left, layout.right]) { parameter in
+                VStack(spacing: 2) {
+                    Text(FilterDialLayout.title(parameter)).font(.system(size: 10)).foregroundStyle(.white.opacity(0.58))
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                    Text(model.filterParameterText(parameter))
+                        .font(.system(size: 12, weight: .medium, design: .monospaced)).monospacedDigit()
+                        .foregroundStyle(.white)
+                }.frame(maxWidth: .infinity)
             }
-            if tab == .effects {
-                Spacer(minLength: 2)
-                VStack(spacing: 1) {
-                    Text("光晕").font(.system(size: 9)).foregroundStyle(.white.opacity(0.52))
-                    Text(valueText(glowValue)).font(.system(size: 13, weight: .semibold, design: .monospaced))
-                        .monospacedDigit().foregroundStyle(.white)
+        }.frame(height: 34)
+    }
+
+    /// 质感三项共享最底部滑条；其它分类保留同高的单项标签，切换时布局不跳动。
+    private var bottomSelector: some View {
+        HStack(spacing: 8) {
+            ForEach(layout.bottom) { parameter in
+                Button {
+                    guard tab == .effects, textureParameter != parameter else { return }
+                    model.setFilterParameterEditing(false)
+                    withAnimation(AppTheme.popupAnimation) { textureParameter = parameter }
+                } label: {
+                    Text(FilterDialLayout.title(parameter))
+                        .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                        .foregroundStyle(bottomParameter == parameter ? AppTheme.accent : .white.opacity(0.65))
+                        .padding(.horizontal, 10).frame(height: 30)
+                        .background(.white.opacity(bottomParameter == parameter ? 0.08 : 0), in: Capsule())
                 }
-                Spacer(minLength: 2)
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("filter.dial.bottom." + parameter.rawValue)
+                .accessibilityAddTraits(bottomParameter == parameter ? .isSelected : [])
             }
+            Spacer(minLength: 0)
+        }.frame(height: 30)
+    }
+
+    private var bottomSlider: some View {
+        HStack(spacing: 8) {
+            Text(FilterDialLayout.title(bottomParameter))
+                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.75))
+                .lineLimit(2).frame(width: 60, alignment: .leading)
+            Slider(value: model.filterParameterBinding(bottomParameter), in: bottomParameter.range,
+                   onEditingChanged: { model.setFilterParameterEditing($0) })
+                .tint(AppTheme.accent).disabled(!enabled)
+                .accessibilityLabel("滤镜" + FilterDialLayout.title(bottomParameter))
+                .accessibilityIdentifier("filter.dial.bottomSlider")
+            Text(model.filterParameterText(bottomParameter))
+                .font(.system(size: 11, weight: .medium, design: .monospaced)).monospacedDigit()
+                .foregroundStyle(AppTheme.accent).frame(width: 32, alignment: .trailing)
         }
-        .frame(height: 32)
-        .background(.white.opacity(0.055), in: Capsule())
+        .id(bottomParameter)
+        .transition(.opacity)
+        .frame(height: 34)
     }
 
-    private var pad: some View {
-        FilterDialPad(style: padStyle, x: padXBinding, y: padYBinding,
-                      xRange: padXRange, yRange: padYRange,
-                      xLabel: padXLabel, yLabel: padYLabel,
-                      enabled: enabled,
-                      onEditingChanged: { model.setFilterParameterEditing($0) })
-            .frame(width: 220, height: 220)
-    }
-
-    private func rail(_ spec: DialRailSpec) -> some View {
-        FilterDialRail(title: spec.title, value: spec.binding, range: spec.range,
-                       gradient: spec.gradient, enabled: enabled,
+    private func rail(_ parameter: FilterParameter) -> some View {
+        FilterDialRail(title: FilterDialLayout.title(parameter), value: model.filterParameterBinding(parameter),
+                       range: parameter.range, enabled: enabled && (parameter != .strength || model.style != .original),
                        onEditingChanged: { model.setFilterParameterEditing($0) })
-            .frame(width: 44, height: 220)
+            .frame(width: 40)
+            .accessibilityIdentifier("filter.dial.rail." + parameter.rawValue)
     }
-
     private var padStyle: FilterDialPad.Style {
         switch tab { case .color: return .color; case .light: return .light; case .effects: return .texture }
     }
-    private var padXBinding: Binding<Double> {
-        switch tab { case .color: return model.filterParameterBinding(.temperature); case .light: return model.filterParameterBinding(.exposure); case .effects: return model.filterParameterBinding(.detail) }
-    }
-    private var padYBinding: Binding<Double> {
-        switch tab {
-        case .color:
-            return model.filterParameterBinding(.tint)
-        case .light:
-            // 上方柔、下方硬：界面纵轴是 -contrast。
-            return Binding(get: { -model.filterAdjustments[.contrast] },
-                           set: { model.filterAdjustments[.contrast] = -$0 })
-        case .effects:
-            // 底部干净、顶部颗粒；0 在轨底，与暗角/光晕的零位一致。
-            return model.filterParameterBinding(.grainSize)
-        }
-    }
-    private var padXRange: ClosedRange<Double> {
-        switch tab { case .color: return -100...100; case .light: return -5...5; case .effects: return -100...100 }
-    }
-    private var padYRange: ClosedRange<Double> {
-        switch tab { case .color: return -100...100; case .light: return -100...100; case .effects: return 0...100 }
-    }
     private var padXLabel: (String, String) {
-        switch tab { case .color: return ("冷", "暖"); case .light: return ("欠曝", "过曝"); case .effects: return ("柔", "锐") }
+        switch tab { case .color: return ("冷", "暖"); case .light: return ("欠曝", "过曝"); case .effects: return ("柔光弱", "柔光强") }
     }
     private var padYLabel: (String, String) {
-        switch tab { case .color: return ("绿", "洋红"); case .light: return ("柔", "硬"); case .effects: return ("颗粒", "干净") }
-    }
-    private var leftSpec: DialRailSpec {
-        switch tab {
-        case .color: return .init(title: "浓度", binding: model.filterParameterBinding(.strength), range: 0...100,
-                                  gradient: LinearGradient(colors: [Color(red: 0.96, green: 0.78, blue: 0.62), AppTheme.accent, Color(white: 0.28)], startPoint: .top, endPoint: .bottom))
-        case .light: return .init(title: "高光", binding: model.filterParameterBinding(.highlights), range: -100...100,
-                                  gradient: LinearGradient(colors: [Color(white: 0.96), Color(white: 0.72), Color(white: 0.34)], startPoint: .top, endPoint: .bottom))
-        case .effects: return .init(title: "暗角", binding: model.filterParameterBinding(.vignette), range: 0...100,
-                                    gradient: LinearGradient(colors: [Color(white: 0.88), Color(white: 0.48), Color(white: 0.12)], startPoint: .top, endPoint: .bottom))
-        }
-    }
-    private var rightSpec: DialRailSpec {
-        switch tab {
-        case .color: return .init(title: "饱和度", binding: model.filterParameterBinding(.saturation), range: -100...100,
-                                  gradient: LinearGradient(colors: [Color(white: 0.92), Color(red: 0.93, green: 0.56, blue: 0.62), Color(red: 0.65, green: 0.54, blue: 0.60)], startPoint: .top, endPoint: .bottom))
-        case .light: return .init(title: "阴影", binding: model.filterParameterBinding(.shadows), range: -100...100,
-                                  gradient: LinearGradient(colors: [Color(white: 0.30), Color(white: 0.56), Color(white: 0.94)], startPoint: .top, endPoint: .bottom))
-        case .effects: return .init(title: "光晕", binding: glowBinding, range: 0...100,
-                                    gradient: LinearGradient(colors: [Color(red: 0.94, green: 0.78, blue: 0.57), Color(red: 0.63, green: 0.54, blue: 0.48), Color(white: 0.28)], startPoint: .top, endPoint: .bottom))
-        }
-    }
-
-    private var glowBinding: Binding<Double> {
-        Binding(get: { max(model.filterAdjustments[.softness], model.filterAdjustments[.halation]) },
-                set: { value in
-                    model.filterAdjustments[.softness] = value
-                    model.filterAdjustments[.halation] = value
-                })
-    }
-    private var glowValue: Double { max(model.filterAdjustments[.softness], model.filterAdjustments[.halation]) }
-    private func valueText(_ value: Double) -> String { String(format: "%.0f", value) }
-    private func displayName(_ parameter: FilterParameter) -> String {
-        switch parameter {
-        case .exposure: return "曝光"
-        case .detail: return "细节"
-        case .grainSize: return "颗粒"
-        default: return parameter.title
-        }
-    }
-    private func readoutText(_ parameter: FilterParameter) -> String {
-        if parameter == .strength && model.style == .original { return "—" }
-        return model.filterParameterText(parameter)
+        switch tab { case .color: return ("洋红", "绿"); case .light: return ("高对比", "低对比"); case .effects: return ("光晕强", "光晕弱") }
     }
 }
 
-private struct DialRailSpec {
-    let title: String
-    let binding: Binding<Double>
-    let range: ClosedRange<Double>
-    let gradient: LinearGradient
+/// 轨道与盘面使用相同的触点内缩，避免端点处手柄显示与实际参数位置不一致。
+enum FilterDialGeometry {
+    static let inset: CGFloat = 13
+    static func fraction(_ value: Double, in range: ClosedRange<Double>) -> Double {
+        guard range.upperBound > range.lowerBound else { return 0.5 }
+        return (min(max(value, range.lowerBound), range.upperBound) - range.lowerBound) / (range.upperBound - range.lowerBound)
+    }
+    static func value(at location: CGFloat, length: CGFloat, in range: ClosedRange<Double>) -> Double {
+        let f = min(max(Double((location - inset) / max(1, length - 2 * inset)), 0), 1)
+        return range.lowerBound + f * (range.upperBound - range.lowerBound)
+    }
 }
 
 private struct FilterDialRail: View {
     let title: String
     @Binding var value: Double
     let range: ClosedRange<Double>
-    let gradient: LinearGradient
     let enabled: Bool
     let onEditingChanged: (Bool) -> Void
     @State private var editing = false
-
-    private var fraction: Double {
-        guard range.upperBound > range.lowerBound else { return 0.5 }
-        return (min(max(value, range.lowerBound), range.upperBound) - range.lowerBound) / (range.upperBound - range.lowerBound)
-    }
     var body: some View {
-        GeometryReader { proxy in
-            let h = proxy.size.height
-            let topInset: CGFloat = 27
-            let bottomInset: CGFloat = 25
-            let usable = max(1, h - topInset - bottomInset)
-            ZStack {
-                RoundedRectangle(cornerRadius: 21, style: .continuous).fill(.white.opacity(0.055))
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(gradient).frame(width: 16)
-                    .padding(.top, topInset).padding(.bottom, bottomInset)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.white.opacity(0.15), lineWidth: 0.5).padding(.top, topInset).padding(.bottom, bottomInset))
-                Text(title).font(.system(size: 8, weight: .medium)).foregroundStyle(.white.opacity(0.62))
-                    .position(x: proxy.size.width/2, y: 13)
-                Text(valueText).font(.system(size: 8, weight: .medium, design: .monospaced)).monospacedDigit()
-                    .foregroundStyle(.white.opacity(0.72)).position(x: proxy.size.width/2, y: h - 12)
-                Circle().fill(.white).frame(width: 25, height: 25)
-                    .overlay(Circle().stroke(AppTheme.accent.opacity(0.85), lineWidth: 2))
-                    .shadow(color: .black.opacity(0.35), radius: 4, y: 2)
-                    .position(x: proxy.size.width/2, y: topInset + usable * (1 - fraction))
+        VStack(spacing: 4) {
+            Text(title).font(.system(size: 9)).foregroundStyle(.white.opacity(0.65))
+                .lineLimit(1).minimumScaleFactor(0.8)
+            GeometryReader { proxy in
+                let h = proxy.size.height
+                ZStack {
+                    Capsule().fill(LinearGradient(colors: [.white.opacity(0.65), .white.opacity(0.12)], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 12).padding(.vertical, FilterDialGeometry.inset)
+                    Circle().fill(.white).frame(width: 21, height: 21)
+                        .overlay(Circle().stroke(AppTheme.accent.opacity(0.8), lineWidth: 1.5))
+                        .position(x: proxy.size.width/2, y: FilterDialGeometry.inset + (h - 2 * FilterDialGeometry.inset) * (1 - FilterDialGeometry.fraction(value, in: range)))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .gesture(DragGesture(minimumDistance: 0).onChanged { g in
+                    guard enabled else { return }
+                    if !editing { editing = true; onEditingChanged(true) }
+                    value = FilterDialGeometry.value(at: h - g.location.y, length: h, in: range)
+                }.onEnded { _ in editing = false; onEditingChanged(false) })
             }
-            .contentShape(RoundedRectangle(cornerRadius: 21))
-            .gesture(DragGesture(minimumDistance: 0).onChanged { g in
-                guard enabled else { return }
-                if !editing { editing = true; onEditingChanged(true) }
-                let y = min(max(g.location.y, topInset), topInset + usable)
-                let f = 1 - Double((y - topInset) / usable)
-                value = range.lowerBound + f * (range.upperBound - range.lowerBound)
-            }.onEnded { _ in
-                guard enabled else { return }
-                editing = false; onEditingChanged(false)
-            })
-            .opacity(enabled ? 1 : 0.36)
-            .allowsHitTesting(enabled)
+            Text(String(format: "%.0f", value)).font(.system(size: 10, design: .monospaced)).monospacedDigit()
+                .foregroundStyle(.white.opacity(0.75))
         }
+        .allowsHitTesting(enabled)
         .accessibilityElement().accessibilityLabel(title)
-        .accessibilityValue(valueText)
+        .accessibilityValue(String(format: "%.0f", value))
         .accessibilityAdjustableAction { direction in
             guard enabled else { return }
             let step = (range.upperBound - range.lowerBound) / 100
             value = min(max(value + (direction == .increment ? step : -step), range.lowerBound), range.upperBound)
         }
+        .onDisappear { if editing { onEditingChanged(false) } }
     }
-    private var valueText: String { String(format: "%.0f", value) }
 }
 
 private struct FilterDialPad: View {
     enum Style { case color, light, texture }
     let style: Style
-    @Binding var x: Double
-    @Binding var y: Double
-    let xRange: ClosedRange<Double>
-    let yRange: ClosedRange<Double>
+    @Binding var point: CGPoint
+    let xParameter: FilterParameter
+    let yParameter: FilterParameter
+    private var xRange: ClosedRange<Double> { xParameter.range }
+    private var yRange: ClosedRange<Double> { yParameter.range }
     let xLabel: (String, String)
     let yLabel: (String, String)
     let enabled: Bool
     let onEditingChanged: (Bool) -> Void
     @State private var editing = false
 
-    private var nx: Double { fraction(x, in: xRange) }
-    private var ny: Double { fraction(y, in: yRange) }
+    private var nx: Double { FilterDialGeometry.fraction(Double(point.x), in: xRange) }
+    private var ny: Double { FilterDialGeometry.fraction(Double(point.y), in: yRange) }
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
@@ -249,12 +228,13 @@ private struct FilterDialPad: View {
                     p.move(to: CGPoint(x: 10, y: size.height/2)); p.addLine(to: CGPoint(x: size.width-10, y: size.height/2))
                 }.stroke(.white.opacity(0.16), lineWidth: 1)
                 Circle().stroke(.white.opacity(0.66), lineWidth: 1).frame(width: 7, height: 7)
-                    .position(x: size.width/2, y: size.height/2)
+                    .position(x: 13 + CGFloat(FilterDialGeometry.fraction(0, in: xRange)) * (size.width - 26),
+                              y: 13 + (1 - CGFloat(FilterDialGeometry.fraction(0, in: yRange))) * (size.height - 26))
                 Circle().fill(.white).frame(width: 20, height: 20)
                     .overlay(Circle().stroke(AppTheme.accent, lineWidth: 2))
                     .shadow(color: .black.opacity(0.32), radius: 4, y: 2)
-                    .position(x: max(13, min(size.width-13, CGFloat(nx) * size.width)),
-                              y: max(13, min(size.height-13, (1 - CGFloat(ny)) * size.height)))
+                    .position(x: 13 + CGFloat(nx) * (size.width - 26),
+                              y: 13 + (1 - CGFloat(ny)) * (size.height - 26))
                 axisLabel(xLabel.0, alignment: .leading, size: size)
                 axisLabel(xLabel.1, alignment: .trailing, size: size)
                 axisLabel(yLabel.0, alignment: .top, size: size)
@@ -264,19 +244,23 @@ private struct FilterDialPad: View {
             .gesture(DragGesture(minimumDistance: 0).onChanged { g in
                 guard enabled else { return }
                 if !editing { editing = true; onEditingChanged(true) }
-                let px = min(max(g.location.x, 0), size.width)
-                let py = min(max(g.location.y, 0), size.height)
-                x = value(Double(px / size.width), in: xRange)
-                y = value(1 - Double(py / size.height), in: yRange)
+                // 两轴一次提交，避免每个触摸事件触发两次配方保存与渲染请求。
+                point = CGPoint(x: FilterDialGeometry.value(at: g.location.x, length: size.width, in: xRange),
+                                y: FilterDialGeometry.value(at: size.height - g.location.y, length: size.height, in: yRange))
             }.onEnded { _ in
-                guard enabled else { return }
                 editing = false; onEditingChanged(false)
             })
-            .opacity(enabled ? 1 : 0.4)
             .allowsHitTesting(enabled)
         }
-        .accessibilityElement().accessibilityLabel("二维调色盘")
-        .accessibilityValue("\(xLabel.0)\(Int(x))，\(yLabel.0)\(Int(y))")
+        .accessibilityRepresentation {
+            VStack {
+                Slider(value: Binding(get: { Double(point.x) }, set: { point = CGPoint(x: $0, y: point.y) }), in: xRange)
+                    .accessibilityLabel(FilterDialLayout.title(xParameter))
+                Slider(value: Binding(get: { Double(point.y) }, set: { point = CGPoint(x: point.x, y: $0) }), in: yRange)
+                    .accessibilityLabel(FilterDialLayout.title(yParameter))
+            }.disabled(!enabled)
+        }
+        .onDisappear { if editing { onEditingChanged(false) } }
     }
     private var dots: some View {
         Canvas { context, size in
@@ -312,13 +296,5 @@ private struct FilterDialPad: View {
             .shadow(color: .black.opacity(0.35), radius: 1, y: 1)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
             .padding(10)
-    }
-    private func fraction(_ value: Double, in range: ClosedRange<Double>) -> Double {
-        guard range.upperBound > range.lowerBound else { return 0.5 }
-        return (min(max(value, range.lowerBound), range.upperBound) - range.lowerBound) / (range.upperBound - range.lowerBound)
-    }
-    private func value(_ fraction: Double, in range: ClosedRange<Double>) -> Double {
-        let f = min(max(fraction, 0), 1)
-        return range.lowerBound + f * (range.upperBound - range.lowerBound)
     }
 }

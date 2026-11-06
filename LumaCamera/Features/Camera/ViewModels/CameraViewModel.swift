@@ -5223,6 +5223,21 @@ final class CameraViewModel: ObservableObject {
                     else { filterAdjustments[parameter] = value }
                 })
     }
+    /// 二维盘一次提交两项独立参数；沿用旧滑条的重置、格式与录制保护。
+    /// 不联动改写柔光/卤化，也不改变基础滤镜浓度的作用范围。
+    func filterParameterPairBinding(_ x: FilterParameter, _ y: FilterParameter) -> Binding<CGPoint> {
+        let revision = filterResetRevision, selectedStyle = style, selectedTab = filterEditorTab
+        return Binding(get: { [self] in CGPoint(x: filterAdjustments[x], y: filterAdjustments[y]) },
+                       set: { [self] point in
+            guard filterControlsEnabled, !camera.videoBusy, !filterResetVisible,
+                  revision == filterResetRevision, style == selectedStyle, filterEditorTab == selectedTab,
+                  x != .strength, y != .strength, point.x.isFinite, point.y.isFinite else { return }
+            var next = filterAdjustments
+            next[x] = Double(point.x); next[y] = Double(point.y)
+            guard next != filterAdjustments else { return }
+            filterAdjustments = next
+        })
+    }
     func updateLook() { camera.updateLook(effectiveCaptureLook, photoFormat: photoFormat); refreshFocusNavigatorPreference() }
     func refreshFocusNavigatorPreference() {
         camera.configureFocusNavigator(enabled: preferences.focusAssist, zoom: camera.currentZoom, ratio: ratio.portraitRatio,

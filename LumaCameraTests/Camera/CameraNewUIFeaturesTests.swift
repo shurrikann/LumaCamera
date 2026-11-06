@@ -194,3 +194,77 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         XCTAssertNotNil(model.captureButtonFramesForTesting["toolbar.live"])
     }
 }
+
+/// 调色盘参数与手势回归：不启动相机、不创建系统相册资产。
+@MainActor
+final class CompactFilterDialTests: XCTestCase {
+    func testAllParametersStayReachableWithoutChangingDefaultStyle() throws {
+        XCTAssertFalse(CapturePreferences().filterDialPad)
+        XCTAssertFalse(try JSONDecoder().decode(CapturePreferences.self, from: Data("{}".utf8)).filterDialPad)
+        for tab in FilterEditorTab.allCases {
+            let layout = FilterDialLayout.layout(for: tab)
+            XCTAssertEqual(Set(layout.parameters), Set(tab.parameters))
+            XCTAssertEqual(layout.parameters.count, Set(layout.parameters).count, "同页不能重复放置参数")
+        }
+        XCTAssertEqual(FilterDialLayout.layout(for: .effects).bottom, [.aberration, .grainSize, .grainSaturation])
+    }
+
+    func testPairCommitsOncePreservesIndependentValuesAndRejectsStaleGestures() throws {
+        let suite = "Luma.Dial." + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = FilterSettingsStore(defaults: defaults)
+        let model = AppDependencies.makeCameraModel(automaticallySave: false, filterSettings: store)
+        model.filterEditorTab = .effects
+        model.style = .leicaM9
+        model.intensity = 0.8
+        model.filterParameterBinding(.softness).wrappedValue = 20
+        model.filterParameterBinding(.halation).wrappedValue = 60
+        let pair = model.filterParameterPairBinding(.softness, .halation)
+        XCTAssertEqual(pair.wrappedValue, CGPoint(x: 20, y: 60))
+        var publications = 0
+        let token = model.$filterAdjustments.dropFirst().sink { _ in publications += 1 }
+        defer { token.cancel() }
+        var times: [Double] = []
+        for index in 0..<300 {
+            let start = CACurrentMediaTime()
+            pair.wrappedValue = CGPoint(x: index % 100, y: (index + 40) % 100)
+            times.append((CACurrentMediaTime() - start) * 1000)
+        }
+        XCTAssertEqual(publications, 300, "每次二维输入只发布一次配方")
+        XCTAssertEqual(model.intensity, 0.8, "调色盘参数不能反向改写基础滤镜浓度")
+        let recipe = model.filterAdjustments
+        pair.wrappedValue = CGPoint(x: CGFloat.nan, y: 10)
+        XCTAssertEqual(model.filterAdjustments, recipe)
+        model.preferences.filterDialPad = true
+        model.preferences.filterDialPad = false
+        XCTAssertEqual(model.filterAdjustments, recipe)
+        model.filterEditorTab = .light
+        pair.wrappedValue = CGPoint(x: 90, y: 90)
+        XCTAssertEqual(model.filterAdjustments, recipe, "切页后的旧手势不能污染配方")
+        model.filterEditorTab = .effects
+        let beforeReset = model.filterParameterPairBinding(.softness, .halation)
+        model.presentFilterReset()
+        beforeReset.wrappedValue = CGPoint(x: 80, y: 90)
+        XCTAssertEqual(model.filterAdjustments, recipe)
+        model.dismissFilterReset()
+        model.resetCurrentFilter()
+        beforeReset.wrappedValue = CGPoint(x: 80, y: 90)
+        XCTAssertTrue(model.filterAdjustments.isNeutral)
+        times.sort()
+        print("DIAL-PAIR samples=300 medianMs=\(times[150]) p95Ms=\(times[285]) publications=\(publications); binding submission only, not frame rate")
+    }
+
+    func testPadEndpointAndNeutralMappingsMatchVisibleHandle() {
+        for length: CGFloat in [80, 124, 180, 240] {
+            for parameter in FilterParameter.allCases {
+                let range = parameter.range
+                for value in [range.lowerBound, 0, range.upperBound] {
+                    let fraction = FilterDialGeometry.fraction(value, in: range)
+                    let coordinate = 13 + CGFloat(fraction) * (length - 26)
+                    XCTAssertEqual(FilterDialGeometry.value(at: coordinate, length: length, in: range), value, accuracy: 0.00001)
+                }
+            }
+        }
+    }
+}

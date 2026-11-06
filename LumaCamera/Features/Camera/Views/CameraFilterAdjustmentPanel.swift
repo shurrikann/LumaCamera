@@ -49,7 +49,7 @@ extension CameraView {
             }
         }
         .padding(.horizontal, 16).padding(.bottom, 10)
-        .frame(height: model.preferences.filterDialPad ? 448 : 334)
+        .frame(height: model.preferences.filterDialPad ? 374 : 334)
         .onDisappear { model.setFilterParameterEditing(false); model.dismissFilterReset(); model.flushFilterSettings() }
     }
 }
