@@ -1,3 +1,11 @@
+## HDR源增益保留与编码（2026-11-06，覆盖先SDR后猜测扩展的旧路径）
+
+`Imaging.filteredHDR`用最大RGB通道软肩生成参考白范围内的SDR基底（knee=0.8，target=1），再处理原有影调、滤镜及参数。`hdrRestoreSourceGain`以同一源图最大通道/基底最大通道的逐像素比例恢复高光；不再使用hdrExpand推测增益。最终SDR基底直接复用处理结果，不再二次压肩。照片参数和曝光采集路线不变。
+
+`PhotoEncoder`移除HDR主图额外0.7EV，通过`CIAreaMaximum`在扩展线性P3读取最大通道，`HDRToneMapping.measuredHeadroom`提供实际编码headroom（无效读数回退）。iOS26+在最终HDR图上设置该标记，然后通过官方`heifRepresentation`的`hdrImage`写SDR基底及HDR图。保留原有ISO/Apple增益图和EXIF封装；源图无扩展高光时系统可能不生成增益图，允许交付有效HEIF，不强制抬高曝光制造增益图。旧系统既有PQ回退保留，本轮未验证iOS18/低版本实机。
+
+官方依据：[HDR图像编辑/编码](https://developer.apple.com/videos/play/wwdc2024/10177/)、[headroom标记](https://developer.apple.com/documentation/coreimage/ciimage/settingcontentheadroom(_:))。软肩、增益传递与参数取值为本项目实现，不是苹果原生相机算法或官方保证；最大RGB值作为本项目编码标记的测量方法，也不等同于显示屏的亮度尼特。
+
 ## 裁剪入口面板清理（2026-11-06）
 
 `enterCrop()`先调用`closeEditorControls()`清理数值草稿及拖动状态，再记录裁剪快照并切工具。`finishCrop`仅恢复之前工具，不重新开启面板；裁剪取消仍恢复原构图配方。沿用既有局部淡入淡出。

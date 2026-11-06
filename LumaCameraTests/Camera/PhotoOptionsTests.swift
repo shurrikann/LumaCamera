@@ -8,6 +8,15 @@ final class PhotoOptionsTests: XCTestCase {
     private let context = CIContext()
     private var source: CIImage { CIImage(color: CIColor(red: 0.6, green: 0.3, blue: 0.2)).cropped(to: CGRect(x: 0, y: 0, width: 120, height: 160)) }
 
+    /// 测试高光使用浮点位图，避免CIColor默认SDR色域把输入截到1。
+    private func hdrSource(_ rgb: [Float] = [3, 3, 3]) -> CIImage {
+        let pixels = Array(repeating: rgb + [1], count: 120 * 160).flatMap { $0 }
+        let data = pixels.withUnsafeBufferPointer { Data(buffer: $0) }
+        return CIImage(bitmapData: data, bytesPerRow: 120 * 16,
+            size: CGSize(width: 120, height: 160), format: .RGBAf,
+            colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearDisplayP3))
+    }
+
     func testFlashCyclesThroughAllThreeStates() {
         XCTAssertEqual(CameraFlashMode.off.next, .on)
         XCTAssertEqual(CameraFlashMode.on.next, .auto)
@@ -222,13 +231,13 @@ final class PhotoOptionsTests: XCTestCase {
     }
 
     func testHDRHEIFWithFilterKeepsGainMap() throws {
-        let image = CIImage(color: CIColor(red: 1.4, green: 0.5, blue: 0.2)).cropped(to: CGRect(x: 0, y: 0, width: 120, height: 160))
+        let image = hdrSource([3, 1.5, 0.5])
         let look = CaptureLook(style: .leicaM9, intensity: 0.8)
         let photo = try PhotoEncoder.encode(source: image, raw: nil, look: look,
                                             options: PhotoOptions(format: .heif, hdr: true), context: context)
         let source = try XCTUnwrap(CGImageSourceCreateWithData(photo.resources[0].data as CFData, nil))
         XCTAssertNotNil(CGImageSourceCopyAuxiliaryDataInfoAtIndex(source, 0, kCGImageAuxiliaryDataTypeISOGainMap), "HDR成片必须带ISO增益图")
-        XCTAssertNotNil(CGImageSourceCopyAuxiliaryDataInfoAtIndex(source, 0, kCGImageAuxiliaryDataTypeHDRGainMap), "系统照片需要Apple HDRGainMap")
+        HDRImageAssertions.assertNativeISOGainMap(source)
         XCTAssertEqual((CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString:Any])?[kCGImagePropertyDepth] as? Int, 8)
     }
 
@@ -245,7 +254,7 @@ final class PhotoOptionsTests: XCTestCase {
         let photo = try PhotoEncoder.encode(source: source, raw: nil, look: CaptureLook(), options: PhotoOptions(format: .heif, hdr: true), context: context)
         let sourceFile = try XCTUnwrap(CGImageSourceCreateWithData(photo.resources[0].data as CFData, nil))
         XCTAssertNotNil(CGImageSourceCopyAuxiliaryDataInfoAtIndex(sourceFile, 0, kCGImageAuxiliaryDataTypeISOGainMap))
-        XCTAssertNotNil(CGImageSourceCopyAuxiliaryDataInfoAtIndex(sourceFile, 0, kCGImageAuxiliaryDataTypeHDRGainMap))
+        HDRImageAssertions.assertNativeISOGainMap(sourceFile)
         let sdrCG = try XCTUnwrap(CGImageSourceCreateImageAtIndex(sourceFile, 0, nil))
         let hdr = try XCTUnwrap(CIImage(data: photo.resources[0].data, options: [.expandToHDR:true]))
         print("HDR-SHOULDER headroom=\(hdr.contentHeadroom) sdr=\(sdrCG.width)x\(sdrCG.height) hdrExt=\(hdr.extent)")
@@ -265,25 +274,57 @@ final class PhotoOptionsTests: XCTestCase {
     }
 
     func testHEIFProHDRToneChangesHDRPixels() throws {
-        let source = CIImage(color: CIColor(red: 1.5, green: 1.5, blue: 1.5))
-            .cropped(to: CGRect(x: 0, y: 0, width: 120, height: 160))
+        // 同一扩展线性源图覆盖暗部、中间调、参考白和HDR高光；普通CIColor会截断>1。
+        let values: [Float] = [0.03, 0.18, 0.5, 0.9, 1.5, 3, 6]
+        let w = values.count * 16, h = 84
+        var pixels = [Float](repeating: 1, count: w * h * 4)
+        for y in 0..<h { for x in 0..<w {
+            let i = (y * w + x) * 4, v = values[x / 16]
+            pixels[i] = v; pixels[i+1] = v; pixels[i+2] = v
+        }}
         let cs = CGColorSpace(name: CGColorSpace.extendedLinearDisplayP3)!
-        func center(_ tone: PhotoTone) -> Float {
-            let look = CaptureLook(style: .original, intensity: 0, tone: tone)
-            let image = Imaging.filtered(source, look: look, hdr: true)
-            var p = [Float](repeating: 0, count: 4)
-            p.withUnsafeMutableBytes { context.render(image, toBitmap: $0.baseAddress!, rowBytes: 16,
-                bounds: CGRect(x: 60, y: 80, width: 1, height: 1), format: .RGBAf, colorSpace: cs) }
-            return p[0]
+        let data = pixels.withUnsafeBufferPointer { Data(buffer: $0) }
+        let source = CIImage(bitmapData: data, bytesPerRow: w * 16,
+            size: CGSize(width: w, height: h), format: .RGBAf, colorSpace: cs)
+        func samples(_ image: CIImage) -> [Float] {
+            values.indices.map { index in
+                var p = [Float](repeating: 0, count: 4)
+                p.withUnsafeMutableBytes { context.render(image, toBitmap: $0.baseAddress!, rowBytes: 16,
+                    bounds: CGRect(x: index * 16 + 8, y: h / 2, width: 1, height: 1), format: .RGBAf, colorSpace: cs) }
+                return p[0]
+            }
         }
-        let natural = center(.natural), contrast = center(.contrast)
-        XCTAssertGreaterThan(abs(natural - contrast), 0.02, "HDR图像处理必须实际写入Pro影调")
+        let natural = samples(Imaging.filtered(source, look: CaptureLook(), hdr: true))
+        for tone in PhotoTone.allCases {
+            let look = CaptureLook(style: .original, intensity: 0, landscape: true, tone: tone)
+            let beforeEncoding = samples(Imaging.filtered(source, look: look, hdr: true))
+            print("HDR-SAME-SOURCE tone=\(tone.rawValue) pixels=\(beforeEncoding)")
+            XCTAssertTrue(beforeEncoding.allSatisfy { $0.isFinite && $0 > 0 })
+            for i in 4..<values.count {
+                XCTAssertGreaterThan(beforeEncoding[i], natural[i] * 0.7, "影调不能把原有HDR高光压回SDR")
+            }
+            if tone == .contrast {
+                XCTAssertLessThan(beforeEncoding[1], natural[1] * 0.8, "保留高光不能抹掉高对比中间调风格")
+            }
+            for format in [PhotoFileFormat.heif, .heifPro] {
+                let began = CACurrentMediaTime()
+                let photo = try PhotoEncoder.encode(source: source, raw: nil, look: look,
+                    options: PhotoOptions(format: format, hdr: true), context: context)
+                let resource = try XCTUnwrap(photo.resources.first)
+                let decoded = try XCTUnwrap(CIImage(data: resource.data, options: [.expandToHDR: true]))
+                let output = samples(decoded)
+                for i in values.indices {
+                    XCTAssertEqual(output[i], beforeEncoding[i], accuracy: max(0.015, beforeEncoding[i] * 0.12),
+                        "\(format) \(tone) 编码不能改变原有曝光/高光")
+                }
+                print("HDR-ENCODE-ROUNDTRIP format=\(format) tone=\(tone) seconds=\(CACurrentMediaTime()-began) pixels=\(output) headroom=\(decoded.contentHeadroom)")
+            }
+        }
     }
 
     #if !targetEnvironment(simulator)
     func testHEIFProHDRToneWritesGainMapOnDevice() throws {
-        let source = CIImage(color: CIColor(red: 1.5, green: 1.5, blue: 1.5))
-            .cropped(to: CGRect(x: 0, y: 0, width: 120, height: 160))
+        let source = hdrSource()
         func encoded(_ tone: PhotoTone) throws -> Data {
             let look = CaptureLook(style: .original, intensity: 0, tone: tone)
             let photo = try PhotoEncoder.encode(source: source, raw: nil, look: look,
@@ -294,7 +335,7 @@ final class PhotoOptionsTests: XCTestCase {
             let data = try encoded(tone)
             let src = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData, nil))
             XCTAssertNotNil(CGImageSourceCopyAuxiliaryDataInfoAtIndex(src, 0, kCGImageAuxiliaryDataTypeISOGainMap), "\(tone) HDR必须带ISO增益图")
-            XCTAssertNotNil(CGImageSourceCopyAuxiliaryDataInfoAtIndex(src, 0, kCGImageAuxiliaryDataTypeHDRGainMap), "\(tone) HDR必须带Apple增益图")
+            HDRImageAssertions.assertNativeISOGainMap(src)
         }
     }
     #endif
@@ -306,6 +347,10 @@ final class PhotoOptionsTests: XCTestCase {
         let props = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(decoded, 0, nil) as? [CFString: Any])
         XCTAssertEqual(props[kCGImagePropertyDepth] as? Int, 8)
         XCTAssertFalse(HDRImageAssertions.hasGainMap(decoded), "HDR 关闭不能输出增益图")
+        let lowRange = try PhotoEncoder.encode(source: source, raw: nil, look: CaptureLook(),
+            options: PhotoOptions(format: .heif, hdr: true), context: context)
+        XCTAssertNotNil(CGImageSourceCreateWithData(lowRange.resources[0].data as CFData, nil),
+            "HDR开启但场景没有扩展高光时也必须交付有效HEIF")
     }
 
     func testLiveFilterColorsMatchSavedTIFFAcrossStylesAndTones() throws {
@@ -333,14 +378,13 @@ final class PhotoOptionsTests: XCTestCase {
     }
 
     func testHDRHEIFWritesGainMapWithSDRBase() throws {
-        let image = CIImage(color: CIColor(red: 1.5, green: 0.4, blue: 0.2)).cropped(to: CGRect(x: 0, y: 0, width: 120, height: 160))
+        let image = hdrSource([3, 1.5, 0.5])
         let photo = try PhotoEncoder.encode(source: image, raw: nil, look: CaptureLook(), options: PhotoOptions(format: .heifPro, hdr: true), context: context)
         let decoded = try XCTUnwrap(CGImageSourceCreateWithData(photo.resources[0].data as CFData, nil))
         let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(decoded, 0, nil) as? [CFString: Any])
         let isoGainMap = CGImageSourceCopyAuxiliaryDataInfoAtIndex(decoded, 0, kCGImageAuxiliaryDataTypeISOGainMap) != nil
-        let appleGainMap = CGImageSourceCopyAuxiliaryDataInfoAtIndex(decoded, 0, kCGImageAuxiliaryDataTypeHDRGainMap) != nil
         XCTAssertTrue(isoGainMap, "HDR HEIF 必须带 ISO 增益图")
-        XCTAssertTrue(appleGainMap, "系统照片需要 Apple HDRGainMap")
+        HDRImageAssertions.assertNativeISOGainMap(decoded)
         XCTAssertEqual(properties[kCGImagePropertyDepth] as? Int, 8, "增益图路径应以 SDR 基底作为主图")
     }
     func testMeanMeteringMeasuresEntireFrameInLinearLight() {

@@ -2,7 +2,7 @@ import CoreImage
 import UIKit
 
 enum Imaging {
-    private static let hdrExpandKernel = MetalImageKernels.color("hdrExpand")
+    private static let hdrRestoreKernel = MetalImageKernels.color("hdrRestoreSourceGain")
     private static let hdrBlendKernel = MetalImageKernels.color("filterStrength")
 
     struct FilteredHDR {
@@ -14,34 +14,22 @@ enum Imaging {
     /// 成片不再在预览结果上二次压软肩。
     static func filteredHDR(_ image: CIImage, look: CaptureLook) -> FilteredHDR? {
         guard look.requiresImageProcessing, #available(iOS 18.0, *),
-              let hdrExpandKernel, let hdrBlendKernel else { return nil }
-        let base = image.applyingFilter("CIToneMapHeadroom", parameters: [
-            "inputSourceHeadroom": Float(4.0),
-            "inputTargetHeadroom": Float(1.0)
-        ])
+              let hdrRestoreKernel, let hdrBlendKernel,
+              let shoulder = MetalImageKernels.color("hdrSoftShoulder"),
+              let base = shoulder.apply(extent: image.extent,
+                  arguments: [image, HDRToneMapping.knee, Float(1.0)]) else { return nil }
         let fullStyle = look.style.apply(to: base, intensity: 1)
         let sourceAdjusted = FilterAdjustmentRenderer.apply(look.adjustments,
             to: look.tone.apply(to: base, hdr: false), grainPhase: look.grainPhase)
         let filteredAdjusted = FilterAdjustmentRenderer.apply(look.adjustments,
             to: look.tone.apply(to: fullStyle, hdr: false), grainPhase: look.grainPhase)
-        guard let sourceHDR = hdrExpandKernel.apply(extent: base.extent, arguments: [sourceAdjusted, HDRToneMapping.previewMaxGain]),
-              let filteredHDR = hdrExpandKernel.apply(extent: base.extent, arguments: [filteredAdjusted, HDRToneMapping.previewMaxGain]),
-              let mixed = hdrBlendKernel.apply(extent: base.extent,
-                  arguments: [sourceHDR, filteredHDR, min(max(look.intensity, 0), 1)]) else { return nil }
-        var hdr = mixed.cropped(to: image.extent)
-        if #available(iOS 26.0, *) { hdr = hdr.settingContentHeadroom(HDRToneMapping.headroom) }
-        // 成片SDR基底从同一份HDR主图压一次软肩，预览也用这份HDR主图。
-        let sdr: CIImage
-        if let shoulder = MetalImageKernels.color("hdrSoftShoulder"),
-           let mapped = shoulder.apply(extent: hdr.extent,
-                                       arguments: [hdr, HDRToneMapping.knee, HDRToneMapping.headroom]) {
-            sdr = mapped.cropped(to: hdr.extent)
-        } else {
-            sdr = hdr.applyingFilter("CIToneMapHeadroom", parameters: [
-                "inputSourceHeadroom": HDRToneMapping.headroom,
-                "inputTargetHeadroom": Float(1.0)
-            ])
-        }
+        guard let mixed = hdrBlendKernel.apply(extent: base.extent,
+                  arguments: [sourceAdjusted, filteredAdjusted, min(max(look.intensity, 0), 1)]),
+              let restored = hdrRestoreKernel.apply(extent: image.extent,
+                  arguments: [image, base, mixed]) else { return nil }
+        // 影调只编辑SDR基底，恢复同一源图原有的逐像素HDR增益；不再凭亮度猜测高光。
+        let hdr = restored.cropped(to: image.extent)
+        let sdr = mixed.cropped(to: image.extent)
         return FilteredHDR(hdr: VirtualApertureRenderer.apply(hdr, fNumber: look.virtualAperture),
                            sdr: VirtualApertureRenderer.apply(sdr, fNumber: look.virtualAperture))
     }

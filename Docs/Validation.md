@@ -1,3 +1,56 @@
+# 2026-11-06 HDR增益图双份封装结构复核
+
+- 原生 iPhone 17 Pro HEIF 的 ISO 增益图与 Apple HDRGainMap：3000×4000、OneComponent8、BytesPerRow 3072，12,288,000 字节完全相同；两者 HDRToneMap 元数据也相同。此前“独立Apple像素重映射”假设不成立于该原生样张。
+- 原型用 `CGImageDestinationAddImageFromSource` 保留主图，再同时写ISO与Apple同一字典；输出双份可解码，主图像素不被二次有损编码。
+- PhotoEncoder已接入 `addingHDRGainMapAlias`，测试增加了ISO/Apple Data、DataDescription、XMP元数据一致性断言。
+- 真机已通过：`PhotoOptionsTests` 双份Data/DataDescription/语义元数据一致性、普通/Pro HDR文件、`HDRCaptureDiagnosticsTests` 实际拍摄。系统照片HDR识别、完整出片耗时/内存和观感仍未验收，不能把本专项记为完成。模拟器HDR HEIF编码限制不用于通过判断。
+- 早前“Apple必须是独立重映射/XMP”假设已被原生样张推翻；旧原型只保留为历史证据，不再作为接入依据。
+
+## 2026-11-06 HDR格式专项暂停交接（历史，后续已继续）
+
+用户要求记录后暂停。需求为保留ISO和Apple双份兼容，修正元数据和像素转换，不接受以ISO-only文件解码通过替代系统照片兼容性验收。
+
+- 工作区：PhotoEncoder暂时直接返回CoreImage原生ISO输出，错误Apple双写已移除；正确双份写入尚未接入。7项编码/同源像素/元数据测试及10张真实连续拍摄通过（17:31、17:32 xcresult），仅证明ISO中间态文件及流程，不证明系统照片稳定识别。未执行该中间态最终RunProject安装，手机上正常入口运行版本未重新验收。
+- 临时双份原型：/tmp/luma_dual_gain.swift，分离ISO/Apple元数据并对单通道增益值重映射。/tmp/luma_apple_only.swift用于独立验证，第一次Apple-only解码平均最大RGB约0.531，对照ISO约0.625，仍不一致；原型未接入主项目。
+- /tmp/luma_log709.swift、/tmp/luma_linear709.swift及/tmp/luma_apple_variants.txt为后续Rec.709候选实验；暂停前未完成结果审阅，不计为通过。用户原图副本在/tmp/FOTOR_20261106_171324.heic与/tmp/Luma-A0EC16D3-EFFA-477B-80DE-012D54D3DC68.HEIC，未改原文件。
+- 17:32真实10张中位1.341秒、最大1.521秒，任务清空/EXIF/原生ISO格式断言通过；这是ISO-only中间态的短时数据，不能代表待完成双份转换性能。
+- 后续顺序见Docs/TODO.md的HDR-GAIN-COMPAT-001。停止进一步修改与测试，不能把本专项写成已完成。
+
+## 2026-11-06 用户两张HEIF HDR对照（1713样片）
+
+- 只读检查FOTOR_20261106_171324.heic与Luma-A0EC16D3-EFFA-477B-80DE-012D54D3DC68.HEIC，原文件未改。系统HEIC解码在沙盒内最初返回无效零像素，改用获准的系统解码后得到有效像素及增益图；零值结果不作证据。临时副本与分析脚本在/tmp/luma_hdr_compare*，未修改生产代码。
+- 两张均DisplayP3/8bit SDR基底＋增益图。HDR展开headroom第一3.249、光屿5.262；全图最大RGB第一2.762、光屿4.029。峰值更高不能推出每个光源区域更亮。
+- 按画面归一化选取电脑屏幕大致相同区域（非精确配准）：最大RGB均值第一1.368、光屿1.055；P95第一1.890、光屿1.399。顶部灯区域P95第一2.591、光屿3.774。证据指向亮度分布差异，而非光屿所有高光都低。该数值为扩展线性P3相对值，不是显示屏实际尼特。
+- 曝光也不同：FOTOR自定义配方记录约1/100秒、ISO144.57、EV0（其标准EXIF部分数值被截整）；光屿标准EXIF为1/100秒、ISO100、ExposureBiasValue=-0.8201。不能把两张差异全部归为编码。
+- 第一张Apple增益图具有HDRGainMapVersion/HDRGainMapHeadroom专用元数据；光屿Apple辅助项却复制了ISO HDRToneMap元数据。当前PhotoEncoder.addAppleHDRGainMap直接将ISO辅助字典再以Apple类型写入，不是已验证的格式转换。需优先核对/去除这种混写，再用系统照片做显示适配验收；尚未确认这是本次视觉差异的唯一根因，不能仅依据增益图存在关闭问题。
+- 官方依据：[Apple Gain Map格式](https://developer.apple.com/documentation/appkit/applying-apple-hdr-effect-to-your-photos)、[HDR显示适配](https://developer.apple.com/documentation/colorsync/headroom-adaptive-gain-curve)。HDR编码规范不等于相机曝光、影调或每个区域的亮度必须相同。前面的10项定向通过仅代表所列文件/流程断言，不代表用户亮度反馈已经完整解决。
+
+## 2026-11-06 HDR亮度修正版（后续覆盖前面的未修复记录）
+
+### 修改与结果
+
+- iPhone17Pro / iOS27.2，Xcode正常签名；仅相关功能，未启动模拟器、未写入系统相册。6项HDR编码/像素、3项元数据/容器画幅/SDR影调、1项实际拍摄，共10个不同方法的最终定向检查通过。调试阶段的失败和修正见下方，不将早期失败记录改写为通过。
+- 同一112×84扩展线性P3浮点源图，7档[0.03,0.18,0.5,0.9,1.5,3,6] × 4影调 × HEIF/HEIF Pro共56个编码读回采样。源高光6：自然/高对比/明亮处理后6，电影5.215（约87%）；文件读回约5.841/5.841/5.841/5.081，与各自编码前像素误差约3%，在12%容差内。高对比中暗部仍低于自然，非简单全图提亮。
+- 原失败的普通HEIF肩部规则已通过：HDR/SDR中间调比1.000、近白1.026、高光3.000。去掉统一0.7EV后不再人为抬高中间调；HDR标记按输出实际峰值测量，不固定写4。
+- 普通HEIF及Pro自然/高对比/电影/明亮正反顺序共10张真实照片交付，EXIF快门/焦距存在且>0，每张结束时4项任务计数均为0，无相机错误。HDR展开后最大RGB：普通约4.14–4.17，Pro自然约6.00、高对比约6.02–6.08、电影约5.21–5.26、明亮约5.98–6.01。不是同一RAW的逐张比较，受测光/构图变化影响；不能据此量化相对旧版的实景亮度增幅。
+- HDR滤镜文件ISO/Apple增益图检查通过；没有真实扩展高光的低动态场景也能编码，不因缺少增益图而报错。HDR关闭无增益图、原有曝光元数据、容器/画幅及SDR影调回归通过。
+
+### 性能、稳定性与局限
+
+- 10张真实12MP序列：快门调用至回调中位1.616秒、最大1.694秒；8次112×84合成样本编码约0.12–0.15秒（仅小图编码开销，不能当作整幅出片速度）。未与旧版严格同场景计时，不宣称加速；没有新增预览动画或会话重建。
+- 覆盖重复拍摄、照片格式/影调往返和任务清空；此次未增加拍摄中取消/退后台压力回归，因为未修改采集/取消路线。未验证长期温升、全部镜头/画幅/HDR高动态联动及旧系统实机；系统照片的实际屏幕亮度/观感仍需用户复核，未将文件像素峰值当作屏幕尼特或主观效果验收。
+- 调试中新增同源测试最初用竖幅裁切后的图采样原横幅坐标，出现越界0值；已改为匹配4:3横幅。若干旧HDR测试使用默认SDR CIColor，输入>1被截断，之前靠额外曝光才有增益图；改为实际扩展线性浮点位图，另补低动态场景编码检查。保留真正的像素读回断言，没有仅删去失败断言。
+- 结果路径（共同目录 `/var/folders/wt/n9q7f5jd71jd8kz6vq7n_n7m0000gn/T/ActionArtifacts/default/RunSomeTests/`）：`Test-LumaCamera-2026.11.06_17-05-58-+0800.xcresult`（5项通过，余1项测试输入随后修正）；`Test-LumaCamera-2026.11.06_17-08-09-+0800.xcresult`（修正项+10张拍摄通过）；`Test-LumaCamera-2026.11.06_17-10-37-+0800.xcresult`（3项回归通过）。
+
+## 2026-11-06 HDR亮度反馈检查（尚未修复）
+
+用户反馈普通HEIF与HEIF Pro HDR在系统照片和应用详情均偏暗。最新Pro影调提交aeacba3使非自然影调进入先压SDR再扩展的filteredHDR路线；普通HEIF自然影调未由本提交改变。依据苹果[HDR编辑说明](https://developer.apple.com/videos/play/wwdc2024/10177/)，应同时核对图像像素和headroom，不能只检查增益图存在。
+
+- iPhone17Pro / iOS27.2，同一现场临时拍摄5张：普通HEIF自然、Pro自然/高对比/电影/明亮。扩展线性P3解码RGB通道最大值分别8.28、9.84、6.62、3.33、6.65；均超过SDR参考白1。Pro电影相对Pro自然峰值低约66%，但非同一RAW，受自动曝光和轻微构图变化影响，不能当作纯曲线损失的精确比值。解码headroom均约6.498，基础图8bit；不是完整HDR丢失。尚无旧版同RAW/同场景基线，普通HEIF变暗原因仍待确认。
+- 共用编码有HDR主图+0.7EV，SDR基底不变。既有肩部用例实际失败2个断言：中间调HDR/SDR比1.621（目标1±0.15），近白1.628（目标<1.25）；表明该规则与当前编码实现不一致。不能把统一抬中间调当作HDR增强修复。
+- 性能/稳定性：5次真实拍摄回调约0.99–1.65秒，全部交付；单场景短序列，无崩溃，未保存系统相册。非长期稳定性或热耗验证。现场诊断1项通过，仅表示交付与超SDR高光存在，不代表观感问题已解决。
+- 结果：`/var/folders/wt/n9q7f5jd71jd8kz6vq7n_n7m0000gn/T/ActionArtifacts/default/RunSomeTests/Test-LumaCamera-2026.11.06_16-55-17-+0800.xcresult`；肩部失败：`Test-LumaCamera-2026.11.06_16-52-22-+0800.xcresult`（同目录）。未修改生产亮度、影调和编码算法。
+
 # 2026-11-06 HEIF Pro HDR 保留 Pro 影调
 
 - `effectiveCaptureLook` HDR 分支仅对 HEIF Pro 保留 `tone`；滤镜、浓度、调整和虚拟光圈仍清空。

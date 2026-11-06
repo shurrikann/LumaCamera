@@ -1,3 +1,15 @@
+## HDR格式兼容：双份结构已接入（2026-11-06）
+
+原生 iPhone HEIF 实测 Apple HDRGainMap 与 ISO 增益图使用同一份数据、DataDescription 和 HDRToneMap 元数据。`PhotoEncoder` 已用 ImageIO 无损复制主图并同时写入两份同源辅助数据，不再做独立 Apple 像素重映射。真机双份结构与 HDR 拍摄用例通过；系统照片 HDR 识别和观感仍需验收。[验证](Docs/Validation.md)
+
+## 2026-11-06 HDR高光保留修正
+
+普通HEIF/HDR编码移除全图额外+0.7EV，以实际输出像素测量headroom；HEIF Pro影调改为编辑SDR基底后恢复同一源图的HDR增益，避免压SDR后重新猜测高光。HDR开启但场景没有扩展高光时仍交付有效HEIF。10项相关定向真机检查通过，含10张真实连续拍摄；观感仍待用户在系统照片复核，详见 Docs/Validation.md 最新记录。
+
+## 2026-11-06 HDR亮度检查
+
+普通HEIF和HEIF Pro现场对照确认文件仍有HDR高光；Pro影调高光及共用编码中间调规则发现差异，观感反馈尚未解决，未直接统一提亮。实测数据与限制见 Docs/Validation.md 最新记录。
+
 ## 2026-11-06 裁剪自动收起调节面板
 
 照片编辑进入裁剪时自动关闭滤镜/调节面板；完成或取消裁剪后保持收起，重新点击对应工具可展开，滤镜参数保留。新旧控件均适用。

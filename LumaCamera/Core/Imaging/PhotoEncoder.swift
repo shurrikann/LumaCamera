@@ -102,18 +102,20 @@ enum PhotoEncoder {
         return result
     }
 
-    /// 系统照片仍依赖 Apple HDRGainMap 才稳定显示 HDR；与 ISO 增益图同数据双写。
-    private static func addAppleHDRGainMap(to data: Data) -> Data? {
+
+    /// 原生 iPhone HEIF 的 Apple HDRGainMap 与 ISO 21496-1 增益图使用同一份
+    /// 像素、DataDescription 和 HDRToneMap 元数据。用 ImageIO 复制主图并同时写入
+    /// 两个 auxiliary type，不能重编码主图，也不能伪造独立 Apple 像素转换。
+    private static func addingHDRGainMapAlias(to data: Data) -> Data? {
+        // 低动态HDR可能没有ISO增益图；此时保留系统输出，不能为了补Apple项丢照片。
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-              let image = CGImageSourceCreateImageAtIndex(source, 0, nil),
-              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
-              let gain = CGImageSourceCopyAuxiliaryDataInfoAtIndex(source, 0, kCGImageAuxiliaryDataTypeISOGainMap) as? [CFString: Any]
-        else { return nil }
+              let iso = CGImageSourceCopyAuxiliaryDataInfoAtIndex(source, 0, kCGImageAuxiliaryDataTypeISOGainMap) as? [String: Any] else { return data }
         let output = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(output, "public.heic" as CFString, 1, nil) else { return nil }
-        CGImageDestinationAddImage(destination, image, properties as CFDictionary)
-        CGImageDestinationAddAuxiliaryDataInfo(destination, kCGImageAuxiliaryDataTypeISOGainMap, gain as CFDictionary)
-        CGImageDestinationAddAuxiliaryDataInfo(destination, kCGImageAuxiliaryDataTypeHDRGainMap, gain as CFDictionary)
+        // AddImageFromSource 保留主图像素和属性，不经过二次有损编码。
+        CGImageDestinationAddImageFromSource(destination, source, 0, nil)
+        CGImageDestinationAddAuxiliaryDataInfo(destination, kCGImageAuxiliaryDataTypeISOGainMap, iso as CFDictionary)
+        CGImageDestinationAddAuxiliaryDataInfo(destination, kCGImageAuxiliaryDataTypeHDRGainMap, iso as CFDictionary)
         guard CGImageDestinationFinalize(destination) else { return nil }
         return output as Data
     }
@@ -121,19 +123,17 @@ enum PhotoEncoder {
     private static func encodeImageData(_ image: CIImage, fileExtension: String, hdr: Bool,
                                         sdrBase: CIImage? = nil, context: CIContext) throws -> Data? {
         if hdr, fileExtension == "heic", #available(iOS 18.0, *) {
-            // 普通 HEIF 增益图的 AlternateHeadroom 实际写为 2.0；
-            // 把编码 headroom 和 SDR 肩部对齐到同一个 2.0，避免文件按4.0解释。
-            let headroom = HDRToneMapping.headroom
+            let headroom = HDRToneMapping.measuredHeadroom(image, context: context)
             let baseImage = if #available(iOS 26.0, *) {
                 image.settingContentHeadroom(headroom)
             } else { image }
-            // 只提升HDR主图；SDR基底保持原亮度，增益比才会真正增大。
-            let hdrImage = baseImage.applyingFilter("CIExposureAdjust", parameters: ["inputEV": 0.7])
+            // 原始HDR像素保持曝光；不能用统一+0.7EV制造中间调增益。
+            let hdrImage = baseImage
             let sdr: CIImage
             if let sdrBase {
                 sdr = sdrBase
             } else if let shoulder = MetalImageKernels.color("hdrSoftShoulder"),
-               let mapped = shoulder.apply(extent: image.extent, arguments: [baseImage, HDRToneMapping.knee, headroom]) {
+               let mapped = shoulder.apply(extent: image.extent, arguments: [baseImage, HDRToneMapping.knee, Float(1.0)]) {
                 sdr = mapped.cropped(to: image.extent)
             } else {
                 sdr = baseImage.applyingFilter("CIToneMapHeadroom", parameters: [
@@ -144,7 +144,9 @@ enum PhotoEncoder {
             if let data = context.heifRepresentation(of: sdr, format: .RGBA8,
                                                      colorSpace: CGColorSpace(name: CGColorSpace.displayP3)!,
                                                      options: [.hdrImage: hdrImage]) {
-                return try? addAppleHDRGainMap(to: data)
+                // 系统先写 ISO 21496-1；再用无损 ImageIO 复制主图，并写入同源的
+                // Apple HDRGainMap。两者共用同一份增益数据和 HDRToneMap 元数据。
+                return addingHDRGainMapAlias(to: data) ?? data
             }
         }
         let colorSpace = CGColorSpace(name: hdr ? CGColorSpace.itur_2100_PQ : CGColorSpace.sRGB)!

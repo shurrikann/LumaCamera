@@ -131,13 +131,25 @@ inline float hdrExpansionGain(float peak) {
 [[stitchable]] float4 hdrSoftShoulder(sample_t image, float knee, float targetHeadroom) {
     float4 c = unpremultiply(image);
     float3 rgb = max(c.rgb, 0.0);
-    float y = dot(rgb, float3(0.2126, 0.7152, 0.0722));
+    // 最大通道作为参考，避免彩色高光在SDR编码时单通道先被截断。
+    float y = max(rgb.r, max(rgb.g, rgb.b));
     if (y > knee && y > 0.0001) {
         float range = max(targetHeadroom - knee, 0.001);
         float mapped = knee + range * (1.0 - exp(-(y - knee) / range));
         rgb *= mapped / y;
     }
     return float4(rgb, c.a);
+}
+
+[[stitchable]] float4 hdrRestoreSourceGain(sample_t original, sample_t base, sample_t adjusted) {
+    float3 source = max(unpremultiply(original).rgb, 0.0);
+    float3 reference = max(unpremultiply(base).rgb, 0.0);
+    float sourcePeak = max(source.r, max(source.g, source.b));
+    float basePeak = max(reference.r, max(reference.g, reference.b));
+    float gain = basePeak > 0.0001 ? max(1.0, sourcePeak / basePeak) : 1.0;
+    float4 result = unpremultiply(adjusted);
+    result.rgb = max(result.rgb, 0.0) * gain;
+    return premultiply(result);
 }
 
 [[stitchable]] float4 filterStrength(sample_t original, sample_t filtered, float strength) {
