@@ -1382,11 +1382,10 @@ final class CameraViewModel: ObservableObject {
             && camera.frontPhotoAspectRatioSwitchAvailable && ratio != .square && photoFormat != .raw
         if hdr {
             // HDR与滤镜互斥：保留用户已选滤镜，仅本次拍摄临时使用原片。
-            // TODO(HDR+ProTone): 仅 HEIF Pro 保留已选 tone；滤镜仍清空。
-            // 实现时必须让影调走“SDR 基底 → tone → 恢复 HDR 高光”的路径，
-            // 不能等 HDR 恢复后再套影调。标记位置等待调色盘同步后处理。
+            // HEIF Pro 的 Pro 影调独立于滤镜保留；影调在 HDR 的 SDR 基底上处理后再恢复高光。
             return CaptureLook(style: .original, intensity: 0, ratio: ratio,
-                               landscape: photoLandscape, border: border, tone: .natural,
+                               landscape: photoLandscape, border: border,
+                               tone: photoFormat == .heifPro ? tone : .natural,
                                adjustments: FilterAdjustments(), virtualAperture: nil,
                                nightPreviewAssist: false).forOutput(photoFormat)
         }

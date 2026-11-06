@@ -242,6 +242,25 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         XCTAssertEqual(FilmStyle.effectStrength(for: model.intensity), 0, accuracy: 0.0001)
     }
 
+    func testHEIFProHDRKeepsProToneButDisablesFilters() {
+        let model = AppDependencies.makeCameraModel(automaticallySave: false)
+        model.setCaptureKind(.photo)
+        model.photoFormat = .heifPro
+        model.style = .leicaM9
+        model.intensity = 0.8
+        model.filterAdjustments[.contrast] = 20
+        model.tone = .cinematic
+        model.hdr = true
+        let look = model.effectiveCaptureLook
+        XCTAssertEqual(look.tone, .cinematic, "HEIF Pro HDR应保留Pro影调")
+        XCTAssertEqual(look.style, .original, "HDR仍禁用滤镜")
+        XCTAssertEqual(look.intensity, 0)
+        XCTAssertTrue(look.adjustments.isNeutral)
+        XCTAssertTrue(look.requiresImageProcessing, "影调必须进入HDR图像处理路径")
+        model.photoFormat = .heif
+        XCTAssertEqual(model.effectiveCaptureLook.tone, .natural, "非HEIF Pro不保留影调")
+    }
+
     func testHDRSuppressesFilterTemporarilyAndRestoresIt() async throws {
         let model = try await FullDeviceRegressionFixture.makeIsolatedModel(), camera = model.camera
         model.setCameraActive(true)

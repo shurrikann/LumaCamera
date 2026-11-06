@@ -1,3 +1,13 @@
+## 裁剪入口面板清理（2026-11-06）
+
+`enterCrop()`先调用`closeEditorControls()`清理数值草稿及拖动状态，再记录裁剪快照并切工具。`finishCrop`仅恢复之前工具，不重新开启面板；裁剪取消仍恢复原构图配方。沿用既有局部淡入淡出。
+
+## 照片编辑共享控件（2026-11-06）
+
+通过 `FilterEditingControls` 协议复用 `FilterDialEditor`、`FilterAdjustmentTabs` 和 `FilterNumericInputDialog`。CameraViewModel 与 PhotoEditorViewModel 分别提供绑定；照片仍写本地 PhotoAdjustments、走既有预览和保存管线，不写拍照配方。照片进入编辑时读取全局调色盘偏好，默认旧版控件。分类还原推进代次；切工具、滤镜、分类、保存和取消清除数值草稿，旧手势不能覆盖新配方。
+
+PhotoEditorViewModel 独立管理 editorControlsVisible：当前工具再次点按或关闭图标收起，再点恢复；退出拖动时结束交互。新版滤镜选择160点、参数290点，旧版190点；收起为0。照片适配区域吸收高度变化，底部工具栏原位。局部切换使用既有减弱动态效果感知的淡入淡出，不改原图及编码算法。
+
 ## 底部横条与盘面端点对齐（2026-11-06）
 
 新版底部横条使用50点右对齐名称、6点间距、56点尾部空白，与盘面左右8＋40＋8点的占位一致。DEBUG几何采样记录实际中央盘面与横条的global frame，用例在支持宽度和比例下断言端点及宽度一致；这些调试几何不参与产品布局。旧版Slider保持原结构。
@@ -204,6 +214,8 @@ HDR 与高动态开关保持同一行；说明文字拆成下方两列，使用 
 - 详细状态与限制见[HDR-Macro-Status](HDR-Macro-Status.md)。
 
 ## 高动态显影与RAW编辑配方（2026-10-27）
+
+HEIF Pro 的 HDR 成片现在保留已选 Pro 影调：HDR 分支仅清空滤镜、浓度、调整和虚拟光圈，`requiresImageProcessing` 将非自然影调纳入，`filteredHDR` 先在 SDR 基底套影调，再恢复 HDR 高光；不得在 HDR 恢复后再套影调。高动态仍可与 HDR 同时开启，滤镜继续禁用。
 
 `PhotoOptions.adaptiveHighDynamic`仅在普通HEIF Pro下有效，与HDR独立，存档使用兼容旧版本的可选字段。格式切换、水印或照片合成子模块会关闭开关，不改写相机AE、M挡快门/ISO，也不增加应用包围曝光。相机预览沿用原路线，高动态在成片中计算。
 
