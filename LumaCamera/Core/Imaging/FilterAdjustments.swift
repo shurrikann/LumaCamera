@@ -6,7 +6,8 @@ enum FilterEditorTab: String, CaseIterable, Identifiable {
     var parameters: [FilterParameter] {
         switch self {
         case .color: return [.strength, .temperature, .tint, .saturation, .fade]
-        case .light: return [.exposure, .contrast, .highlights, .shadows]
+        // 原版编辑入口保留曝光与亮度的独立调节，沿用各自的渲染参数。
+        case .light: return [.exposure, .brightness, .contrast, .highlights, .shadows]
         case .effects: return [.detail, .aberration, .softness, .halation, .grainSize, .grainSaturation, .vignette]
         }
     }

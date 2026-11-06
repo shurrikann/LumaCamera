@@ -1,3 +1,9 @@
+# 2026-11-06 删除HEIF格式HDR说明行
+
+- 拍照顶部工具栏的分辨率/文件格式弹窗中，HEIF 不再显示“支持 HDR 实时预览……决定 HDR 是否可用”整行说明。
+- 其他格式说明与 HEIF Pro 单独说明保留；HDR 开关和能力判断逻辑未改。
+- 通用 iOS 构建通过；未做布局截图回归。
+
 # 2026-11-06 夜景新样张复核（用户提供）
 
 - 三张新 HEIC 均恢复相机参数：ISO 200/200/160，1/100s，f/1.78，6.765mm，LensModel、DateTimeOriginal、GPS、CompositeImage/SourceExposureTimes 均存在。

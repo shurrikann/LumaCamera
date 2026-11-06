@@ -50,9 +50,9 @@ final class FilterAdjustmentStateTests: XCTestCase {
         XCTAssertEqual(model.filters.styles, FilmStyle.availableStyles)
         XCTAssertEqual(model.filters.styles.count, 46)
         XCTAssertEqual(FilterEditorTab.allCases.map(\.rawValue), ["色彩", "明暗", "质感"])
-        // 亮度已并入曝光，不再出现在编辑参数表中；旧 key 仍保留用于历史配方渲染。
+        // 原版明暗页恢复亮度，所有现有参数都有编辑入口。
         XCTAssertEqual(Set(FilterEditorTab.allCases.flatMap(\.parameters)),
-                       Set(FilterParameter.allCases).subtracting([.brightness]))
+                       Set(FilterParameter.allCases))
         let names = model.shootingFeatures.map(\.title)
         XCTAssertEqual(names, ["视频", "照片"])
     }

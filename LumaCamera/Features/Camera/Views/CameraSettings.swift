@@ -121,7 +121,7 @@ private struct CameraSettingsPanel: View {
                 } header: { Text("拍摄设置") }
                 Section {
                     Toggle(isOn: $model.preferences.filterDialPad) {
-                        settingTitleWithInfo("调色盘", message: "开启后，滤镜参数的色彩/明暗/质感页使用调色盘与左右竖轨；关闭后保留原来的滑条样式。亮度并入曝光，旧配方仍按原值渲染。")
+                        settingTitleWithInfo("调色盘", message: "开启后，滤镜参数的色彩/明暗/质感页使用调色盘与左右竖轨；关闭后保留原来的滑条样式，可独立调节曝光与亮度。切换样式不会改变已有参数。")
                     }
                     .accessibilityIdentifier("settings.filterDialPad")
                     Toggle(isOn: $model.preferences.saveCaptureSettings) {
