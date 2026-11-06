@@ -238,7 +238,13 @@ final class NightPhotoMergerTests: XCTestCase {
 
     func testCompositeMetadataSurvivesActualJPEGHEIFTIFFAndSingleFrameFallback() throws {
         let sources = [0.0625,0.125,0.25].map { time in
-            fixture(seed:2).settingProperties([kCGImagePropertyExifDictionary as String:[kCGImagePropertyExifExposureTime as String:time]])
+            fixture(seed:2).settingProperties([kCGImagePropertyExifDictionary as String:[
+                kCGImagePropertyExifExposureTime as String:time,
+                kCGImagePropertyExifFNumber as String:1.78,
+                kCGImagePropertyExifFocalLength as String:6.765,
+                kCGImagePropertyExifISOSpeedRatings as String:[800],
+                kCGImagePropertyExifLensModel as String:"iPhone 17 Pro back camera 6.765mm f/1.78"
+            ]])
         }
         let merged = try NightPhotoMerger.merge(sources,context:context,maximumRegistrationDimension:320)
         XCTAssertEqual(merged.alignedFrameCount,3)
@@ -248,6 +254,10 @@ final class NightPhotoMergerTests: XCTestCase {
             let props = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source,0,nil) as? [String:Any])
             let exif = try XCTUnwrap(props[kCGImagePropertyExifDictionary as String] as? [String:Any])
             XCTAssertEqual((exif[kCGImagePropertyExifCompositeImage as String] as? NSNumber)?.intValue,2)
+            XCTAssertEqual((exif[kCGImagePropertyExifFNumber as String] as? NSNumber)?.doubleValue,1.78)
+            XCTAssertEqual((exif[kCGImagePropertyExifFocalLength as String] as? NSNumber)?.doubleValue,6.765)
+            XCTAssertEqual((exif[kCGImagePropertyExifISOSpeedRatings as String] as? [NSNumber])?.first?.intValue,800)
+            XCTAssertEqual(exif[kCGImagePropertyExifLensModel as String] as? String,"iPhone 17 Pro back camera 6.765mm f/1.78")
             if format != .tiff { // 当前ImageIO TIFF写入器不保留此SHORT[2]，曝光数组及CompositeImage仍核对。
                 XCTAssertEqual((exif[kCGImagePropertyExifSourceImageNumberOfCompositeImage as String] as? [NSNumber])?.map(\.intValue),[3,3])
             }
@@ -258,7 +268,7 @@ final class NightPhotoMergerTests: XCTestCase {
         let fallback = try NightPhotoMerger.merge([sources[1]],context:context)
         let exif = fallback.image.properties[kCGImagePropertyExifDictionary as String] as? [String:Any]
         XCTAssertNil(exif?[kCGImagePropertyExifCompositeImage as String])
-        let partial = NightCompositeMetadata.applying(to:sources[1],sources:sources,usedIndices:[1,2])
+        let partial = NightCompositeMetadata.applying(to:sources[1],sources:sources,usedIndices:[1,2],referenceIndex:1)
         let partialExif = try XCTUnwrap(partial.properties[kCGImagePropertyExifDictionary as String] as? [String:Any])
         XCTAssertEqual((partialExif[kCGImagePropertyExifSourceImageNumberOfCompositeImage as String] as? [Int]),[3,2])
     }

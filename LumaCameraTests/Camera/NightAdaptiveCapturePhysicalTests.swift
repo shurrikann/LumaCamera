@@ -1021,6 +1021,11 @@ final class NightAdaptiveCapturePhysicalTests: XCTestCase {
             let width = try XCTUnwrap(props[kCGImagePropertyPixelWidth as String] as? Int)
             let height = try XCTUnwrap(props[kCGImagePropertyPixelHeight as String] as? Int)
             print("INDEPENDENT-NIGHT-RESULT final=\(width)x\(height) zoom=\(camera.currentZoom) diagnostics=\(result.diagnostics?.rows.map(\.title) ?? [])")
+            let exif = props[kCGImagePropertyExifDictionary as String] as? [String: Any]
+            XCTAssertNotNil(exif?[kCGImagePropertyExifExposureTime as String], "独立夜景必须保留实际曝光时间")
+            XCTAssertNotNil(exif?[kCGImagePropertyExifISOSpeedRatings as String], "独立夜景必须保留实际ISO")
+            XCTAssertNotNil(exif?[kCGImagePropertyExifFocalLength as String], "独立夜景必须保留焦距")
+            XCTAssertNotNil(exif?[kCGImagePropertyExifCompositeImage as String], "独立夜景必须保留composite标记")
             XCTAssertGreaterThanOrEqual(width * height, 11_000_000, "48mm 独立夜景应保留至少约 6MP 真实像素")
             XCTAssertEqual(camera.currentZoom, 2, accuracy: 0.05)
             XCTAssertTrue(result.diagnostics?.rows.contains { $0.title == "夜景独立采集" } == true)

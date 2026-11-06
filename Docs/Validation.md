@@ -5,6 +5,7 @@
 - 移除“亮度优先影调”：删除设置开关、`PhotoOptions.nightBrightTone`、合并器/影调规划中的brightTone分支；保留自适应基础影调。
 - 独立夜景逐帧：`setExposureModeCustom` completion 后才 `capturePhoto`；settings/prepared priority 由 `.quality` 改为 `.speed`；每帧读取文件 EXIF 的 exposureTime/ISO，与计划超出容差则失败，不把错误曝光送进合成。
 - 普通夜景 `NightCapturePolicy.qualityPriority` 也改为 speed，避免质量优先改变帧时序。
+- 元数据：独立夜景解码帧不再丢弃 ImageIO 属性；`NightCompositeMetadata` 以参考帧 EXIF/TIFF 为底写 composite 统计，保留曝光、ISO、光圈、焦距和镜头信息。NightPhotoMergerTests 增加对应断言并通过。
 - `NightAdaptiveCapturePolicyTests` 与夜景设置页加载测试在模拟器通过（含新的 speed 规则）。
 - 真机测试：设备当前 Xcode 连接不可用，夜景M挡/A挡、独立触发、逐帧曝光、崩溃复现尚未执行；不能记为真机通过。
 

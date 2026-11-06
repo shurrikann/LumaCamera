@@ -7244,6 +7244,9 @@ final class CameraEngine: NSObject, ObservableObject {
                                       let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
                                 // CIImage(data:) 对 48MP HEIC 会取预览表示；必须解主图。
                                 var image = CIImage(cgImage: cgImage)
+                                // ImageIO属性不能丢：独立夜景最终EXIF/TIFF/镜头信息从这里继承。
+                                var frameProperties = properties
+                                frameProperties[kCGImagePropertyOrientation as String] = 1
                                 if let raw = properties[kCGImagePropertyOrientation as String] as? UInt32,
                                    let orientation = CGImagePropertyOrientation(rawValue: raw) {
                                     image = image.oriented(forExifOrientation: Int32(orientation.rawValue))
@@ -7264,7 +7267,7 @@ final class CameraEngine: NSObject, ObservableObject {
                                                                      y: extent.midY - height / 2,
                                                                      width: width, height: height))
                                 }
-                                return image
+                                return image.settingProperties(frameProperties)
                             }
                             guard images.count >= 2 else {
                                 self.completeCapture(context, photo: nil, message: "夜景独立采集帧不足。")

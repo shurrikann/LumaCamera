@@ -99,7 +99,7 @@ enum NightPhotoMerger {
         }
         let originalArea = max(1, reference.extent.width * reference.extent.height)
         let retainedArea = commonExtent.width * commonExtent.height
-        let output = NightCompositeMetadata.applying(to:composite.cropped(to:extent),sources:sources,usedIndices:acceptedIndices)
+        let output = NightCompositeMetadata.applying(to:composite.cropped(to:extent),sources:sources,usedIndices:acceptedIndices,referenceIndex:referenceIndex)
         return NightPhotoMergeResult(image: output, alignedFrameCount: cropped.count,
                                      croppedFraction: min(max(1 - retainedArea / originalArea, 0), 1),
                                      perspectiveAlignedFrameCount:perspectiveCount,rotationAlignedFrameCount:rotationCount,referenceCrop:commonExtent)
