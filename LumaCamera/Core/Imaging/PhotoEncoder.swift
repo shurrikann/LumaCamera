@@ -104,19 +104,22 @@ enum PhotoEncoder {
 
 
     /// 原生 iPhone HEIF 的 Apple HDRGainMap 与 ISO 21496-1 增益图使用同一份
-    /// 像素、DataDescription 和 HDRToneMap 元数据。用 ImageIO 复制主图并同时写入
-    /// 两个 auxiliary type，不能重编码主图，也不能伪造独立 Apple 像素转换。
+    /// 像素、DataDescription 和 HDRToneMap 元数据。用同一主图属性重新封装，
+    /// 同时写入两个 auxiliary type；不伪造独立 Apple 像素转换。
     private static func addingHDRGainMapAlias(to data: Data) -> Data? {
         // 低动态HDR可能没有ISO增益图；此时保留系统输出，不能为了补Apple项丢照片。
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let iso = CGImageSourceCopyAuxiliaryDataInfoAtIndex(source, 0, kCGImageAuxiliaryDataTypeISOGainMap) as? [String: Any] else { return data }
         let output = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(output, "public.heic" as CFString, 1, nil) else { return nil }
-        // AddImageFromSource 保留主图像素和属性，不经过二次有损编码。
-        CGImageDestinationAddImageFromSource(destination, source, 0, nil)
+        // ImageIO 的 AddImageFromSource + AddAuxiliaryDataInfo 会丢 HDRToneMap 的 XMP；
+        // 用同一主图属性重新封装，保留增益图所需的 AlternateHeadroom/GainMap 元数据。
+        CGImageDestinationAddImage(destination, image, properties as CFDictionary)
         CGImageDestinationAddAuxiliaryDataInfo(destination, kCGImageAuxiliaryDataTypeISOGainMap, iso as CFDictionary)
         CGImageDestinationAddAuxiliaryDataInfo(destination, kCGImageAuxiliaryDataTypeHDRGainMap, iso as CFDictionary)
-        guard CGImageDestinationFinalize(destination) else { return nil }
+        guard CGImageDestinationFinalize(destination) else { return data }
         return output as Data
     }
 
@@ -144,7 +147,7 @@ enum PhotoEncoder {
             if let data = context.heifRepresentation(of: sdr, format: .RGBA8,
                                                      colorSpace: CGColorSpace(name: CGColorSpace.displayP3)!,
                                                      options: [.hdrImage: hdrImage]) {
-                // 系统先写 ISO 21496-1；再用无损 ImageIO 复制主图，并写入同源的
+                // 系统先写 ISO 21496-1；再用同一主图属性重新封装，并写入同源的
                 // Apple HDRGainMap。两者共用同一份增益数据和 HDRToneMap 元数据。
                 return addingHDRGainMapAlias(to: data) ?? data
             }

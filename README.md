@@ -1,6 +1,6 @@
 ## HDR格式兼容：双份结构已接入（2026-11-06）
 
-原生 iPhone HEIF 实测 Apple HDRGainMap 与 ISO 增益图使用同一份数据、DataDescription 和 HDRToneMap 元数据。`PhotoEncoder` 已用 ImageIO 无损复制主图并同时写入两份同源辅助数据，不再做独立 Apple 像素重映射。真机双份结构与 HDR 拍摄用例通过；系统照片 HDR 识别和观感仍需验收。[验证](Docs/Validation.md)
+原生 iPhone HEIF 实测 Apple HDRGainMap 与 ISO 增益图使用同一份数据、DataDescription 和 HDRToneMap 元数据。`PhotoEncoder` 已用同一主图属性重新封装并同时写入两份同源辅助数据，保留 HDRToneMap 元数据；不再做独立 Apple 像素重映射。真机双份结构与 HDR 拍摄用例通过；系统照片 HDR 识别和观感仍需验收。[验证](Docs/Validation.md)
 
 ## 2026-11-06 HDR高光保留修正
 

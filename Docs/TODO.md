@@ -1,7 +1,7 @@
 # 2026-11-06 HDR格式兼容专项（按用户要求暂停）
 
 - [ ] HDR-GAIN-COMPAT-001：保留ISO＋Apple双份兼容需求。原生 iPhone HEIF 实测：Apple HDRGainMap 与 ISO 21496-1 增益图的 Data、DataDescription、HDRToneMap 元数据完全一致；正确方案是同源复制两份 auxiliary，不做独立像素重映射或 HDRGainMap XMP。
-- [x] PhotoEncoder 已实现 `addingHDRGainMapAlias`：ImageIO `AddImageFromSource` 保留主图，再写 ISO 与 Apple 两份同一增益字典，不二次编码主图。
+- [x] PhotoEncoder 已实现 `addingHDRGainMapAlias`：用同一主图属性重新封装 HEIF，并写 ISO 与 Apple 两份同一增益字典；保留 HDRToneMap 元数据（`AddImageFromSource` 路径会丢 XMP，已弃用）。
 - [x] 真机结构验证：ISO/Apple Data/DataDescription/语义元数据一致；普通 HEIF 与 HEIF Pro HDR 文件、实际 HDR 拍摄诊断通过。
 - [ ] 系统照片 HDR 识别、光屿详情各影调观感、EXIF/方向/尺寸仍需人工验收；不能仅凭结构测试关闭总项。
 - [ ] 性能与稳定性：双份出片耗时/内存、重复拍摄、格式往返、异常回退；17:32中位1.341秒/最大1.521秒是ISO-only中间态数据，不代表双份。

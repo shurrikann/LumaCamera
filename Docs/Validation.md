@@ -1,8 +1,8 @@
 # 2026-11-06 HDR增益图双份封装结构复核
 
 - 原生 iPhone 17 Pro HEIF 的 ISO 增益图与 Apple HDRGainMap：3000×4000、OneComponent8、BytesPerRow 3072，12,288,000 字节完全相同；两者 HDRToneMap 元数据也相同。此前“独立Apple像素重映射”假设不成立于该原生样张。
-- 原型用 `CGImageDestinationAddImageFromSource` 保留主图，再同时写ISO与Apple同一字典；输出双份可解码，主图像素不被二次有损编码。
-- PhotoEncoder已接入 `addingHDRGainMapAlias`，测试增加了ISO/Apple Data、DataDescription、XMP元数据一致性断言。
+- 原型验证：`CGImageDestinationAddImageFromSource` 会丢 HDRToneMap XMP；改用同一主图属性重新封装，再同时写 ISO/Apple 同一字典，双份和 AlternateHeadroom/GainMap 元数据均保留。
+- PhotoEncoder已接入 `addingHDRGainMapAlias`，测试增加了ISO/Apple Data、DataDescription、HDRToneMap语义一致性断言；真机双份结构用例通过。
 - 真机已通过：`PhotoOptionsTests` 双份Data/DataDescription/语义元数据一致性、普通/Pro HDR文件、`HDRCaptureDiagnosticsTests` 实际拍摄。系统照片HDR识别、完整出片耗时/内存和观感仍未验收，不能把本专项记为完成。模拟器HDR HEIF编码限制不用于通过判断。
 - 早前“Apple必须是独立重映射/XMP”假设已被原生样张推翻；旧原型只保留为历史证据，不再作为接入依据。
 
