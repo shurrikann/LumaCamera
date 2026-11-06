@@ -83,7 +83,7 @@ extension CameraView {
                     .captureControlGeometry("format.option." + format.rawValue, model: model)
                 }
             }
-            HStack(alignment: .top, spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
                 choicePill("HEIF Pro", selected: model.photoFormat == .heifPro, enabled: model.canSelectPhotoFormat(.heifPro)) {
                     model.photoFormat = .heifPro
                 }
