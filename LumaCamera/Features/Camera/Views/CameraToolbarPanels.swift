@@ -138,9 +138,6 @@ extension CameraView {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityIdentifier("camera.format.heifPro.explanation")
             }
-            if model.photoFormat != .heifPro, let formatExplanation {
-                Text(formatExplanation).font(.system(size: 11)).foregroundStyle(.white.opacity(0.6)).fixedSize(horizontal: false, vertical: true)
-            }
             HStack(spacing: 12) {
                 HStack(spacing: 6) {
                     let hdrDisabled = camera.hdrPreviewConfiguring || model.isPreparingSubmode || model.burstModeEnabled || model.nightModeEnabled || model.portraitModeEnabled || (model.photoFormat != .heifPro && model.photoFormat != .heif) || model.border || (model.photoFormat == .heif && !model.hdr && !camera.supportsHEIFHDR)
@@ -188,15 +185,6 @@ extension CameraView {
                 }
                 .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
             }
-        }
-    }
-    private var formatExplanation: String? {
-        switch model.photoFormat {
-        case .heifPro: return "通过 RAW 格式转换 HEIF，保留更多细节和降低锐化，并支持 Pro 影调。"
-        case .heif: return nil
-        case .raw: return "保留原始 DNG，禁用滤镜；影调、画幅和边框仅用于预览，DNG 保留完整传感器画面。"
-        case .rawJPEG: return "同时保存 DNG 和 JPG；滤镜应用于 JPG 及其预览，DNG 原始数据保持不变。"
-        default: return "滤镜、影调、画幅和边框直接写入所选格式。HEIF 和 JPG 为压缩格式，TIFF 为 16-bit 输出。"
         }
     }
     private var ratioOptions: some View {

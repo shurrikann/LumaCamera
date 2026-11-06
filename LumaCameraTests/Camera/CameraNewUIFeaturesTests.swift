@@ -310,6 +310,53 @@ final class CompactFilterDialTests: XCTestCase {
         print("DIAL-PAIR samples=300 medianMs=\(times[150]) p95Ms=\(times[285]) publications=\(publications); binding submission only, not frame rate")
     }
 
+    func testTextureRailsStayIndependentAndPanelSnapshotCost() async throws {
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        model.style = .leicaM9; model.preferences.filterDialPad = true
+        model.filterEditorTab = .effects
+        let parameters = FilterDialLayout.layout(for: .effects).vertical
+        var expected = model.filterAdjustments
+        var writes = 0
+        for index in 0..<140 {
+            let parameter = parameters[index % parameters.count]
+            let value = parameter.range.lowerBound + Double(index % 101) / 100 * (parameter.range.upperBound - parameter.range.lowerBound)
+            model.filterParameterBinding(parameter).wrappedValue = value
+            expected[parameter] = value
+            XCTAssertEqual(model.filterAdjustments, expected, "单轨调整不能改写相邻参数")
+            writes += 1
+        }
+        let recipe = model.filterAdjustments
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let controller = UIHostingController(rootView: CompactDialPanelHost(model: model, angle: 0))
+        let window = UIWindow(windowScene: scene)
+        window.frame = CGRect(x: 0, y: 0, width: 390, height: 760)
+        window.rootViewController = controller; window.isHidden = false
+        defer { window.isHidden = true; window.rootViewController = nil; model.closePopups() }
+        var times: [Double] = []
+        for tab in FilterEditorTab.allCases {
+            model.filterEditorTab = tab
+            try await Task.sleep(for: .milliseconds(100))
+            for _ in 0..<12 {
+                let start = CACurrentMediaTime()
+                window.layoutIfNeeded()
+                _ = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                    window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+                }
+                times.append((CACurrentMediaTime() - start) * 1000)
+            }
+        }
+        XCTAssertEqual(model.filterAdjustments, recipe)
+        model.filterEditorTab = .effects
+        let oldBindings = parameters.map { model.filterParameterBinding($0) }
+        model.presentFilterReset(); model.dismissFilterReset()
+        XCTAssertEqual(model.filterAdjustments, recipe)
+        model.resetCurrentFilter()
+        for binding in oldBindings { binding.wrappedValue = 95 }
+        XCTAssertTrue(model.filterAdjustments.isNeutral, "重置后七条旧手势均应失效")
+        times.sort()
+        print("TEXTURE-UI independentWrites=\(writes) snapshotSamples=\(times.count) medianMs=\(times[times.count/2]) p95Ms=\(times[Int(Double(times.count)*0.95)]); hosted snapshot cost only, not actual FPS")
+    }
+
     func testPadEndpointAndNeutralMappingsMatchVisibleHandle() {
         for length: CGFloat in [80, 124, 180, 240] {
             for parameter in FilterParameter.allCases {
