@@ -98,14 +98,25 @@ extension CameraView {
                     .accessibilityIdentifier("camera.format.proTone")
                     .captureControlGeometry("format.proTone", model: model)
                     Button {
-                        model.setAdaptiveHighDynamic(!model.adaptiveHighDynamic)
+                        let reduceMotion = UIAccessibility.isReduceMotionEnabled
+                        withAnimation(reduceMotion ? .linear(duration: 0.01) : .easeInOut(duration: 0.18)) {
+                            model.setAdaptiveHighDynamic(!model.adaptiveHighDynamic)
+                        }
                     } label: {
-                        Text("高动态")
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(model.adaptiveHighDynamic ? .black : .white.opacity(0.9))
-                            .padding(.horizontal, 7)
-                            .frame(height: 24)
-                            .background(model.adaptiveHighDynamic ? AppTheme.accent : Color.white.opacity(0.18), in: Capsule())
+                        ZStack {
+                            Capsule()
+                                .fill(model.adaptiveHighDynamic ? AppTheme.accent : Color.white.opacity(0.18))
+                            Text("高动态")
+                                .font(.system(size: 8, weight: .semibold))
+                                .foregroundStyle(model.adaptiveHighDynamic ? .black : .white.opacity(0.9))
+                                .offset(x: model.adaptiveHighDynamic ? max(0, formatColumnWidth / 2 - 19) : -max(0, formatColumnWidth / 2 - 19))
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 26, height: 26)
+                                .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
+                                .offset(x: model.adaptiveHighDynamic ? -max(0, formatColumnWidth / 2 - 16) : max(0, formatColumnWidth / 2 - 16))
+                        }
+                        .frame(width: formatColumnWidth, height: 32)
                     }
                     .buttonStyle(.plain)
                     .disabled(!model.adaptiveHighDynamicAvailable)
@@ -115,7 +126,6 @@ extension CameraView {
                     .accessibilityAddTraits(model.adaptiveHighDynamic ? .isSelected : [])
                     .accessibilityIdentifier("camera.format.adaptiveHighDynamic")
                     .captureControlGeometry("format.highDynamic", model: model)
-                    .fixedSize()
                 }
                 Text("通过 RAW 格式转换 HEIF，保留更多细节并降低锐化，支持 Pro 影调。")
                     .font(.system(size: 9))

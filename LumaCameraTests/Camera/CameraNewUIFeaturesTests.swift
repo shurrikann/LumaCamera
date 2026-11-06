@@ -95,7 +95,11 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         var samples = 0
         for width: CGFloat in [320, 390] {
             for angle in [0.0, 90.0] {
-                let (controller, window) = try host(model, width: width, angle: angle, scenePhase: .inactive)
+                let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+                let controller = UIHostingController(rootView: CompactDialPanelHost(model: model, angle: angle))
+                let window = UIWindow(windowScene: scene)
+                window.frame = CGRect(x: 0, y: 0, width: width, height: 760)
+                window.rootViewController = controller; window.isHidden = false
                 defer { window.isHidden = true; window.rootViewController = nil }
                 _ = controller.view
                 model.style = .leicaM9
@@ -314,5 +318,21 @@ final class CompactFilterDialTests: XCTestCase {
                 }
             }
         }
+    }
+}
+
+/// 独立承载真实参数弹窗，避免测试关闭相机会话时把待检查的弹窗也关闭。
+private struct CompactDialPanelHost: View {
+    @ObservedObject var model: CameraViewModel
+    let angle: Double
+    var body: some View {
+        VStack {
+            Spacer(minLength: 0)
+            CameraView(model: model).filterAdjustmentPanel
+                .environment(\.captureControlAngle, 0)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.popupFrameForTesting = $0 }
+        }
+        .environment(\.captureControlAngle, angle)
+        .background(Color.black)
     }
 }
