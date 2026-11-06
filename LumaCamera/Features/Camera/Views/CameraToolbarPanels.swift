@@ -81,12 +81,19 @@ extension CameraView {
                     .captureControlGeometry("format.option." + format.rawValue, model: model)
                 }
             }
-            // 与上方格式行共用五等分列宽，影调紧接 HEIF Pro；说明另起一行避免挤压按钮。
-            HStack(spacing: 8) {
+            HStack(alignment: .top, spacing: 8) {
                 choicePill("HEIF Pro", selected: model.photoFormat == .heifPro, enabled: model.canSelectPhotoFormat(.heifPro)) {
                     model.photoFormat = .heifPro
                 }
                 .captureControlGeometry("format.heifPro", model: model)
+                Text("通过 RAW 格式转换 HEIF，保留更多细节并降低锐化，支持 Pro 影调。")
+                    .font(.system(size: 9))
+                    .lineSpacing(1)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(1)
+                    .accessibilityIdentifier("camera.format.heifPro.explanation")
                 if model.photoFormat == .heifPro {
                     choicePill("Pro 影调", selected: false, enabled: !model.isPreparingSubmode) {
                         // choicePill 已提供触感和淡入淡出；格式浮层已完成其他弹窗收起。
@@ -94,18 +101,8 @@ extension CameraView {
                     }
                     .accessibilityIdentifier("camera.format.proTone")
                     .captureControlGeometry("format.proTone", model: model)
-                } else {
-                    // 未选 HEIF Pro 时不显示禁用态，只保留列宽占位。
-                    Color.clear.frame(maxWidth: .infinity).frame(height: 32).allowsHitTesting(false)
                 }
-                ForEach(0..<3) { _ in Color.clear.frame(maxWidth: .infinity).frame(height: 32).allowsHitTesting(false) }
             }
-            Text("通过 RAW 格式转换 HEIF，保留更多细节并降低锐化，支持 Pro 影调。")
-                .font(.system(size: 9))
-                .lineSpacing(1)
-                .foregroundStyle(.white.opacity(0.6))
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("camera.format.heifPro.explanation")
             if model.photoFormat != .heifPro, let formatExplanation {
                 Text(formatExplanation).font(.system(size: 11)).foregroundStyle(.white.opacity(0.6)).fixedSize(horizontal: false, vertical: true)
             }
