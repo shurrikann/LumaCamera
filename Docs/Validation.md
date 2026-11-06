@@ -2,7 +2,7 @@
 
 - HEIF Pro 说明从按钮下方整行移到 HEIF Pro 按钮后面，保留多行换行与9pt字号。
 - “Pro 影调”按钮仍在同一行；未选 HEIF Pro 时说明直接跟在按钮后。
-- HEIF Pro按钮固定82pt、Pro影调固定68pt，避免说明文字把按钮挤到0宽；说明明确`lineLimit(nil)`多行换行。
+- HEIF Pro与Pro影调按钮改用第一行五等分实测列宽（`(contentWidth-32)/5`），与HEIF按钮同宽；说明占剩余宽度并明确`lineLimit(nil)`多行换行。
 - 通用iOS构建通过；真机横向宽度/换行未截图验收。
 
 # 2026-11-06 HDR开关双行说明

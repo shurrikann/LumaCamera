@@ -12,7 +12,7 @@ extension CameraView {
         @ViewBuilder func content() -> some View {
             VStack(alignment: .leading, spacing: 24) {
                 switch model.toolbarPanel {
-                case .format: formatOptions
+                case .format: formatOptions(contentWidth: contentWidth)
                 case .ratio: ratioOptions
                 case .tone: toneOptions
                 case .videoFormat: videoFormatOptions(contentWidth: contentWidth)
@@ -60,8 +60,10 @@ extension CameraView {
         }
     }
 
-    private var formatOptions: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private func formatOptions(contentWidth: CGFloat) -> some View {
+        // 第一行五个格式按钮等分宽度；HEIF Pro 使用同一列宽，不能固定成更宽的按钮。
+        let formatColumnWidth = max(1, (contentWidth - 32) / 5)
+        return VStack(alignment: .leading, spacing: 12) {
             panelHeading("分辨率")
             HStack(spacing: 10) {
                 ForEach(PhotoResolution.allCases) { resolution in
@@ -85,7 +87,7 @@ extension CameraView {
                 choicePill("HEIF Pro", selected: model.photoFormat == .heifPro, enabled: model.canSelectPhotoFormat(.heifPro)) {
                     model.photoFormat = .heifPro
                 }
-                .frame(width: 82)
+                .frame(width: formatColumnWidth)
                 .captureControlGeometry("format.heifPro", model: model)
                 Text("通过 RAW 格式转换 HEIF，保留更多细节并降低锐化，支持 Pro 影调。")
                     .font(.system(size: 9))
@@ -101,7 +103,7 @@ extension CameraView {
                         // choicePill 已提供触感和淡入淡出；格式浮层已完成其他弹窗收起。
                         model.toolbarPanel = .tone
                     }
-                    .frame(width: 68)
+                    .frame(width: formatColumnWidth)
                     .accessibilityIdentifier("camera.format.proTone")
                     .captureControlGeometry("format.proTone", model: model)
                 }
