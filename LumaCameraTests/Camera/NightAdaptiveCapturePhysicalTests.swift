@@ -146,7 +146,12 @@ final class NightAdaptiveCapturePhysicalTests: XCTestCase {
             model.forceNightEnvironmentTriggeredForTesting(true)
             let on = await withCheckedContinuation { c in camera.independentNightModeActiveForTesting { c.resume(returning:$0) } }
             XCTAssertTrue(on, "夜景开启且环境触发后才进入独立夜景")
-            print("NIGHT-TRIGGER off=\(off) on=\(on)")
+            model.forceIndependentNightEnabled = true
+            model.forceNightEnvironmentTriggeredForTesting(false)
+            let forced = await withCheckedContinuation { c in camera.independentNightModeActiveForTesting { c.resume(returning:$0) } }
+            XCTAssertTrue(forced, "强制独立夜景开关应跳过环境触发")
+            model.forceIndependentNightEnabled = false
+            print("NIGHT-TRIGGER off=\(off) on=\(on) forced=\(forced)")
         }
     }
 

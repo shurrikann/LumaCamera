@@ -2676,6 +2676,13 @@ final class CameraViewModel: ObservableObject {
     @Published var nightHDRPhotoEnabled = UserDefaults.standard.bool(forKey: "camera.nightHDRPhoto") {
         didSet { UserDefaults.standard.set(nightHDRPhotoEnabled, forKey: "camera.nightHDRPhoto") }
     }
+    /// 实验用：跳过环境触发，开启夜景就进入独立夜景，便于逐项试拍。
+    @Published var forceIndependentNightEnabled = UserDefaults.standard.bool(forKey: "camera.forceIndependentNight") {
+        didSet {
+            UserDefaults.standard.set(forceIndependentNightEnabled, forKey: "camera.forceIndependentNight")
+            syncIndependentNightRoute()
+        }
+    }
     @Published private(set) var nightEnvironmentTriggered = false
     private var nightEnvironmentGate = NightCaptureEnvironmentGate()
 
@@ -2866,7 +2873,7 @@ final class CameraViewModel: ObservableObject {
     /// 独立夜景必须同时满足：用户开启夜景、环境已触发、照片模式且A挡。
     private func syncIndependentNightRoute() {
         camera.setIndependentNightModeActive(nightModeEnabled && captureKind == .photo
-            && mode == .auto && nightEnvironmentTriggered)
+            && mode == .auto && (nightEnvironmentTriggered || forceIndependentNightEnabled))
     }
 
     private func exitNightModeBecauseCaptureBecameUnavailable() {
