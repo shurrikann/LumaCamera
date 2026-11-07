@@ -6,7 +6,7 @@ import CoreImage
 
 final class PhotoEditorZoomTests: XCTestCase {
     #if targetEnvironment(simulator)
-    @MainActor func testPresentedEditorHasSquareCornersAndHintBesideFadeOutsidePhoto() async throws {
+    @MainActor func testPresentedEditorHasSquareCornersAndDialOutsidePhoto() async throws {
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let old = scene.windows.first(where: \.isKeyWindow), window = UIWindow(windowScene: scene)
         let session = PhotoEditSession(source: CIImage(image: DemoImageFactory.make())!) { _, _ in }
@@ -21,16 +21,12 @@ final class PhotoEditorZoomTests: XCTestCase {
         let sheet = try XCTUnwrap(presented.presentationController as? UISheetPresentationController)
         XCTAssertEqual(sheet.preferredCornerRadius, 0, "The system sheet must not cut the photo's upper corners")
         for tab in FilterEditorTab.allCases {
-            model.tool = .adjustments; model.filterTab = tab
-            for parameter in tab.parameters {
-                model.selectedParameter = parameter
-                try await Task.sleep(for: .milliseconds(60))
-                let hint = model.parameterHintFrameForTesting
-                XCTAssertEqual(hint.width, 44, accuracy: 0.5)
-                XCTAssertLessThanOrEqual(hint.maxX, window.bounds.width)
-                XCTAssertGreaterThanOrEqual(hint.minY, model.photoViewportFrameForTesting.maxY)
-                if tab == .color { XCTAssertGreaterThanOrEqual(hint.minX, model.fadeButtonFrameForTesting.maxX + 4) }
-            }
+            model.tool = .adjustments; model.filterEditorTab = tab
+            try await Task.sleep(for: .milliseconds(150))
+            let dial = model.filterDialPadFrameForTesting
+            XCTAssertGreaterThan(dial.height, 200)
+            XCTAssertLessThanOrEqual(dial.maxX, window.bounds.width)
+            XCTAssertGreaterThanOrEqual(dial.minY, model.photoViewportFrameForTesting.maxY)
             let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
             let shot = XCTAttachment(image: image); shot.name = "Presented-editor-" + tab.rawValue; shot.lifetime = .keepAlways; add(shot)
         }

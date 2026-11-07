@@ -127,7 +127,7 @@ final class CaptureControlRotationTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(350)); attach(window, name: "Manual-Popup-Landscape", heldAngle: 90)
         model.closePopups()
     }
-    @MainActor func testEditorHasVerticalRulerInBothLandscapeDirectionsAndCrop() async throws {
+    @MainActor func testPhotoEditorDialAndCropKeepPortraitLayoutInBothLandscapeDirections() async throws {
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let previous = scene.windows.first(where: \.isKeyWindow)
         let window = UIWindow(windowScene: scene)
@@ -142,15 +142,12 @@ final class CaptureControlRotationTests: XCTestCase {
             for _ in 0..<150 { if editor.preview != nil { break }; try await Task.sleep(for: .milliseconds(30)) }
             try await Task.sleep(for: .milliseconds(300))
             XCTAssertNotNil(editor.preview)
-            let rect = editor.editingRulerFrameForTesting
-            // The interface stays portrait. In the user's landscape view the
-            // portrait horizontal ruler is vertical, and its local x drag is up/down.
-            let heldRect = rect.applying(CGAffineTransform(rotationAngle: -angle * .pi / 180)).standardized
-            XCTAssertEqual(heldRect.width, 46, accuracy: 0.5)
-            XCTAssertGreaterThan(heldRect.height, 180)
+            let rect = editor.filterDialPadFrameForTesting
+            XCTAssertGreaterThan(rect.width, 250)
+            XCTAssertGreaterThan(rect.height, 200)
             XCTAssertTrue(window.bounds.contains(rect))
-            XCTAssertLessThanOrEqual(editor.photoViewportFrameForTesting.maxY, rect.minY, "Ruler stays outside the image and crop controls")
-            attach(window, name: "Editor-Vertical-\(angle)", heldAngle: angle)
+            XCTAssertLessThanOrEqual(editor.photoViewportFrameForTesting.maxY, rect.minY)
+            attach(window, name: "Editor-Dial-\(angle)", heldAngle: angle)
         }
         editor.enterCrop()
         try await Task.sleep(for: .milliseconds(300))

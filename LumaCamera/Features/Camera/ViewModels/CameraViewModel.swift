@@ -5245,9 +5245,12 @@ final class CameraViewModel: ObservableObject {
         if parameter == .strength && style == .original { return "—" }
         return parameter.text(filterParameterBinding(parameter).wrappedValue)
     }
-    /// 输入框只编辑草稿，确认时才经旧版受保护绑定提交，取消不会改写配方。
+    /// 拍照固定使用调色盘，录像取景延续升级前保存的编辑样式。
+    var usesFilterDialPad: Bool { captureKind == .photo || preferences.videoFilterDialPad }
+
+    /// 输入框只编辑草稿，确认时才经受保护的参数绑定提交，取消不会改写配方。
     func presentFilterNumericInput(_ parameter: FilterParameter) {
-        guard preferences.filterDialPad, filterControlsEnabled, !camera.videoBusy,
+        guard usesFilterDialPad, filterControlsEnabled, !camera.videoBusy,
               panel == .film, filters.showStrength, !(parameter == .strength && style == .original) else { return }
         setFilterParameterEditing(false)
         dismissFilterReset()

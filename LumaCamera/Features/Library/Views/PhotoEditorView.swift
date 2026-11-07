@@ -56,7 +56,7 @@ struct PhotoEditorView: View {
                 .animation(AppTheme.popupAnimation, value: model.saveOptionsVisible)
                 .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: model.tool == .crop)
                 .onChange(of: controlAngle) { _, _ in model.setParameterEditing(false) }
-                .task { model.reloadFilterEditingPreference(); model.renderPreview(); filters.prepareThumbnails() }.onDisappear { model.cancelPreview() }
+                .task { model.renderPreview(); filters.prepareThumbnails() }.onDisappear { model.cancelPreview() }
                 .interactiveDismissDisabled(model.saving)
                 .allowsHitTesting(!model.saving)
                 .alert("图片编辑", isPresented: Binding(get: { model.message != nil }, set: { if !$0 { model.message = nil } })) {
@@ -158,75 +158,19 @@ struct PhotoEditorView: View {
             }
         }.buttonStyle(.plain)
     }
-    @ViewBuilder private var adjustmentPanel: some View {
-        if model.filterDialPadEnabled {
-            VStack(spacing: 12) {
-                FilterAdjustmentTabs(model: model, onClose: { model.closeEditorControls() })
-                FilterDialEditor(model: model, tab: model.filterEditorTab)
-            }
-            .padding(.horizontal, 6)
-            .environment(\.captureControlAngle, 0)
-            .accessibilityIdentifier("photo.editor.sharedFilterControls")
-            #if DEBUG
-            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
-                model.captureButtonFramesForTesting["photo.editor.controls"] = $0
-            }
-            #endif
-        } else {
-            legacyAdjustmentPanel
-        }
-    }
-    private var legacyAdjustmentPanel: some View {
+    private var adjustmentPanel: some View {
         VStack(spacing: 12) {
-            HStack {
-                ForEach(FilterEditorTab.allCases) { tab in
-                    Button { model.setParameterEditing(false); model.filterTab = tab; model.selectedParameter = tab.parameters.first(where: { $0 != .strength }) ?? .temperature } label: {
-                        RoundTextControlLabel(title: tab.rawValue, highlighted: model.filterTab == tab, diameter: 44)
-                            .frame(maxWidth: .infinity)
-                            .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: model.filterTab)
-                    }
-                }
-                Button { model.closeEditorControls() } label: {
-                    Image(systemName: "xmark").font(.system(size: 14)).frame(width: 28, height: 32)
-                }.accessibilityLabel("收起滤镜参数")
-            }
-            HStack(spacing: 8) {
-                ScrollView(.horizontal) {
-                    HStack(spacing: 10) {
-                        ForEach(model.filterTab.parameters) { parameter in
-                            Button { model.setParameterEditing(false); model.selectedParameter = parameter } label: {
-                                Image(systemName: parameter.icon).rotatingCaptureContent().font(.system(size: 21)).frame(width: 48, height: 48)
-                                    .foregroundStyle(model.selectedParameter == parameter ? .black : .white)
-                                    .background(model.selectedParameter == parameter ? AppTheme.accent : .white.opacity(0.05), in: Circle())
-                            }.accessibilityLabel(parameter.title).accessibilityAddTraits(model.selectedParameter == parameter ? .isSelected : [])
-                                #if DEBUG
-                                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { if parameter == .fade { model.fadeButtonFrameForTesting = $0 } }
-                                #endif
-                        }
-                    }.padding(.horizontal, 4)
-                }.scrollIndicators(.hidden)
-                Text(RoundTextControlLabel.lines(model.selectedParameter.title))
-                    .font(.system(size: model.selectedParameter.title.count > 4 ? 10 : 12, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.8)).multilineTextAlignment(.center)
-                    .lineLimit(2).minimumScaleFactor(0.7).frame(width: 44, height: 44)
-                    .allowsHitTesting(false).accessibilityIdentifier("editor.parameterHint")
-                    #if DEBUG
-                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.parameterHintFrameForTesting = $0 }
-                    #endif
-            }
-            VStack(spacing: 4) {
-                Text(model.parameterText(model.selectedParameter)).rotatingCaptureContent().font(.system(size: 12, design: .monospaced)).foregroundStyle(AppTheme.accent)
-                CameraRuler(value: model.parameterBinding(model.selectedParameter), range: model.selectedParameter.range, tint: AppTheme.accent,
-                            temperature: model.selectedParameter == .temperature, tintAdjustment: model.selectedParameter == .tint)
-                    .id(landscape) // Reset an in-progress drag when the device changes orientation.
-                    #if DEBUG
-                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.editingRulerFrameForTesting = $0 }
-                    #endif
-                    .simultaneousGesture(DragGesture(minimumDistance: 0).onChanged { _ in model.setParameterEditing(true) }.onEnded { _ in model.setParameterEditing(false) })
-                    .disabled(model.style == .original && model.selectedParameter == .strength)
-                    .accessibilityLabel("照片滤镜" + model.selectedParameter.title)
-            }.padding(.horizontal, 10)
-        }.buttonStyle(.plain)
+            FilterAdjustmentTabs(model: model, onClose: { model.closeEditorControls() })
+            FilterDialEditor(model: model, tab: model.filterEditorTab)
+        }
+        .padding(.horizontal, 6)
+        .environment(\.captureControlAngle, 0)
+        .accessibilityIdentifier("photo.editor.sharedFilterControls")
+        #if DEBUG
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+            model.captureButtonFramesForTesting["photo.editor.controls"] = $0
+        }
+        #endif
     }
     private var cropHeader: some View {
         HStack(spacing: 22) {

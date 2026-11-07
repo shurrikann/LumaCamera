@@ -22,14 +22,16 @@ struct CapturePreferences: Codable, Equatable {
     var auxiliaryRecordingCapacity = false
     var auxiliaryAudioMeter = false
     var dockKitTrackingEnabled = false
-    var filterDialPad = false
+    /// 仅为升级前已选调色盘的用户保留录像取景中的编辑样式。
+    var videoFilterDialPad = false
 
     init() {}
     private enum CodingKeys: String, CodingKey {
         case focusLockMode, silentShutter, recordLocation, copyright, focusAssist, saveUnfilteredOriginal, saveCaptureSettings, lockVideoWhiteBalance, videoBitratePreset, videoStabilization
         case auxiliaryWatermark, auxiliaryTimerSeconds, auxiliaryGrid, auxiliaryHistogram, auxiliaryFocusPeaking, auxiliarySmoothPreview
         case auxiliaryLevel, auxiliaryPreviewQuarterTurns, auxiliaryRecordingCapacity, auxiliaryAudioMeter
-        case dockKitTrackingEnabled, filterDialPad
+        case dockKitTrackingEnabled
+        case videoFilterDialPad = "filterDialPad"
     }
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -54,7 +56,7 @@ struct CapturePreferences: Codable, Equatable {
         auxiliaryRecordingCapacity = try values.decodeIfPresent(Bool.self, forKey: .auxiliaryRecordingCapacity) ?? false
         auxiliaryAudioMeter = try values.decodeIfPresent(Bool.self, forKey: .auxiliaryAudioMeter) ?? false
         dockKitTrackingEnabled = try values.decodeIfPresent(Bool.self, forKey: .dockKitTrackingEnabled) ?? false
-        filterDialPad = try values.decodeIfPresent(Bool.self, forKey: .filterDialPad) ?? false
+        videoFilterDialPad = try values.decodeIfPresent(Bool.self, forKey: .videoFilterDialPad) ?? false
     }
 }
 final class CapturePreferencesStore {

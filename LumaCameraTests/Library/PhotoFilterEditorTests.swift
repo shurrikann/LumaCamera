@@ -23,9 +23,9 @@ final class PhotoFilterEditorTests: XCTestCase {
             for _ in 0..<150 { if model.preview != nil { break }; try await Task.sleep(for: .milliseconds(20)) }
             XCTAssertNotNil(model.preview)
             for tab in FilterEditorTab.allCases {
-                model.filterTab = tab
+                model.filterEditorTab = tab
                 try await Task.sleep(for: .milliseconds(100))
-                XCTAssertTrue(model.filterTab.parameters.contains(model.selectedParameter))
+                XCTAssertGreaterThan(model.filterDialPadFrameForTesting.height, 200)
                 for scroll in scrolls(window) { XCTAssertLessThanOrEqual(scroll.bounds.width, window.bounds.width + 1) }
                 let name = "Photo-Filter-" + ratio.rawValue.replacingOccurrences(of: ":", with: "-").replacingOccurrences(of: ".", with: "p") + "-" + String(describing: tab)
                 let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
@@ -44,19 +44,15 @@ final class PhotoFilterEditorTests: XCTestCase {
     }
     @MainActor private func scrolls(_ view: UIView) -> [UIScrollView] { (view as? UIScrollView).map { [$0] } ?? view.subviews.flatMap { scrolls($0) } }
     #endif
-    @MainActor func testSharedPhotoControlsRespectPreferenceAndKeepDraftAndResetLocal() throws {
+    @MainActor func testSharedPhotoControlsKeepDraftAndResetLocal() throws {
         let suite = "Photo.SharedControls." + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let preferences = CapturePreferencesStore(defaults: defaults)
         let library = PhotoLibraryViewModel(service: FilterEditLibraryStub())
         let session = PhotoEditSession(source: source) { _, _ in }
-        let model = PhotoEditorViewModel(session: session, library: library, preferencesStore: preferences)
+        let model = PhotoEditorViewModel(session: session, library: library)
         defer { model.cancelPreview() }
-        XCTAssertFalse(model.filterDialPadEnabled)
-        var settings = preferences.load(); settings.filterDialPad = true; preferences.save(settings)
-        model.reloadFilterEditingPreference()
-        XCTAssertTrue(model.filterDialPadEnabled)
         model.selectFilter(.leicaM9); model.tool = .adjustments
         model.filterEditorTab = .color
         let pair = model.filterParameterPairBinding(.temperature, .tint)
@@ -89,7 +85,7 @@ final class PhotoFilterEditorTests: XCTestCase {
         XCTAssertEqual(model.adjustments.filterAdjustments[.fade], 42.5)
         let camera = AppDependencies.makeCameraModel(automaticallySave: false,
             filterSettings: FilterSettingsStore(defaults: defaults), preferencesStore: preferences)
-        XCTAssertTrue(camera.filterDialPadEnabled)
+        XCTAssertTrue(camera.usesFilterDialPad)
         XCTAssertTrue(camera.filterAdjustments.isNeutral, "照片编辑不能改写拍摄配方")
         model.presentFilterNumericInput(.fade)
         model.tool = .filters
@@ -107,39 +103,25 @@ final class PhotoFilterEditorTests: XCTestCase {
             XCTAssertTrue(model.editorControlsVisible)
         }
         XCTAssertEqual(model.adjustments, beforeClose)
-        settings.filterDialPad = false; preferences.save(settings)
-        let edited = model.adjustments
-        model.reloadFilterEditingPreference()
-        XCTAssertFalse(model.filterDialPadEnabled)
-        XCTAssertEqual(model.adjustments, edited)
-        // 新旧控件都覆盖滤镜/调节进入裁剪，以及完成、取消和重复操作。
-        for enabled in [false, true] {
-            settings.filterDialPad = enabled; preferences.save(settings); model.reloadFilterEditingPreference()
-            for _ in 0..<10 {
-                for tool in [PhotoEditorTool.filters, .adjustments] {
-                    for commit in [false, true] {
-                        model.closeEditorControls(); model.toggleEditorControls(tool)
-                        let recipe = model.adjustments
-                        model.enterCrop()
-                        XCTAssertEqual(model.tool, .crop)
-                        XCTAssertFalse(model.editorControlsVisible)
-                        XCTAssertEqual(model.editorControlsHeight, 0)
-                        model.finishCrop(commit: commit)
-                        XCTAssertEqual(model.tool, tool)
-                        XCTAssertFalse(model.editorControlsVisible)
-                        XCTAssertEqual(model.adjustments, recipe)
-                    }
+        for _ in 0..<20 {
+            for tool in [PhotoEditorTool.filters, .adjustments] {
+                for commit in [false, true] {
+                    model.closeEditorControls(); model.toggleEditorControls(tool)
+                    let recipe = model.adjustments
+                    model.enterCrop()
+                    XCTAssertEqual(model.tool, .crop)
+                    XCTAssertFalse(model.editorControlsVisible)
+                    XCTAssertEqual(model.editorControlsHeight, 0)
+                    model.finishCrop(commit: commit)
+                    XCTAssertEqual(model.tool, tool)
+                    XCTAssertFalse(model.editorControlsVisible)
+                    XCTAssertEqual(model.adjustments, recipe)
                 }
             }
         }
     }
 
     @MainActor func testSharedPhotoEditorLayoutPreviewAndCostOnSupportedWidths() async throws {
-        let suite = "Photo.SharedLayout." + UUID().uuidString
-        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let preferences = CapturePreferencesStore(defaults: defaults)
-        var settings = preferences.load(); settings.filterDialPad = true; preferences.save(settings)
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let previous = scene.windows.first(where: \.isKeyWindow)
         let window = UIWindow(windowScene: scene)
@@ -157,7 +139,7 @@ final class PhotoFilterEditorTests: XCTestCase {
                 let input = source.transformed(by: CGAffineTransform(scaleX: 420/source.extent.width,
                     y: (420/ratio.portraitRatio)/source.extent.height))
                 let model = PhotoEditorViewModel(session: PhotoEditSession(source: input) { _, _ in },
-                                                library: library, preferencesStore: preferences)
+                                                library: library)
                 model.selectFilter(.leicaM9); model.tool = .adjustments
                 host.rootView = AnyView(PhotoEditorView(model: model).id(UUID()).environment(\.captureControlAngle, 0))
                 for _ in 0..<100 { if model.preview != nil { break }; try await Task.sleep(for: .milliseconds(20)) }

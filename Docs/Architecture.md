@@ -1,3 +1,7 @@
+## 2026-11-07 照片滤镜编辑统一使用调色盘
+
+拍照参数面板和照片详情编辑直接使用 `FilterDialEditor` 与共享分类标签。照片编辑不再从 `CapturePreferencesStore` 加载样式；滤镜和调节面板继续使用 160 点与 290 点，配方仍由各自的 ViewModel 保存。录像取景保留原样式分支，旧 `filterDialPad` 键仅作为 `videoFilterDialPad` 的兼容存档读取和保存。
+
 ## 2026-11-07 HEIF Pro 双图层影调显影
 
 纯 Pro 影调的 HDR 路径由 `Imaging.filteredHDR` 在同一显影源上生成两份结果。SDR 基底先压软肩再套 SDR 曲线，HDR 图层在扩展范围图像上直接套 HDR 曲线。Metal 根据线性亮度在 0.5 到 1.0 间逐渐收回亮度和饱和度调整，参考白及以上保留源色。曲线的五个节点使用感知亮度刻度。

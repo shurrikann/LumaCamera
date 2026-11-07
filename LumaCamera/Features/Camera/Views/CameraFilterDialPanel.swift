@@ -6,7 +6,6 @@ import UIKit
 protocol FilterEditingControls: ObservableObject {
     var style: FilmStyle { get }
     var filterEditorTab: FilterEditorTab { get set }
-    var filterDialPadEnabled: Bool { get }
     var filterDialControlsEnabled: Bool { get }
     var filterNumericParameter: FilterParameter? { get }
     var filterNumericDraft: String { get set }
@@ -27,11 +26,10 @@ protocol FilterEditingControls: ObservableObject {
 }
 
 extension CameraViewModel: FilterEditingControls {
-    var filterDialPadEnabled: Bool { preferences.filterDialPad }
     var filterDialControlsEnabled: Bool { filterControlsEnabled && !camera.videoBusy && !filterResetVisible }
 }
 
-/// 调色盘仅替换编辑控件；参数 key、渲染与旧版滑条共用，设置默认关闭。
+/// 调色盘只负责编辑控件布局，参数 key、配方与渲染保持独立。
 struct FilterDialLayout {
     let x: FilterParameter
     let y: FilterParameter

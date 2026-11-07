@@ -17,10 +17,11 @@ extension CameraView {
                     Image(systemName: "xmark").frame(width: 28, height: 32)
                 }.accessibilityLabel("收起滤镜参数")
             }.font(.system(size: 14)).foregroundStyle(.white.opacity(0.85))
-            FilterAdjustmentTabs(model: model)
-            if model.preferences.filterDialPad {
+            FilterAdjustmentTabs(model: model, animatesTabChanges: model.usesFilterDialPad)
+            if model.usesFilterDialPad {
                 FilterDialEditor(model: model, tab: model.filterEditorTab)
             } else {
+                // 录像取景延续原有滑条，拍照不会进入此分支。
                 ScrollView {
                     VStack(spacing: 10) {
                         ForEach(model.filterEditorTab.parameters) { parameter in
@@ -40,7 +41,7 @@ extension CameraView {
             }
         }
         .padding(.horizontal, 16).padding(.bottom, 10)
-        .frame(height: model.preferences.filterDialPad ? 348 : 334)
+        .frame(height: model.usesFilterDialPad ? 348 : 334)
         .onDisappear { model.setFilterParameterEditing(false); model.dismissFilterReset(); model.flushFilterSettings() }
     }
 }
@@ -48,14 +49,16 @@ extension CameraView {
 /// 两处入口共用分类选项卡和分类还原，保证按钮布局/动画一致。
 struct FilterAdjustmentTabs<Model: FilterEditingControls>: View {
     @ObservedObject var model: Model
+    var animatesTabChanges = true
     var onClose: (() -> Void)? = nil
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         HStack(spacing: 8) {
                 ForEach(FilterEditorTab.allCases) { tab in
                     Button {
                         model.setFilterParameterEditing(false)
-                        if model.filterDialPadEnabled {
-                            withAnimation(AppTheme.popupAnimation) { model.filterEditorTab = tab }
+                        if animatesTabChanges {
+                            withAnimation(reduceMotion ? .easeInOut(duration: 0.1) : AppTheme.popupAnimation) { model.filterEditorTab = tab }
                         } else { model.filterEditorTab = tab }
                     } label: {
                         Text(tab.rawValue).font(.system(size: 12, weight: .medium))

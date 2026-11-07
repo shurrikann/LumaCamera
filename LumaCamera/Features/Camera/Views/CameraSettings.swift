@@ -98,10 +98,6 @@ private struct CameraSettingsPanel: View {
                     Button("恢复自动参数") { model.setMode(.auto); model.resetParameters() }
                 } header: { Text("拍摄设置") }
                 Section {
-                    Toggle(isOn: $model.preferences.filterDialPad) {
-                        settingTitleWithInfo("调色盘", message: "默认关闭，使用原版滑条。开启后，色彩和明暗使用横向调色盘与左右竖轨，底部滑条调节补充参数；质感使用七条独立竖向滑条。浓度仅控制基础滤镜，其他参数独立生效，切换样式不会改变已有参数。")
-                    }
-                    .accessibilityIdentifier("settings.filterDialPad")
                     Toggle(isOn: $model.preferences.saveCaptureSettings) {
                         settingTitleWithInfo("保存拍摄设置", message: "开启后，下次启动恢复上次的模式、格式、参数、滤镜与焦段。关闭后，照片默认 JPG、4:3、A 挡、闪光灯与 Live 关闭；视频默认 1080p30、16:9、SDR、HEVC、A 挡，均不套滤镜。辅助开关独立保存。")
                     }

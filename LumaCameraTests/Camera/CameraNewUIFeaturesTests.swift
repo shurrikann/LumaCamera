@@ -43,21 +43,17 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         XCTAssertEqual(model.photoResolution, .standard, "M 48MP 切回 A 必须回退 12MP")
     }
 
-    func testFilterDialPadSettingSwitchesEditorLayout() async throws {
+    func testPhotoFilterEditorOpensWithDialPadByDefault() async throws {
         let model = try await FullDeviceRegressionFixture.makeIsolatedModel(), camera = model.camera
         model.setCameraActive(true)
-        defer { model.setCameraActive(false); model.preferences.filterDialPad = false; model.closePopups() }
+        defer { model.setCameraActive(false); model.closePopups() }
         for _ in 0..<300 { if camera.ready { break }; try await Task.sleep(for: .milliseconds(20)) }
         let (_, window) = try host(model)
         defer { window.isHidden = true; window.rootViewController = nil }
         model.style = .leicaM9
         model.panel = .film
         model.filters.showStrength = true
-        model.preferences.filterDialPad = false
-        try await Task.sleep(for: .milliseconds(500))
-        XCTAssertEqual(model.filterDialPadFrameForTesting, .zero, "设置关闭时必须走旧滑条布局")
-        model.preferences.filterDialPad = true
-        model.filters.showStrength = true
+        XCTAssertFalse(model.preferences.videoFilterDialPad)
         for _ in 0..<100 { if model.filterDialPadFrameForTesting.height > 200 { break }; try await Task.sleep(for: .milliseconds(30)) }
         let frame = model.filterDialPadFrameForTesting
         XCTAssertGreaterThan(frame.width, 250)
@@ -84,9 +80,17 @@ final class CameraNewUIFeaturesTests: XCTestCase {
             for tab in FilterEditorTab.allCases { model.filterEditorTab = tab; await Task.yield() }
         }
         XCTAssertEqual(model.filterAdjustments, recipe)
-        model.preferences.filterDialPad = false
+        model.closePopups()
         try await Task.sleep(for: .milliseconds(350))
-        XCTAssertEqual(model.filterDialPadFrameForTesting, .zero, "关闭设置后应恢复旧样式")
+        XCTAssertEqual(model.filterDialPadFrameForTesting, .zero)
+        model.panel = .film
+        model.filters.showStrength = true
+        for _ in 0..<100 {
+            if model.filterDialPadFrameForTesting.height > 200 { break }
+            try await Task.sleep(for: .milliseconds(30))
+        }
+        XCTAssertGreaterThan(model.filterDialPadFrameForTesting.height, 200)
+        XCTAssertEqual(model.filterAdjustments, recipe)
     }
 
     func testCompactDialFitsSupportedWidthsAndRotatedControlsForEveryPhotoRatio() async throws {
@@ -103,7 +107,6 @@ final class CameraNewUIFeaturesTests: XCTestCase {
                 defer { window.isHidden = true; window.rootViewController = nil }
                 _ = controller.view
                 model.style = .leicaM9
-                model.preferences.filterDialPad = true
                 model.panel = .film; model.filters.showStrength = true
                 try await Task.sleep(for: .milliseconds(250))
                 let height = model.popupFrameForTesting.height
@@ -149,7 +152,7 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         let (controller, window) = try host(model)
         window.makeKeyAndVisible()
         defer { window.isHidden = true; window.rootViewController = nil }
-        model.style = .leicaM9; model.preferences.filterDialPad = true
+        model.style = .leicaM9
         model.panel = .film; model.filters.showStrength = true
         model.filterEditorTab = .light
         try await Task.sleep(for: .milliseconds(300))
@@ -228,7 +231,6 @@ final class CameraNewUIFeaturesTests: XCTestCase {
     func testDialPadStrengthUsesUniformLinearStrength() {
         let model = AppDependencies.makeCameraModel(automaticallySave: false)
         model.setCaptureKind(.photo); model.photoFormat = .heif
-        model.preferences.filterDialPad = true
         model.style = .leicaM9
         let binding = model.filterParameterBinding(.strength)
         binding.wrappedValue = 80
@@ -322,9 +324,17 @@ final class CameraNewUIFeaturesTests: XCTestCase {
 /// 调色盘参数与手势回归：不启动相机、不创建系统相册资产。
 @MainActor
 final class CompactFilterDialTests: XCTestCase {
-    func testAllParametersStayReachableWithoutChangingDefaultStyle() throws {
-        XCTAssertFalse(CapturePreferences().filterDialPad)
-        XCTAssertFalse(try JSONDecoder().decode(CapturePreferences.self, from: Data("{}".utf8)).filterDialPad)
+    func testAllParametersStayReachableAndVideoRetainsSavedEditorStyle() throws {
+        let model = AppDependencies.makeCameraModel(automaticallySave: false)
+        XCTAssertFalse(CapturePreferences().videoFilterDialPad)
+        XCTAssertTrue(model.usesFilterDialPad)
+        model.setCaptureKind(.video)
+        XCTAssertFalse(model.usesFilterDialPad)
+        let legacyData = Data(#"{"filterDialPad":true}"#.utf8)
+        model.preferences = try JSONDecoder().decode(CapturePreferences.self, from: legacyData)
+        XCTAssertTrue(model.usesFilterDialPad)
+        model.setCaptureKind(.photo)
+        XCTAssertTrue(model.usesFilterDialPad)
         for tab in FilterEditorTab.allCases {
             let layout = FilterDialLayout.layout(for: tab)
             XCTAssertEqual(Set(layout.parameters), Set(tab.parameters))
@@ -362,8 +372,6 @@ final class CompactFilterDialTests: XCTestCase {
         let recipe = model.filterAdjustments
         pair.wrappedValue = CGPoint(x: CGFloat.nan, y: 10)
         XCTAssertEqual(model.filterAdjustments, recipe)
-        model.preferences.filterDialPad = true
-        model.preferences.filterDialPad = false
         XCTAssertEqual(model.filterAdjustments, recipe)
         model.filterEditorTab = .light
         pair.wrappedValue = CGPoint(x: 90, y: 90)
@@ -383,7 +391,7 @@ final class CompactFilterDialTests: XCTestCase {
 
     func testTextureRailsStayIndependentAndPanelSnapshotCost() async throws {
         let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
-        model.style = .leicaM9; model.preferences.filterDialPad = true
+        model.style = .leicaM9
         model.filterEditorTab = .effects
         let parameters = FilterDialLayout.layout(for: .effects).vertical
         var expected = model.filterAdjustments
@@ -445,7 +453,7 @@ final class CompactFilterDialTests: XCTestCase {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let model = AppDependencies.makeCameraModel(automaticallySave: false, filterSettings: FilterSettingsStore(defaults: defaults))
-        model.preferences.filterDialPad = true; model.style = .leicaM9
+        model.style = .leicaM9
         model.panel = .film; model.filters.showStrength = true
         let recipe = model.filterAdjustments
         let start = CACurrentMediaTime()
@@ -499,7 +507,6 @@ final class CompactFilterDialTests: XCTestCase {
         }
         model.filterEditorTab = .light
         model.filterParameterBinding(.brightness).wrappedValue = 12
-        model.preferences.filterDialPad = true
         model.panel = .film; model.filters.showStrength = true
         model.presentFilterNumericInput(.brightness); model.filterNumericDraft = "70"
         model.resetCurrentFilterTab(); model.confirmFilterNumericInput()
