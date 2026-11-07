@@ -53,16 +53,28 @@ final class IndependentNightCaptureTests: XCTestCase {
         for profile in IndependentNightProfile.allCases {
             XCTAssertFalse(profile.exposureOffsets.contains { $0 > 0 }, "夜景方案不能增加曝光")
             let night = IndependentNightCapture()
+            let started = CACurrentMediaTime()
             let result: IndependentNightCapture.Result = try await withCheckedThrowingContinuation { c in
                 night.capture(device: main.device, exposureSeconds: 0.125, iso: 200, profile: profile) { c.resume(with: $0) }
             }
+            let acquisitionSeconds = CACurrentMediaTime() - started
             XCTAssertEqual(result.frames.count, profile.exposureOffsets.count)
-            if let frame = result.frames.first,
-               let source = CGImageSourceCreateWithData(frame as CFData, nil),
-               let image = CGImageSourceCreateImageAtIndex(source, 0, nil) {
-                XCTAssertGreaterThanOrEqual(image.width * image.height, 40_000_000)
+            for (frame, offset) in zip(result.frames, profile.exposureOffsets) {
+                let source = try XCTUnwrap(CGImageSourceCreateWithData(frame as CFData, nil))
+                let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any])
+                let width = try XCTUnwrap(properties[kCGImagePropertyPixelWidth as String] as? Int)
+                let height = try XCTUnwrap(properties[kCGImagePropertyPixelHeight as String] as? Int)
+                // 48MP 交付另有专门用例。此处验证四套配方的实际源帧尺寸和曝光。
+                XCTAssertGreaterThanOrEqual(width * height, 12_000_000)
+                XCTAssertEqual(width, Int(result.dimensions.width))
+                XCTAssertEqual(height, Int(result.dimensions.height))
+                let exif = try XCTUnwrap(properties[kCGImagePropertyExifDictionary as String] as? [String: Any])
+                let duration = try XCTUnwrap(exif[kCGImagePropertyExifExposureTime as String] as? NSNumber).doubleValue
+                let iso = try XCTUnwrap((exif[kCGImagePropertyExifISOSpeedRatings as String] as? [NSNumber])?.first).doubleValue
+                XCTAssertEqual(duration, 0.125 * pow(2, offset), accuracy: 0.004)
+                XCTAssertEqual(iso, 200, accuracy: 6)
             }
-            print("INDEPENDENT-NIGHT-PROFILE name=\(profile.rawValue) frames=\(result.frames.count) dims=\(result.dimensions.width)x\(result.dimensions.height)")
+            print("INDEPENDENT-NIGHT-PROFILE name=\(profile.rawValue) frames=\(result.frames.count) dims=\(result.dimensions.width)x\(result.dimensions.height) acquisitionSeconds=\(acquisitionSeconds)")
         }
     }
     #endif

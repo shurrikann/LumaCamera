@@ -1462,7 +1462,6 @@ final class CameraViewModel: ObservableObject {
     }
 
     private func synchronizeHDRPreview() {
-        let heifPhoto = captureKind == .photo && photoFormat == .heif && !border
         // HDR只作用于成片；取景保持SDR。
         camera.setHEIFHDRPipeline(false)
         camera.setHEIFHDRPreview(false)
@@ -2687,14 +2686,9 @@ final class CameraViewModel: ObservableObject {
 
     @Published private(set) var nightModeEnabled = false
     @Published private(set) var nightCaptureRuntimeUnavailable = false
-    @Published var independentNightProfile: IndependentNightProfile = IndependentNightProfile(
-        rawValue: UserDefaults.standard.string(forKey: "camera.independentNightProfile") ?? ""
-    ) ?? .balanced {
-        didSet { UserDefaults.standard.set(independentNightProfile.rawValue, forKey: "camera.independentNightProfile") }
-    }
-    @Published var nightHDRPhotoEnabled = UserDefaults.standard.bool(forKey: "camera.nightHDRPhoto") {
-        didSet { UserDefaults.standard.set(nightHDRPhotoEnabled, forKey: "camera.nightHDRPhoto") }
-    }
+    /// 用户侧固定三帧；保留可变属性供内部诊断覆盖，不再读写旧实验设置。
+    @Published var independentNightProfile: IndependentNightProfile = .standard
+    @Published var nightHDRPhotoEnabled = false
     /// 实验用：跳过环境触发，开启夜景就进入独立夜景，便于逐项试拍；不持久化，重启自动关闭。
     @Published var forceIndependentNightEnabled = false {
         didSet { syncIndependentNightRoute() }

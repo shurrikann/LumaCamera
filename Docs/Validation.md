@@ -1,3 +1,9 @@
+# 2026-11-07 夜景固定三帧并移除实验设置
+
+- 设置页删除“实验：独立夜景”整段：多帧方案 Picker、强制独立夜景测试开关、夜景 HDR 成片开关及说明文字均不再存在。用户夜景固定走标准三帧、SDR。
+- `CameraViewModel` 不再读取旧 `camera.independentNightProfile` / `camera.nightHDRPhoto` 持久值；内部属性保留供测试覆盖，但默认分别为 `.standard` 和 `false`。
+- 模拟器验证：`NightExperimentSettingsUITests` 1 项通过，确认设置页不存在旧控件、`photoOptions` 为三帧 SDR；`NightAdaptiveCapturePolicyTests` 7 项通过。未涉及真机拍摄，未将本轮写成夜景画质已验收。
+
 ## 2026-11-07 全局测光读数独立显示
 
 - iPhone 17 Pro 真机托管用例通过。覆盖 64 组宽度、画幅和控件角度组合，以及快速切换直方图、系统测光和点测光与全局测光往返、HEIF 与 HEIF Pro 往返。全局测光生效时读数持续显示，其他测光方式隐藏读数。直方图关闭时，读数单独显示在预览左上角。

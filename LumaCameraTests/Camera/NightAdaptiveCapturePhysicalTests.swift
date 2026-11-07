@@ -490,20 +490,31 @@ final class NightAdaptiveCapturePhysicalTests: XCTestCase {
     @MainActor func testIndependentNightDisableDuringCaptureDoesNotFreeze() async throws {
         try await withCamera { model in
             let camera = model.camera
+            // 拦截成片回调，避免托管 App 在恢复预览后自动保存诊断照片。
+            var completionCount = 0
+            camera.onCaptureCompleted = { _ in completionCount += 1 }
+            let originalForce = model.forceIndependentNightEnabled
+            defer { model.forceIndependentNightEnabled = originalForce }
+            model.forceIndependentNightEnabled = true
             camera.nightAutomaticExposureForTesting = .init(seconds: 0.5, iso: 3200)
             model.toggleNightMode()
+            try await self.wait { model.nightModeEnabled && !model.isPreparingSubmode }
             await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
             camera.setContinuousZoom(2)
             await withCheckedContinuation { c in camera.flushRestoredZoom { c.resume() } }
             var options = PhotoOptions(format: .heif); options.nightMode = true; options.shootingType = "夜景"
+            let started = CACurrentMediaTime()
             camera.capture(flashMode: .off, options: options)
             try await Task.sleep(for: .milliseconds(500))
+            XCTAssertEqual(completionCount, 0, "需要在采集完成前退出夜景")
             model.toggleNightMode()
-            for _ in 0..<600 { if !camera.capturing && camera.pendingPhotoCount == 0 && camera.ready { break }; try await Task.sleep(for: .milliseconds(20)) }
+            try await self.wait { !camera.capturing && camera.pendingPhotoCount == 0 && camera.ready && completionCount > 0 }
+            XCTAssertFalse(model.nightModeEnabled)
+            XCTAssertEqual(completionCount, 1)
             XCTAssertFalse(camera.capturing, "关闭夜景后仍在采集")
             XCTAssertEqual(camera.pendingPhotoCount, 0, "关闭夜景后拍摄任务未释放")
             XCTAssertTrue(camera.ready, "关闭夜景后相机会话未恢复")
-            print("INDEPENDENT-NIGHT-CANCEL ready=\(camera.ready) pending=\(camera.pendingPhotoCount) capturing=\(camera.capturing) zoom=\(camera.currentZoom)")
+            print("INDEPENDENT-NIGHT-CANCEL ready=\(camera.ready) pending=\(camera.pendingPhotoCount) capturing=\(camera.capturing) zoom=\(camera.currentZoom) seconds=\(CACurrentMediaTime() - started)")
         }
     }
 
@@ -758,7 +769,6 @@ final class NightAdaptiveCapturePhysicalTests: XCTestCase {
 
     @MainActor func testSmartCaptureSwitchesBetweenPresets() async throws {
         try await withCamera { model in
-            let camera = model.camera
             model.toggleSmartCaptureMode()
             XCTAssertTrue(model.smartCaptureEnabled)
             model.togglePortraitMode()

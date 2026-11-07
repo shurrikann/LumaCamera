@@ -15,10 +15,10 @@ extension CameraView {
     }
 
     var viewfinder: some View {
-        viewfinderContent(controlAngle: controlAngle)
+        viewfinderContent(controlAngle: controlAngle, reducingMotion: reduceMotion)
     }
 
-    func viewfinderContent(controlAngle: Double) -> some View {
+    func viewfinderContent(controlAngle: Double, reducingMotion: Bool = UIAccessibility.isReduceMotionEnabled) -> some View {
         GeometryReader { geometry in
             let previewRect = CameraPreviewLayout.frame(in: geometry.size, ratio: model.ratio,
                                                          openGatePortraitRatio: camera.openGatePortraitRatio,
@@ -50,8 +50,8 @@ extension CameraView {
                         NightCaptureRevealView(state:reveal).id(reveal.id).transition(.opacity)
                     }
                 }.frame(width:width,height:height).allowsHitTesting(false)
-                    .animation(reduceMotion ? .easeInOut(duration:0.1) : .easeInOut(duration:0.2),value:camera.nightPreviewReveal?.id)
-                    .animation(reduceMotion ? .easeInOut(duration:0.1) : .easeInOut(duration:0.2),value:model.slowShutterAccumulationPreview?.id)
+                    .animation(reducingMotion ? .easeInOut(duration:0.1) : .easeInOut(duration:0.2),value:camera.nightPreviewReveal?.id)
+                    .animation(reducingMotion ? .easeInOut(duration:0.1) : .easeInOut(duration:0.2),value:model.slowShutterAccumulationPreview?.id)
                 if model.hdr, model.captureKind == .photo {
                     Text("HDR")
                         .font(.system(size: 10, weight: .bold))
@@ -250,14 +250,14 @@ extension CameraView {
                                 .transition(.opacity)
                         }
                     }
-                    .animation(reduceMotion ? .easeInOut(duration: 0.1) : AppTheme.popupAnimation, value: showsMeteringReadout)
+                    .animation(reducingMotion ? .easeInOut(duration: 0.1) : AppTheme.popupAnimation, value: showsMeteringReadout)
                     .padding(.leading, 5)
                     .padding(.top, max(5, hudTop))
                     .animation(AppTheme.popupAnimation, value: isRecording)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .allowsHitTesting(false)
                     .zIndex(5)
-                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: controlLandscape)
+                    .animation(reducingMotion ? nil : .easeInOut(duration: 0.22), value: controlLandscape)
                 }
                 if let point = model.focusPoint {
                     CameraFocusControls(model: model, camera: camera, point: point, size: CGSize(width: width, height: height), topInset: hudTop, bottomInset: max(0, previewTop + height - (geometry.size.height - CameraControlLayout.compositionBottom - 32)))

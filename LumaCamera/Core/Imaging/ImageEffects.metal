@@ -89,9 +89,12 @@ inline float hdrExpansionGain(float peak) {
 
 // Perceptual luminance curves with a linear HDR extension. Never clamp scene
 // highlights to 1; all colour channels keep their chromatic relationships.
-[[stitchable]] float4 proTone(coreimage::sample_t pixel, float4 points, float white, float saturation, coreimage::destination dest) {
+[[stitchable]] float4 proTone(coreimage::sample_t pixel, float4 points, float white, float saturation, float protectHighlights, coreimage::destination dest) {
     float4 c = unpremultiply(pixel);
     float lum = max(dot(c.rgb, float3(0.2126, 0.7152, 0.0722)), 0.0);
+    if (protectHighlights > 0.0 && lum >= 1.0) {
+        return pixel;
+    }
     float x = lum <= 0.0031308 ? lum * 12.92 : 1.055 * pow(lum, 1.0 / 2.4) - 0.055;
     float ys[5] = { points.x, points.y, points.z, points.w, white };
     float d[4];
@@ -113,6 +116,10 @@ inline float hdrExpansionGain(float peak) {
         float decodeSlope = white <= 0.04045 ? 1.0 / 12.92 : (2.4 / 1.055) * pow((white + 0.055) / 1.055, 1.4);
         mapped = linearWhite + (lum - 1.0) * d[3] * decodeSlope / 2.2748815;
     }
+    // 线性亮度接近参考白时平滑减弱影调，保留源图的高光亮度和色彩。
+    float highlightWeight = protectHighlights * smoothstep(0.5, 1.0, lum);
+    mapped = mix(mapped, lum, highlightWeight);
+    saturation = mix(saturation, 1.0, highlightWeight);
     float scale = mapped / max(lum, 0.005);
     c.rgb = float3(mapped) + (c.rgb - float3(lum)) * scale * saturation;
     return premultiply(c);

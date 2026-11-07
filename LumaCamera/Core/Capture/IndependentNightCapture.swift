@@ -176,15 +176,13 @@ final class IndependentNightCapture: NSObject {
                         }
                     }
                 }
-                // 普通 48MP 路径在会话运行中预分配高像素照片管线；独立会话同样处理。
-                let prepared = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
-                prepared.maxPhotoDimensions = largest
-                prepared.photoQualityPrioritization = .speed
-                self.output.setPreparedPhotoSettingsArray([prepared]) { [weak self] _, _ in
-                    guard let self else { return }
-                    self.queue.async {
-                        self.highResolutionPrepared = true
-                        self.beginCaptureIfPreviewReady()
+                // 预热与实际请求匹配编码、尺寸及优先级。每张仍创建独立的 settings。
+                let prepared = self.makePhotoSettings()
+                self.output.setPreparedPhotoSettingsArray([prepared]) { [weak capture = self] _, _ in
+                    guard let capture else { return }
+                    capture.queue.async {
+                        capture.highResolutionPrepared = true
+                        capture.beginCaptureIfPreviewReady()
                     }
                 }
                 // 预览优先：首帧视频到达后再发照片请求；超时则无预览也继续，避免卡死。
@@ -255,6 +253,15 @@ final class IndependentNightCapture: NSObject {
         queue.async { self.beginCaptureIfPreviewReady() }
     }
 
+    private func makePhotoSettings() -> AVCapturePhotoSettings {
+        let codec: AVVideoCodecType = output.availablePhotoCodecTypes.contains(.hevc) ? .hevc : .jpeg
+        let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: codec])
+        settings.maxPhotoDimensions = largestDimensions
+        settings.photoQualityPrioritization = .speed
+        settings.flashMode = .off
+        return settings
+    }
+
     private func captureNextFrame() {
         guard remainingFrames > 0, !finished else { return }
         remainingFrames -= 1
@@ -270,14 +277,10 @@ final class IndependentNightCapture: NSObject {
         let seconds = max(device.activeFormat.minExposureDuration.seconds,
                           min(maximumSeconds, exposureSeconds * pow(2, offsetEV)))
         let value = max(device.activeFormat.minISO, min(device.activeFormat.maxISO, iso))
-        let codec: AVVideoCodecType = output.availablePhotoCodecTypes.contains(.hevc) ? .hevc : .jpeg
-        let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: codec])
-        settings.maxPhotoDimensions = largestDimensions
+        let settings = makePhotoSettings()
         #if DEBUG
-        print("INDEPENDENT-NIGHT-FRAME profile=\(profile.rawValue) index=\(frameIndex) offsetEV=\(offsetEV) seconds=\(seconds) iso=\(value) codec=\(codec.rawValue)")
+        print("INDEPENDENT-NIGHT-FRAME profile=\(profile.rawValue) index=\(frameIndex) offsetEV=\(offsetEV) seconds=\(seconds) iso=\(value) codec=\(settings.format?[AVVideoCodecKey] ?? "unknown")")
         #endif
-        settings.photoQualityPrioritization = .speed
-        settings.flashMode = .off
         pendingExpectedExposure = (seconds, Double(value))
         do {
             try device.lockForConfiguration()
@@ -343,11 +346,10 @@ extension IndependentNightCapture: AVCapturePhotoCaptureDelegate {
             guard let data = photo.fileDataRepresentation() else {
                 self.finish(.failure(Failure.noFrames)); return
             }
-            self.frames.append(data)
-            if let expected = self.pendingExpectedExposure,
-               let source = CGImageSourceCreateWithData(data as CFData, nil),
-               let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
-                let exif = props[kCGImagePropertyExifDictionary as String] as? [String: Any]
+            let properties = CGImageSourceCreateWithData(data as CFData, nil)
+                .flatMap { CGImageSourceCopyPropertiesAtIndex($0, 0, nil) as? [String: Any] }
+            if let expected = self.pendingExpectedExposure {
+                let exif = properties?[kCGImagePropertyExifDictionary as String] as? [String: Any]
                 let actualSeconds = (exif?[kCGImagePropertyExifExposureTime as String] as? NSNumber)?.doubleValue
                 let actualISO = (exif?[kCGImagePropertyExifISOSpeedRatings as String] as? [NSNumber])?.first?.doubleValue
                 if let actualSeconds, let actualISO {
@@ -361,12 +363,11 @@ extension IndependentNightCapture: AVCapturePhotoCaptureDelegate {
                 }
             }
             self.pendingExpectedExposure = nil
-            if let source = CGImageSourceCreateWithData(data as CFData, nil),
-               let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
-               let width = props[kCGImagePropertyPixelWidth as String] as? Int,
-               let height = props[kCGImagePropertyPixelHeight as String] as? Int {
+            if let width = properties?[kCGImagePropertyPixelWidth as String] as? Int,
+               let height = properties?[kCGImagePropertyPixelHeight as String] as? Int {
                 self.capturedDimensions = CMVideoDimensions(width: Int32(width), height: Int32(height))
             }
+            self.frames.append(data)
             if self.frames.count >= self.expectedFrames {
                 self.finish(.success(Result(frames: self.frames, dimensions: self.capturedDimensions)))
             } else {

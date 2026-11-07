@@ -75,8 +75,7 @@ final class DualCaptureLandscapeTests: XCTestCase {
         let original = scene.windows.first { $0.isKeyWindow }
         let controller = UIHostingController(rootView: DualLandscapeHost(model: model, angle: 0))
         let window = UIWindow(windowScene: scene); window.rootViewController = controller; window.makeKeyAndVisible()
-        var files: [URL] = []
-        defer { model.showHistogram = originalHistogram; model.showsRecordingCapacity = originalCapacity; model.showsAudioMeter = originalAudio; window.isHidden = true; window.rootViewController = nil; original?.makeKey(); camera.onVideoRecorded = callback; model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle; audit.finish(); files.forEach { try? FileManager.default.removeItem(at: $0) } }
+        defer { model.showHistogram = originalHistogram; model.showsRecordingCapacity = originalCapacity; model.showsAudioMeter = originalAudio; window.isHidden = true; window.rootViewController = nil; original?.makeKey(); camera.onVideoRecorded = callback; model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle; audit.finish() }
         func wait(_ label: String, _ condition: () -> Bool) async throws {
             let end = CACurrentMediaTime() + 18
             while CACurrentMediaTime() < end { if condition() { return }; try await Task.sleep(for: .milliseconds(20)) }
@@ -88,14 +87,14 @@ final class DualCaptureLandscapeTests: XCTestCase {
         model.setCameraActive(true); try await wait("启动") { camera.ready }
         model.setCaptureKind(.video); try await wait("视频") { camera.ready && !camera.videoConfiguring }
         let front = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard })
-        let wide = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide })
+        _ = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide })
         model.selectFocalLength(front); try await wait("前置") { camera.ready && model.currentPosition == .front }
         model.toggleDualCapture(frontWide: false); try await wait("双拍") { camera.ready && camera.dualCaptureEnabled && !camera.dualCapturePreparing }
         model.showHistogram = true; model.showsRecordingCapacity = true; model.showsAudioMeter = true
         model.refreshRecordingCapacity()
         try await wait("辅助显示几何") { model.captureButtonFramesForTesting["histogram"] != nil && model.captureButtonFramesForTesting["videoHUD"] != nil }
         var samples: [Double] = []
-        for (index, ratio) in VideoRatio.aspectOptions.enumerated() {
+        for ratio in VideoRatio.aspectOptions {
             model.selectVideoRatio(ratio); try await wait("主画幅") { camera.ready && !camera.videoConfiguring }
             for priorWide in [false, true] {
                 // 双拍主画面为后置时，前置广角/标准是 inset 属性，不是主焦段按钮。

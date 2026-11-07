@@ -48,7 +48,11 @@ final class ProToneCapturePhysicalTests: XCTestCase {
             let decoded = try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil))
             let profile = (properties[kCGImagePropertyProfileName as String] as? String)
                 ?? (decoded.colorSpace?.name as String? ?? "")
-            XCTAssertTrue(profile.localizedCaseInsensitiveContains("PQ"), "HDR 文件必须保留 PQ 色彩标记：\(profile)")
+            if HDRImageAssertions.hasGainMap(source) {
+                HDRImageAssertions.assertNativeISOGainMap(source)
+            } else {
+                XCTAssertTrue(profile.localizedCaseInsensitiveContains("PQ"), "HDR 单图回退应保留 PQ 标记")
+            }
             let exif = try XCTUnwrap(properties[kCGImagePropertyExifDictionary as String] as? [String: Any])
             XCTAssertGreaterThan(try XCTUnwrap((exif[kCGImagePropertyExifISOSpeedRatings as String] as? [NSNumber])?.first?.doubleValue), 0)
             XCTAssertGreaterThan(try XCTUnwrap((exif[kCGImagePropertyExifExposureTime as String] as? NSNumber)?.doubleValue), 0)
@@ -61,7 +65,7 @@ final class ProToneCapturePhysicalTests: XCTestCase {
             XCTAssertEqual(tasks.2, 0); XCTAssertEqual(tasks.3, 0)
             XCTAssertEqual(camera.pendingPhotoCount, 0)
             XCTAssertNil(camera.message)
-            print("PRO-TONE-HDR tone=\(item.rawValue) seconds=\(samples.last ?? 0) profile=\(profile) depth=10 dimensions=\(decoded.width)x\(decoded.height) EXIF-preserved=true tasks=0")
+            print("PRO-TONE-HDR tone=\(item.rawValue) seconds=\(samples.last ?? 0) profile=\(profile) gainMap=\(HDRImageAssertions.hasGainMap(source)) dimensions=\(decoded.width)x\(decoded.height) EXIF-preserved=true tasks=0")
         }
         // 快速改影调只提交最终选择；退出/返回之后仍必须交付新帧而非旧预览。
         for index in 0..<40 { model.tone = PhotoTone.allCases[index % PhotoTone.allCases.count] }
@@ -85,6 +89,63 @@ final class ProToneCapturePhysicalTests: XCTestCase {
         XCTAssertTrue(model.photoOptions.hdr)
         let sorted = samples.sorted()
         print("PRO-TONE-HDR-SUMMARY samples=\(samples.count) median=\(sorted[sorted.count / 2]) max=\(sorted.last ?? 0) rapidToneChanges=40 resumed=true")
+    }
+
+    @MainActor func testSameRAWAcrossToneHDRAndAdaptiveMatrixWithoutSaving() async throws {
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        let camera = model.camera
+        let previousCallback = camera.onCaptureCompleted
+        defer {
+            camera.onCaptureCompleted = previousCallback
+            model.setCameraActive(false)
+        }
+        model.photoFormat = .raw
+        for _ in 0..<200 {
+            if camera.ready, camera.availablePhotoFormats.contains(.raw) { break }
+            try await Task.sleep(for: .milliseconds(25))
+        }
+        XCTAssertTrue(camera.availablePhotoFormats.contains(.raw))
+        let captured = expectation(description: "同一张对照用 RAW")
+        var photo: CapturedPhoto?
+        camera.onCaptureCompleted = { photo = $0; captured.fulfill() }
+        camera.capture(flashMode: .off, options: model.photoOptions)
+        await fulfillment(of: [captured], timeout: 35)
+        let raw = try XCTUnwrap(photo?.resources.first?.data, camera.message ?? "RAW capture failed")
+
+        let context = CIContext(options: [.cacheIntermediates: false])
+        var times: [Double] = []
+        for hdr in [false, true] {
+            for adaptive in [false, true] {
+                let filter = try XCTUnwrap(CIRAWFilter(imageData: raw, identifierHint: nil))
+                AdaptiveRAWDeveloper.configure(filter, adaptive: adaptive, hdr: hdr, adjustments: FilterAdjustments())
+                filter.scaleFactor = Float(min(1, 1200 / max(filter.nativeSize.width, filter.nativeSize.height)))
+                let source = try XCTUnwrap(filter.outputImage)
+                var referenceExtent: CGRect?
+                for tone in PhotoTone.allCases {
+                    let start = CACurrentMediaTime()
+                    let encoded = try PhotoEncoder.encode(source: source, raw: raw, look: CaptureLook(tone: tone),
+                        options: PhotoOptions(format: .heifPro, hdr: hdr, adaptiveHighDynamic: adaptive), context: context)
+                    let data = try XCTUnwrap(encoded.resources.first?.data)
+                    let container = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData, nil))
+                    let decoded = try XCTUnwrap(CIImage(data: data, options: [.expandToHDR: hdr]))
+                    times.append(CACurrentMediaTime() - start)
+                    XCTAssertFalse(decoded.extent.isEmpty)
+                    if let referenceExtent { XCTAssertEqual(decoded.extent, referenceExtent) }
+                    referenceExtent = decoded.extent
+                    if !hdr { XCTAssertFalse(HDRImageAssertions.hasGainMap(container)) }
+                    if adaptive {
+                        XCTAssertEqual(encoded.resources.first(where: { $0.alternate })?.data, raw)
+                        let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(container, 0, nil) as? [String: Any])
+                        let recipe = try XCTUnwrap(RAWDevelopmentRecipe.read(properties)?.rawDevelopment)
+                        XCTAssertEqual(recipe.tone, tone.rawValue)
+                        XCTAssertEqual(recipe.hdr, hdr)
+                    }
+                    print("PRO-TONE-MATRIX hdr=\(hdr) adaptive=\(adaptive) tone=\(tone.rawValue) headroom=\(decoded.contentHeadroom) extent=\(decoded.extent.size)")
+                }
+            }
+        }
+        times.sort()
+        print("PRO-TONE-MATRIX-TIMING n=\(times.count) median=\(times[times.count / 2]) max=\(times.last ?? 0)")
     }
     #endif
 }

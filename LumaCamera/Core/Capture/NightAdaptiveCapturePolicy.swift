@@ -58,11 +58,13 @@ enum NightAdaptiveCapturePolicy {
 
     /// 低纹理等未知状态仍允许补足六帧；实际运动停止追加，融合器逐区域保护移动内容。
     static func shouldContinue(target: Int, submitted: Int, received: Int, motion: NightSceneMotion,
-                               elapsed: Double, compressedBytes: Int, constrained: Bool) -> Bool {
+                               elapsed: Double, nextBatchSeconds: Double, compressedBytes: Int, constrained: Bool) -> Bool {
         !constrained && motion != .moving && (motion != .unknown || submitted < 6)
             && target > submitted && received == submitted
             && submitted >= 3 && submitted < maximumFrameCount
             && elapsed.isFinite && elapsed < maximumSequenceSeconds
+            && nextBatchSeconds.isFinite && nextBatchSeconds >= 0
+            && elapsed + nextBatchSeconds <= maximumSequenceSeconds
             && compressedBytes < maximumCompressedBytes
     }
 }

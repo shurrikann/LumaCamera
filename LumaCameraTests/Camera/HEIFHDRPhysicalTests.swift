@@ -9,7 +9,7 @@ final class HEIFHDRPhysicalTests: XCTestCase {
     #if !targetEnvironment(simulator)
     @MainActor func testHDRToggleAtOneXKeepsWidePrimary() async throws {
         let model = try XCTUnwrap(AppDependencies.runningAppCameraModel), camera = model.camera
-        let oldFormat = model.photoFormat, oldHDR = model.hdr, oldMode = model.mode
+        let oldFormat = model.photoFormat, oldMode = model.mode
         let idle = UIApplication.shared.isIdleTimerDisabled
         UIApplication.shared.isIdleTimerDisabled = true
         defer { model.hdr = false; model.photoFormat = oldFormat; model.setMode(oldMode)

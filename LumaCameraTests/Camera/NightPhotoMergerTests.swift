@@ -66,6 +66,42 @@ final class NightPhotoMergerTests: XCTestCase {
         print("NIGHT-NOISE fixture=320x240 samples=10400 shadow-code-std-before=\(before) after=\(after)")
     }
 
+    func testColoredDarkFramesRetainSaturationAfterFusion() throws {
+        func colored(_ seed: UInt64) -> CIImage {
+            var state = seed
+            var bytes = [UInt8](repeating: 255, count: width * height * 4)
+            for y in 0..<height { for x in 0..<width {
+                for c in 0..<3 {
+                    state = state &* 6364136223846793005 &+ 1
+                    let base = y < 160 ? [72, 38, 26][c] : [220, 150, 110][c]
+                    bytes[(y*width+x)*4+c] = UInt8(clamping: base + Int((state>>32)%17)-8)
+                }
+            } }
+            return CIImage(bitmapData: Data(bytes), bytesPerRow: width*4,
+                           size: CGSize(width: width, height: height), format: .RGBA8, colorSpace: space)
+                .settingProperties([kCGImagePropertyExifDictionary as String: [
+                    kCGImagePropertyExifISOSpeedRatings as String: [800],
+                    kCGImagePropertyExifExposureTime as String: 1.0
+                ]])
+        }
+        func saturation(_ bytes: [UInt8]) -> Double {
+            var total = 0.0, count = 0.0
+            for y in 20..<60 { for x in 30..<290 {
+                let o = (y*width+x)*4
+                let r = Double(bytes[o]), g = Double(bytes[o+1]), b = Double(bytes[o+2])
+                let mx = max(r,g,b), mn = min(r,g,b)
+                if mx > 0 { total += (mx-mn)/mx; count += 1 }
+            } }
+            return total / count
+        }
+        let input = saturation(pixels(colored(1)))
+        let output = pixels(try XCTUnwrap(NightPhotoMerger.fuseAlignedFrames(
+            (1...3).map { colored(UInt64($0)) }, referenceIndex: 1, context: context, adaptiveTone: true)))
+        let result = saturation(output)
+        print("NIGHT-COLOR-PRESERVE inputSat=\(input) outputSat=\(result)")
+        XCTAssertGreaterThan(result, input * 0.65, "暗部彩色内容不应被融合无条件去色")
+    }
+
     func testSourceISOIsPreservedThroughRegistrationAndCropping() throws {
         let image = fixture(seed: 7).settingProperties([kCGImagePropertyExifDictionary as String:
             [kCGImagePropertyExifISOSpeedRatings as String: [3200], kCGImagePropertyExifExposureTime as String: 1.0]])

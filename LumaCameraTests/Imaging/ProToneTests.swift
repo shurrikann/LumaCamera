@@ -49,8 +49,34 @@ final class ProToneTests: XCTestCase {
         XCTAssertEqual(black, 0, accuracy: 0.0001, "HDR清新明亮不能抬黑造成泛白")
         XCTAssertGreaterThan(brightMid, naturalMid)
         XCTAssertLessThan(brightMid, 0.26, "HDR中灰只应轻抬，不能沿用SDR的大幅平坦化曲线")
-        XCTAssertGreaterThan(sample(PhotoTone.bright.apply(to: source(0)))[0], 0.002,
-                             "SDR清新明亮保留既有参考配方")
+        XCTAssertEqual(sample(PhotoTone.bright.apply(to: source(0)))[0], 0.02 / 12.92, accuracy: 0.0001,
+                       "SDR清新明亮保留轻微抬黑")
+    }
+
+    func testHDRProTonePairKeepsContinuousHighlightsAndUsesSeparateBlackPoints() throws {
+        for tone in [PhotoTone.cinematic, .contrast, .bright] {
+            let look = CaptureLook(tone: tone)
+            let levels: [CGFloat] = [0, 0.005, 0.05, 0.18, 0.5, 0.65, 0.8, 0.99, 1, 1.01, 2, 4, 8]
+            let outputs = try levels.map { level in
+                sample(try XCTUnwrap(Imaging.filteredHDR(source(level), look: look)).hdr)[0]
+            }
+            XCTAssertTrue(zip(outputs, outputs.dropFirst()).allSatisfy { $0 <= $1 }, tone.rawValue)
+            for (input, output) in zip(levels, outputs) where input >= 1 {
+                XCTAssertEqual(output, Float(input), accuracy: 0.002)
+            }
+            let black = try XCTUnwrap(Imaging.filteredHDR(source(0), look: look))
+            if tone == .cinematic || tone == .bright {
+                XCTAssertLessThan(sample(black.hdr)[0], sample(black.sdr)[0])
+            }
+
+            // 彩色灯光高光保留 RGB 比例，避免全局饱和度作用到参考白以上。
+            let lamp = CIImage(color: CIColor(red: 4, green: 2, blue: 0.6, colorSpace: space)!)
+                .cropped(to: CGRect(x: 0, y: 0, width: 64, height: 64))
+            let hdrLamp = try XCTUnwrap(Imaging.filteredHDR(lamp, look: look)).hdr
+            for (actual, expected) in zip(sample(hdrLamp), sample(lamp)) {
+                XCTAssertEqual(actual, expected, accuracy: 0.002)
+            }
+        }
     }
     #if !targetEnvironment(simulator)
     func testEachToneIsEncodedInTenBitHDRHEIFWithoutSavingToPhotos() throws {
@@ -63,7 +89,6 @@ final class ProToneTests: XCTestCase {
                 options: PhotoOptions(format: .heifPro, hdr: true), context: context)
             let resource = try XCTUnwrap(photo.resources.first)
             let source = try XCTUnwrap(CGImageSourceCreateWithData(resource.data as CFData, nil))
-            let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any])
             HDRImageAssertions.assertHDR(source, "PRO-TONE HDR")
             let decoded = try XCTUnwrap(CIImage(data: resource.data, options: [.expandToHDR: true]))
             XCTAssertGreaterThan(sample(decoded)[0], 1)

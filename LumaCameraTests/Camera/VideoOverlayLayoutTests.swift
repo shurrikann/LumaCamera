@@ -153,14 +153,14 @@ final class VideoOverlayLayoutTests: XCTestCase {
     }
 }
 
-/// Install the environment on a real View before reading it. Extracting a
-/// computed CameraView subview directly would read that CameraView's default angle.
+/// 由已挂载的测试视图读取环境，再传给取景内容。
 struct CameraViewfinderTestHost: View {
     @ObservedObject var model: CameraViewModel
     @ObservedObject var camera: CameraEngine
     @Environment(\.captureControlAngle) private var angle
+    @Environment(\.accessibilityReduceMotion) private var reducingMotion
 
     var body: some View {
-        CameraView(model: model).viewfinderContent(controlAngle: angle)
+        CameraView(model: model).viewfinderContent(controlAngle: angle, reducingMotion: reducingMotion)
     }
 }

@@ -16,6 +16,9 @@ enum AdaptiveDynamicRenderer {
     private static let restoreHDR = MetalImageKernels.color("adaptiveHDRRestore")
     /// LUT通常只定义0–1域；分离逐像素亮度余量后调色，再恢复余量，避免滤镜截断HDR层次。
     static func filtered(_ image:CIImage,look:CaptureLook,hdr:Bool) -> CIImage {
+        if hdr, look.tone != .natural, let layers = Imaging.filteredHDR(image, look: look) {
+            return layers.hdr
+        }
         guard hdr, let base = sdrBase?.apply(extent:image.extent,arguments:[image]), let restoreHDR else {
             return Imaging.filtered(image,look:look)
         }

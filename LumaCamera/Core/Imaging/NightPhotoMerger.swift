@@ -393,8 +393,12 @@ enum NightPhotoMerger {
         let baseNoiseLevel = adaptiveTone ? min(0.12, 0.055 + tone.exposureEV * 0.035 + max(0, tone.shadowLift - 0.06) * 0.2) : 0.035
         // 高ISO提高边缘保持滤波门限并扩大暗部覆盖，不增加全局高斯模糊或锐化颗粒。
         let noiseLevel = baseNoiseLevel + noiseStress * 0.08
-        var reduced = composite.applyingFilter("CINoiseReduction", parameters: ["inputNoiseLevel": noiseLevel, "inputSharpness": adaptiveTone || noiseStress > 0 ? 0.0 : 0.25])
-        if adaptiveTone {
+        // 低 ISO 夜景不需要按高 ISO 的强度压彩色噪声；当前 1s/ISO800 样片
+        // 在旧配方下被压到接近灰阶。高 ISO 仍保留强彩色降噪。
+        let keepLowISColor = sourceISO > 0 && sourceISO < 1600
+        let denoiseSharpness: Float = adaptiveTone && noiseStress > 0.2 ? 0 : (keepLowISColor ? 0.2 : 0.25)
+        var reduced = composite.applyingFilter("CINoiseReduction", parameters: ["inputNoiseLevel": noiseLevel, "inputSharpness": denoiseSharpness])
+        if adaptiveTone && !keepLowISColor {
             // 彩色斑块比单像素颗粒更粗。只借用低频色彩，亮度结构仍来自边缘保持降噪结果。
             let radius = min(3,max(1.2,max(extent.width,extent.height)/1400))
             let color = reduced.clampedToExtent().applyingFilter("CIMedianFilter")
@@ -464,10 +468,10 @@ enum NightPhotoMerger {
         let medianEV = log2(linear(0.28) / linear(max(median, 0.02)))
         let highlightEV = log2(linear(0.82) / linear(max(high, 0.05)))
         let exposureCap = longExposure ? 0.5 : 2.5
-        let shadowCap = longExposure ? 0.14 : 0.18
-        let targetMedian = 0.30
+        let shadowCap = longExposure ? 0.16 : 0.18
+        let targetMedian = 0.33
         let exposureEV = min(exposureCap, max(0, min(medianEV, highlightEV)))
-        let shadowLift = min(shadowCap, max(0.06, 0.06 + (targetMedian - median) * 0.55))
+        let shadowLift = min(shadowCap, max(0.06, 0.06 + (targetMedian - median) * 0.60))
         return (exposureEV, shadowLift)
     }
 

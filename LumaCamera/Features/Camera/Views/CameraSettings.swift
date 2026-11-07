@@ -16,28 +16,6 @@ private struct CameraSettingsPanel: View {
         NavigationStack {
             Form {
                 Section {
-                    Picker("独立夜景多帧方案", selection: $model.independentNightProfile) {
-                        ForEach(IndependentNightProfile.allCases) { profile in
-                            Text(profile.title).tag(profile)
-                        }
-                    }
-                    .accessibilityIdentifier("settings.independentNightProfile")
-                    Text(model.independentNightProfile.detail)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    Toggle("强制独立夜景（测试）", isOn: $model.forceIndependentNightEnabled)
-                        .accessibilityIdentifier("settings.forceIndependentNight")
-                    Toggle("HDR 成片（HEIF 10-bit PQ）", isOn: $model.nightHDRPhotoEnabled)
-                        .accessibilityIdentifier("settings.nightHDRPhoto")
-                    Text("HDR 成片仅在选择 HEIF 时生效；当前实现为 10-bit PQ，不是 Apple 增益图。取景 HDR 需要 EDR 渲染层，暂未接入。")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                } header: {
-                    Text("实验：独立夜景")
-                } footer: {
-                    Text("仅影响 0.5–8× 的 48MP 独立夜景；普通夜景与超过 8× 的回退路线不受影响。")
-                }
-                Section {
                     LabeledContent {
                         Menu {
                             Picker("", selection: $model.preferences.videoBitratePreset) {

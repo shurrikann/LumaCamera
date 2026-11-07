@@ -56,8 +56,10 @@ enum PhotoEncoder {
         }
         // HDR 成片必须让影调处理保留超出 SDR 的高光范围。
         let hdrDestination = options.hdr && (options.format == .heif || options.format == .heifPro)
-        let hdrLayers = !options.adaptiveHighDynamic && hdrDestination ? Imaging.filteredHDR(portraitSource, look: renderLook) : nil
-        let styled = options.adaptiveHighDynamic ? AdaptiveDynamicRenderer.filtered(portraitSource,look:renderLook,hdr:options.hdr) : (hdrLayers?.hdr ?? Imaging.filtered(portraitSource,look:renderLook,hdr:hdrDestination))
+        let hdrLayers = hdrDestination ? Imaging.filteredHDR(portraitSource, look: renderLook) : nil
+        let styled = hdrLayers?.hdr ?? (options.adaptiveHighDynamic
+            ? AdaptiveDynamicRenderer.filtered(portraitSource, look: renderLook, hdr: options.hdr)
+            : Imaging.filtered(portraitSource, look: renderLook, hdr: hdrDestination))
         let processed = styled.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         let processedSDR = (systemSDR ?? hdrLayers?.sdr).map {
             $0.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
@@ -81,10 +83,6 @@ enum PhotoEncoder {
         // 避免系统相册再次旋转，导致成片与相册按钮的 UIImage 预览方向不同。
         image = PhotoMetadata.applying(to: CaptureOrientation.normalizedPhotoMetadata(image),
                                        location: location, copyright: options.copyright)
-        if systemSDR != nil {
-            // 裁切后的基底与HDR图都已将方向体现在像素中，写入一致的元数据。
-            sdrForEncoding = sdrForEncoding?.settingProperties(image.properties)
-        }
         if options.adaptiveHighDynamic {
             image = try RAWDevelopmentRecipe.applying(RAWDevelopmentRecipe.initial(source:source,look:look,hdr:options.hdr,maximumPixels:maxPixels),to:image)
         }
@@ -95,6 +93,10 @@ enum PhotoEncoder {
             exif[kCGImagePropertyExifUserComment as String] = old + (old.isEmpty ? "" : "\n") + String(format: "LumaCamera.VirtualAperture=%.4f", aperture)
             properties[kCGImagePropertyExifDictionary as String] = exif
             image = CaptureOrientation.normalizedPhotoMetadata(image.settingProperties(properties))
+        }
+        // 增益图 HEIF 的主图是 SDR 基底。方向、拍摄信息与 RAW 显影配方都写到该基底。
+        if systemSDR != nil || options.format == .heifPro {
+            sdrForEncoding = sdrForEncoding?.settingProperties(image.properties)
         }
         let fileExtension: String
         switch options.format {

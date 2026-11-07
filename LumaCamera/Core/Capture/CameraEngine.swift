@@ -1200,6 +1200,7 @@ final class CameraEngine: NSObject, ObservableObject {
         var nightRouteStartedAt: TimeInterval?
         var nightRouteSettledChecks = 0
         var nightStarted = CACurrentMediaTime()
+        var nightBatchSubmittedAt: TimeInterval?
         var nightRouteGeneration: UInt64 = 0
         var nightPrimaryDeviceID: String?
         var nightStopReason = "环境无需追加"
@@ -5410,15 +5411,15 @@ final class CameraEngine: NSObject, ObservableObject {
             if iso != nil { self.globalBias = 0; self.globalMeteringPolicy.reset(); self.manualGlobalMeteringSuggestion = nil }
             self.exposureBias = Float(bias)
             let meteringRevision = self.globalMeteringRevision
-            device.setExposureTargetBias(min(max(Float(bias) + (self.metering == .global && iso == nil ? self.globalBias : 0), device.minExposureTargetBias), device.maxExposureTargetBias)) { [weak self] _ in
-                guard let self else { return }
-                self.queue.async {
-                    guard self.globalMeteringRevision == meteringRevision,
-                          self.input?.device.uniqueID == device.uniqueID else { return }
-                    if rebaseMetering, iso == nil, self.metering == .global {
-                        self.globalMeteringPolicy.complete(at: CACurrentMediaTime())
+            device.setExposureTargetBias(min(max(Float(bias) + (self.metering == .global && iso == nil ? self.globalBias : 0), device.minExposureTargetBias), device.maxExposureTargetBias)) { [weak engine = self] _ in
+                guard let engine else { return }
+                engine.queue.async {
+                    guard engine.globalMeteringRevision == meteringRevision,
+                          engine.input?.device.uniqueID == device.uniqueID else { return }
+                    if rebaseMetering, iso == nil, engine.metering == .global {
+                        engine.globalMeteringPolicy.complete(at: CACurrentMediaTime())
                     }
-                    self.publishGlobalMetering(device)
+                    engine.publishGlobalMetering(device)
                 }
             }
             self.publishGlobalMetering(device)
@@ -5750,11 +5751,11 @@ final class CameraEngine: NSObject, ObservableObject {
             if !self.customExposureRequested, device.exposureMode != .custom, device.isExposureModeSupported(.continuousAutoExposure) {
                 device.exposureMode = .continuousAutoExposure
                 let revision = self.globalMeteringRevision
-                device.setExposureTargetBias(min(max(self.exposureBias, device.minExposureTargetBias), device.maxExposureTargetBias)) { [weak self] _ in
-                    guard let self else { return }
-                    self.queue.async {
-                        guard self.globalMeteringRevision == revision, self.input?.device.uniqueID == device.uniqueID else { return }
-                        self.publishGlobalMetering(device)
+                device.setExposureTargetBias(min(max(self.exposureBias, device.minExposureTargetBias), device.maxExposureTargetBias)) { [weak engine = self] _ in
+                    guard let engine else { return }
+                    engine.queue.async {
+                        guard engine.globalMeteringRevision == revision, engine.input?.device.uniqueID == device.uniqueID else { return }
+                        engine.publishGlobalMetering(device)
                     }
                 }
             }
@@ -5884,10 +5885,10 @@ final class CameraEngine: NSObject, ObservableObject {
               device.deviceType == .builtInUltraWideCamera, device.isFocusModeSupported(.locked) else { return }
         do {
             try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
             device.setFocusModeLocked(lensPosition: min(max(device.lensPosition, 0), 1), completionHandler: nil)
-            device.unlockForConfiguration()
             macroPreviewFocusLocked = true
-        } catch { try? device.unlockForConfiguration() }
+        } catch { return }
     }
 
     /// 系统一判定微距就切到最终物理超广角，用户在这之后的预览上构图；
@@ -5962,27 +5963,28 @@ final class CameraEngine: NSObject, ObservableObject {
         guard device.isVirtualDevice, device.position == .back,
               device.activePrimaryConstituent?.deviceType == .builtInUltraWideCamera,
               device.primaryConstituentDeviceSwitchingBehavior != .unsupported else { return }
+        do {
+            try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
+            device.setPrimaryConstituentDeviceSwitchingBehavior(.locked, restrictedSwitchingBehaviorConditions: [])
+        } catch { return }
+        // 延长锁定失败时保留上一次已排定的释放任务。
         macroLensHoldGeneration &+= 1
         let generation = macroLensHoldGeneration
         macroLensHoldUntil = CACurrentMediaTime() + 2.2
-        do {
-            try device.lockForConfiguration()
-            device.setPrimaryConstituentDeviceSwitchingBehavior(.locked, restrictedSwitchingBehaviorConditions: [])
-            device.unlockForConfiguration()
-            #if DEBUG
-            print("MACRO-HOLD locked generation=\(generation)")
-            #endif
-        } catch { try? device.unlockForConfiguration() }
+        #if DEBUG
+        print("MACRO-HOLD locked generation=\(generation)")
+        #endif
         queue.asyncAfter(deadline: .now() + 2.2) {
             guard generation == self.macroLensHoldGeneration else { return }
             self.macroLensHoldUntil = 0
             do {
                 try device.lockForConfiguration()
+                defer { device.unlockForConfiguration() }
                 if device.primaryConstituentDeviceSwitchingBehavior != .unsupported {
                     device.setPrimaryConstituentDeviceSwitchingBehavior(.auto, restrictedSwitchingBehaviorConditions: [])
                 }
-                device.unlockForConfiguration()
-            } catch { try? device.unlockForConfiguration() }
+            } catch { return }
         }
     }
 
@@ -5996,10 +5998,10 @@ final class CameraEngine: NSObject, ObservableObject {
         let old = device.exposureTargetBias
         do {
             try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
             device.setExposureTargetBias(min(old + 0.5, device.maxExposureTargetBias), completionHandler: nil)
-            device.unlockForConfiguration()
             macroExposureBiasRestore = (device, old)
-        } catch { try? device.unlockForConfiguration() }
+        } catch { return }
     }
 
     private func restoreMacroExposureBias() {
@@ -6693,6 +6695,10 @@ final class CameraEngine: NSObject, ObservableObject {
         let frames = capture.nightFrames
         let latest = Array(frames.suffix(3).map(\.data))
         guard let reference = frames.first(where: { $0.sequence == 2 })?.data else { return false }
+        // 上一批实测包含曝光与系统回调。首批有一张短帧，追加三张正常曝光还需检查曝光下限。
+        let lastBatchSeconds = capture.nightBatchSubmittedAt.map { CACurrentMediaTime() - $0 } ?? 0
+        let baseSeconds = capture.manualExposureForCapture?.seconds ?? capture.nightAutomaticExposure?.seconds ?? 0
+        let nextBatchSeconds = max(lastBatchSeconds, 3 * baseSeconds)
         processingQueue.async {
             self.tracePhotoPhase("night-motion-start")
             let assessment = autoreleasepool { () -> NightSceneAssessment in
@@ -6719,6 +6725,7 @@ final class CameraEngine: NSObject, ObservableObject {
                 let shouldContinue = NightAdaptiveCapturePolicy.shouldContinue(target: capture.nightTargetFrames,
                     submitted: capture.nightSubmittedFrames, received: capture.nightFrames.count, motion: motion,
                     elapsed: CACurrentMediaTime() - capture.nightStarted,
+                    nextBatchSeconds: nextBatchSeconds,
                     compressedBytes: capture.nightFrames.reduce(0) { $0 + $1.data.count }, constrained: constrained)
                 guard !capture.nightCancelled, self.wantsRunning, self.session.isRunning, sameRoute,
                       shouldContinue, self.photoOutput.maxBracketedCapturePhotoCount >= 3, let device = self.input?.device else {
@@ -6818,6 +6825,7 @@ final class CameraEngine: NSObject, ObservableObject {
         if let angle = context.captureRotationAngle, let connection = photoOutput.connection(with: .video), connection.isVideoRotationAngleSupported(angle) {
             connection.videoRotationAngle = angle
         }
+        if context.options.nightMode { context.nightBatchSubmittedAt = CACurrentMediaTime() }
         photoOutput.capturePhoto(with: settings, delegate: self)
     }
 
@@ -7425,7 +7433,7 @@ final class CameraEngine: NSObject, ObservableObject {
                                     context.options.hdr = true
                                     diagnostics.add("夜景HDR成片", "10-bit HEIF PQ")
                                 }
-                                diagnostics.add("夜景独立采集", "48MP · \(images.count) 帧 · 中心裁切")
+                                diagnostics.add("夜景独立采集", "\(captured.dimensions.width)×\(captured.dimensions.height) · \(images.count) 帧 · 中心裁切")
                                 diagnostics.add("夜景源尺寸", "\(Int(images[0].extent.width))x\(Int(images[0].extent.height))")
                                 diagnostics.add("夜景融合尺寸", "\(Int(merged.image.extent.width))x\(Int(merged.image.extent.height))")
                                 diagnostics.add("夜景边缘裁切", String(format: "%.1f%%", merged.croppedFraction * 100))
@@ -8429,7 +8437,7 @@ extension CameraEngine: AVCapturePhotoCaptureDelegate {
                 autoreleasepool {
                     let orderedFrames = capture.nightFrames.sorted { $0.sequence < $1.sequence }
                     let decodedFrames = orderedFrames.compactMap { frame -> (sequence: Int, image: CIImage)? in
-                        guard var image = CIImage(data: frame.data, options: [.applyOrientationProperty: true]) else { return nil }
+                        guard let image = CIImage(data: frame.data, options: [.applyOrientationProperty: true]) else { return nil }
                         return (frame.sequence, image)
                     }
                     guard !decodedFrames.isEmpty else {

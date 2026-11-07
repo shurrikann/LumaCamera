@@ -14,10 +14,15 @@ enum Imaging {
     /// 成片不再在预览结果上二次压软肩。
     static func filteredHDR(_ image: CIImage, look: CaptureLook) -> FilteredHDR? {
         guard look.requiresImageProcessing, #available(iOS 18.0, *),
-              let hdrRestoreKernel, let hdrBlendKernel,
               let shoulder = MetalImageKernels.color("hdrSoftShoulder"),
               let base = shoulder.apply(extent: image.extent,
                   arguments: [image, HDRToneMapping.knee, Float(1.0)]) else { return nil }
+        if look.tone != .natural, look.style == .original, look.adjustments.isNeutral, look.virtualAperture == nil {
+            // Pro 影调成片直接处理扩展范围的 RAW 显影结果，SDR 基底独立套用 SDR 配方。
+            return FilteredHDR(hdr: look.tone.apply(to: image, hdr: true),
+                               sdr: look.tone.apply(to: base))
+        }
+        guard let hdrRestoreKernel, let hdrBlendKernel else { return nil }
         let fullStyle = look.style.apply(to: base, intensity: 1)
         let sourceAdjusted = FilterAdjustmentRenderer.apply(look.adjustments,
             to: look.tone.apply(to: base, hdr: false), grainPhase: look.grainPhase)

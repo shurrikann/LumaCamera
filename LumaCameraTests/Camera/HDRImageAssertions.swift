@@ -15,8 +15,9 @@ enum HDRImageAssertions {
             XCTFail("缺少ISO增益图", file: file, line: line); return
         }
         func metadata(_ info: [String: Any]) -> CGImageMetadata? {
-            guard let object = info[kCGImageAuxiliaryDataInfoMetadata as String] else { return nil }
-            return object as! CGImageMetadata
+            guard let object = info[kCGImageAuxiliaryDataInfoMetadata as String],
+                  CFGetTypeID(object as CFTypeRef) == CGImageMetadataGetTypeID() else { return nil }
+            return (object as! CGImageMetadata)
         }
         func value(_ metadata: CGImageMetadata?, _ path: String) -> String? {
             guard let metadata else { return nil }

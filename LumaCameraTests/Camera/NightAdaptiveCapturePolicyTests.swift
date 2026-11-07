@@ -66,21 +66,25 @@ final class NightAdaptiveCapturePolicyTests: XCTestCase {
 
     func testMotionMissingFramesBudgetsAndResourcePressureStopAdditionalBatches() {
         func continues(motion: NightSceneMotion = .stable, received: Int = 3, elapsed: Double = 1,
-                       bytes: Int = 1000, constrained: Bool = false) -> Bool {
+                       nextBatchSeconds: Double = 1, bytes: Int = 1000, constrained: Bool = false) -> Bool {
             NightAdaptiveCapturePolicy.shouldContinue(target: 9, submitted: 3, received: received, motion: motion,
-                elapsed: elapsed, compressedBytes: bytes, constrained: constrained)
+                elapsed: elapsed, nextBatchSeconds: nextBatchSeconds, compressedBytes: bytes, constrained: constrained)
         }
         XCTAssertTrue(continues())
         XCTAssertFalse(continues(motion: .moving)); XCTAssertTrue(continues(motion: .unknown))
         XCTAssertFalse(continues(received: 2)); XCTAssertFalse(continues(constrained: true))
         XCTAssertFalse(continues(elapsed: 8)); XCTAssertFalse(continues(elapsed: .nan))
+        XCTAssertTrue(continues(elapsed: 5, nextBatchSeconds: 3))
+        XCTAssertFalse(continues(elapsed: 5.1, nextBatchSeconds: 3))
+        XCTAssertFalse(continues(elapsed: 3, nextBatchSeconds: 6))
+        XCTAssertFalse(continues(nextBatchSeconds: .nan))
         XCTAssertFalse(continues(bytes: NightAdaptiveCapturePolicy.maximumCompressedBytes))
         XCTAssertFalse(NightAdaptiveCapturePolicy.shouldContinue(target: 6, submitted: 6, received: 6,
-            motion: .stable, elapsed: 3, compressedBytes: 1000, constrained: false))
+            motion: .stable, elapsed: 3, nextBatchSeconds: 1, compressedBytes: 1000, constrained: false))
         XCTAssertTrue(NightAdaptiveCapturePolicy.shouldContinue(target: 9, submitted: 6, received: 6,
-            motion: .stable, elapsed: 3, compressedBytes: 1000, constrained: false))
+            motion: .stable, elapsed: 3, nextBatchSeconds: 1, compressedBytes: 1000, constrained: false))
         XCTAssertFalse(NightAdaptiveCapturePolicy.shouldContinue(target: 9, submitted: 6, received: 6,
-            motion: .unknown, elapsed: 3, compressedBytes: 1000, constrained: false))
+            motion: .unknown, elapsed: 3, nextBatchSeconds: 1, compressedBytes: 1000, constrained: false))
     }
 
     func testActualAutomaticExposureRetainsDenoisingFramesDespiteBiasCorrectedMetering() {

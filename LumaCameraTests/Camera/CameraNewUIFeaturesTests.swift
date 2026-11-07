@@ -23,7 +23,7 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         model.setCameraActive(true)
         defer { model.setCameraActive(false) }
         for _ in 0..<300 { if camera.ready && camera.availableResolutions.contains(.high) { break }; try await Task.sleep(for: .milliseconds(20)) }
-        let (controller, window) = try host(model)
+        let (_, window) = try host(model)
         defer { window.isHidden = true; window.rootViewController = nil }
         model.setMode(.auto); model.toolbarPanel = .format
         try await Task.sleep(for: .milliseconds(400))
