@@ -32,6 +32,7 @@ extension CameraView {
             let hudTop = isRecording ? (width < 300 ? 34.0 : 5.0)
                 : max(1, toolbarOverlap > 0 ? toolbarOverlap + 8 : 1)
             let controlLandscape = abs(sin(controlAngle * .pi / 180)) > 0.5
+            let showsMeteringReadout = model.effectiveMetering == .global
             ZStack {
                 Color.black
                 if let image = camera.preview {
@@ -223,27 +224,40 @@ extension CameraView {
                     .zIndex(2)
                 }
 
-                if model.showHistogram {
-                    // One persistent view so the 90/180/270 transitions animate
-                    // instead of swapping between separate portrait/landscape copies.
-                    CameraHistogram(bins: camera.histogram)
-                        .rotatingCaptureContent()
-                        .frame(width: controlLandscape ? CameraHistogram.size.height : CameraHistogram.size.width,
-                               height: controlLandscape ? CameraHistogram.size.width : CameraHistogram.size.height)
-                        .captureControlGeometry("histogram", model: model)
-                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
-                            model.histogramFrame = $0
-                            #if DEBUG
-                            model.histogramFrameForTesting = $0
-                            #endif
+                if model.showHistogram || showsMeteringReadout {
+                    HStack(alignment: .top, spacing: 6) {
+                        if model.showHistogram {
+                            // One persistent view so the 90/180/270 transitions animate
+                            // instead of swapping between separate portrait/landscape copies.
+                            CameraHistogram(bins: camera.histogram)
+                                .rotatingCaptureContent()
+                                .frame(width: controlLandscape ? CameraHistogram.size.height : CameraHistogram.size.width,
+                                       height: controlLandscape ? CameraHistogram.size.width : CameraHistogram.size.height)
+                                .captureControlGeometry("histogram", model: model)
+                                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                                    model.histogramFrame = $0
+                                    #if DEBUG
+                                    model.histogramFrameForTesting = $0
+                                    #endif
+                                }
                         }
-                        .padding(.leading, 5)
-                        .padding(.top, max(5, hudTop))
-                        .animation(AppTheme.popupAnimation, value: isRecording)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .allowsHitTesting(false)
-                        .zIndex(5)
-                        .animation(.easeInOut(duration: 0.22), value: controlLandscape)
+                        if showsMeteringReadout {
+                            meteringReadout
+                                .rotatingCaptureContent()
+                                .frame(width: controlLandscape ? CameraHistogram.size.height : CameraHistogram.size.width,
+                                       height: controlLandscape ? CameraHistogram.size.width : CameraHistogram.size.height)
+                                .captureControlGeometry("metering.compensation", model: model)
+                                .transition(.opacity)
+                        }
+                    }
+                    .animation(reduceMotion ? .easeInOut(duration: 0.1) : AppTheme.popupAnimation, value: showsMeteringReadout)
+                    .padding(.leading, 5)
+                    .padding(.top, max(5, hudTop))
+                    .animation(AppTheme.popupAnimation, value: isRecording)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .allowsHitTesting(false)
+                    .zIndex(5)
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: controlLandscape)
                 }
                 if let point = model.focusPoint {
                     CameraFocusControls(model: model, camera: camera, point: point, size: CGSize(width: width, height: height), topInset: hudTop, bottomInset: max(0, previewTop + height - (geometry.size.height - CameraControlLayout.compositionBottom - 32)))
@@ -333,6 +347,30 @@ extension CameraView {
                 }
             }
             .contentShape(Rectangle())
+    }
+
+    /// 全局测光独立显示读数，固定尺寸让实时数值更新时位置稳定。
+    private var meteringReadout: some View {
+        let readout = camera.globalMeteringReadout
+        return VStack(alignment: .leading, spacing: 0) {
+            Text(String(format: "用户 %+.1f EV", model.ev))
+            if let suggestion = readout.suggestion {
+                Text(String(format: "建议 %+.1f EV", suggestion))
+            } else {
+                Text(String(format: "全局 %+.1f EV", readout.target ?? readout.correction))
+            }
+            Text(String(format: "设备 %+.1f EV", readout.actual))
+        }
+        .font(.system(size: 9, weight: .medium, design: .monospaced))
+        .foregroundStyle(AppTheme.accent)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .padding(.horizontal, 4)
+        .frame(width: CameraHistogram.size.width, height: CameraHistogram.size.height, alignment: .leading)
+        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 4))
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("metering.compensation")
+        .accessibilityHint("全局是实时测光目标。设备是已生效的总补偿。手动曝光时显示建议。")
     }
 
     private func focusSurface(size: CGSize) -> some View {

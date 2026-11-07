@@ -196,7 +196,7 @@ extension CameraView {
                 HStack(spacing: 0) {
                     readout("S", value: camera.readings.map { model.shutterText($0.seconds) } ?? "—")
                     readout("ISO", value: camera.readings.map { CameraNumericText.integer($0.iso) } ?? "—")
-                    readout("EV", value: String(format: "%+.1f", model.ev))
+                    readout(model.usesGlobalMeteringReadout ? "总EV" : "EV", value: String(format: "%+.1f", model.displayedExposureBias))
                     readout("WB", value: camera.readings.map { CameraNumericText.integer($0.kelvin) == "—" ? "—" : CameraNumericText.integer($0.kelvin) + "K" } ?? "—")
                     readout("FOCUS", value: camera.readings.map { String(format: "%.2f", $0.focus) } ?? "—")
                 }.tag(1)

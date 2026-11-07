@@ -25,6 +25,9 @@ struct PhotoCaptureParameters: Codable, Equatable {
     var sampledISO: Double?
     var sampledExposureSeconds: Double?
     var requestedExposureBiasEV: Double?
+    // 全局测光单独记录用户/应用/设备三种值；实际成片EXIF仍由系统提供。
+    var globalMeteringBiasEV: Double?
+    var deviceExposureBiasEV: Double?
     var whiteBalanceKelvin: Double?
     var whiteBalanceTint: Double?
     var whiteBalanceMode: String?
@@ -70,6 +73,8 @@ struct PhotoCaptureParameters: Codable, Equatable {
         if let virtualAperture { result.append(.init(title: "虚拟光圈", value: VirtualApertureRenderer.label(virtualAperture))) }
         if let adaptiveHighDynamic { result.append(.init(title:"高动态显影",value:adaptiveHighDynamic ? "开启" : "关闭")) }
         if let ev = exifExposureBiasEV { result.append(.init(title: "成片曝光补偿", value: String(format: "%+.1f EV", ev))) }
+        if let ev = globalMeteringBiasEV { result.append(.init(title: "全局测光补偿", value: String(format: "%+.1f EV", ev))) }
+        if let ev = deviceExposureBiasEV { result.append(.init(title: "设备曝光补偿", value: String(format: "%+.1f EV", ev))) }
         if let ev = requestedExposureBiasEV { result.append(.init(title: "设置曝光补偿", value: String(format: "%+.1f EV", ev))) }
         if let kelvin = whiteBalanceKelvin { result.append(.init(title: "快门时白平衡", value: String(format: "%.0f K", kelvin))) }
         if let whiteBalanceTint { result.append(.init(title: "快门时色调", value: String(format: "%+.0f", whiteBalanceTint))) }

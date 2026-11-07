@@ -29,8 +29,8 @@ extension CameraView {
 }
 
 /// 单项数值输入：输入框＋还原图标，下方取消/确定；键盘只移动弹窗，底层相机布局不动。
-struct FilterNumericInputDialog: View {
-    @ObservedObject var model: CameraViewModel
+struct FilterNumericInputDialog<Model: FilterEditingControls>: View {
+    @ObservedObject var model: Model
     @FocusState private var inputFocused: Bool
     @State private var keyboardFrame: CGRect = .null
     private var parameter: FilterParameter { model.filterNumericParameter ?? .exposure }

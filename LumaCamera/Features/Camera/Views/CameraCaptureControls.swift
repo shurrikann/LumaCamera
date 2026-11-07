@@ -72,8 +72,8 @@ extension CameraView {
             if model.mode == .auto {
                 HStack(spacing: 12) {
                     VStack(spacing: 4) {
-                        Text("曝光").font(.system(size: 10)).foregroundStyle(.white.opacity(0.65))
-                        Text(String(format: "%+.1f", model.ev)).font(.system(size: 12, weight: .medium, design: .monospaced)).foregroundStyle(AppTheme.accent)
+                        Text(model.usesGlobalMeteringReadout ? "总曝光" : "曝光").font(.system(size: 10)).foregroundStyle(.white.opacity(0.65))
+                        Text(String(format: "%+.1f", model.displayedExposureBias)).font(.system(size: 12, weight: .medium, design: .monospaced)).foregroundStyle(AppTheme.accent)
                     }.rotatingCaptureContent().frame(width: 38)
                     ZStack {
                         HStack(alignment: .center, spacing: 0) {

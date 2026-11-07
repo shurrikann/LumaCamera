@@ -101,6 +101,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private let frontVideoCenteringRevision = PreviewRevision()
     @Published private(set) var frontPhotoAspectRatioSwitchAvailable = false
     @Published private(set) var frontPhotoLandscapeEnabled = false
+    @Published private(set) var globalMeteringReadout = GlobalMeteringReadout()
     @Published private(set) var readings: CameraReadings?
     @Published private(set) var histogram: [Double] = []
     @Published private(set) var availablePhotoFormats: [PhotoFileFormat] = [.heif, .jpeg, .tiff]
@@ -722,6 +723,7 @@ final class CameraEngine: NSObject, ObservableObject {
                 "supported": device?.activeFormat.supportedMaxPhotoDimensions.map { "\($0.width)x\($0.height)" }.joined(separator: ",") ?? "",
                 "outputMax": "\(self.photoOutput.maxPhotoDimensions.width)x\(self.photoOutput.maxPhotoDimensions.height)",
                 "responsive": String(self.photoOutput.isResponsiveCaptureEnabled),
+                "deferredPhotoDelivery": String(self.photoOutput.isAutoDeferredPhotoDeliveryEnabled),
                 "proRAW": String(self.photoOutput.isAppleProRAWEnabled),
                 "proRAWSupported": String(self.photoOutput.isAppleProRAWSupported),
                 "rawTypes": "\(self.photoOutput.availableRawPhotoPixelFormatTypes.count)",
@@ -1173,6 +1175,7 @@ final class CameraEngine: NSObject, ObservableObject {
     /// Mutable only on the session queue, then handed exclusively to the processing queue.
     private final class CaptureContext {
         let sequence: UInt64
+        let capturedAt = Date() // 快门请求时刻；耗时采集/处理不改变文件名时间。
         let token: UUID
         var look: CaptureLook
         var options: PhotoOptions
@@ -1244,8 +1247,11 @@ final class CameraEngine: NSObject, ObservableObject {
     private var photoDimensions: [CMVideoDimensions] = []
     private var metering = CameraMetering.system
     private var globalBias: Float = 0
+    private var manualGlobalMeteringSuggestion: Double?
+    private var liveGlobalMeteringTarget: Double?
     private var exposureBias: Float = 0
-    private var lastMeteringTime = 0.0
+    private var globalMeteringPolicy = GlobalMeteringPolicy()
+    private var globalMeteringRevision = UUID()
     private var lastFrameTime = 0.0
     private var lastReadingsTime = 0.0
     private var lastReadingsRefreshRevision: UInt64 = 0 // preview queue only
@@ -5396,8 +5402,26 @@ final class CameraEngine: NSObject, ObservableObject {
                     device.setExposureModeCustom(duration: CMTime(seconds: duration, preferredTimescale: 1_000_000_000), iso: actualISO, completionHandler: nil)
                 }
             }
+            let rebaseMetering = self.exposureBias != Float(bias) || iso != nil
+            if rebaseMetering {
+                self.globalMeteringRevision = UUID()
+                self.globalMeteringPolicy.complete(at: CACurrentMediaTime())
+            }
+            if iso != nil { self.globalBias = 0; self.globalMeteringPolicy.reset(); self.manualGlobalMeteringSuggestion = nil }
             self.exposureBias = Float(bias)
-            device.setExposureTargetBias(min(max(Float(bias) + (self.metering == .global && iso == nil ? self.globalBias : 0), device.minExposureTargetBias), device.maxExposureTargetBias), completionHandler: nil)
+            let meteringRevision = self.globalMeteringRevision
+            device.setExposureTargetBias(min(max(Float(bias) + (self.metering == .global && iso == nil ? self.globalBias : 0), device.minExposureTargetBias), device.maxExposureTargetBias)) { [weak self] _ in
+                guard let self else { return }
+                self.queue.async {
+                    guard self.globalMeteringRevision == meteringRevision,
+                          self.input?.device.uniqueID == device.uniqueID else { return }
+                    if rebaseMetering, iso == nil, self.metering == .global {
+                        self.globalMeteringPolicy.complete(at: CACurrentMediaTime())
+                    }
+                    self.publishGlobalMetering(device)
+                }
+            }
+            self.publishGlobalMetering(device)
             if let targetToken, self.targetLockRequested || self.targetFocusLockRequested {
                 self.scheduleTargetExposureLock(device: device, revision: targetToken)
             }
@@ -5428,6 +5452,10 @@ final class CameraEngine: NSObject, ObservableObject {
     func setWhiteBalance(kelvin: Double?, tint: Double = 0) {
         configureDevice { device in
             if let kelvin, (!kelvin.isFinite || kelvin <= 0 || !tint.isFinite) { return }
+            if self.metering == .global {
+                self.globalMeteringPolicy.reset(); self.globalMeteringRevision = UUID()
+                self.manualGlobalMeteringSuggestion = nil
+            }
             self.automaticWhiteBalanceRequested = kelvin == nil
             guard let kelvin else {
                 self.manualWhiteBalanceValues = nil
@@ -5458,6 +5486,10 @@ final class CameraEngine: NSObject, ObservableObject {
             queue.async { self.targetFocusLockRequested = false }
         }
         configureDevice { device in
+            if self.metering == .global {
+                self.globalMeteringPolicy.reset(); self.globalMeteringRevision = UUID()
+                self.manualGlobalMeteringSuggestion = nil
+            }
             self.smartFocusHoldOnQueue = false
             self.smartFocusObservation = nil
             if #available(iOS 26.0, *), self.input?.isCinematicVideoCaptureEnabled == true {
@@ -5582,6 +5614,8 @@ final class CameraEngine: NSObject, ObservableObject {
                     self.publishTargetExposureLock(true, active: true, revision: revision)
                 } else if device.isExposureModeSupported(.locked) {
                     self.globalBias = 0
+                    self.globalMeteringRevision = UUID(); self.globalMeteringPolicy.reset()
+                    self.publishGlobalMetering(device)
                     device.setExposureTargetBias(min(max(self.exposureBias, device.minExposureTargetBias), device.maxExposureTargetBias), completionHandler: nil)
                 } else {
                     self.targetLockRequested = false
@@ -5709,27 +5743,84 @@ final class CameraEngine: NSObject, ObservableObject {
         unlockTargetExposure()
         configureDevice { device in
             self.metering = mode; self.globalBias = 0
+            self.globalMeteringPolicy.reset(); self.globalMeteringRevision = UUID()
+            self.manualGlobalMeteringSuggestion = nil; self.liveGlobalMeteringTarget = nil
             self.syncPreviewState()
             if device.isExposurePointOfInterestSupported { device.exposurePointOfInterest = CGPoint(x: 0.5, y: 0.5) }
             if !self.customExposureRequested, device.exposureMode != .custom, device.isExposureModeSupported(.continuousAutoExposure) {
                 device.exposureMode = .continuousAutoExposure
-                device.setExposureTargetBias(min(max(self.exposureBias, device.minExposureTargetBias), device.maxExposureTargetBias), completionHandler: nil)
+                let revision = self.globalMeteringRevision
+                device.setExposureTargetBias(min(max(self.exposureBias, device.minExposureTargetBias), device.maxExposureTargetBias)) { [weak self] _ in
+                    guard let self else { return }
+                    self.queue.async {
+                        guard self.globalMeteringRevision == revision, self.input?.device.uniqueID == device.uniqueID else { return }
+                        self.publishGlobalMetering(device)
+                    }
+                }
             }
+            self.publishGlobalMetering(device)
         }
     }
 
-    private func updateGlobalMetering(mean: Double, time: Double, deviceID: String?) {
-        guard !customExposureRequested, !targetLockRequested, metering == .global, time - lastMeteringTime >= 0.4,
-              let device = input?.device, device.uniqueID == deviceID, device.exposureMode != .custom else { return }
-        lastMeteringTime = time
-        guard mean > 0.001 else { return }
-        let adjustment = Float(log2(0.18 / mean)) * 0.25
-        guard abs(adjustment) > 0.025 else { return }
-        globalBias = min(max(globalBias + min(max(adjustment, -0.25), 0.25), -2), 2)
+    /// 只在会话队列改变状态；补偿完成回调按版本隔离，切格式后旧回调不能复活全局测光。
+    private func publishGlobalMetering(_ device: AVCaptureDevice) {
+        let value = GlobalMeteringReadout(user: Double(exposureBias), correction: Double(globalBias),
+            actual: Double(device.exposureTargetBias),
+            automatic: metering == .global && !customExposureRequested && !targetLockRequested && device.exposureMode != .custom,
+            suggestion: metering == .global && customExposureRequested ? manualGlobalMeteringSuggestion : nil,
+            target: metering == .global && !customExposureRequested ? liveGlobalMeteringTarget : nil)
+        DispatchQueue.main.async {
+            if self.globalMeteringReadout != value { self.globalMeteringReadout = value }
+        }
+    }
+
+    private func updateGlobalMetering(_ sample: GlobalMeteringPolicy.Sample, deviceID: String?, generation: UInt64, adjustingForTesting: Bool? = nil) {
+        guard metering == .global, generation == readingsGeneration,
+              let device = input?.device, device.uniqueID == deviceID else { return }
+        #if DEBUG
+        if let observer = onGlobalMeteringObservationForTesting {
+            let line = "mean=\(sample.mean) level=\(sample.sceneLevel) AE=\(device.isAdjustingExposure) WB=\(device.isAdjustingWhiteBalance) AF=\(device.isAdjustingFocus) target=\(liveGlobalMeteringTarget.map(String.init(describing:)) ?? "nil") global=\(globalBias) device=\(device.exposureTargetBias) computes=\(globalMeteringPolicy.computations)"
+            DispatchQueue.main.async { observer(line) }
+        }
+        #endif
+        // bias属性读回可能略晚于完成回调；低频刷新实际值，但不重新计算/下发曝光。
+        liveGlobalMeteringTarget = GlobalMeteringPolicy.target(for: sample)
+        publishGlobalMetering(device)
+        guard !targetLockRequested, captureContexts.isEmpty else { globalMeteringPolicy.suspend(); return }
+        let adjusting = adjustingForTesting ?? (device.isAdjustingExposure || device.isAdjustingWhiteBalance || device.isAdjustingFocus)
+        if customExposureRequested {
+            guard let values = manualExposureValues else { globalMeteringPolicy.suspend(); return }
+            let aperture = max(Double(device.lensAperture), 0.1)
+            let planned = Double(values.0) * values.1 / (aperture * aperture)
+            let manual = GlobalMeteringPolicy.manualSample(sample, plannedExposureProduct: planned)
+            // 手动建议跟随每次预览取样，不等场景稳定，也不下发任何曝光指令。
+            manualGlobalMeteringSuggestion = GlobalMeteringPolicy.target(for: manual)
+            globalMeteringPolicy.suspend()
+            publishGlobalMetering(device)
+            return
+        }
+        guard device.exposureMode != .custom else { globalMeteringPolicy.suspend(); return }
+        guard let target = globalMeteringPolicy.consider(sample, adjusting: adjusting) else { return }
+        let revision = globalMeteringRevision
         do {
             try device.lockForConfiguration(); defer { device.unlockForConfiguration() }
-            device.setExposureTargetBias(min(max(exposureBias + globalBias, device.minExposureTargetBias), device.maxExposureTargetBias), completionHandler: nil)
-        } catch { /* Keep the last valid metering value while the device is busy. */ }
+            let current = Double(device.exposureTargetBias - exposureBias)
+            let correction = GlobalMeteringPolicy.appliedCorrection(target: target, current: current)
+            let total = min(max(exposureBias + Float(correction), device.minExposureTargetBias), device.maxExposureTargetBias)
+            globalBias = total - exposureBias
+            device.setExposureTargetBias(total) { [weak self] _ in
+                guard let self else { return }
+                self.queue.async {
+                    guard self.globalMeteringRevision == revision, self.metering == .global,
+                          self.input?.device.uniqueID == deviceID else { return }
+                    self.globalMeteringPolicy.complete(at: CACurrentMediaTime())
+                    self.publishGlobalMetering(device)
+                }
+            }
+            publishGlobalMetering(device)
+        } catch {
+            globalMeteringPolicy.complete(at: sample.time)
+        }
     }
 
     private func configureDevice(onFailure: (() -> Void)? = nil, restartLongPhotoExposure: Bool = false,
@@ -6189,7 +6280,17 @@ final class CameraEngine: NSObject, ObservableObject {
                     self.configurePhotoOutput(device)
                 }
             }
-            let requested = options.resolution == .high ? self.photoDimensions.last : self.photoDimensions.last(where: { Int64($0.width) * Int64($0.height) <= 16_000_000 }) ?? self.photoDimensions.first
+            let macroNow: Bool = {
+                guard let device = self.input?.device else { return false }
+                let recentMacro = CACurrentMediaTime() - self.lastMacroCaptureAt < 5
+                return self.macroActive || recentMacro || CameraMacroPolicy.isActive(manual: self.manualMode, virtual: device.isVirtualDevice,
+                    rear: device.position == .back,
+                    ultraWide: device.activePrimaryConstituent?.deviceType == .builtInUltraWideCamera,
+                    displayZoom: device.videoZoomFactor * CameraLensCatalog.displayMultiplier(device))
+            }()
+            // 标准档恢复即时12MP，显式高像素仍按原路由能力请求48MP；不启用24MP延迟代理。
+            let requested = options.resolution == .high ? self.photoDimensions.last
+                : self.photoDimensions.last(where: { Int64($0.width) * Int64($0.height) <= 16_000_000 }) ?? self.photoDimensions.first
             // Bracketed capture supports only the documented shared photo settings;
             // its default dimensions are the active format's standard resolution.
             if let requested, !options.nightMode {
@@ -6204,17 +6305,6 @@ final class CameraEngine: NSObject, ObservableObject {
                 DispatchQueue.main.async { callback(dimensions) }
             }
             #endif
-            if directSystemHDR, self.photoOutput.maxPhotoQualityPrioritization.rawValue >= AVCapturePhotoOutput.QualityPrioritization.quality.rawValue {
-                settings.photoQualityPrioritization = .quality
-            }
-            let macroNow: Bool = {
-                guard let device = self.input?.device else { return false }
-                let recentMacro = CACurrentMediaTime() - self.lastMacroCaptureAt < 5
-                return self.macroActive || recentMacro || CameraMacroPolicy.isActive(manual: self.manualMode, virtual: device.isVirtualDevice,
-                    rear: device.position == .back,
-                    ultraWide: device.activePrimaryConstituent?.deviceType == .builtInUltraWideCamera,
-                    displayZoom: device.videoZoomFactor * CameraLensCatalog.displayMultiplier(device))
-            }()
             if macroNow, self.photoOutput.isVirtualDeviceConstituentPhotoDeliveryEnabled,
                let device = self.input?.device, device.isVirtualDevice,
                let ultraWide = device.constituentDevices.first(where: { $0.deviceType == .builtInUltraWideCamera }) {
@@ -6238,6 +6328,18 @@ final class CameraEngine: NSObject, ObservableObject {
                         maximum: self.photoOutput.maxPhotoQualityPrioritization)
                 }
             }
+            // 普通HEIF HDR在通用策略之后设定画质优先，避免被balanced覆盖。
+            // 用户手动曝光仍沿用speed策略，不能让计算摄影改写指定快门/ISO。
+            if directSystemHDR, !self.customExposureRequested, context.manualExposureForCapture == nil,
+               self.photoOutput.maxPhotoQualityPrioritization == .quality {
+                settings.photoQualityPrioritization = .quality
+            }
+            #if DEBUG
+            if directSystemHDR, let callback = self.onHEIFHDRQualityForTesting {
+                let value = settings.photoQualityPrioritization.rawValue
+                DispatchQueue.main.async { callback(value) }
+            }
+            #endif
 
             // Apple ProRAW doesn't use AVFoundation depth/matte delivery. Its portrait
             // matte is scene-dependent auxiliary data embedded in the ProRAW DNG and
@@ -6659,6 +6761,46 @@ final class CameraEngine: NSObject, ObservableObject {
     var nightMotionForTesting: NightSceneMotion?
     var onNightBatchSubmittedForTesting: ((Int) -> Void)?
     var onNightSourceForTesting: ((Data,Int) -> Void)?
+    /// 仅诊断普通HEIF HDR的系统原始资源，不写相册、不参与正式处理。
+    var onProcessedHEIFHDRForTesting: ((Data) -> Void)?
+    var onHEIFHDRQualityForTesting: ((Int) -> Void)?
+    /// 验证测光归属及残留补偿；只读硬件状态，返回值不用于正式曝光控制。
+    func meteringStateForTesting(_ completion: @escaping (CameraMetering, Float, Float, Float) -> Void) {
+        queue.async {
+            let mode = self.metering, user = self.exposureBias, extra = self.globalBias
+            let actual = self.input?.device.exposureTargetBias ?? .nan
+            DispatchQueue.main.async { completion(mode, user, extra, actual) }
+        }
+    }
+    /// 用已知亮度触发一次既有全局测光算法，避免测试依赖现场亮度是否恰好产生负补偿。
+    func submitGlobalMeteringSampleForTesting(mean: Double) {
+        queue.async {
+            guard let device = self.input?.device else { return }
+            self.globalMeteringPolicy.reset()
+            let now = CACurrentMediaTime()
+            for offset in [-0.8, -0.4, 0.0] {
+                let sample = GlobalMeteringPolicy.Sample(mean: mean, shape: [0], exposureProduct: 1,
+                    deviceBias: Double(device.exposureTargetBias), userBias: Double(self.exposureBias),
+                    time: now + offset, route: device.uniqueID)
+                self.updateGlobalMetering(sample, deviceID: device.uniqueID, generation: self.readingsGeneration, adjustingForTesting: false)
+            }
+        }
+    }
+    var onGlobalMeteringObservationForTesting: ((String) -> Void)?
+    /// 全局测光建议不得改写全手动曝光；读取真实设备而非界面数值。
+    func globalMeteringManualExposureForTesting(_ completion: @escaping (Double, Double) -> Void) {
+        queue.async {
+            let iso = Double(self.input?.device.iso ?? 0)
+            let seconds = self.input?.device.exposureDuration.seconds ?? 0
+            DispatchQueue.main.async { completion(iso, seconds) }
+        }
+    }
+    func heifExposureSnapshotForTesting(_ completion: @escaping (String) -> Void) {
+        queue.async {
+            let value = "requested=\(self.exposureBias) global=\(self.globalBias) hardware=\(self.input?.device.exposureTargetBias ?? .nan) metering=\(self.metering.rawValue)"
+            DispatchQueue.main.async { completion(value) }
+        }
+    }
     private func notifyNightBatchSubmitted(_ capture: CaptureContext) {
         let submitted = capture.nightSubmittedFrames
         if let callback = onNightBatchSubmittedForTesting { DispatchQueue.main.async { callback(submitted) } }
@@ -7060,7 +7202,9 @@ final class CameraEngine: NSObject, ObservableObject {
             var photo = try PhotoEncoder.encode(source: image, raw: capture.raw, look: capture.look,
                                                options: capture.options, context: context, location: capture.location,
                                                portraitMatte: orientedPortraitMatte, portraitMask: effectivePortraitMask,
-                                               portraitHeadMask: semanticPortraitMask)
+                                               portraitHeadMask: semanticPortraitMask,
+                                               systemHEIF: capture.nativePortraitFrontSensor ? nil : capture.processed,
+                                               captureDate: capture.capturedAt)
             tracePhotoPhase("encode-end")
             if capture.options.portraitMode {
                 var diagnostics = capture.diagnostics ?? PhotoCaptureDiagnostics()
@@ -7934,11 +8078,24 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
             let route = "\(state.device?.uniqueID ?? "")/\(state.readingsGeneration)/\(state.nativeFrontPhotoSensor)/\(CVPixelBufferGetWidth(pixelBuffer))x\(CVPixelBufferGetHeight(pixelBuffer))"
             portraitPreviewProcessor.submit(pixelBuffer, time: CACurrentMediaTime(), generation: state.portraitPreviewGeneration, route: route)
         }
-        if state.metering == .global, time - lastMeteringSampleTime >= 0.4 {
+        if state.metering == .global, time - lastMeteringSampleTime >= 0.2 {
             lastMeteringSampleTime = time
             let cropped = state.look.ratio.crop(PreviewRotation.image(source, quarterTurns: state.quarterTurns), landscape: state.look.landscape)
-            let mean = Imaging.meanLuminance(cropped, context: previewContext)
-            queue.async { self.updateGlobalMetering(mean: mean, time: time, deviceID: state.device?.uniqueID) }
+            if let device = state.device {
+                let analysis = GlobalMeteringPolicy.analyze(cropped, context: previewContext)
+                let sample = GlobalMeteringPolicy.Sample(mean: analysis.mean, shape: analysis.shape,
+                    exposureProduct: Double(device.iso) * device.exposureDuration.seconds / pow(max(Double(device.lensAperture), 0.1), 2),
+                    deviceBias: Double(device.exposureTargetBias), userBias: 0,
+                    time: time, route: "\(device.uniqueID)/\(device.activePrimaryConstituent?.uniqueID ?? device.uniqueID)/\(CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription))/\(state.look.ratio)/\(Int((device.videoZoomFactor * 100).rounded()))")
+                queue.async {
+                    guard self.previewRevision.canRender(state.revision) else { return }
+                    // 用户EV只在会话队列读取；取样亮度和曝光乘积来自同一轮预览回调。
+                    let current = GlobalMeteringPolicy.Sample(mean: sample.mean, shape: sample.shape,
+                        exposureProduct: sample.exposureProduct, deviceBias: sample.deviceBias,
+                        userBias: Double(self.exposureBias), time: sample.time, route: sample.route)
+                    self.updateGlobalMetering(current, deviceID: device.uniqueID, generation: state.readingsGeneration)
+                }
+            }
         }
         guard previewRevision.canRender(state.revision) else { return }
         // 先恢复方形像素，再按成片画幅裁切；滤镜处理和缩放仍等比进行。
@@ -8064,6 +8221,10 @@ extension CameraEngine: AVCapturePhotoCaptureDelegate {
             parameters.shootingType = capture.options.shootingType == "夜景" && !capture.options.nightMode
                 ? "普通" : capture.options.shootingType
             parameters.requestedExposureBiasEV = Double(self.exposureBias)
+            if self.metering == .global {
+                parameters.globalMeteringBiasEV = Double(self.globalBias)
+                parameters.deviceExposureBiasEV = Double(device.exposureTargetBias)
+            }
             parameters.requestedFormat = capture.options.format.rawValue
             parameters.requestedMegapixels = capture.options.resolution.rawValue
             parameters.flashMode = capture.flashMode.rawValue
@@ -8157,6 +8318,11 @@ extension CameraEngine: AVCapturePhotoCaptureDelegate {
                 if isRepresentativeNightFrame { capture.processed = data }
             } else if photo.isRawPhoto { capture.raw = data } else {
                 capture.processed = data
+                #if DEBUG
+                if capture.options.usesHDRHEIF, let callback = self.onProcessedHEIFHDRForTesting {
+                    DispatchQueue.main.async { callback(data) }
+                }
+                #endif
                 if capture.options.portraitMode, let matte = photo.portraitEffectsMatte {
                     let orientationNumber = photo.metadata[kCGImagePropertyOrientation as String] as? NSNumber
                     let orientation = CGImagePropertyOrientation(rawValue: orientationNumber?.uint32Value ?? 1) ?? .up

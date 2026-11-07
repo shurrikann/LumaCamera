@@ -25,27 +25,45 @@ struct PhotoEditorView: View {
                     .animation(AppTheme.frameAnimation, value: landscape)
                 if model.tool == .crop { cropFooter.transition(.opacity) }
                 else {
-                    Group {
-                        if model.tool == .filters { filterPanel.transition(.opacity) } else { adjustmentPanel.transition(.opacity) }
-                    }.frame(height: 190).padding(.horizontal, 10)
-                        .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: model.tool)
+                    ZStack {
+                        if model.editorControlsVisible {
+                            Group {
+                                if model.tool == .filters { filterPanel } else { adjustmentPanel }
+                            }.transition(.opacity)
+                        }
+                    }
+                    .frame(height: model.editorControlsHeight).padding(.horizontal, 10)
+                    .animation(AppTheme.popupAnimation, value: model.editorControlsVisible)
+                    .animation(AppTheme.popupAnimation, value: model.tool)
                     toolBar.padding(.horizontal, 12).transition(.opacity)
+                        #if DEBUG
+                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                            model.captureButtonFramesForTesting["photo.editor.toolbar"] = $0
+                        }
+                        #endif
                 }
             }.padding(.bottom, 10).background(AppTheme.popupColor)
                 .overlay(alignment: .top) { if model.tool != .crop { editorHeader.transition(.opacity) } }
                 .overlay { if model.resetVisible { resetDialog.transition(.opacity) }; if model.saveOptionsVisible { saveDialog.transition(.opacity) } }
+                .overlay {
+                    if model.filterNumericParameter != nil {
+                        FilterNumericInputDialog(model: model).environment(\.captureControlAngle, 0).transition(.opacity)
+                    }
+                }
+                .animation(AppTheme.popupAnimation, value: model.filterNumericParameter)
                 .toolbar(.hidden, for: .navigationBar)
                 .animation(AppTheme.popupAnimation, value: model.resetVisible)
                 .animation(AppTheme.popupAnimation, value: model.saveOptionsVisible)
                 .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: model.tool == .crop)
                 .onChange(of: controlAngle) { _, _ in model.setParameterEditing(false) }
-                .task { model.renderPreview(); filters.prepareThumbnails() }.onDisappear { model.cancelPreview() }
+                .task { model.reloadFilterEditingPreference(); model.renderPreview(); filters.prepareThumbnails() }.onDisappear { model.cancelPreview() }
                 .interactiveDismissDisabled(model.saving)
                 .allowsHitTesting(!model.saving)
                 .alert("图片编辑", isPresented: Binding(get: { model.message != nil }, set: { if !$0 { model.message = nil } })) {
                     Button("好", role: .cancel) { model.message = nil }
                 } message: { Text(model.message ?? "") }
-        }.tint(AppTheme.accent).preferredColorScheme(.dark)
+        }.ignoresSafeArea(.keyboard, edges: .bottom)
+            .tint(AppTheme.accent).preferredColorScheme(.dark)
             .presentationCornerRadius(0)
     }
     private var editorHeader: some View {
@@ -86,8 +104,8 @@ struct PhotoEditorView: View {
     private var toolBar: some View {
         HStack(spacing: 24) {
             toolButton(.crop, icon: "crop") { model.enterCrop() }
-            toolButton(.filters, icon: "camera.filters") { model.tool = .filters }
-            toolButton(.adjustments, icon: "slider.horizontal.3") { model.tool = .adjustments }
+            toolButton(.filters, icon: "camera.filters") { model.toggleEditorControls(.filters) }
+            toolButton(.adjustments, icon: "slider.horizontal.3") { model.toggleEditorControls(.adjustments) }
             Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); model.presentSaveOptions() } label: {
                 ZStack {
                     Circle().fill(AppTheme.accent)
@@ -99,12 +117,12 @@ struct PhotoEditorView: View {
     }
     private func toolButton(_ tool: PhotoEditorTool, icon: String, action: @escaping () -> Void) -> some View {
         Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); action() } label: {
-            Image(systemName: icon).rotatingCaptureContent().font(.system(size: 20)).foregroundStyle(model.tool == tool ? AppTheme.accent : .white.opacity(0.8))
+            Image(systemName: icon).rotatingCaptureContent().font(.system(size: 20)).foregroundStyle(model.tool == tool && model.editorControlsVisible ? AppTheme.accent : .white.opacity(0.8))
                 .frame(width: 44, height: 44).modifier(PopupSurface(radius: 22, glass: true))
-                .overlay(Circle().stroke(model.tool == tool ? AppTheme.accent.opacity(0.65) : .clear, lineWidth: 1))
+                .overlay(Circle().stroke(model.tool == tool && model.editorControlsVisible ? AppTheme.accent.opacity(0.65) : .clear, lineWidth: 1))
                 .contentShape(Circle())
                 .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: model.tool)
-        }.accessibilityLabel("照片编辑" + tool.rawValue).accessibilityAddTraits(model.tool == tool ? .isSelected : [])
+        }.accessibilityLabel("照片编辑" + tool.rawValue).accessibilityAddTraits(model.tool == tool && model.editorControlsVisible ? .isSelected : [])
     }
     private var filterPanel: some View {
         VStack(spacing: 10) {
@@ -114,7 +132,10 @@ struct PhotoEditorView: View {
                         Text(category.rawValue).rotatingCaptureContent().font(.system(size: 12)).foregroundStyle(filters.category == category ? AppTheme.accent : .white.opacity(0.55))
                     }
                 }
-                Spacer()
+                Spacer(minLength: 0)
+                Button { model.closeEditorControls() } label: {
+                    Image(systemName: "xmark").frame(width: 28, height: 32)
+                }.accessibilityLabel("收起滤镜列表")
             }.padding(.horizontal, 10)
             ScrollViewReader { proxy in
                 ScrollView(.horizontal) {
@@ -137,7 +158,25 @@ struct PhotoEditorView: View {
             }
         }.buttonStyle(.plain)
     }
-    private var adjustmentPanel: some View {
+    @ViewBuilder private var adjustmentPanel: some View {
+        if model.filterDialPadEnabled {
+            VStack(spacing: 12) {
+                FilterAdjustmentTabs(model: model, onClose: { model.closeEditorControls() })
+                FilterDialEditor(model: model, tab: model.filterEditorTab)
+            }
+            .padding(.horizontal, 6)
+            .environment(\.captureControlAngle, 0)
+            .accessibilityIdentifier("photo.editor.sharedFilterControls")
+            #if DEBUG
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                model.captureButtonFramesForTesting["photo.editor.controls"] = $0
+            }
+            #endif
+        } else {
+            legacyAdjustmentPanel
+        }
+    }
+    private var legacyAdjustmentPanel: some View {
         VStack(spacing: 12) {
             HStack {
                 ForEach(FilterEditorTab.allCases) { tab in
@@ -147,6 +186,9 @@ struct PhotoEditorView: View {
                             .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: model.filterTab)
                     }
                 }
+                Button { model.closeEditorControls() } label: {
+                    Image(systemName: "xmark").font(.system(size: 14)).frame(width: 28, height: 32)
+                }.accessibilityLabel("收起滤镜参数")
             }
             HStack(spacing: 8) {
                 ScrollView(.horizontal) {

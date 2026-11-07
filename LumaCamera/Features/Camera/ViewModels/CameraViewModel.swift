@@ -135,6 +135,8 @@ final class CameraViewModel: ObservableObject {
                 cinematicVideoEnabled = false
             }
             compatibleSubmodeLensIDs = nil
+            // Pro测光选择只归属照片HEIF Pro；进入视频不沿用全局/点测光。
+            camera.setMetering(effectiveMetering)
             reconcileNightMode()
         }
     }
@@ -1256,6 +1258,10 @@ final class CameraViewModel: ObservableObject {
                 return
             }
             if photoFormat != .heifPro, toolbarPanel == .tone { toolbarPanel = nil }
+            // 切出Pro立即归还系统测光，清掉全局补偿；保留Pro选择供切回时恢复。
+            if captureKind == .photo, (oldValue == .heifPro) != (photoFormat == .heifPro) {
+                camera.setMetering(effectiveMetering)
+            }
             if !filtersEnabled && panel == .film { panel = nil }
             updateLook()
             synchronizeLiveAudio()
@@ -1511,7 +1517,13 @@ final class CameraViewModel: ObservableObject {
         }
     }
     @Published var tone = PhotoTone.natural { didSet { updateLook() } }
-    @Published var metering = CameraMetering.system { didSet { camera.setMetering(metering) } }
+    @Published var metering = CameraMetering.system { didSet { camera.setMetering(effectiveMetering) } }
+    /// 选中值与生效值分开：非HEIF Pro格式始终使用系统测光，不改M挡手动曝光参数。
+    var effectiveMetering: CameraMetering { captureKind == .photo && photoFormat == .heifPro ? metering : .system }
+    /// 全局测光时主读数显示设备总补偿；滑条仍操作用户EV，分项在测光面板明确显示。
+    var usesGlobalMeteringReadout: Bool { effectiveMetering == .global && camera.globalMeteringReadout.automatic }
+    var displayedExposureBias: Double { usesGlobalMeteringReadout ? camera.globalMeteringReadout.actual : ev }
+
     var photoOptions: PhotoOptions {
         let shootingType: String
         if burstCaptureActive {
@@ -3976,7 +3988,7 @@ final class CameraViewModel: ObservableObject {
         // A user may lock a target on the first ready frame before this deferred
         // restoration runs. Do not turn that new lock back into automatic focus/metering.
         if !camera.targetFocusLockActive, !camera.smartFocusHolding { camera.setFocus(position: manual && manualFocus ? focus : nil) }
-        if !camera.targetLockActive { camera.setMetering(metering) }
+        if !camera.targetLockActive { camera.setMetering(effectiveMetering) }
     }
 
     #if DEBUG
@@ -5164,7 +5176,7 @@ final class CameraViewModel: ObservableObject {
         applyExposure()
         applyWhiteBalance()
         camera.setFocus(position: manualFocus ? focus : nil)
-        camera.setMetering(metering)
+        camera.setMetering(effectiveMetering)
         applySlowShutterExposurePolicy()
     }
 

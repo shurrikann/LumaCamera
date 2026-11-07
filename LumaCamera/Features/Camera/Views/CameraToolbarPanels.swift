@@ -218,7 +218,6 @@ extension CameraView {
                 }
             }
             Divider().overlay(.white.opacity(0.15))
-            panelHeading("测光")
             HStack(spacing: 16) {
                 ForEach(CameraMetering.allCases) { metering in
                     Button { model.metering = metering } label: {
@@ -231,7 +230,6 @@ extension CameraView {
                     }.buttonStyle(.plain)
                 }
             }
-
         }
     }
 

@@ -4,28 +4,41 @@ import SwiftUI
 import UIKit
 
 @MainActor
-final class PhotoEditorViewModel: ObservableObject {
+final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
     #if DEBUG
     var editingRulerFrameForTesting: CGRect = .zero
     var photoViewportFrameForTesting: CGRect = .zero
     var parameterHintFrameForTesting: CGRect = .zero
     var fadeButtonFrameForTesting: CGRect = .zero
+    var filterDialPadFrameForTesting: CGRect = .zero
+    var captureButtonFramesForTesting: [String: CGRect] = [:]
     #endif
     let session: PhotoEditSession
     private let library: PhotoLibraryViewModel
+    private let preferencesStore: CapturePreferencesStore
+    @Published private(set) var filterDialPadEnabled: Bool
+    @Published private(set) var filterNumericParameter: FilterParameter?
+    @Published var filterNumericDraft = ""
+    private var filterNumericBinding: Binding<Double>?
+    var filterEditorTab: FilterEditorTab {
+        get { filterTab }
+        set { filterTab = newValue }
+    }
+    var filterDialControlsEnabled: Bool { !saving && !resetVisible && !cancelled }
     @Published var adjustments: PhotoAdjustments {
         didSet {
             if tool == .crop { var old = oldValue; old.crop = adjustments.crop; if old == adjustments { return } }
             renderPreview(structural: oldValue.filterID != adjustments.filterID || oldValue.quarterTurns != adjustments.quarterTurns)
         }
     }
-    @Published var tool = PhotoEditorTool.filters { didSet { setParameterEditing(false); renderPreview(structural: true) } }
+    @Published var tool = PhotoEditorTool.filters { didSet { dismissFilterNumericInput(); setParameterEditing(false); renderPreview(structural: true) } }
+    @Published private(set) var editorControlsVisible = true
     @Published var preservesLive = true
     @Published var selectedParameter = FilterParameter.temperature
     private var cropEntry: PhotoAdjustments?
     private var toolBeforeCrop = PhotoEditorTool.filters
     @Published var filterTab = FilterEditorTab.color {
-        didSet { if !filterTab.parameters.contains(selectedParameter) { selectedParameter = filterTab.parameters.first(where: { $0 != .strength }) ?? .temperature } }
+        didSet { if filterTab != oldValue { dismissFilterNumericInput() }; if !filterTab.parameters.contains(selectedParameter) { selectedParameter = filterTab.parameters.first(where: { $0 != .strength }) ?? .temperature } }
     }
     @Published private(set) var preview: UIImage?
     @Published private(set) var saving = false
@@ -58,8 +71,10 @@ final class PhotoEditorViewModel: ObservableObject {
             self.preview = image
         }
     }
-    init(session: PhotoEditSession, library: PhotoLibraryViewModel) {
+    init(session: PhotoEditSession, library: PhotoLibraryViewModel, preferencesStore: CapturePreferencesStore = CapturePreferencesStore()) {
         self.session = session; self.library = library
+        self.preferencesStore = preferencesStore
+        self.filterDialPadEnabled = preferencesStore.load().filterDialPad
         var initial = session.initialAdjustments
         // Migrate the old editor's three controls into the shared filter recipe.
         initial.filterAdjustments[.exposure] += initial.exposure
@@ -72,7 +87,7 @@ final class PhotoEditorViewModel: ObservableObject {
     var style: FilmStyle { FilmStyle(rawValue: adjustments.filterID) ?? .original }
     func selectFilter(_ style: FilmStyle) {
         guard !saving, style != self.style, FilmStyle.availableStyles.contains(style) else { return }
-        setParameterEditing(false); dismissReset(); resetRevision &+= 1
+        dismissFilterNumericInput(); setParameterEditing(false); dismissReset(); resetRevision &+= 1
         recipes[adjustments.filterID] = SavedFilterSettings(intensity: adjustments.filterIntensity, adjustments: adjustments.filterAdjustments)
         let saved = recipes[style.rawValue] ?? SavedFilterSettings()
         var next = adjustments; next.filterID = style.rawValue; next.filterIntensity = saved.intensity; next.filterAdjustments = saved.adjustments
@@ -81,10 +96,59 @@ final class PhotoEditorViewModel: ObservableObject {
     func parameterBinding(_ parameter: FilterParameter) -> Binding<Double> {
         let revision = resetRevision, filter = adjustments.filterID
         return Binding(get: { [self] in parameter == .strength ? (style == .original ? 0 : adjustments.filterIntensity * 100) : adjustments.filterAdjustments[parameter] }, set: { [self] value in
-            guard !saving, !resetVisible, revision == resetRevision, filter == adjustments.filterID else { return }
+            guard !saving, !cancelled, !resetVisible, revision == resetRevision, filter == adjustments.filterID else { return }
             if parameter == .strength { if style != .original { adjustments.filterIntensity = parameter.clamped(value) / 100 } }
             else { adjustments.filterAdjustments[parameter] = value }
         })
+    }
+    // 以下适配只操作本次编辑配方，不写CameraViewModel或相机FilterSettingsStore。
+    func reloadFilterEditingPreference() {
+        let enabled = preferencesStore.load().filterDialPad
+        if enabled != filterDialPadEnabled { dismissFilterNumericInput(); filterDialPadEnabled = enabled }
+    }
+    func filterParameterBinding(_ parameter: FilterParameter) -> Binding<Double> { parameterBinding(parameter) }
+    func filterParameterText(_ parameter: FilterParameter) -> String { parameterText(parameter) }
+    func setFilterParameterEditing(_ editing: Bool) { setParameterEditing(editing) }
+    func filterParameterPairBinding(_ x: FilterParameter, _ y: FilterParameter) -> Binding<CGPoint> {
+        let revision = resetRevision, filter = adjustments.filterID, tab = filterTab
+        return Binding(get: { [self] in CGPoint(x: adjustments.filterAdjustments[x], y: adjustments.filterAdjustments[y]) },
+                       set: { [self] point in
+            guard filterDialControlsEnabled, revision == resetRevision, filter == adjustments.filterID, tab == filterTab,
+                  x != .strength, y != .strength, point.x.isFinite, point.y.isFinite else { return }
+            var next = adjustments
+            next.filterAdjustments[x] = Double(point.x); next.filterAdjustments[y] = Double(point.y)
+            if next != adjustments { adjustments = next }
+        })
+    }
+    func resetCurrentFilterTab() {
+        guard filterDialControlsEnabled else { return }
+        dismissFilterNumericInput(); setParameterEditing(false); resetRevision &+= 1
+        var next = adjustments
+        for parameter in filterTab.parameters {
+            if parameter == .strength { next.filterIntensity = parameter.defaultValue / 100 }
+            else { next.filterAdjustments[parameter] = parameter.defaultValue }
+        }
+        adjustments = next
+    }
+    func presentFilterNumericInput(_ parameter: FilterParameter) {
+        guard filterDialPadEnabled, filterDialControlsEnabled, tool == .adjustments,
+              !(parameter == .strength && style == .original) else { return }
+        setParameterEditing(false)
+        let binding = parameterBinding(parameter)
+        filterNumericBinding = binding; filterNumericDraft = String(binding.wrappedValue)
+        filterNumericParameter = parameter
+    }
+    var filterNumericValue: Double? { filterNumericParameter?.inputValue(from: filterNumericDraft) }
+    func restoreFilterNumericDraft() {
+        guard let parameter = filterNumericParameter else { return }
+        filterNumericDraft = String(parameter.defaultValue)
+    }
+    func confirmFilterNumericInput() {
+        guard let value = filterNumericValue, let binding = filterNumericBinding else { return }
+        binding.wrappedValue = value; dismissFilterNumericInput()
+    }
+    func dismissFilterNumericInput() {
+        filterNumericParameter = nil; filterNumericBinding = nil; filterNumericDraft = ""
     }
     func parameterText(_ parameter: FilterParameter) -> String { parameter == .strength && style == .original ? "—" : parameter.text(parameterBinding(parameter).wrappedValue) }
     func setParameterEditing(_ active: Bool) {
@@ -92,16 +156,34 @@ final class PhotoEditorViewModel: ObservableObject {
         editingParameter = active; previewGate.setInteractive(active)
         if !active { renderPreview() }
     }
-    func presentReset() { guard !saving else { return }; setParameterEditing(false); resetVisible = true }
+    func presentReset() { guard !saving else { return }; dismissFilterNumericInput(); setParameterEditing(false); resetVisible = true }
     func dismissReset() { resetVisible = false }
     func resetCurrentFilter() {
         guard !saving else { return }
-        setParameterEditing(false); dismissReset(); resetRevision &+= 1
+        dismissFilterNumericInput(); setParameterEditing(false); dismissReset(); resetRevision &+= 1
         var next = adjustments; next.filterIntensity = 0.8; next.filterAdjustments = FilterAdjustments()
         adjustments = next
     }
+    /// 底部工具再次点击即可收起；只隐藏控件，不丢弃当前照片配方。
+    func toggleEditorControls(_ requested: PhotoEditorTool) {
+        guard !saving, requested != .crop else { return }
+        dismissFilterNumericInput(); setParameterEditing(false)
+        if tool == requested { editorControlsVisible.toggle() }
+        else { tool = requested; editorControlsVisible = true }
+    }
+    func closeEditorControls() {
+        guard !saving else { return }
+        dismissFilterNumericInput(); setParameterEditing(false); editorControlsVisible = false
+    }
+    var editorControlsHeight: CGFloat {
+        guard editorControlsVisible else { return 0 }
+        guard filterDialPadEnabled else { return 190 }
+        return tool == .filters ? 160 : 290
+    }
     func enterCrop() {
         guard !saving, tool != .crop else { return }
+        // 裁剪与滤镜调节互斥；完成或取消裁剪后也不自动重新展开旧面板。
+        closeEditorControls()
         toolBeforeCrop = tool; cropEntry = adjustments; tool = .crop
     }
     func finishCrop(commit: Bool) {
@@ -145,11 +227,11 @@ final class PhotoEditorViewModel: ObservableObject {
         if tool == .crop { rendered.crop = .full }
         renderer.submit(Request(adjustments: rendered, revision: revision))
     }
-    func presentSaveOptions() { guard !saving else { return }; setParameterEditing(false); dismissReset(); saveOptionsVisible = true }
+    func presentSaveOptions() { guard !saving else { return }; dismissFilterNumericInput(); setParameterEditing(false); dismissReset(); saveOptionsVisible = true }
     func dismissSaveOptions() { saveOptionsVisible = false }
     func save(asCopy: Bool = false, completion: @escaping (PhotoEditResult) -> Void) {
         guard !saving, library.beginEditing() else { return }
-        setParameterEditing(false); dismissReset(); dismissSaveOptions(); saving = true
+        dismissFilterNumericInput(); setParameterEditing(false); dismissReset(); dismissSaveOptions(); saving = true
         let library = library
         let finish: (Result<PhotoEditResult, Error>) -> Void = { [weak self] result in
             library.endEditing()
@@ -162,5 +244,5 @@ final class PhotoEditorViewModel: ObservableObject {
         else { session.save(adjustments, completion: finish) }
     }
         
-    func cancelPreview() { cancelled = true; previewGate.setInteractive(false); _ = previewGate.advance(); renderer.cancel() }
+    func cancelPreview() { dismissFilterNumericInput(); editingParameter = false; cancelled = true; previewGate.setInteractive(false); _ = previewGate.advance(); renderer.cancel() }
 }

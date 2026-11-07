@@ -1,6 +1,36 @@
 import SwiftUI
 import UIKit
 
+/// 相机与照片编辑共用控件契约；只转发各自配方，不共享拍摄/编辑状态。
+@MainActor
+protocol FilterEditingControls: ObservableObject {
+    var style: FilmStyle { get }
+    var filterEditorTab: FilterEditorTab { get set }
+    var filterDialPadEnabled: Bool { get }
+    var filterDialControlsEnabled: Bool { get }
+    var filterNumericParameter: FilterParameter? { get }
+    var filterNumericDraft: String { get set }
+    var filterNumericValue: Double? { get }
+    func filterParameterBinding(_ parameter: FilterParameter) -> Binding<Double>
+    func filterParameterPairBinding(_ x: FilterParameter, _ y: FilterParameter) -> Binding<CGPoint>
+    func filterParameterText(_ parameter: FilterParameter) -> String
+    func setFilterParameterEditing(_ editing: Bool)
+    func resetCurrentFilterTab()
+    func presentFilterNumericInput(_ parameter: FilterParameter)
+    func dismissFilterNumericInput()
+    func restoreFilterNumericDraft()
+    func confirmFilterNumericInput()
+    #if DEBUG
+    var filterDialPadFrameForTesting: CGRect { get set }
+    var captureButtonFramesForTesting: [String: CGRect] { get set }
+    #endif
+}
+
+extension CameraViewModel: FilterEditingControls {
+    var filterDialPadEnabled: Bool { preferences.filterDialPad }
+    var filterDialControlsEnabled: Bool { filterControlsEnabled && !camera.videoBusy && !filterResetVisible }
+}
+
 /// 调色盘仅替换编辑控件；参数 key、渲染与旧版滑条共用，设置默认关闭。
 struct FilterDialLayout {
     let x: FilterParameter
@@ -29,11 +59,11 @@ struct FilterDialLayout {
     }
 }
 
-struct FilterDialEditor: View {
-    @ObservedObject var model: CameraViewModel
+struct FilterDialEditor<Model: FilterEditingControls>: View {
+    @ObservedObject var model: Model
     let tab: FilterEditorTab
     private var layout: FilterDialLayout { .layout(for: tab) }
-    private var enabled: Bool { model.filterControlsEnabled && !model.camera.videoBusy && !model.filterResetVisible }
+    private var enabled: Bool { model.filterDialControlsEnabled }
     private var bottomParameter: FilterParameter { layout.bottom.first ?? .fade }
 
     var body: some View {

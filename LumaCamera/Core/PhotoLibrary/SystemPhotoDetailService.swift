@@ -31,7 +31,11 @@ extension SystemPhotoLibraryService: PhotoDetailService {
                 let hasRAW = resources.contains { PhotoResourceKind.isRAW(typeIdentifier:$0.uniformTypeIdentifier,filename:$0.originalFilename) }
                 rows.append(.init(title:"RAW底片",value:hasRAW ? "已附带，可重新显影" : "当前资产未附带"))
             }
-            let diagnostics = PhotoCaptureDiagnosticsStore.shared.load(assetID: id)
+            var diagnostics = PhotoCaptureDiagnosticsStore.shared.load(assetID: id)
+            // 仅修复延迟HDR资产：历史记录可能只有快门时EV，必须用当前最终文件补齐成片参数。
+            if diagnostics?.rows.contains(where: { $0.title == "HDR处理" && $0.value == "系统延迟融合完成" }) == true {
+                diagnostics?.parameters?.updateEXIF(properties)
+            }
             if let diagnostics {
                 rows = PhotoCaptureDiagnostics.merged(rows, with: diagnostics.detailRows)
             } else { rows.append(.init(title: "拍摄诊断", value: "未知，未记录拍摄时信息")) }

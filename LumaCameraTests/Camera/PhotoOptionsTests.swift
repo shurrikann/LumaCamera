@@ -393,9 +393,16 @@ final class PhotoOptionsTests: XCTestCase {
         XCTAssertEqual(Imaging.meanLuminance(white.composited(over: black), context: context), 0.5, accuracy: 0.02)
     }
     func testRAWPairPreservesDNGBytesAndJPEGPrimary() throws {
+        let date = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-11-06T12:34:56Z")).addingTimeInterval(0.789)
+        XCTAssertEqual(PhotoEncoder.captureFilenamePrefix(date: date, timeZone: TimeZone(secondsFromGMT: 8 * 3600)!), "luma-20261106-203456-789")
         let raw = Data([0x49, 0x49, 0x2A, 0, 8, 0, 0, 0])
-        let photo = try PhotoEncoder.encode(source: source, raw: raw, look: CaptureLook(), options: PhotoOptions(format: .rawJPEG), context: context)
+        let photo = try PhotoEncoder.encode(source: source, raw: raw, look: CaptureLook(), options: PhotoOptions(format: .rawJPEG), context: context, captureDate: date)
         XCTAssertEqual(photo.resources.count, 2)
+        let prefix = PhotoEncoder.captureFilenamePrefix(date: date)
+        XCTAssertEqual(photo.resources[0].filename, prefix + ".jpg")
+        XCTAssertEqual(photo.resources[1].filename, prefix + ".dng")
+        let names = (0..<1000).map { PhotoEncoder.captureFilenamePrefix(date: date.addingTimeInterval(Double($0) / 1000)) }
+        XCTAssertEqual(Set(names).count, 1000, "毫秒时间戳不应在连续毫秒内重名")
         XCTAssertEqual(photo.resources[1].data, raw)
         XCTAssertTrue(photo.resources[1].alternate)
         XCTAssertTrue(photo.resources[0].filename.hasSuffix(".jpg"))

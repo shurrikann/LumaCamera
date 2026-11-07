@@ -1,3 +1,62 @@
+## 2026-11-07 测光读数移入取景预览
+
+取景器按当前生效的测光方式显示三行 EV 读数。HEIF Pro 的全局测光生效时，读数出现在预览左上角，有直方图时并排显示在它右侧，相距 6 点。两个视图各自旋转内容，使用固定占位保持直方图原有位置。测光值使用现有设备读回和实时目标，全手动时显示建议。Pro 影调弹窗中的读数已移除。
+
+## 2026-11-07 实时全局测光覆盖早先“场景不变完全冻结”规则
+
+- 用户确认“测光读数实时变化，设备曝光短暂稳定后更新”。`GlobalMeteringPolicy.target(for:)`独立于去抖，在每个有效样本上计算绝对目标。`GlobalMeteringReadout.target`只用于实时显示，不冒充已应用`globalBias`；照片快照/EXIF继续记录应用分量/设备实际值。采样间隔0.4s改为0.2s，按实际预览出帧允许最多5Hz，低帧率预览不承诺5Hz。
+- 全手动使用`manualSample`将预览换算为实际拍摄参数后立即输出建议，移除其原候选/冷却等待。快门/ISO/WB等手动设置的控制方式保持原样。
+- 设备侧保留候选稳定判断，新增候选均值漂移<0.2档要求，3样本/>=0.35s；isAdjustingExposure/WB/Focus只把条件延长为4样本/>=0.55s，不再一出现true就取消候选。数据本身变化仍重启候选，因此不是遇到系统调整标志就强行更新。
+- 同一场景的新目标与实际全局分量差>=0.1EV也可继续跟进。`appliedCorrection`为`current+clamp((freshTarget-current)*0.5,-0.5,0.5)`：平滑最新绝对目标，不积累每轮log亮度误差。补偿应用后冷却0.45s并重建观察基准，冷却期间明显构图变化不直接吞作旧基准。回调丢失4s解除等待，但同场景保持不重试，换场景/重置后可恢复。
+- 当前是有死区/去抖的曝光反馈，不应再称为“完全无闭环”或“只在换场景才重算”。达到死区停止下发，设备完成回调/预览读回刷新显示。HDR/夜景等独立曝光规划和非Pro测光限制未扩展。
+
+## 2026-11-07 场景触发全局测光
+
+- 新增独立`GlobalMeteringPolicy`，不复用夜景/慢门/HDR规划。预览每0.4s最多一次、在滤镜和影调前按当前成片画幅采集线性sRGB面积平均亮度及8×8归一化结构。用实际ISO×曝光时间/真实光圈²辅助区分场景变化与曝光变化，镜头/主供图镜头、格式、比例、倍率变化作为新路由。
+- 状态为场景候选、稳定、应用中、冷却/重新建基准。候选至少3次且跨度>=0.75s；AE/WB/AF正在调整、拍摄中或曝光锁定时不应用。场景判定门限：曝光归一化亮度差0.8档或结构均值差0.35；候选稳定距离<判定门限的0.35。上述都是应用经验参数，不是官方规格。
+- 自动曝光目标：`neutralMean=mean/pow(2, deviceBias)`，`globalTarget=clamp(log2(0.18/neutralMean),-2,2)`，与当前实际全局分量差<0.1EV时不下发。总目标为用户EV+globalTarget，按设备上下限夹紧，记录实际应用的全局分量。没有`globalBias += adjustment`或每轮连续追灰；也没有新增另一套高光保护控制器。
+- 官方`setExposureTargetBias`完成回调返回后冷却1.2s，再用稳定新帧重建观察基准，避免ISP非线性响应再次触发补偿；回调丢失4s后只解除等待/重建基准。版本号隔离旧格式/旧用户参数回调。完成回调与每0.4s的只读刷新共同更新设备bias显示，不把请求值当读回值。
+- 全手动只生成建议。`manualSample`按实际成片ISO/快门/真实光圈相对预览的曝光乘积换算亮度，bias不当作custom模式的实际画面增益；参数变化使候选失效并重新测算，不需要画面内容先变化。建议不下发设备、不抵消手动曝光、不写入成片EXIF。白平衡/色调或显式对焦变更只重置测光观察，不改变其他曝光/渲染实现。
+- `GlobalMeteringReadout`单独承载用户EV、应用分量、设备读回及手动建议。测光弹窗同一行常驻，避免切测光方式改变高度；自动曝光的主EV读数注明总EV，滑条仍编辑用户EV。`PhotoCaptureParameters`新增可选globalMeteringBiasEV/deviceExposureBiasEV，兼容旧记录；exifExposureBiasEV仍从文件读取。
+- 平台依据：[exposureTargetBias](https://developer.apple.com/documentation/avfoundation/avcapturedevice/exposuretargetbias)明确custom模式bias只影响测光，不改变实际曝光；[setExposureTargetBias](https://developer.apple.com/documentation/avfoundation/avcapturedevice/setexposuretargetbias(_:completionhandler:))提供设置生效回调。预览灰度推算及场景判断属于本项目实现，不宣称能线性还原ISP前的照度或保证每种合成流程EXIF精确等于请求值。
+
+## 2026-11-07 当前结构：撤回24MP延迟HDR
+
+普通HEIF HDR重新使用既有AVCapturePhoto即时交付→PhotoEncoder→普通PhotoLibraryService保存。标准档请求<=16MP最大原生尺寸（本机4032×3024），高档位保留原48MP请求逻辑。移除独立24MP契约/保存器/元数据缓存、专用代理标记与等待UI条件，图库保存、分享及编辑恢复回退前结构；不启用或恢复旧24MP待处理任务，不改既有用户资产。
+
+保留普通HDR无裁切原生HEIF直通、裁切SDR/HDR配对与EXIF、Date型快门时间及luma时间命名；保留effectiveMetering的仅HEIF Pro作用域。历史24MP资产在SystemPhotoDetailService中的EXIF补齐独立保留。下方24MP结构条目均为历史说明。
+
+## 2026-11-07 延迟HDR无裁切快路径与最终元数据复用
+
+HEIFHDRDeferredPhoto.requiresCrop以真实PixelWidth/PixelHeight及EXIF方向建立画幅几何，不创建照片像素图。独立保存器waitForFinalInput同时返回PHContentEditingInput和已经读取的最终属性；无裁切时到此结束，不再Data(contentsOf:)并构造双图。需要裁切的画幅保持原SDR/HDR配对及PhotoKit调整提交。finalProperties优先单次消费本次完成时的元数据（最多16项、10秒），无缓存仍走真实资源读取；缓存不进入普通浏览服务，不改变其他照片格式和编辑流程。
+
+CameraViewModel.effectiveMetering区分Pro保存的选择与当前生效测光。仅photo＋heifPro采用metering，其余system。格式边界、拍照/视频、参数恢复和手动值应用均传effectiveMetering，调用既有setMetering清globalBias并恢复硬件请求，不改全局测光算法及界面布局。
+
+## 延迟HDR最终参数与设置记录（2026-11-06补充）
+
+HEIFHDRDeferredPhotoSaver.finalProperties读取已完成资产的当前全尺寸文件。SystemPhotoLibraryService仅在延迟HDR分支用其EXIF更新PhotoCaptureParameters与成片行；附加信息读取失败不把已完成保存判为失败。SystemPhotoDetailService只对已标记“系统延迟融合完成”的历史资产补齐真实EXIF，保持设置EV不变，不写原文件。界面仍沿用原布局。PhotoKit的photoProxy最终名称在本机观测为IMG，不保证originalFilename保留；当前不为命名自动重导入/删除资产。
+
+## 普通HEIF HDR延迟处理（2026-11-06）
+
+- 新增独立契约HEIFHDRDeferredPhoto和保存器HEIFHDRDeferredPhotoSaver，不抽取其他功能为共用框架。普通HEIF HDR标准档、后置、自动曝光、无额外图像处理且有图库读权限时，逐路由核对5712×4284和autoDeferredPhotoDeliverySupported。微距constituent交付保持原路线。HEIF Pro/RAW等不走本功能。
+- CameraEngine在提交请求前按需配置autoDeferredPhotoDeliveryEnabled，连续同类请求不反复配置；24MP使用quality。接收didFinishCapturingDeferredPhotoProxy并交付专用标记，代理不通过PhotoEncoder重新编码。上下文及硬件任务按既有顺序清空。跨处理类型时不在未完成原生请求上改动管线。
+- CapturedPhoto携带独立deferredHEIFHDR描述，PhotoResource标记deferredPhotoProxy。SystemPhotoLibraryService只对该分支转交独立保存器，按.photoProxy原样导入，同一任务UUID复用同一资产；普通PhotoLibraryStagedResources拒绝误导入代理。shareResources不暴露代理，PhotoReview和beginEditing在等待期间不启动编辑/分享。
+- 保存成功回调延后到最终全尺寸输入可读，并完成画幅处理。使用requestContentEditingInput，检查实际文件尺寸而非仅PHAsset像素值；有界等待，超时取消读取、不取消系统处理、不删除资产。导入成功的资产ID与描述持久化，重试及重启恢复不再次导入。图像读取/编码放后台。
+- 4:3未裁切直接保留系统文件。其他比例裁切系统最终SDR/HDR配对，不改曝光或降噪，不降到12MP；通过支持HEIC的PHContentEditingOutput对原资产写画幅调整，保留系统原始资源，不另建第二张。独立封装ISO/Apple兼容辅助图。HEIC编辑输出不支持时保留原资产并提供重试错误，绝不静默改成JPG。
+- 读取权限不足时拍摄阶段使用旧即时HEIF，不为本功能新增授权弹窗。前置、手动曝光、特殊子模块与图像处理暂不启用24MP。原有预览显示策略、HEIF Pro和其他功能布局不变。
+
+## 拍摄文件命名（2026-11-06）
+
+CaptureContext保存Date类型capturedAt并传给PhotoEncoder.encode。编码时统一调用captureFilenamePrefix，以POSIX locale、Gregorian日历、当前时区生成`luma-yyyyMMdd-HHmmss-SSS`。缺少显式快门时间的合成等路径优先解析源EXIF DateTimeOriginal/OffsetTimeOriginal/SubsecTimeOriginal，无有效时间才回退当前时刻。HEIF直通与处理后文件共用该前缀；RAW辅助DNG同名不同扩展，Live处理器按静图基名生成MOV；另存无滤镜原片加-original以免同扩展文件重名。不改文件像素或EXIF时间。毫秒减少正常连拍重名，但不保证重复处理同一时刻可生成唯一名称。
+
+## 普通HEIF保留系统HDR资源（2026-11-06，最新）
+
+CameraEngine.finishCapture通过PhotoEncoder.encode的可选systemHEIF参数提供同次AVCapturePhoto.fileDataRepresentation资源；前置nativePortraitFrontSensor需额外画幅修正时不传入，保持原路径。普通HEIF HDR、无图像调整/边框/人像/夜景/Live/高动态，且源画幅无需裁切时，PhotoEncoder仅生成预览，原文件字节直接作为成片，保留系统原生SDR、增益图、色彩与显示适配、实际传感器输出尺寸及EXIF方向。普通12MP资源可能是3024×4032，而非再次缩到3000×4000。
+
+需裁切的普通HEIF同样从原资源读取SDR基底，和HDR图同步缩放/裁切、统一输出方向元数据；编码使用源图已有contentHeadroom，不用孤立最大RGB重新替代它。没有合适系统资源或涉及其它图像处理时安全回退既有编码；HEIF Pro等分支保持不变。DEBUG同源回调只提供测试原始Data，不保存相册。
+
+官方依据：[AVCapturePhoto.fileDataRepresentation](https://developer.apple.com/documentation/avfoundation/avcapturephoto/filedatarepresentation())、[SDR/HDR配对编辑](https://developer.apple.com/videos/play/wwdc2024/10177/)。具体直通条件为项目策略，不保证不同App的曝光和影调相同。
+
 ## HDR源增益保留与编码（2026-11-06，覆盖先SDR后猜测扩展的旧路径）
 
 `Imaging.filteredHDR`用最大RGB通道软肩生成参考白范围内的SDR基底（knee=0.8，target=1），再处理原有影调、滤镜及参数。`hdrRestoreSourceGain`以同一源图最大通道/基底最大通道的逐像素比例恢复高光；不再使用hdrExpand推测增益。最终SDR基底直接复用处理结果，不再二次压肩。照片参数和曝光采集路线不变。

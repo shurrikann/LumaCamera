@@ -9,11 +9,31 @@ enum PhotoEncodingError: LocalizedError {
 }
 enum PhotoEncoder {
     static func encode(source: CIImage, raw: Data?, look: CaptureLook, options: PhotoOptions, context: CIContext, location: PhotoLocation? = nil,
-                       portraitMatte: AVPortraitEffectsMatte? = nil, portraitMask: CIImage? = nil, portraitHeadMask: CIImage? = nil) throws -> CapturedPhoto {
+                       portraitMatte: AVPortraitEffectsMatte? = nil, portraitMask: CIImage? = nil, portraitHeadMask: CIImage? = nil,
+                       systemHEIF: Data? = nil, captureDate: Date? = nil) throws -> CapturedPhoto {
         defer { context.clearCaches() }
         guard source.extent.width.isFinite, source.extent.height.isFinite,
               source.extent.width > 0, source.extent.height > 0 else { throw PhotoEncodingError.encoding }
         let look = look.forOutput(options.format)
+        let prefix = captureFilenamePrefix(date: captureDate ?? sourceCaptureDate(source) ?? Date())
+        // 普通HEIF HDR优先保留同次系统资源的SDR/HDR配对与显示适配信息。
+        // RAW显影、Pro影调、夜景合成和人像等仍使用各自原有处理路径。
+        let preservesSystemHDR = options.format == .heif && options.hdr
+            && !options.nightMode && !options.portraitMode && !options.adaptiveHighDynamic
+            && !options.capturesLive && !look.requiresImageProcessing && !look.border
+        let systemSDR = preservesSystemHDR ? systemHEIF.flatMap {
+            CIImage(data: $0, options: [.applyOrientationProperty: true, .expandToHDR: false])
+        } : nil
+        if let systemHEIF, let systemSDR,
+           look.ratio.crop(source, landscape: look.landscape).extent == source.extent,
+           systemSDR.extent == source.extent,
+           let preview = Imaging.renderProcessed(source.transformed(by: CGAffineTransform(
+               scaleX: min(1, 2400 / max(source.extent.width, source.extent.height)),
+               y: min(1, 2400 / max(source.extent.width, source.extent.height)))),
+               look: look, context: context, hdr: true) {
+            return CapturedPhoto(preview: preview, resources: [PhotoResource(data: systemHEIF,
+                filename: prefix + ".heic")], location: location)
+        }
         if options.adaptiveHighDynamic && (options.format != .heifPro || raw == nil) { throw PhotoEncodingError.missingRAW }
         // 高动态在影调/滤镜之前完成；RAW白平衡与曝光已由解码器处理，不能重复应用。
         var renderLook = look
@@ -39,11 +59,12 @@ enum PhotoEncoder {
         let hdrLayers = !options.adaptiveHighDynamic && hdrDestination ? Imaging.filteredHDR(portraitSource, look: renderLook) : nil
         let styled = options.adaptiveHighDynamic ? AdaptiveDynamicRenderer.filtered(portraitSource,look:renderLook,hdr:options.hdr) : (hdrLayers?.hdr ?? Imaging.filtered(portraitSource,look:renderLook,hdr:hdrDestination))
         let processed = styled.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-        let processedSDR = hdrLayers?.sdr.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        let processedSDR = (systemSDR ?? hdrLayers?.sdr).map {
+            $0.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        }
         let previewScale = min(1, 2400 / max(processed.extent.width, processed.extent.height))
         let previewSource = processed.transformed(by: CGAffineTransform(scaleX: previewScale, y: previewScale))
         guard let preview = Imaging.renderProcessed(previewSource, look: look, context: context, hdr: options.hdr && (options.format == .heifPro || options.format == .heif)) else { throw PhotoEncodingError.encoding }
-        let prefix = "Luma-" + UUID().uuidString
         if options.format == .raw {
             guard let raw else { throw PhotoEncodingError.missingRAW }
             return CapturedPhoto(preview: preview, resources: [PhotoResource(data: raw, filename: prefix + ".dng")], location: location)
@@ -60,6 +81,10 @@ enum PhotoEncoder {
         // 避免系统相册再次旋转，导致成片与相册按钮的 UIImage 预览方向不同。
         image = PhotoMetadata.applying(to: CaptureOrientation.normalizedPhotoMetadata(image),
                                        location: location, copyright: options.copyright)
+        if systemSDR != nil {
+            // 裁切后的基底与HDR图都已将方向体现在像素中，写入一致的元数据。
+            sdrForEncoding = sdrForEncoding?.settingProperties(image.properties)
+        }
         if options.adaptiveHighDynamic {
             image = try RAWDevelopmentRecipe.applying(RAWDevelopmentRecipe.initial(source:source,look:look,hdr:options.hdr,maximumPixels:maxPixels),to:image)
         }
@@ -82,7 +107,8 @@ enum PhotoEncoder {
         // 统一走 ImageIO destination，既保留元数据，也继续支持 HDR 10-bit。
         let data = try Self.encodeImageData(image, fileExtension: fileExtension,
                                             hdr: options.hdr && !look.border,
-                                            sdrBase: sdrForEncoding, context: context)
+                                            sdrBase: sdrForEncoding, context: context,
+                                            sourceHeadroom: systemSDR != nil && source.contentHeadroom > 1 ? source.contentHeadroom : nil)
         guard let data else { throw PhotoEncodingError.encoding }
         var resources = [PhotoResource(data: data, filename: prefix + "." + fileExtension)]
         if options.format == .rawJPEG || options.adaptiveHighDynamic {
@@ -95,13 +121,43 @@ enum PhotoEncoder {
             var originalOptions = options; originalOptions.saveUnfilteredOriginal = false; originalOptions.live = false
             var originalLook = look; originalLook.style = .original; originalLook.intensity = 0; originalLook.adjustments = FilterAdjustments(); originalLook.tone = .natural; originalLook.border = false; originalLook.virtualAperture = nil
             let original = try encode(source: source, raw: nil, look: originalLook, options: originalOptions, context: context,
-                                      location: location, portraitMatte: portraitMatte, portraitMask: portraitMask, portraitHeadMask: portraitHeadMask)
-            result.unfilteredOriginal = original.resources.first
+                                      location: location, portraitMatte: portraitMatte, portraitMask: portraitMask, portraitHeadMask: portraitHeadMask,
+                                      captureDate: captureDate)
+            if let resource = original.resources.first {
+                let ext = (resource.filename as NSString).pathExtension
+                result.unfilteredOriginal = PhotoResource(data: resource.data, filename: prefix + "-original." + ext,
+                    alternate: resource.alternate, pairedVideo: resource.pairedVideo)
+            }
         }
 
         return result
     }
 
+
+    /// 拍摄文件共用同一时间基名，RAW配对及Live动态片段沿用该基名。
+    static func captureFilenamePrefix(date: Date, timeZone: TimeZone = .current) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = timeZone; formatter.dateFormat = "yyyyMMdd-HHmmss-SSS"
+        return "luma-" + formatter.string(from: date)
+    }
+
+    /// 合成照片优先用首帧的真实拍摄时间，避免用合成结束时间命名。
+    private static func sourceCaptureDate(_ image: CIImage) -> Date? {
+        guard let exif = image.properties[kCGImagePropertyExifDictionary as String] as? [String: Any],
+              let text = exif[kCGImagePropertyExifDateTimeOriginal as String] as? String else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian); formatter.timeZone = .current
+        let offset = exif[kCGImagePropertyExifOffsetTimeOriginal as String] as? String
+        formatter.dateFormat = "yyyy:MM:dd HH:mm:ss" + (offset == nil ? "" : "XXXXX")
+        guard let date = formatter.date(from: text + (offset ?? "")) else { return nil }
+        let fraction = exif[kCGImagePropertyExifSubsecTimeOriginal as String] as? String ?? ""
+        let digits = String(fraction.prefix(3))
+        let milliseconds = Double(digits.padding(toLength: 3, withPad: "0", startingAt: 0)) ?? 0
+        return date.addingTimeInterval(milliseconds / 1000)
+    }
 
     /// 原生 iPhone HEIF 的 Apple HDRGainMap 与 ISO 21496-1 增益图使用同一份
     /// 像素、DataDescription 和 HDRToneMap 元数据。用同一主图属性重新封装，
@@ -124,9 +180,9 @@ enum PhotoEncoder {
     }
 
     private static func encodeImageData(_ image: CIImage, fileExtension: String, hdr: Bool,
-                                        sdrBase: CIImage? = nil, context: CIContext) throws -> Data? {
+                                        sdrBase: CIImage? = nil, context: CIContext, sourceHeadroom: Float? = nil) throws -> Data? {
         if hdr, fileExtension == "heic", #available(iOS 18.0, *) {
-            let headroom = HDRToneMapping.measuredHeadroom(image, context: context)
+            let headroom = sourceHeadroom ?? HDRToneMapping.measuredHeadroom(image, context: context)
             let baseImage = if #available(iOS 26.0, *) {
                 image.settingContentHeadroom(headroom)
             } else { image }
