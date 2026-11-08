@@ -16,6 +16,8 @@ struct CameraView: View {
     @State var dockKitROIStart: CGPoint?
     @State var dockKitROIFrame: CGRect?
     @State var dockKitROISelecting = false
+    /// 景深/光圈浮层打开时冻结的竖屏绝对中线；每个 CameraView 独立，避免测试宿主互相覆盖。
+    @State var depthControlPortraitMidY: CGFloat?
     @GestureState var previewPressLocation: CGPoint?
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) var reduceMotion

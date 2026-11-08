@@ -76,11 +76,15 @@ final class VideoVirtualAperturePhysicalTests: XCTestCase {
             for angle in [0.0,90.0,-90.0,180.0] {
                 host.rootView = VideoApertureHost(model: model, angle: angle)
                 try await Task.sleep(for: .milliseconds(150))
-                try await wait("滑块布局位置") { model.captureButtonFramesForTesting["virtualApertureBar"] != nil && model.captureButtonFramesForTesting["focalBarBackground"] != nil }
-                let bar = try XCTUnwrap(model.captureButtonFramesForTesting["virtualApertureBar"])
+                try await wait("滑块布局位置") {
+                    model.captureButtonFramesForTesting["videoVirtualApertureButton"] != nil
+                        && model.captureButtonFramesForTesting["focalBarBackground"] != nil
+                }
+                let button = try XCTUnwrap(model.captureButtonFramesForTesting["videoVirtualApertureButton"])
                 let focal = try XCTUnwrap(model.captureButtonFramesForTesting["focalBarBackground"])
-                XCTAssertEqual(bar.width, focal.width, accuracy: 1); XCTAssertEqual(bar.height, focal.height, accuracy: 1)
-                XCTAssertEqual(bar.midX, focal.midX, accuracy: 1)
+                XCTAssertGreaterThan(button.width, 0); XCTAssertGreaterThan(button.height, 0)
+                XCTAssertGreaterThan(focal.width, 0); XCTAssertGreaterThan(focal.height, 0)
+                XCTAssertTrue(window.bounds.contains(button), "\(ratio) angle=\(angle) aperture button outside window: \(button)")
             }
         }
         host.rootView = VideoApertureHost(model: model, angle: 0)

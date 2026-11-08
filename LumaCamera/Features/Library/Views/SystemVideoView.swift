@@ -100,7 +100,9 @@ struct SystemVideoView: View {
             shareRequest?.cancel()
             if requestID != PHInvalidImageRequestID { PHImageManager.default().cancelImageRequest(requestID) }
         }
-        .sheet(item: $shareSession) { FileShareSheet(session: $0).presentationBackground(AppTheme.popupColor) }
+        // 系统分享面板使用标准 sheet 动画；自定义 presentationBackground 会让
+        // UIActivityViewController 的呈现看起来是瞬切，不叠加自定义背景。
+        .sheet(item: $shareSession) { FileShareSheet(session: $0) }
         .fullScreenCover(isPresented: $editorPresented) {
             if let loadedAsset {
                 VideoEditorView(asset: loadedAsset, photo: photo, library: model.library)

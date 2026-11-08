@@ -10,7 +10,7 @@ struct CapturePreferences: Codable, Equatable {
     var saveCaptureSettings = true
     var lockVideoWhiteBalance = false
     var videoBitratePreset = VideoBitratePreset.systemDefault
-    var videoStabilization = VideoStabilizationPreference.lowLatency
+    var videoStabilization = VideoStabilizationPreference.standard
     var auxiliaryWatermark = false
     var auxiliaryTimerSeconds = 0
     var auxiliaryGrid = false
@@ -44,7 +44,7 @@ struct CapturePreferences: Codable, Equatable {
         saveCaptureSettings = try values.decodeIfPresent(Bool.self, forKey: .saveCaptureSettings) ?? true
         lockVideoWhiteBalance = try values.decodeIfPresent(Bool.self, forKey: .lockVideoWhiteBalance) ?? false
         videoBitratePreset = try values.decodeIfPresent(VideoBitratePreset.self, forKey: .videoBitratePreset) ?? .systemDefault
-        videoStabilization = try values.decodeIfPresent(VideoStabilizationPreference.self, forKey: .videoStabilization) ?? .lowLatency
+        videoStabilization = try values.decodeIfPresent(VideoStabilizationPreference.self, forKey: .videoStabilization) ?? .standard
         auxiliaryWatermark = try values.decodeIfPresent(Bool.self, forKey: .auxiliaryWatermark) ?? false
         auxiliaryTimerSeconds = try values.decodeIfPresent(Int.self, forKey: .auxiliaryTimerSeconds) ?? 0
         auxiliaryGrid = try values.decodeIfPresent(Bool.self, forKey: .auxiliaryGrid) ?? false

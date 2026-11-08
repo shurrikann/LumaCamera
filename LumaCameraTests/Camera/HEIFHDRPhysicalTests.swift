@@ -23,8 +23,10 @@ final class HEIFHDRPhysicalTests: XCTestCase {
         for _ in 0..<200 { if camera.ready && abs(camera.currentZoom-1)<0.01 { break }; try await Task.sleep(for: .milliseconds(25)) }
         XCTAssertEqual(camera.currentZoom, 1, accuracy: 0.01)
         model.hdr = true
-        for _ in 0..<200 { if camera.hdrPreviewActive { break }; try await Task.sleep(for: .milliseconds(25)) }
-        XCTAssertTrue(camera.hdrPreviewActive)
+        for _ in 0..<200 { if !camera.hdrPreviewConfiguring && model.photoOptions.hdr { break }; try await Task.sleep(for: .milliseconds(25)) }
+        // HDR 只作用于成片，取景保持 SDR；不能再用实时 HDR 预览作为开关成功条件。
+        XCTAssertTrue(model.photoOptions.hdr)
+        XCTAssertFalse(camera.hdrPreviewActive)
         model.hdr = false
         for _ in 0..<250 { if !camera.hdrPreviewActive && !camera.hdrPreviewConfiguring && camera.preview != nil { break }; try await Task.sleep(for: .milliseconds(25)) }
         try await Task.sleep(for: .milliseconds(350))
@@ -55,9 +57,10 @@ final class HEIFHDRPhysicalTests: XCTestCase {
         for _ in 0..<200 { if camera.ready && camera.supportsHEIFHDR { break }; try await Task.sleep(for:.milliseconds(30)) }
         XCTAssertTrue(camera.supportsHEIFHDR)
         model.photoFormat = .heif; model.photoResolution = .standard; model.style = .original; model.hdr = true
-        for _ in 0..<200 { if camera.hdrPreviewActive && camera.preview?.cgImage?.bitsPerComponent == 16 { break }; try await Task.sleep(for:.milliseconds(30)) }
-        XCTAssertTrue(camera.hdrPreviewActive,camera.message ?? "HLG preview failed")
-        XCTAssertEqual(camera.preview?.cgImage?.bitsPerComponent,16)
+        for _ in 0..<200 { if !camera.hdrPreviewConfiguring && model.photoOptions.hdr { break }; try await Task.sleep(for:.milliseconds(30)) }
+        XCTAssertTrue(model.photoOptions.hdr)
+        XCTAssertFalse(camera.hdrPreviewActive, "HDR 只作用于成片，取景保持 SDR")
+        XCTAssertEqual(camera.preview?.cgImage?.bitsPerComponent,8)
         let capabilities = await withCheckedContinuation { c in camera.previewHDRCapabilitiesForTesting { c.resume(returning:$0) } }
         print("HEIF-HDR-PREVIEW \(capabilities)")
         let done = expectation(description:"HEIF HDR full-quality still")
@@ -70,33 +73,33 @@ final class HEIFHDRPhysicalTests: XCTestCase {
         let source = try XCTUnwrap(CGImageSourceCreateWithData(resource.data as CFData,nil))
         let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source,0,nil) as? [String:Any])
         HDRImageAssertions.assertHDR(source, "HEIF HDR")
-        XCTAssertEqual(photo.preview.cgImage?.bitsPerComponent,16)
         let decoded = try XCTUnwrap(CIImage(data:resource.data,options:[.expandToHDR:true]))
         print("HEIF-HDR-CAPTURE bits=\(properties[kCGImagePropertyDepth as String] ?? "nil") headroom=\(decoded.contentHeadroom) dimensions=\(decoded.extent)")
         XCTAssertGreaterThanOrEqual(decoded.extent.width*decoded.extent.height,11_000_000)
-        for _ in 0..<200 { if camera.hdrPreviewActive && camera.preview?.cgImage?.bitsPerComponent == 16 { break }; try await Task.sleep(for:.milliseconds(30)) }
-        XCTAssertTrue(camera.hdrPreviewActive)
         for _ in 0..<4 {
             model.hdr = false
-            for _ in 0..<120 { if !camera.hdrPreviewActive && camera.preview?.cgImage?.bitsPerComponent == 8 { break }; try await Task.sleep(for:.milliseconds(20)) }
+            for _ in 0..<120 { if !camera.hdrPreviewConfiguring && !camera.hdrPreviewActive && camera.preview?.cgImage?.bitsPerComponent == 8 { break }; try await Task.sleep(for:.milliseconds(20)) }
             XCTAssertFalse(camera.hdrPreviewActive)
             XCTAssertTrue(camera.availablePhotoFormats.contains(.heifPro))
             model.hdr = true
-            for _ in 0..<120 { if camera.hdrPreviewActive { break }; try await Task.sleep(for:.milliseconds(20)) }
-            XCTAssertTrue(camera.hdrPreviewActive)
+            for _ in 0..<120 { if !camera.hdrPreviewConfiguring && model.photoOptions.hdr { break }; try await Task.sleep(for:.milliseconds(20)) }
+            XCTAssertTrue(model.photoOptions.hdr)
+            XCTAssertFalse(camera.hdrPreviewActive)
         }
         for mode in [CameraShootingMode.manual, .auto, .manual] {
             model.setMode(mode)
             await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
-            for _ in 0..<180 { if camera.hdrPreviewActive && camera.preview?.cgImage?.bitsPerComponent == 16 { break }; try await Task.sleep(for:.milliseconds(25)) }
+            for _ in 0..<180 { if camera.ready && !camera.hdrPreviewConfiguring { break }; try await Task.sleep(for:.milliseconds(25)) }
             print("HEIF-HDR-MODE mode=\(mode) requested=\(model.hdr) supported=\(camera.supportsHEIFHDR) active=\(camera.hdrPreviewActive) format=\(model.photoFormat)")
-            XCTAssertTrue(camera.hdrPreviewActive)
+            XCTAssertTrue(model.photoOptions.hdr)
+            XCTAssertFalse(camera.hdrPreviewActive)
             for focal in [0.5,1.0,2.0,4.0,8.0] {
                 guard let lens = camera.lenses.first(where: { $0.device.position == .back && abs(Double($0.displayZoom)-focal)<0.01 }) else { continue }
                 for _ in 0..<200 { if camera.ready && !camera.capturing { break }; try await Task.sleep(for:.milliseconds(20)) }
                 model.selectFocalLength(lens)
-                for _ in 0..<150 { if camera.ready && camera.selectedLens == lens.id && camera.hdrPreviewActive { break }; try await Task.sleep(for:.milliseconds(25)) }
-                XCTAssertTrue(camera.ready); XCTAssertTrue(camera.hdrPreviewActive,"HDR lens \(focal) mode \(mode)")
+                for _ in 0..<150 { if camera.ready && camera.selectedLens == lens.id { break }; try await Task.sleep(for:.milliseconds(25)) }
+                XCTAssertTrue(camera.ready, "HDR lens \(focal) mode \(mode)")
+                XCTAssertFalse(camera.hdrPreviewActive)
                 XCTAssertEqual(camera.currentZoom,CGFloat(focal),accuracy:0.02)
             }
         }

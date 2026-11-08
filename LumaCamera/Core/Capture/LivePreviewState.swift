@@ -25,6 +25,12 @@ final class LivePreviewState {
         /// 夜景跨批次及慢门回退曝光期间保留有效取景，避免曝光切换帧覆盖画面。
         var nightCapturePreviewHold = false
         var latestFrameHostTime = -Double.infinity
+        var latestRecordingPreviewFrameHostTime = -Double.infinity
+        var independentNightMeteringRequest: (startedAt: TimeInterval, deviceID: String)?
+        var independentNightMeteringSample: IndependentNightMetering.Sample?
+        #if DEBUG
+        var nightPreviewTraceStartForTesting: TimeInterval?
+        #endif
         var framesNotBefore = -Double.infinity
         var macroNotBefore = -Double.infinity
         var warmupFrames = 0

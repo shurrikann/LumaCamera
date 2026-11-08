@@ -169,6 +169,57 @@ final class FrontWideAspectReturnPhysicalTests:XCTestCase {
         }
     }
 
+    @MainActor func testRepeatedFrontFocalWideThenVideoEntryDoesNotFreeze() async throws {
+        try await withFront { model in
+            let camera = model.camera
+            let standard = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard })
+            let wide = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide })
+            camera.setFrontPhotoLandscapeEnabled(false); model.selectFocalLength(standard)
+            try await self.wait("前置标准未就绪") { camera.ready && camera.selectedLens == standard.id && model.focalTransitionImage == nil }
+            for _ in 0..<4 {
+                model.selectFocalLength(wide)
+                try await Task.sleep(for: .milliseconds(40))
+                model.selectFocalLength(standard)
+                try await Task.sleep(for: .milliseconds(40))
+            }
+            let switchTime = CACurrentMediaTime()
+            model.setCaptureKind(.video)
+            try await self.wait("前置焦段切换后视频超时") {
+                camera.ready && !camera.videoConfiguring && !model.captureKindSwitching
+                    && camera.previewFrameTimeForTesting > switchTime
+            }
+            XCTAssertEqual(model.captureKind, .video, camera.message ?? "")
+            XCTAssertFalse(camera.message?.contains("超时") == true, camera.message ?? "")
+            try await Task.sleep(for: .milliseconds(300))
+            XCTAssertGreaterThan(camera.previewFrameTimeForTesting, switchTime)
+            print("FRONT-LENS-VIDEO-STRESS toggles=8 switchToVideoReady=true message=\(camera.message ?? "nil")")
+        }
+    }
+
+    @MainActor func testRepeatedFrontUltraWideThenVideoEntryDoesNotFreeze() async throws {
+        try await withFront { model in
+            let camera = model.camera
+            let standard = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard })
+            camera.setFrontPhotoLandscapeEnabled(false); model.selectFocalLength(standard)
+            try await self.wait("前置标准未就绪") { camera.ready && camera.selectedLens == standard.id && model.focalTransitionImage == nil }
+            for _ in 0..<4 {
+                model.toggleFrontPhotoAspectRatio()
+                try await Task.sleep(for: .milliseconds(30))
+            }
+            let switchTime = CACurrentMediaTime()
+            model.setCaptureKind(.video)
+            try await self.wait("连续超广角后视频超时") {
+                camera.ready && !camera.videoConfiguring && !model.captureKindSwitching
+                    && camera.previewFrameTimeForTesting > switchTime
+            }
+            XCTAssertEqual(model.captureKind, .video, camera.message ?? "")
+            XCTAssertFalse(camera.message?.contains("超时") == true, camera.message ?? "")
+            try await Task.sleep(for: .milliseconds(300))
+            XCTAssertGreaterThan(camera.previewFrameTimeForTesting, switchTime)
+            print("FRONT-WIDE-VIDEO-STRESS toggles=4 switchToVideoReady=true message=\(camera.message ?? "nil")")
+        }
+    }
+
     @MainActor private func withFront(_ action:(CameraViewModel) async throws -> Void) async throws {
         let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
         let audit = SessionRuntimeErrorAudit(), idle = UIApplication.shared.isIdleTimerDisabled

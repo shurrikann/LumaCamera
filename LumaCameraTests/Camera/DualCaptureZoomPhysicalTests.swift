@@ -41,11 +41,11 @@ import UIKit
         try await wait("后置横幅小窗") { camera.dualCaptureInsetLandscape && !model.dualInsetAspectChanging }
         let standard = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard })
         let wide = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide })
-        for lens in [standard, wide, standard] {
-            XCTAssertTrue(model.canSelectFocalLength(lens))
-            model.selectFocalLength(lens)
-            try await wait("前置主画面焦段") { camera.dualCaptureFrontWide == (lens.frontFraming == .wide) }
-        }
+        // 前置主画面固定超广角，不再允许切回 1×。
+        XCTAssertTrue(camera.dualCaptureFrontWide)
+        XCTAssertFalse(model.canSelectFocalLength(standard))
+        XCTAssertTrue(camera.dualCaptureFrontWide)
+        _ = wide
         model.swapDualCaptureCameras(); try await wait("后置主画面与前置广角小窗") { !camera.dualCaptureMainIsFront && camera.dualCaptureFrontWide }
         model.toggleDualCaptureInsetAspect()
         try await wait("小窗恢复竖幅") { !camera.dualCaptureInsetLandscape && !model.dualInsetAspectChanging }

@@ -60,7 +60,8 @@ final class RecordingEdgeLayoutPhysicalTests: XCTestCase {
                 controller.rootView = RecordingEdgeTestHost(model: model, angle: angle)
                 try await Task.sleep(for: .milliseconds(300))
                 let key = kind == .photo ? "frontPhotoWide" : "frontVideoWide"
-                let companion = kind == .photo ? "frontPhotoAspectRatio" : "dualCaptureToggle"
+                // 固定栏的视频第二个控件是人物居中；同步双拍入口在视频子模块，不在固定栏。
+                let companion = kind == .photo ? "frontPhotoAspectRatio" : "frontVideoCentering"
                 let a = try XCTUnwrap(model.captureButtonFramesForTesting[key], key)
                 let b = try XCTUnwrap(model.captureButtonFramesForTesting[companion], companion)
                 let group = a.union(b)

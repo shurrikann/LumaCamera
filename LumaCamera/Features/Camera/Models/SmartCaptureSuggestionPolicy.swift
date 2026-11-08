@@ -6,13 +6,9 @@ enum SmartCaptureSuggestionPolicy {
                           available:Set<PhotoFileFormat>) -> SmartCaptureSuggestion? {
         guard let suggestion else { return nil }
         var title = suggestion.title, action = suggestion.actionTitle
-        if suggestion.parameters.mode == .night {
-            let changesFormat = !NightCapturePolicy.supportedFormats.contains(format)
-            if changesFormat || resolution == .high {
-                let output = NightCapturePolicy.supportedFormats.contains(format) ? format : (available.contains(.heif) ? .heif : .jpeg)
-                title = changesFormat ? "夜景 · \(output.rawValue) 12MP" : "夜景 · 12MP"
-                action = available.contains(output) ? "切换" : nil
-            }
+        // 夜景拍照功能已取消：任何来源的夜景建议都不能进入横幅。
+        if suggestion.kind == .night || suggestion.parameters.mode == .night {
+            return nil
         } else if suggestion.parameters.hdr == true && format != .heif && format != .heifPro {
             // 无人物的高反差画面不能仅为替代HDR而盲目加曝光，避免窗外进一步过曝。
             title = "高反差 · 可用 HEIF HDR"; action = nil

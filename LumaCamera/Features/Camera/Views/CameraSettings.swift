@@ -38,12 +38,18 @@ private struct CameraSettingsPanel: View {
                     } label: { settingTitleWithInfo("视频码率", message: videoBitrateHelpText) }
                     LabeledContent {
                         Menu {
-                            Picker("", selection: $model.preferences.videoStabilization) {
-                                ForEach(VideoStabilizationPreference.allCases) { option in
-                                    Text(option.rawValue).tag(option)
+                            ForEach(VideoStabilizationPreference.allCases) { option in
+                                Button {
+                                    model.preferences.videoStabilization = option
+                                } label: {
+                                    if model.preferences.videoStabilization == option {
+                                        Label(option.rawValue, systemImage: "checkmark")
+                                    } else {
+                                        Text(option.rawValue)
+                                    }
                                 }
+                                .disabled(!model.isVideoStabilizationAvailable(option))
                             }
-                            .labelsHidden()
                         } label: {
                             HStack(spacing: 4) {
                                 Text(model.preferences.videoStabilization.rawValue)
@@ -56,7 +62,7 @@ private struct CameraSettingsPanel: View {
                         .accessibilityIdentifier("settings.videoStabilization")
                     } label: { settingTitleWithInfo("视频防抖", message: videoStabilizationHelpText) }
                     Toggle(isOn: $model.preferences.focusAssist) {
-                        settingTitleWithInfo("对焦辅助", message: "仅拍照：后置8倍及以上显示可拖动的广角导航小窗，白框按视场角估计当前取景范围，近距离可能有视差。小窗不写入照片；按快门时回到原拍照管线，保留实际格式和拍摄参数。视频、人像、夜景、慢门及HDR实时取景暂不启用，资源不足时保留原取景。")
+                        settingTitleWithInfo("对焦辅助", message: "仅拍照：后置8倍及以上显示可拖动的广角导航小窗，白框按视场角估计当前取景范围，近距离可能有视差。小窗不写入照片；按快门时回到原拍照管线，保留实际格式和拍摄参数。视频、人像、慢门及HDR实时取景暂不启用，资源不足时保留原取景。")
                     }
                     .accessibilityIdentifier("settings.focusAssist")
                     Toggle(isOn: $model.smoothPreview) {
@@ -190,7 +196,7 @@ private struct CameraSettingsPanel: View {
     }
     private var videoStabilizationHelpText: String {
         let details = VideoStabilizationPreference.allCases.map { "\($0.rawValue)：\($0.explanation)" }.joined(separator: "\n")
-        return "普通录像的预览和成片使用同一种防抖模式，避免取景范围和成片不一致。\n\(details)\n当前格式不支持时按电影→标准→低延迟→关闭回退。设置在下一次开始录像或重新配置时生效。"
+        return "普通录像的预览和成片使用同一种防抖模式，避免取景范围和成片不一致。\n\(details)\n当前格式不支持的档位直接置灰；旧存档中不支持的档位会自动回退，默认标准防抖。设置在下一次开始录像或重新配置时生效。"
     }
 
 

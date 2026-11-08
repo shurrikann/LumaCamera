@@ -1,6 +1,17 @@
+## 2026-11-08 电影切换与照片路由恢复
+
+切换到视频后，电影配置等普通视频换路由完成再提交。电影就绪要收到录制输出提供的新预览帧，超时先恢复普通视频；仍无画面时沿用返回照片保护。准备期间可直接返回照片，旧规格请求随修订代次失效。返回照片时，在会话事务中关闭电影输入状态并换回照片设备，再恢复照片输出和发布能力。视频退出沿用原焦段换算，HDR 的编码策略未改变。
+
 ## 2026-11-07 照片滤镜编辑统一使用调色盘
 
 拍照参数面板和照片详情编辑直接使用 `FilterDialEditor` 与共享分类标签。照片编辑不再从 `CapturePreferencesStore` 加载样式；滤镜和调节面板继续使用 160 点与 290 点，配方仍由各自的 ViewModel 保存。录像取景保留原样式分支，旧 `filterDialPad` 键仅作为 `videoFilterDialPad` 的兼容存档读取和保存。
+
+## 夜景三帧一致性与低 ISO 清晰度（2026-11-07）
+
+- `CameraEngine.captureIndependentNight` 通过主预览的新帧采样 ISO 和快门，`IndependentNightMetering` 要求同一供图镜头至少三次读数、跨越 0.35 秒且曝光未在调整。帧时间戳去重，镜头或会话读数代次变化时重新计数。相机会话队列异步等待最多 2.5 秒，超时释放拍摄任务并提示重试。每次重新测光，无跨快门缓存。
+- 独立采集停止主会话前，快照记录原输入的 `videoZoomFactor`。主会话恢复时在重新出帧前还原该硬件倍率，避免把界面倍率直接写入虚拟多摄并改变下一张的取景和测光。 [Apple 的显示倍率说明](https://developer.apple.com/documentation/avfoundation/avcapturedevice/displayvideozoomfactormultiplier)
+- `NightPhotoMerger.fuseAlignedFrames` 将彩色降噪从“低 ISO 完全跳过/高 ISO 全量”改为按 ISO 保留原始色度：低于 3200 保留 35%，3200 保留 55%，6400 及以上使用完整彩色降噪。低 ISO 同时降低亮度降噪强度、提高降噪锐度、跳过半尺度二次降噪，并在影调曲线后增加轻量 Unsharp Mask；高 ISO 保留原有强降噪路径。
+- 这些是应用策略，不是 Apple Night mode 的公开行为；稳定 AE 只解决输入读数一致性，不能修复单帧内运动模糊或对焦误差。
 
 ## 2026-11-07 HEIF Pro 双图层影调显影
 
@@ -304,7 +315,7 @@ HEIF的EXIF UserComment保存版本化`PhotoAdjustments`显影配方，DNG作为
 
 ## 前置视频原生Center Stage（2026-10-27）
 
-`VideoCaptureSettings.format`新增默认关闭的requiringCenterStage，只接受格式声明的支持及专用帧率范围。引擎缓存单设备兼容规格，使用app控制模式启停系统Center Stage，KVO读取实际active；开启前关闭照片深度/蒙版输出并保留几何畸变校正。普通照片、原Smart Framing、双拍和自动微距不改为软件人物追踪。
+`VideoCaptureSettings.format`新增默认关闭的requiringCenterStage，只接受格式声明的支持及专用帧率范围。引擎缓存单设备兼容规格，使用app控制模式启停系统Center Stage，KVO读取实际active；开启前关闭照片深度/蒙版输出并保留几何畸变校正。普通照片、原Smart Framing和自动微距不改为软件人物追踪；双拍前置使用系统 CenterStage，且只允许从前置主画面开启。
 
 VM管理独立开关意图、兼容规格、宽取景、互斥和保存状态；手动宽窄、双拍、子模块、前后镜头及照片/视频切换退出，后台保留意图并在相机恢复时重新激活。按钮局部加载，激活前禁止提前开拍。系统原生构图不做额外应用逐帧Vision处理；测试里的Vision仅分析临时样本。
 
@@ -662,7 +673,7 @@ LivePreviewState 在锁内传递运行状态、滤镜、修订号、旋转、直
 - 近远对焦时背景的轻微视角变化仍在诊断，未加入额外补偿。
 
 
-## 前置广角切换
+## 前置照片广角切换（视频已移除该入口）
 
 - 支持 Center Stage/动态画幅的前置设备，`appendFrontLenses` 只加入同一个系统超广角设备的两个逻辑取景：standard 使用系统窄取景倍率（本机约 1.5855×，display 1×），wide 使用 1×（display 约 0.63×）。不再假设两个设备类型代表两颗物理镜头。
 - 前置宽窄取景显示双斜箭头：未开启广角时箭头向外，点击切到 wide；开启后箭头向内，点击切回 standard；选中状态用强调色高亮。照片模式通过原生 SwiftUI `Button` 处理轻点，避免复用焦段变焦控件的长按手势；视频模式为居中的独立圆形按钮。没有 Center Stage 的前置设备保持原有前置 1× 入口。
@@ -899,7 +910,7 @@ DEBUG 诊断仅累计电影输出图重建次数，不增加发布频率或常�
 
 视频子模块为延时、慢动作、电影、同步双拍、虚拟光圈三列；前置模式过滤虚拟光圈。固定控制栏不再有独立双拍按钮，入口只在子模块。`CameraEngine.dualCaptureMainIsFront`、`dualCaptureMainZoomRange` 发布主画面状态；双击小窗交换时更新。`CameraViewModel.displayedFocalPosition` 在前置主画面返回前置、后置主画面固定返回后置，`displayedFocalLenses` 据此过滤；双拍后置不显示 0.5×。
 
-双拍后置主画面通过 `setDualCaptureMainZoom` 调数字变焦，由引擎按当前倍率更新 `selectedLens`，焦段条按 `selectedLens` 高亮；命中的最近固定档显示实际倍率（如 2.6×），1× 保留 24/35mm 切换。前置主画面显示前置标准/超广角切换；双拍开启时隐藏人物居中。后置长按焦段条可开变焦轮，捏合/拖轮/焦段都走主画面数字变焦，不重建会话。
+双拍后置主画面通过 `setDualCaptureMainZoom` 调数字变焦，由引擎按当前倍率更新 `selectedLens`，焦段条按 `selectedLens` 高亮；命中的最近固定档显示实际倍率（如 2.6×），1× 保留 24/35mm 切换。前置主画面固定超广角，不再提供标准/广角切换；双拍前置主画面可开启人物追踪，切到小窗继续生效。后置长按焦段条可开变焦轮，捏合/拖轮/焦段都走主画面数字变焦，不重建会话。
 
 ## 视频虚拟光圈入口（2026-11-02）
 
@@ -911,7 +922,7 @@ DEBUG 诊断仅累计电影输出图重建次数，不增加发布频率或常�
 
 ## 视频防抖设置（2026-11-02）
 
-`CapturePreferences.videoStabilization` 持久化关闭/低延迟/标准/电影，默认低延迟。`CameraEngine.setVideoStabilizationPreference` 在视频待机时同时应用到 `videoOutput` 和 `recordingOutput`，预览与成片使用同一模式；`applyVideoStabilization` 按格式能力回退（电影→标准→低延迟→关闭，低延迟在 iOS 26 以下回退标准）。RAW/Open Gate 仍关闭防抖；照片预览仍使用 `previewOptimized`。设置在下一次开始录像或重新配置时生效。
+`CapturePreferences.videoStabilization` 持久化关闭/标准/电影，默认标准；旧存档的“低延迟”读取时回退标准。`CameraEngine` 按当前视频格式发布可用档位，设置页禁用不支持项；`setVideoStabilizationPreference` 在视频待机且非配置中时同时应用到 `videoOutput` 和 `recordingOutput`，配置期间只保存偏好，由 `configureConnections` 统一应用。`applyVideoStabilization` 按电影→标准→关闭回退。RAW/Open Gate 仍关闭防抖；照片预览仍使用 `previewOptimized`。
 
 ## 人像景深控制（2026-10-30）
 
@@ -1206,4 +1217,9 @@ iOS27的`SystemLanguageModel.default`在available、vision及guidedGeneration能
 # 2026-11-06 A挡微距路由更新
 
 A挡预览沿用系统虚拟多摄，不再由macroActive预切物理输入，也不在快门中替换输入。可用时通过AVCapturePhotoSettings的virtualDeviceConstituentPhotoDeliveryEnabledDevices只请求超广角照片，并按sourceDeviceType接收；手选0.5×沿用原路线。近距两张输入保持与远景倍率往返已定向验证，连续近远自然退出及所有格式尚未完整验收。此前物理输入保持方案不代表当前A挡产品路径。
+## 视频前置固定超广角与中心追踪（2026-11-08）
 
+- 视频前置只使用同一个前置超广角输入，固定 wide 取景；不再渲染标准/广角焦段按钮，`selectFocalLength`/`canSelectFocalLength` 对视频前置直接拒绝。照片前置的宽高比与标准/广角逻辑不受影响。
+- 视频前置主控件区只保留人物追踪按钮，且单独水平居中；“超广角”文字提示已删除。前置追踪不可用时该区域为空，不回退显示照片焦段按钮。
+- 人物追踪开启走系统 CenterStage；普通前置目标为普通会话 input，双拍目标为 `DualCaptureSource.front`。进入双拍时保留追踪请求，双拍设备启动后重新应用；主画面开启后切到小窗继续追踪，小窗不提供新入口，退出双拍关闭追踪。双拍前置默认 `frontWide=true`，不再从存档恢复 1×。
+- 视频入口 watchdog 只判断 `camera.ready`：ready 由目标输出图真实交付新帧后发布，是入口成功的唯一权威信号；用户进入追踪/双拍即取消入口 watchdog，避免配置期误报“视频启动超时”。首次 -11819 仍自动重建会话重试一次。

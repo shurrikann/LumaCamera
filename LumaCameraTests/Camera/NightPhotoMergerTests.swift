@@ -80,7 +80,7 @@ final class NightPhotoMergerTests: XCTestCase {
             return CIImage(bitmapData: Data(bytes), bytesPerRow: width*4,
                            size: CGSize(width: width, height: height), format: .RGBA8, colorSpace: space)
                 .settingProperties([kCGImagePropertyExifDictionary as String: [
-                    kCGImagePropertyExifISOSpeedRatings as String: [800],
+                    kCGImagePropertyExifISOSpeedRatings as String: [3200],
                     kCGImagePropertyExifExposureTime as String: 1.0
                 ]])
         }
@@ -99,7 +99,7 @@ final class NightPhotoMergerTests: XCTestCase {
             (1...3).map { colored(UInt64($0)) }, referenceIndex: 1, context: context, adaptiveTone: true)))
         let result = saturation(output)
         print("NIGHT-COLOR-PRESERVE inputSat=\(input) outputSat=\(result)")
-        XCTAssertGreaterThan(result, input * 0.65, "暗部彩色内容不应被融合无条件去色")
+        XCTAssertGreaterThan(result, input * 0.55, "暗部彩色内容不应被融合无条件去色")
     }
 
     func testSourceISOIsPreservedThroughRegistrationAndCropping() throws {

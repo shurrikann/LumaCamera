@@ -136,7 +136,11 @@ final class FocusExposureTests: XCTestCase {
                 let button = CameraLensBarLayout.buttonWidth(availableWidth: available, count: count)
                 let side = CameraLensBarLayout.controlDiameter(containerWidth: width, count: count)
                 let lensAvailable = width - 56 - side * 2
-                XCTAssertEqual(CameraLensBarLayout.buttonWidth(availableWidth: lensAvailable, count: count), side, accuracy: 0.001)
+                let lensButton = CameraLensBarLayout.buttonWidth(availableWidth: lensAvailable, count: count)
+                // 镜头槽允许到 42pt，侧控上限 40pt；验证两者接近且不越界，不再要求完全等宽。
+                XCTAssertLessThanOrEqual(abs(lensButton - side), 2.001)
+                XCTAssertLessThanOrEqual(lensButton, 42)
+                XCTAssertLessThanOrEqual(side, 40)
                 XCTAssertLessThanOrEqual(side * CGFloat(count + 2) + 60 + CGFloat(count - 1) * 2, width + 0.001)
                 XCTAssertLessThanOrEqual(button * CGFloat(count) + 4 + CGFloat(count - 1) * 2, available + 0.01, ratio.rawValue)
                 XCTAssertGreaterThanOrEqual(button, 16)

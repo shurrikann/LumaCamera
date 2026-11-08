@@ -80,7 +80,6 @@ extension CameraView {
                     }.buttonStyle(.plain).accessibilityLabel("画面比例").accessibilityValue(model.ratio.rawValue)
                         .captureControlGeometry("toolbar.ratio", model: model)
                     toolbarIcon(model.flashMode.icon, label: "闪光灯，\(model.flashMode.rawValue)", active: model.flashMode != .off) { model.flashMode = model.flashMode.next }
-                        .disabled((!camera.supportsFlash && !camera.demo) || model.nightModeEnabled || model.isPreparingSubmode)
                         .opacity(camera.supportsFlash || camera.demo ? 1 : AppTheme.disabledControlOpacity)
                         .captureControlGeometry("toolbar.flash", model: model)
                     if model.slowShutterEnabled {
@@ -107,26 +106,6 @@ extension CameraView {
                         .accessibilityLabel("慢门预设与时长，\(model.selectedSlowShutterPreset?.title.replacingOccurrences(of: "\n", with: "") ?? "未选择预设")，\(model.slowShutterDuration.title)")
                         .accessibilityIdentifier("camera.toolbar.slowShutterPresetDuration")
                         .captureControlGeometry("toolbar.slowShutterPresetDuration", model: model)
-                    } else if model.nightModeEnabled {
-                        if model.nightIndicatorIsTriggered {
-                            Button { model.toggleNightMode() } label: {
-                                nightIndicatorIcon(symbol: "moon.fill", color: AppTheme.accent)
-                                    .frame(maxWidth: .infinity, minHeight: 32)
-                                    .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("夜景已触发")
-                            .accessibilityValue("已开启")
-                            .accessibilityHint("点按关闭夜景模式")
-                            .accessibilityIdentifier("camera.night.indicator")
-                        } else {
-                            nightIndicatorIcon(symbol: "moon.fill", color: .white.opacity(0.92),
-                                               unavailable: !model.nightIndicatorIsSupported)
-                                .frame(maxWidth: .infinity, minHeight: 32)
-                                .allowsHitTesting(false)
-                                .accessibilityLabel(model.nightIndicatorIsSupported ? "夜景已开启，等待低照度" : "夜景模式不可用")
-                                .accessibilityIdentifier("camera.night.indicator")
-                        }
                     } else if model.virtualApertureEnabled {
                         Button { model.toggleVirtualApertureSlider() } label: {
                             VStack(spacing: 0) {
@@ -226,15 +205,20 @@ extension CameraView {
         #endif
     }
 
-    /// 竖屏时滑条中线对齐直方图中线；横屏固定沿用工具栏下方 20pt。
+    /// 滑条打开后首次定位就冻结；旋转、画幅重排都沿用同一绝对位置。
     private func depthControlCenterY(bounds: CGRect, proxy: GeometryProxy) -> CGFloat {
-        let controlLandscape = abs(sin(controlAngle * .pi / 180)) > 0.5
-        guard !controlLandscape, model.showHistogram,
-              model.histogramFrame.width > 0, model.histogramFrame.height > 0 else {
-            return bounds.maxY + 36
-        }
         let overlayOriginY = proxy.frame(in: .global).minY
-        return model.histogramFrame.midY - overlayOriginY
+        let landscape = abs(sin(controlAngle * .pi / 180)) > 0.5
+        // 横屏只读竖屏冻结位置；竖屏必须持续跟随直方图中线，
+        // 不能在直方图尚未布局时用 fallback 位置把错误值冻结下来。
+        if landscape, let frozenMidY = depthControlPortraitMidY {
+            return frozenMidY - overlayOriginY
+        }
+        let hasHistogram = model.showHistogram
+            && model.histogramFrame.width > 0 && model.histogramFrame.height > 0
+        if hasHistogram { return model.histogramFrame.midY - overlayOriginY }
+        if let frozenMidY = depthControlPortraitMidY { return frozenMidY - overlayOriginY }
+        return bounds.maxY + 36
     }
 
     /// 浮层属于完整相机区域，保留工具栏外的绘制及触摸范围。
@@ -255,6 +239,26 @@ extension CameraView {
                     .position(x: center, y: depthControlCenterY(bounds: bounds, proxy: proxy))
                     .transition(.opacity)
                 }
+            }
+            .onChange(of: model.depthControlPopupVisible) { _, visible in
+                if !visible { depthControlPortraitMidY = nil }
+                else if abs(sin(controlAngle * .pi / 180)) <= 0.5,
+                        model.histogramFrame.width > 0 {
+                    depthControlPortraitMidY = model.histogramFrame.midY
+                }
+            }
+            // 只从竖屏直方图更新冻结值；横屏旋转时的几何回调不能覆盖它。
+            .onChange(of: model.histogramFrame) { _, frame in
+                guard model.depthControlPopupVisible,
+                      abs(sin(controlAngle * .pi / 180)) <= 0.5,
+                      frame.width > 0, frame.height > 0 else { return }
+                depthControlPortraitMidY = frame.midY
+            }
+            .onChange(of: model.ratio) { _, _ in
+                guard model.depthControlPopupVisible,
+                      abs(sin(controlAngle * .pi / 180)) <= 0.5,
+                      model.histogramFrame.width > 0 else { return }
+                depthControlPortraitMidY = model.histogramFrame.midY
             }
             .animation(.easeInOut(duration: reduceMotion ? 0.08 : 0.2), value: model.depthControlPopupVisible)
         }

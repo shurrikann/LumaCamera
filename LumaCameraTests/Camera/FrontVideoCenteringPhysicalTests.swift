@@ -200,17 +200,20 @@ final class FrontVideoCenteringPhysicalTests: XCTestCase {
                     for angle in [0.0,90.0,-90.0,180.0] {
                         host.rootView = FrontVideoCenteringHost(model:model,angle:angle)
                         try await Task.sleep(for:.milliseconds(150))
-                        try await wait("三按钮位置") { model.captureButtonFramesForTesting["frontVideoCentering"] != nil && model.captureButtonFramesForTesting["frontVideoWide"] != nil && model.captureButtonFramesForTesting["dualCaptureToggle"] != nil }
+                        // 同步双拍已移入视频子模块；固定栏当前只保留镜头与居中按钮。
+                        try await wait("居中按钮位置") { model.captureButtonFramesForTesting["frontVideoCentering"] != nil }
                         let center = try XCTUnwrap(model.captureButtonFramesForTesting["frontVideoCentering"])
-                        let a = try XCTUnwrap(model.captureButtonFramesForTesting["frontVideoWide"]), b = try XCTUnwrap(model.captureButtonFramesForTesting["dualCaptureToggle"])
-                        XCTAssertFalse(center.intersects(a)); XCTAssertFalse(center.intersects(b))
-                        XCTAssertEqual(center.midY,a.midY,accuracy:1); XCTAssertEqual(center.midY,b.midY,accuracy:1)
+                        XCTAssertEqual(center.midX, model.captureButtonFramesForTesting["lenses"]?.midX ?? center.midX, accuracy: 1)
                     }
                 }
                 snapshot("Front-video-center-three-buttons")
             }
-            model.selectFocalLength(pass == 1 ? wide : standard)
-            try await wait("手动宽窄退出") { !camera.frontVideoCenteringEnabled && !camera.frontVideoCenteringActive && !camera.frontVideoCenteringPreparing }
+            model.toggleFrontVideoCentering()
+            try await wait("关闭人物追踪") {
+                !camera.frontVideoCenteringEnabled && !camera.frontVideoCenteringActive
+                    && !camera.frontVideoCenteringPreparing
+            }
+            XCTAssertEqual(camera.selectedLens, wide.id)
             let stopped = await state()
             XCTAssertEqual(Double(stopped["roiWidth"] ?? ""),1)
             XCTAssertEqual(Double(stopped["roiHeight"] ?? ""),1)
@@ -245,9 +248,8 @@ final class FrontVideoCenteringPhysicalTests: XCTestCase {
             print("CENTER-RECORD mode=\(mode) codec=\(codec) color=\(color) frames=\(frames) size=\(try await track.load(.naturalSize)) native=\(await state())")
         }
         model.toggleDualCapture()
-        try await wait("双拍退出居中") { camera.dualCaptureEnabled && !camera.dualCapturePreparing && !camera.frontVideoCenteringActive }
-        let dualState = await state()
-        XCTAssertFalse(model.frontVideoCenteringRequested); XCTAssertEqual(dualState["global"],"false")
+        try await wait("追踪延续到双拍") { camera.dualCaptureEnabled && !camera.dualCapturePreparing && camera.frontVideoCenteringEnabled }
+        XCTAssertTrue(model.frontVideoCenteringRequested)
         model.toggleDualCapture(); try await wait("退出双拍") { !camera.dualCaptureEnabled && !camera.dualCapturePreparing && camera.ready }
         XCTAssertFalse(model.frontVideoCenteringRequested)
         model.toggleFrontVideoCentering(); try await wait("双拍后可重新开启") { camera.frontVideoCenteringActive && !camera.frontVideoCenteringPreparing }

@@ -392,13 +392,16 @@ enum NightPhotoMerger {
         let tone = adaptiveTone ? automaticTonePlan(composite, context: context) : (exposureEV: 0.0, shadowLift: 0.06)
         let baseNoiseLevel = adaptiveTone ? min(0.12, 0.055 + tone.exposureEV * 0.035 + max(0, tone.shadowLift - 0.06) * 0.2) : 0.035
         // 高ISO提高边缘保持滤波门限并扩大暗部覆盖，不增加全局高斯模糊或锐化颗粒。
-        let noiseLevel = baseNoiseLevel + noiseStress * 0.08
-        // 低 ISO 夜景不需要按高 ISO 的强度压彩色噪声；当前 1s/ISO800 样片
-        // 在旧配方下被压到接近灰阶。高 ISO 仍保留强彩色降噪。
-        let keepLowISColor = sourceISO > 0 && sourceISO < 1600
-        let denoiseSharpness: Float = adaptiveTone && noiseStress > 0.2 ? 0 : (keepLowISColor ? 0.2 : 0.25)
-        var reduced = composite.applyingFilter("CINoiseReduction", parameters: ["inputNoiseLevel": noiseLevel, "inputSharpness": denoiseSharpness])
-        if adaptiveTone && !keepLowISColor {
+        let lowISOClarity = sourceISO > 0 && sourceISO < 1600
+        // 低 ISO + 固定支撑时，降噪应让位于纹理；高 ISO 才继续重降噪。
+        let noiseLevel = (baseNoiseLevel + noiseStress * 0.08) * (lowISOClarity ? 0.55 : 1)
+        // 彩色降噪不再二选一：保留一部分原始色度，避免整片发灰；同时让中高 ISO
+        // 仍有足够的彩色噪声抑制，避免紫/红色斑块。
+        let chromaStrength: CGFloat = sourceISO <= 0 ? 1 : (sourceISO >= 6400 ? 1 : (sourceISO >= 3200 ? 0.55 : 0.35))
+        let denoiseSharpness: Float = adaptiveTone ? (noiseStress > 0.8 ? 0.25 : (lowISOClarity ? 0.55 : 0.4)) : 0.25
+        let beforeColor = composite.applyingFilter("CINoiseReduction", parameters: ["inputNoiseLevel": noiseLevel, "inputSharpness": denoiseSharpness])
+        var reduced = beforeColor
+        if adaptiveTone {
             // 彩色斑块比单像素颗粒更粗。只借用低频色彩，亮度结构仍来自边缘保持降噪结果。
             let radius = min(3,max(1.2,max(extent.width,extent.height)/1400))
             let color = reduced.clampedToExtent().applyingFilter("CIMedianFilter")
@@ -418,12 +421,23 @@ enum NightPhotoMerger {
             let neutral = reduced.applyingFilter("CIColorControls",parameters:[kCIInputSaturationKey:0])
             reduced = reduced.applyingFilter("CIBlendWithMask",parameters:[
                 kCIInputBackgroundImageKey:neutral,kCIInputMaskImageKey:colorConfidence]).cropped(to:extent)
-            // 极暗区域用半尺度的边缘保持结果压低残余细颗粒；有效信号区保留原分辨率细节。
-            let lowSignal = reduced.clampedToExtent().transformed(by:CGAffineTransform(scaleX:0.5,y:0.5))
-                .applyingFilter("CINoiseReduction",parameters:["inputNoiseLevel":0.11,"inputSharpness":0])
-                .transformed(by:CGAffineTransform(scaleX:2,y:2)).cropped(to:extent)
-            reduced = reduced.applyingFilter("CIBlendWithMask",parameters:[
-                kCIInputBackgroundImageKey:lowSignal,kCIInputMaskImageKey:colorConfidence]).cropped(to:extent)
+            // 极暗区域用半尺度的边缘保持结果压低残余细颗粒；低 ISO 不做这一步，
+            // 否则固定支撑下的纹理也会被半尺度结果抹平。
+            if !lowISOClarity {
+                let lowSignal = reduced.clampedToExtent().transformed(by:CGAffineTransform(scaleX:0.5,y:0.5))
+                    .applyingFilter("CINoiseReduction",parameters:["inputNoiseLevel":0.11,"inputSharpness":0])
+                    .transformed(by:CGAffineTransform(scaleX:2,y:2)).cropped(to:extent)
+                reduced = reduced.applyingFilter("CIBlendWithMask",parameters:[
+                    kCIInputBackgroundImageKey:lowSignal,kCIInputMaskImageKey:colorConfidence]).cropped(to:extent)
+            }
+            if chromaStrength < 1 {
+                let mask = CIImage(color: CIColor(red: chromaStrength, green: chromaStrength, blue: chromaStrength))
+                    .cropped(to: extent)
+                // 以前景 original 的比例保留真实色度，其余来自降噪后的 reduced。
+                reduced = beforeColor.applyingFilter("CIBlendWithMask", parameters: [
+                    kCIInputBackgroundImageKey: reduced, kCIInputMaskImageKey: mask
+                ]).cropped(to: extent)
+            }
         }
         composite = reduced.applyingFilter("CIBlendWithMask", parameters: [
             kCIInputBackgroundImageKey: composite, kCIInputMaskImageKey: shadowMask
@@ -435,11 +449,17 @@ enum NightPhotoMerger {
             composite = raised.applyingFilter("CIBlendWithMask",parameters:[
                 kCIInputBackgroundImageKey:composite,kCIInputMaskImageKey:shadowMask])
         }
-        return composite.applyingFilter("CIToneCurve", parameters: [
+        var output = composite.applyingFilter("CIToneCurve", parameters: [
             "inputPoint0": CIVector(x: 0, y: 0), "inputPoint1": CIVector(x: 0.18, y: 0.18 + tone.shadowLift),
             "inputPoint2": CIVector(x: 0.5, y: adaptiveTone ? 0.5 + tone.shadowLift * 0.6 : 0.55), "inputPoint3": CIVector(x: 0.8, y: 0.81),
             "inputPoint4": CIVector(x: 1, y: 1)
-        ]).cropped(to: extent).settingProperties(images[referenceIndex].properties)
+        ]).cropped(to: extent)
+        if adaptiveTone && lowISOClarity {
+            output = output.applyingFilter("CIUnsharpMask", parameters: [
+                kCIInputRadiusKey: 1.15, kCIInputIntensityKey: 0.5
+            ]).cropped(to: extent)
+        }
+        return output.settingProperties(images[referenceIndex].properties)
     }
 
     /// 仅A挡自动夜景在真实融合后使用：小探针估计中位数与高光分位。
@@ -469,7 +489,7 @@ enum NightPhotoMerger {
         let highlightEV = log2(linear(0.82) / linear(max(high, 0.05)))
         let exposureCap = longExposure ? 0.5 : 2.5
         let shadowCap = longExposure ? 0.16 : 0.18
-        let targetMedian = 0.33
+        let targetMedian = 0.34
         let exposureEV = min(exposureCap, max(0, min(medianEV, highlightEV)))
         let shadowLift = min(shadowCap, max(0.06, 0.06 + (targetMedian - median) * 0.60))
         return (exposureEV, shadowLift)

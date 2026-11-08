@@ -4,12 +4,10 @@ import ImageIO
 @testable import LumaCamera
 
 final class Smart48CompatibilityTests:XCTestCase {
-    func testSuggestionsDescribeResolutionAndFormatChanges() {
+    func testSuggestionsDescribeFormatChangesAndNightIsRemoved() {
         let night = SmartCaptureSuggestion(kind:.night,title:"夜景 · 自动",actionTitle:"应用",parameters:.init(mode:.night))
-        let high = SmartCaptureSuggestionPolicy.presented(night,format:.jpeg,resolution:.high,available:[.jpeg,.heif])
-        XCTAssertEqual(high?.title,"夜景 · 12MP"); XCTAssertEqual(high?.actionTitle,"切换")
-        let raw = SmartCaptureSuggestionPolicy.presented(night,format:.raw,resolution:.high,available:[.jpeg,.heif,.raw])
-        XCTAssertEqual(raw?.title,"夜景 · HEIF 12MP")
+        XCTAssertNil(SmartCaptureSuggestionPolicy.presented(night,format:.jpeg,resolution:.high,available:[.jpeg,.heif]))
+        XCTAssertNil(SmartCaptureSuggestionPolicy.presented(night,format:.raw,resolution:.high,available:[.jpeg,.heif,.raw]))
         let hdr = SmartCaptureSuggestion(kind:.backlit,title:"HDR · 保高光",actionTitle:"应用",parameters:.init(hdr:true))
         XCTAssertNil(SmartCaptureSuggestionPolicy.presented(hdr,format:.jpeg,resolution:.high,available:[.jpeg])?.actionTitle)
         XCTAssertEqual(SmartCaptureSuggestionPolicy.presented(hdr,format:.heif,resolution:.high,available:[.heif])?.title,"HDR · 保高光")

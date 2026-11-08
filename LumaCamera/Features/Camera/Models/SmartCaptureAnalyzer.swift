@@ -150,13 +150,6 @@ enum SmartCaptureAnalyzer {
                 composition: composition,
                 hasPerson: false,candidates:candidates)
         }
-        if let metrics, metrics.mean < 0.16, activeSubmode != .night {
-            return SmartCaptureResult(
-                suggestion: SmartCaptureSuggestion(kind: .night, title: "夜景 · 自动", actionTitle: "应用",
-                                                     parameters: SmartCaptureParameters(mode: .night)),
-                composition: composition,
-                hasPerson: hasPerson,candidates:candidates)
-        }
         return SmartCaptureResult(suggestion: nil, composition: composition, hasPerson: hasPerson,candidates:candidates)
     }
 

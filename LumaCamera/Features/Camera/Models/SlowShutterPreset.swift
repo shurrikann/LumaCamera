@@ -167,7 +167,8 @@ enum SlowShutterPresetLayout {
     static func buttonWidth(availableWidth: Double, count: Int = SlowShutterPreset.allCases.count) -> Double {
         guard availableWidth.isFinite, count > 0 else { return 40 }
         let spacing = Double(max(0, count - 1)) * 2
-        return min(40, max(16, (availableWidth - 4 - spacing) / Double(count)))
+        // 与五镜头按钮共用 42pt 上限，宽屏下格宽一致，窄屏继续按可用宽度收缩。
+        return min(42, max(16, (availableWidth - 4 - spacing) / Double(count)))
     }
 }
 

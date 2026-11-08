@@ -71,6 +71,44 @@ enum NightAdaptiveCapturePolicy {
 
 enum NightSceneMotion: String { case stable = "稳定", moving = "运动或晃动", unknown = "无法可靠评估" }
 
+/// 独立夜景只用本次快门之后、同一供图镜头的稳定预览曝光。
+struct IndependentNightMetering {
+    struct Sample {
+        let time: TimeInterval
+        let sourceID: String
+        let exposure: NightAdaptiveCapturePolicy.Exposure
+        let adjusting: Bool
+    }
+
+    static let timeout: TimeInterval = 2.5
+    let startedAt: TimeInterval
+    private var lastTime = -Double.infinity
+    private var anchor: Sample?
+    private var count = 0
+
+    init(startedAt: TimeInterval) { self.startedAt = startedAt }
+
+    mutating func observe(_ sample: Sample) -> NightAdaptiveCapturePolicy.Exposure? {
+        guard sample.time.isFinite, sample.time >= startedAt, sample.time > lastTime else { return nil }
+        lastTime = sample.time
+        let exposure = sample.exposure
+        guard !sample.adjusting, exposure.seconds.isFinite, exposure.seconds > 0, exposure.iso.isFinite, exposure.iso > 0 else {
+            anchor = nil; count = 0
+            return nil
+        }
+        guard let anchor, anchor.sourceID == sample.sourceID,
+              abs(exposure.seconds - anchor.exposure.seconds) <= max(0.0005, anchor.exposure.seconds * 0.03),
+              abs(exposure.iso - anchor.exposure.iso) <= max(8, anchor.exposure.iso * 0.03) else {
+            anchor = sample; count = 1
+            return nil
+        }
+        count += 1
+        // 以窗口首帧为基准，逐帧小幅漂移也不能被当作稳定。
+        guard count >= 3, sample.time - anchor.time >= 0.35 else { return nil }
+        return exposure
+    }
+}
+
 struct NightSceneAssessment {
     var motion: NightSceneMotion
     var maximumShift: Double = 0

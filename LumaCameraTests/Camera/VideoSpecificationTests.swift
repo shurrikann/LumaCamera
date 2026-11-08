@@ -3,6 +3,30 @@ import UIKit
 import XCTest
 @testable import LumaCamera
 
+private final class CinematicOutputFrameProbe: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {
+    let queue = DispatchQueue(label: "tests.cinematic-output-probe")
+    private var count = 0
+
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        count += 1
+    }
+
+    var receivedFrames: Int { queue.sync { count } }
+}
+
+private final class CinematicMovieFileProbe: NSObject, AVCaptureFileOutputRecordingDelegate {
+    let finished: XCTestExpectation
+    private(set) var error: Error?
+
+    init(finished: XCTestExpectation) { self.finished = finished }
+
+    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL,
+                    from connections: [AVCaptureConnection], error: Error?) {
+        self.error = error
+        finished.fulfill()
+    }
+}
+
 private final class RuntimeErrorBox: @unchecked Sendable {
     private let lock = NSLock()
     private var storedValues: [String] = []
@@ -146,6 +170,8 @@ final class VideoSpecificationTests: XCTestCase {
             let videoB = AVCaptureVideoDataOutput()
             let audio = AVCaptureAudioDataOutput()
             let movie = AVCaptureMovieFileOutput()
+            let frames = CinematicOutputFrameProbe()
+            videoA.setSampleBufferDelegate(frames, queue: frames.queue)
             switch graph {
             case .appleMovie:
                 added = [movie, metadata, photo]
@@ -191,8 +217,28 @@ final class VideoSpecificationTests: XCTestCase {
                         continuation.resume()
                     }
                 }
+                let startupMs = Double(DispatchTime.now().uptimeNanoseconds - start.uptimeNanoseconds) / 1_000_000
                 try await Task.sleep(for: .seconds(2))
-                results.append("\(graphNames[index]) running=\(session.isRunning) startMs=\(Double(DispatchTime.now().uptimeNanoseconds - start.uptimeNanoseconds) / 1_000_000) runtimeErrors=\(errorBox.values)")
+                let earlyFrames = frames.receivedFrames
+                if graph == .oneVideoDataOutput {
+                    try await Task.sleep(for: .seconds(3))
+                }
+                results.append("\(graphNames[index]) running=\(session.isRunning) earlyFrames=\(earlyFrames) receivedFrames=\(frames.receivedFrames) scene=\(device.cinematicVideoCaptureSceneMonitoringStatuses) startMs=\(startupMs) runtimeErrors=\(errorBox.values)")
+                if graph == .appleMovie, session.isRunning {
+                    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
+                    defer { try? FileManager.default.removeItem(at: url) }
+                    let finished = expectation(description: "系统电影输出完成")
+                    let recorder = CinematicMovieFileProbe(finished: finished)
+                    movie.startRecording(to: url, recordingDelegate: recorder)
+                    try await Task.sleep(for: .seconds(2))
+                    movie.stopRecording()
+                    await fulfillment(of: [finished], timeout: 8)
+                    let asset = AVURLAsset(url: url)
+                    let duration = try? await asset.load(.duration).seconds
+                    let tracks = try? await asset.loadTracks(withMediaType: .video)
+                    let rate = try? await tracks?.first?.load(.nominalFrameRate)
+                    results.append("AppleMovieRecording duration=\(duration ?? 0) nominalFPS=\(rate ?? 0) error=\(String(describing: recorder.error))")
+                }
             } else {
                 results.append("\(graphNames[index]) running=false failure=\(outputFailure!)")
             }

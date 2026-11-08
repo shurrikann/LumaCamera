@@ -85,6 +85,7 @@ final class CameraEngine: NSObject, ObservableObject {
     @Published private(set) var hdrPreviewActive = false
     @Published private(set) var hdrPreviewConfiguring = false
     @Published private(set) var supportsHEIFHDR = false
+    @Published private(set) var supportedVideoStabilizationPreferences: Set<VideoStabilizationPreference> = []
     @Published private(set) var supportsHighResolutionHEIFHDR = true
     private var reducedHDRResolutionDevices: Set<String> = [] // 只记录实际出片观测，不推断整机能力。
     @Published private(set) var macroActive = false
@@ -201,7 +202,8 @@ final class CameraEngine: NSObject, ObservableObject {
                     self.stopFocusNavigatorOnQueue()
                     self.zoomThrottle.cancel(); _ = self.zoomRevision.advance()
                     self.stopFrontSmartFraming()
-                    self.stopFrontVideoCentering()
+                    let preserveFrontVideoCentering = self.frontVideoCenteringRequested
+                    self.stopFrontVideoCentering(clearRequest: false)
                     if self.session.isRunning { self.session.stopRunning() }
                     guard let configuration = DualCapturePolicy.configuration(for: requested, frontWide: requestedWide) else {
                         throw DualCaptureSource.Failure.unsupported
@@ -256,6 +258,11 @@ final class CameraEngine: NSObject, ObservableObject {
                     if self.wantsRunning {
                         try source.start()
                         self.configureRecordingHaptics()
+                    }
+                    if preserveFrontVideoCentering {
+                        // 普通前置视频开启的追踪在切换到双拍后延续到双拍前置设备。
+                        self.frontVideoCenteringRequested = true
+                        self.refreshFrontVideoCentering(source.front)
                     }
                 } else {
                     self.releaseDualCaptureOnQueue()
@@ -661,6 +668,12 @@ final class CameraEngine: NSObject, ObservableObject {
     private var movieRecorder: MovieRecorder? // recordingQueue only, including audio and finish
     private var recordingFinishing = false // recordingQueue only
     private var lastRecordingPreviewEnqueueTime = -Double.infinity // recordingQueue only
+    #if DEBUG
+    private var receivedRecordingFramesForTesting = 0 // recordingQueue only
+    func recordingFrameCountForTesting(_ completion: @escaping (Int) -> Void) {
+        recordingQueue.async { completion(self.receivedRecordingFramesForTesting) }
+    }
+    #endif
     private var videoCaptureToken: UUID? // main queue only
     #if DEBUG
     private(set) var lastRecordingFrameCountsForTesting: (received: Int, written: Int, span: Double)?
@@ -791,6 +804,33 @@ final class CameraEngine: NSObject, ObservableObject {
         }
     }
     /// 只读核对真实前置倍率、系统人物居中与路由限制。
+    /// 只读/可逆探测：双拍期间前置是否允许 CenterStage。测试结束后恢复关闭。
+    func probeDualCaptureCenterStageForTesting(_ completion: @escaping ([String: String]) -> Void) {
+        queue.async {
+            guard let dual = self.dualCaptureSource else {
+                DispatchQueue.main.async { completion(["dual": "false"]) }
+                return
+            }
+            let front = dual.front
+            let supported = front.activeFormat.isCenterStageSupported
+            let centerFormats = front.formats.filter { $0.isCenterStageSupported }.count
+            AVCaptureDevice.centerStageControlMode = .app
+            let before = AVCaptureDevice.isCenterStageEnabled
+            if supported { AVCaptureDevice.isCenterStageEnabled = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                self.queue.async {
+                    let info = ["dual": "true", "supported": "\(supported)", "centerFormats": "\(centerFormats)",
+                        "requested": "true", "global": "\(AVCaptureDevice.isCenterStageEnabled)",
+                        "active": "\(front.isCenterStageActive)", "before": "\(before)",
+                        "multicam": "\(dual.session.isRunning)", "device": front.deviceType.rawValue,
+                        "zoom": "\(front.videoZoomFactor)"]
+                    AVCaptureDevice.isCenterStageEnabled = false
+                    DispatchQueue.main.async { completion(info) }
+                }
+            }
+        }
+    }
+
     func frontVideoCenteringStateForTesting(_ completion: @escaping ([String: String]) -> Void) {
         queue.async {
             guard let device = self.input?.device else { DispatchQueue.main.async { completion([:]) }; return }
@@ -871,7 +911,7 @@ final class CameraEngine: NSObject, ObservableObject {
             }
             let cinematic: String
             if #available(iOS 26.0, *) {
-                cinematic = "cinematic=\(self.input?.isCinematicVideoCaptureSupported ?? false)/\(self.input?.isCinematicVideoCaptureEnabled ?? false)"
+                cinematic = "cinematic=\(self.input?.isCinematicVideoCaptureSupported ?? false)/\(self.input?.isCinematicVideoCaptureEnabled ?? false) scene=\(device.cinematicVideoCaptureSceneMonitoringStatuses)"
             } else { cinematic = "cinematic=iOSUnsupported" }
             let outputs = self.session.outputs.map { String(describing: type(of: $0)) }.joined(separator: ",")
             let state = "running=\(self.session.isRunning) runtimeErrors=\(self.runtimeErrorCountForTesting) outputs=\(outputs) input=\(device.deviceType.rawValue):\(device.uniqueID) active=\(dimensions.width)x\(dimensions.height) ranges=\(ranges) requested=\(self.requestedVideoSettings.resolution.title)/\(self.requestedVideoSettings.frameRate.rawValue)/capture\(self.requestedVideoSettings.captureFrameRate?.rawValue.description ?? "nil") cinematicRequested=\(self.requestedCinematicVideo) \(cinematic)"
@@ -898,6 +938,8 @@ final class CameraEngine: NSObject, ObservableObject {
     #endif
     private let previewQueue: DispatchQueue
     private let livePreviewState = LivePreviewState()
+    var latestPreviewFrameTime: TimeInterval { livePreviewState.snapshot().latestFrameHostTime }
+    var latestRecordingPreviewFrameTime: TimeInterval { livePreviewState.snapshot().latestRecordingPreviewFrameHostTime }
     private let portraitPreviewProcessor = PortraitPreviewProcessor()
     private let previewContext = CIContext(options: [.cacheIntermediates: false])
     private struct DemoPreview {
@@ -965,7 +1007,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private var requestedVideoSettings = VideoCaptureSettings() // session queue
     private var requestedVideoRatio: FrameRatio = .wide // session queue
     private var requestedVideoOpenGate = false
-    private var preferredVideoStabilization = VideoStabilizationPreference.lowLatency // session queue
+    private var preferredVideoStabilization = VideoStabilizationPreference.standard // session queue
     private var requestedCinematicVideo = false // session queue
     private var highResolutionPhotoRequested = false // session queue; 48MP pins a supported native physical lens
     private var dualSecondaryWhiteBalanceBeforeRecording: (AVCaptureDevice, AVCaptureDevice.WhiteBalanceMode)?
@@ -1255,6 +1297,9 @@ final class CameraEngine: NSObject, ObservableObject {
     private var globalMeteringRevision = UUID()
     private var lastFrameTime = 0.0
     private var lastReadingsTime = 0.0
+    #if DEBUG
+    private var lastNightPreviewTraceTime = -Double.infinity
+    #endif
     private var lastReadingsRefreshRevision: UInt64 = 0 // preview queue only
     private var readingsGeneration: UInt64 = 0
     private var histogramEnabled = false
@@ -1307,6 +1352,9 @@ final class CameraEngine: NSObject, ObservableObject {
     var onCaptureDelivered: ((CapturedPhoto) -> Void)?
     var onSlowShutterSourceFrame: ((SlowShutterSourceFrame?) -> Void)?
     var onVideoRecorded: ((Result<URL, Error>) -> Void)?
+    /// 视频会话启动失败时通知 UI 退出视频，避免 runtime error 恢复循环卡死。
+    var onVideoRouteFailure: ((String) -> Void)?
+    private var videoRouteFailureReported = false // main queue
     var canCapture: () -> Bool = { true }
 
     override convenience init() {
@@ -1369,6 +1417,17 @@ final class CameraEngine: NSObject, ObservableObject {
                       String(reflecting: note.userInfo ?? [:]))
             }
             if self?.videoBusy == true { self?.stopVideoRecording() }
+            if let self, self.videoModeRequested {
+                let code = (note.userInfo?[AVCaptureSessionErrorKey] as? NSError)?.code ?? 0
+                if code == -11819 || code == -11800 {
+                    DispatchQueue.main.async {
+                        guard !self.videoRouteFailureReported else { return }
+                        self.videoRouteFailureReported = true
+                        self.onVideoRouteFailure?("视频无法启动，已退出视频模式。")
+                    }
+                    return
+                }
+            }
             self?.requestSessionRecovery()
         })
     }
@@ -1825,7 +1884,10 @@ final class CameraEngine: NSObject, ObservableObject {
         queue.async {
             guard self.preferredVideoStabilization != preference else { return }
             self.preferredVideoStabilization = preference
-            guard self.videoModeRequested, !self.videoBusy, let device = self.input?.device else { return }
+            // 会话/规格配置期间改 connection 会与事务竞争，容易触发 -11800。
+            // 此时只保存偏好，等 configureConnections 完成后统一应用。
+            guard self.videoModeRequested, !self.videoBusy, !self.videoConfiguring,
+                  !self.recoveringSession, let device = self.input?.device else { return }
             for output in [self.videoOutput as AVCaptureOutput, self.recordingOutput as AVCaptureOutput] {
                 guard let connection = output.connection(with: .video) else { continue }
                 self.applyVideoStabilization(to: connection, device: device)
@@ -1847,6 +1909,23 @@ final class CameraEngine: NSObject, ObservableObject {
         return safe
     }
 
+    /// 当前视频格式实际支持的防抖档位；设置页据此禁用不支持的选项。
+    private func publishVideoStabilizationAvailability(device: AVCaptureDevice) {
+        var values: Set<VideoStabilizationPreference> = [.off]
+        if !requestedVideoSettings.isRAW, !requestedVideoOpenGate,
+           let format = VideoCaptureSettings.format(for: requestedVideoSettings, device: device,
+               requiringOpenGate: requestedVideoOpenGate,
+               requiringCinematicVideo: requestedCinematicVideo) ?? Optional(device.activeFormat) {
+            if format.isVideoStabilizationModeSupported(.standard) { values.insert(.standard) }
+            if format.isVideoStabilizationModeSupported(.cinematic) { values.insert(.cinematic) }
+        }
+        DispatchQueue.main.async {
+            if self.supportedVideoStabilizationPreferences != values {
+                self.supportedVideoStabilizationPreferences = values
+            }
+        }
+    }
+
     private func applyVideoStabilization(to connection: AVCaptureConnection, device: AVCaptureDevice) {
         guard connection.isVideoStabilizationSupported else { return }
         let mode: AVCaptureVideoStabilizationMode
@@ -1855,17 +1934,11 @@ final class CameraEngine: NSObject, ObservableObject {
             switch preferredVideoStabilization {
             case .off:
                 candidates = [.off]
-            case .lowLatency:
-                if #available(iOS 26.0, *) {
-                    candidates = [.lowLatency, .standard, .off]
-                } else {
-                    candidates = [.standard, .off]
-                }
             case .standard:
                 candidates = [.standard, .off]
             case .cinematic:
                 if #available(iOS 26.0, *) {
-                    candidates = [.cinematic, .standard, .lowLatency, .off]
+                    candidates = [.cinematic, .standard, .off]
                 } else {
                     candidates = [.cinematic, .standard, .off]
                 }
@@ -1885,6 +1958,12 @@ final class CameraEngine: NSObject, ObservableObject {
 
     func setVideoMode(_ enabled: Bool) {
         videoModeDesired = enabled
+        if enabled { videoRouteFailureReported = false }
+        if !enabled {
+            // 返回照片后，排队中的旧电影规格不能重新启用电影输出。
+            _ = videoSettingsRevision.advance()
+            if videoConfiguring { videoConfiguring = false }
+        }
         if enabled && AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined && !videoAudioPermissionPending {
             videoAudioPermissionPending = true
             AVCaptureDevice.requestAccess(for: .audio) { [weak self] _ in
@@ -1905,6 +1984,11 @@ final class CameraEngine: NSObject, ObservableObject {
                 self.releaseDualCaptureOnQueue()
                 if self.wantsRunning { self.session.startRunning() }
             }
+            // 即使 A/M 没有变化，电影也可能使用与照片不同的物理输入。
+            var wasCinematic = self.requestedCinematicVideo
+            if #available(iOS 26.0, *), self.input?.isCinematicVideoCaptureEnabled == true {
+                wasCinematic = true
+            }
             // 离开视频路由前先关闭系统电影处理，避免其状态残留到照片采集会话。
             if !enabled { self.requestedCinematicVideo = false; self.stopFrontVideoCentering() }
             let audioWanted = enabled && AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
@@ -1912,6 +1996,7 @@ final class CameraEngine: NSObject, ObservableObject {
             let unchanged = self.videoModeRequested == enabled
                 && self.session.outputs.contains(self.recordingOutput) == enabled
                 && self.session.outputs.contains(self.audioOutput) == audioWanted
+                && (enabled || !wasCinematic)
             self.videoModeRequested = enabled
             self.videoAudioRequested = enabled
             guard self.configured else { return }
@@ -1926,6 +2011,7 @@ final class CameraEngine: NSObject, ObservableObject {
                 self.rememberPhotoDeviceConfiguration(device)
             }
             let zoomBeforeTransition = self.input?.device.videoZoomFactor
+            var changedPhotoInput = false
             self.session.beginConfiguration()
             if #available(iOS 26.0, *), !enabled, let input = self.input,
                input.isCinematicVideoCaptureEnabled {
@@ -1935,6 +2021,10 @@ final class CameraEngine: NSObject, ObservableObject {
                 // Video chooses activeFormat explicitly. A fixed 1080p preset
                 // would replace the saved format and reset the selected zoom.
                 if self.session.canSetSessionPreset(.inputPriority) { self.session.sessionPreset = .inputPriority }
+                // InputPriority 会保留照片 activeFormat；若直接加录制输出，3264×2448
+                // 等照片格式可能不支持视频输出，AVFoundation 以 -11800 失败并进入恢复循环。
+                // 先应用一个安全的视频格式，随后 setVideoSettings 再覆盖为目标规格。
+                self.applyInitialVideoFormatIfNeeded()
                 self.addRecordingOutputs()
             } else {
                 self.removeRecordingOutputs()
@@ -1948,13 +2038,54 @@ final class CameraEngine: NSObject, ObservableObject {
                     self.session.automaticallyConfiguresCaptureDeviceForWideColor = original
                     self.videoWideColorBeforeVideo = nil
                 }
+                if wasCinematic, let previous = self.input,
+                   let lens = self.lensCatalog.first(where: { $0.id == (self.manualZoomAnchorID ?? self.selectedLens) }) {
+                    let photoDevice = self.captureDevice(for: lens)
+                    if photoDevice.uniqueID != previous.device.uniqueID {
+                        do {
+                            let restored = try self.reusableInput(for: photoDevice)
+                            self.session.removeInput(previous)
+                            if self.session.canAddInput(restored) {
+                                self.session.addInput(restored)
+                                self.input = restored
+                                changedPhotoInput = true
+                            } else {
+                                self.session.addInput(previous)
+                                throw CameraError.unavailable
+                            }
+                        } catch {
+                            self.report("恢复照片镜头失败：\(error.localizedDescription)")
+                        }
+                    }
+                }
             }
             if !enabled, self.session.canSetSessionPreset(.photo) { self.session.sessionPreset = .photo }
+            if #available(iOS 26.0, *), !enabled, !self.manualMode, !self.highResolutionPhotoRequested,
+               let current = self.input, current.device.deviceType == .builtInDualWideCamera,
+               let rear = self.rearVirtualDevice, rear.uniqueID != current.device.uniqueID {
+                // 电影使用 DualWide；返回照片的非手动/非高像素路线必须回到普通虚拟多摄。
+                do {
+                    let replacement = try self.reusableInput(for: rear)
+                    self.session.removeInput(current)
+                    if self.session.canAddInput(replacement) {
+                        self.session.addInput(replacement)
+                        self.input = replacement
+                        changedPhotoInput = true
+                    } else {
+                        self.session.addInput(current)
+                    }
+                } catch {
+                    self.report("恢复普通后置输入失败：\(error.localizedDescription)")
+                }
+            }
             // Nested configuration helpers participate in this transaction. Committing
             // each output/input/preview change separately restarts the graph repeatedly.
             self.reconcileLiveAudio()
             if let device = self.input?.device {
-                if !enabled { self.restorePhotoDeviceConfigurationsAfterVideo(preservingActiveZoom: zoomBeforeTransition) }
+                if !enabled {
+                    self.restorePhotoDeviceConfigurationsAfterVideo(
+                        preservingActiveZoom: changedPhotoInput ? nil : zoomBeforeTransition)
+                }
                 self.configureConnections(device: device)
                 if !enabled { self.configurePhotoOutput(device) }
                 if !enabled {
@@ -1980,6 +2111,12 @@ final class CameraEngine: NSObject, ObservableObject {
                 }
             }
             self.session.commitConfiguration()
+            if !enabled {
+                DispatchQueue.main.async {
+                    guard self.videoModeRevision.matches(revision) else { return }
+                    self.cinematicVideoCaptureActive = false
+                }
+            }
             // 视频规格会把 UI 快门范围限制到帧周期；切回照片后在新路由提交完成后重发能力，
             // 让刻度和参数范围立即使用当前照片格式的真实设备范围。
             if let device = self.input?.device {
@@ -1997,6 +2134,13 @@ final class CameraEngine: NSObject, ObservableObject {
         let revision = videoSettingsRevision.advance()
         videoConfiguring = true
         queue.async {
+            // 必须在 revision 守卫之前安装清理；旧请求被新请求取代时直接 return
+            // 曾把 videoConfiguring 永久留在 true，导致无法切回照片/HDR。
+            defer {
+                DispatchQueue.main.async {
+                    if self.videoSettingsRevision.matches(revision) { self.videoConfiguring = false }
+                }
+            }
             guard self.videoSettingsRevision.matches(revision) else { return }
             self.stopFocusNavigatorOnQueue()
             if self.dualCaptureSource != nil {
@@ -2011,11 +2155,6 @@ final class CameraEngine: NSObject, ObservableObject {
             self.requestedVideoSettings = request
             self.requestedCinematicVideo = cinematicVideo && !request.isRAW && !openGate
             self.requestedVideoOpenGate = openGate && !request.isRAW && !cinematicVideo
-            defer {
-                DispatchQueue.main.async {
-                    if self.videoSettingsRevision.matches(revision) { self.videoConfiguring = false }
-                }
-            }
             guard self.videoModeRequested, self.configured, let device = self.input?.device else { return }
             // 子模式在切换规格时可指定最终焦段锚点；先设置 requestedCinematicVideo，
             // 再按目标镜头解析输入设备，避免先经过普通镜头、随后再次重建电影输入。
@@ -2153,6 +2292,78 @@ final class CameraEngine: NSObject, ObservableObject {
                 maxFrameDuration: changed ? .invalid : device.activeVideoMaxFrameDuration,
                 zoomFactor: device.videoZoomFactor
             )
+        }
+    }
+
+    /// 进入视频但目标 setVideoSettings 尚未到达时的安全格式，避免用照片格式挂录制输出。
+    private func applyInitialVideoFormatIfNeeded() {
+        guard let device = input?.device,
+              let format = VideoCaptureSettings.format(
+                for: VideoCaptureSettings(resolution: .hd1080, frameRate: .fps30,
+                                          colorSpace: .sdr, codec: .hevc),
+                device: device) else { return }
+        if device.activeFormat != format {
+            do {
+                try device.lockForConfiguration(); defer { device.unlockForConfiguration() }
+                device.activeFormat = format
+                let duration = CMTime(value: 1, timescale: 30)
+                device.activeVideoMinFrameDuration = duration
+                device.activeVideoMaxFrameDuration = duration
+            } catch {
+                report("初始化视频格式失败：\(error.localizedDescription)")
+                return
+            }
+            configuredPreviewRoute = ""
+        }
+    }
+
+    /// WWDC25 Cinematic 要求先使用 DualWide/TrueDepth 设备及其电影格式，再启用电影输入。
+    /// 视频普通格式往往在 TripleCamera 上；这里在开启电影子模式前直接换到电影设备。
+    func prepareCinematicInput(completion: @escaping (Bool) -> Void) {
+        queue.async {
+            guard #available(iOS 26.0, *), self.videoModeRequested,
+                  let current = self.input,
+                  let target = self.cinematicCaptureDevice(for: current.device.position) else {
+                DispatchQueue.main.async { completion(false) }; return
+            }
+            if current.device.uniqueID == target.uniqueID {
+                DispatchQueue.main.async { completion(true) }; return
+            }
+            let supported = VideoCaptureSettings.cinematicVideoSupported(by: target)
+            let preferred = supported.first {
+                $0.resolution == .hd1080 && $0.frameRate == .fps30 && $0.colorSpace == .sdr
+            } ?? supported.first
+            guard let preferred,
+                  let format = VideoCaptureSettings.format(for: preferred, device: target,
+                                                           requiringCinematicVideo: true) else {
+                DispatchQueue.main.async { completion(false) }; return
+            }
+            self.session.beginConfiguration()
+            do {
+                let replacement = try self.reusableInput(for: target)
+                self.session.removeInput(current)
+                guard self.session.canAddInput(replacement) else {
+                    self.session.addInput(current); self.session.commitConfiguration()
+                    DispatchQueue.main.async { completion(false) }; return
+                }
+                self.session.addInput(replacement)
+                self.input = replacement
+                try self.prepareAutomaticRoute(target, factor: 1)
+                try target.lockForConfiguration()
+                target.activeFormat = format
+                let duration = CMTime(value: 1, timescale: 30)
+                target.activeVideoMinFrameDuration = duration
+                target.activeVideoMaxFrameDuration = duration
+                target.unlockForConfiguration()
+                self.configureConnections(device: target)
+                self.session.commitConfiguration()
+                DispatchQueue.main.async { completion(true) }
+            } catch {
+                self.session.addInput(current)
+                self.session.commitConfiguration()
+                self.report("切换电影设备失败：\(error.localizedDescription)")
+                DispatchQueue.main.async { completion(false) }
+            }
         }
     }
 
@@ -2453,6 +2664,8 @@ final class CameraEngine: NSObject, ObservableObject {
                     return false
                 }
                 session.addOutput(cinematicMetadataOutput)
+                // 官方 Cinematic 会话需要 metadata delegate；缺失时电影图可能不开始送帧。
+                cinematicMetadataOutput.setMetadataObjectsDelegate(self, queue: queue)
                 let requiredTypes = cinematicMetadataOutput.requiredMetadataObjectTypesForCinematicVideoCapture
                 guard !requiredTypes.isEmpty,
                       requiredTypes.allSatisfy(cinematicMetadataOutput.availableMetadataObjectTypes.contains) else {
@@ -2466,6 +2679,8 @@ final class CameraEngine: NSObject, ObservableObject {
                 }
                 session.addOutput(photoOutput)
                 addRecordingOutputs()
+                // 电影管线首帧后编码可能变慢；默认丢迟到帧会让录制输出只剩一帧。
+                recordingOutput.alwaysDiscardsLateVideoFrames = false
                 guard session.outputs.contains(recordingOutput),
                       configurePreviewOutputGraph(useRecordingOutput: true) else {
                     restoreStandardVideoOutputGraph(reuseRecordingOutputForPreview: false)
@@ -2613,7 +2828,9 @@ final class CameraEngine: NSObject, ObservableObject {
                                       nativeCaptureRotationAngle: CGFloat? = nil,
                                       rearCaptureRotationAngle: CGFloat? = nil) {
         recordingQueue.async { [self] in
-            guard self.movieRecorder == nil, !self.recordingFinishing else { return }
+            guard self.movieRecorder == nil, !self.recordingFinishing else {
+                return
+            }
             do {
                 let recorder = try MovieRecorder(url: recordingURL, sourceSize: sourceSize, ratio: aspect,
                                                  mirrored: mirrored, includeAudio: includeAudio,
@@ -2664,7 +2881,9 @@ final class CameraEngine: NSObject, ObservableObject {
                               timeLapseEnabled: Bool = false,
                               timeLapseInterval: TimeInterval? = nil, timeLapseFrameLimit: Int? = nil,
                               cinematicVideo: Bool = false) {
-        guard ready, !videoBusy, !videoConfiguring, !capturing, pendingPhotoCount == 0 else { return }
+        guard ready, !videoBusy, !videoConfiguring, !capturing, pendingPhotoCount == 0 else {
+            return
+        }
         timeLapseCapturedFrames = 0
         guard !timeLapseEnabled || !requestedVideoSettings.isRAW else {
             report("ProRes RAW 保留原始帧时间戳，暂不支持延时摄影。")
@@ -3075,7 +3294,9 @@ final class CameraEngine: NSObject, ObservableObject {
         // formats, not merely the output's global ProRAW-enabled switch. Some
         // routes can still expose Bayer RAW without an Apple ProRAW pixel type.
         let pro = hasProRAW
-        let heifHDRSupported = !rawTypes.isEmpty && hlgPreviewFormat(device) != nil
+        // HEIF HDR 走系统 HLG/增益图，不要求当前 output 同时公开 RAW 类型；
+        // 视频/Live 返回瞬间 rawTypes 可能暂时为空，不能因此把 HDR 误报为不可用。
+        let heifHDRSupported = hlgPreviewFormat(device) != nil
         let highHDRSupported = !reducedHDRResolutionDevices.contains(device.uniqueID)
             && !device.constituentDevices.contains { $0.deviceType == .builtInWideAngleCamera && reducedHDRResolutionDevices.contains($0.uniqueID) }
         let nightSupported = photoOutput.maxBracketedCapturePhotoCount >= NightCapturePolicy.frameCount
@@ -3263,6 +3484,8 @@ final class CameraEngine: NSObject, ObservableObject {
 
     private func configurePreviewOutput(_ device: AVCaptureDevice) {
         guard !nativePhotoInFlight else { deferredPhotoGraphConfiguration = true; return }
+        // 电影由录制输出送帧，不能再配置已拆下的普通预览输出。
+        guard !requestedCinematicVideo || session.outputs.contains(videoOutput) else { return }
         let previewDimensions = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
         // A/M 在虚拟/物理后置之间切换时，只要视频输出格式尺寸和色彩空间一致，
         // 就不必为了设备 ID 变化重建预览输出；输入替换本身会继续送帧。
@@ -3517,7 +3740,7 @@ final class CameraEngine: NSObject, ObservableObject {
         zoomThrottle.cancel()
         queue.async { [self] in
             guard #available(iOS 26.0, *), self.wantsRunning, self.configured, self.session.isRunning,
-                  !self.videoModeRequested, !self.videoBusy, !self.capturing,
+                  !self.videoModeRequested, !self.videoBusy, !self.capturing, !self.frontAspectInFlight,
                   let device = self.input?.device, device.position == .front,
                   self.frontPhotoAspectRatioSwitchAvailable,
                   let wide = self.lensCatalog.first(where: { $0.device.uniqueID == device.uniqueID && $0.frontFraming == .wide }) else { return }
@@ -3674,6 +3897,12 @@ final class CameraEngine: NSObject, ObservableObject {
         if monitor.enabledFramings != choices { monitor.enabledFramings = choices }
     }
 
+    /// 普通前置视频用普通会话 input，双拍时 CenterStage 必须落到双拍自己的前置设备。
+    private var frontCenterStageDevice: AVCaptureDevice? {
+        if let dualCaptureSource { return dualCaptureSource.front }
+        return input?.device
+    }
+
     /// 官方Center Stage负责对人物自动平移/缩放，使用相机原生输出，不叠加软件裁切。
     func setFrontVideoCentering(_ enabled: Bool, transitionID: UUID? = nil) {
         guard !videoBusy, !frontVideoCenteringPreparing else { return }
@@ -3681,19 +3910,22 @@ final class CameraEngine: NSObject, ObservableObject {
         let revision = frontVideoCenteringRevision.advance()
         queue.async {
             defer { DispatchQueue.main.async { if self.frontVideoCenteringRevision.matches(revision) { self.frontVideoCenteringPreparing = false } } }
-            guard self.wantsRunning, self.videoModeRequested, self.dualCaptureSource == nil,
-                  let device = self.input?.device, device.position == .front else { return }
+            guard self.videoModeRequested, let device = self.frontCenterStageDevice,
+                  device.position == .front else { return }
+            guard self.wantsRunning || self.dualCaptureSource != nil else { return }
             if enabled && !device.formats.contains(where: { $0.isCenterStageSupported }) {
                 self.report("当前前置镜头不支持人物居中。"); return
             }
             self.frontAutoCenteringRequested = false; self.stopFrontSmartFraming()
             if !enabled { self.stopFrontVideoCentering() }
             else { self.frontVideoCenteringRequested = true }
-            self.session.beginConfiguration()
-            self.configureConnections(device: device)
-            self.session.commitConfiguration()
+            if self.dualCaptureSource == nil {
+                self.session.beginConfiguration()
+                self.configureConnections(device: device)
+                self.session.commitConfiguration()
+            }
             self.refreshFrontVideoCentering(device)
-            self.publishCapabilities(device, lensID: self.selectedLens)
+            if self.dualCaptureSource == nil { self.publishCapabilities(device, lensID: self.selectedLens) }
             self.syncPreviewState(); if let transitionID { self.markUserPreviewSwitch(transitionID) }
         }
     }
@@ -3701,7 +3933,7 @@ final class CameraEngine: NSObject, ObservableObject {
         if clearRequest { frontVideoCenteringRequested = false }
         AVCaptureDevice.centerStageControlMode = .app
         // 裁切ROI仅属于本功能，退出前恢复整幅，避免带到下一种取景/格式。
-        if AVCaptureDevice.isCenterStageEnabled, let device = input?.device,
+        if AVCaptureDevice.isCenterStageEnabled, let device = frontCenterStageDevice,
            device.formats.contains(where: { $0.isCenterStageSupported }),
            device.centerStageRectOfInterest != CGRect(x:0,y:0,width:1,height:1) {
             do {
@@ -3712,17 +3944,17 @@ final class CameraEngine: NSObject, ObservableObject {
         }
         if AVCaptureDevice.isCenterStageEnabled { AVCaptureDevice.isCenterStageEnabled = false }
         frontVideoCenteringObservation = nil
-        if let device = input?.device { publishFrontVideoCenteringState(device) }
+        if let device = frontCenterStageDevice { publishFrontVideoCenteringState(device) }
     }
     private func refreshFrontVideoCentering(_ device: AVCaptureDevice, deviceLocked: Bool = false) {
         let enabled = frontVideoCenteringRequested && videoModeRequested && device.position == .front
-            && device.activeFormat.isCenterStageSupported && dualCaptureSource == nil && wantsRunning
+            && device.activeFormat.isCenterStageSupported && (wantsRunning || dualCaptureSource != nil)
         AVCaptureDevice.centerStageControlMode = .app
         if AVCaptureDevice.isCenterStageEnabled != enabled { AVCaptureDevice.isCenterStageEnabled = enabled }
         if enabled { updateFrontVideoCenteringRegion(device, deviceLocked: deviceLocked) }
         frontVideoCenteringObservation = enabled ? device.observe(\.isCenterStageActive, options: [.new]) { [weak self, weak device] _, _ in
             self?.queue.async { [weak self, weak device] in
-                guard let self, let device, self.input?.device === device else { return }
+                guard let self, let device, self.frontCenterStageDevice === device else { return }
                 self.publishFrontVideoCenteringState(device)
             }
         } : nil
@@ -3733,6 +3965,12 @@ final class CameraEngine: NSObject, ObservableObject {
     private func updateFrontVideoCenteringRegion(_ device: AVCaptureDevice, deviceLocked: Bool = false) {
         guard frontVideoCenteringRequested, AVCaptureDevice.isCenterStageEnabled,
               device.position == .front, device.activeFormat.isCenterStageSupported else { return }
+        guard dualCaptureSource == nil else {
+            if device.centerStageRectOfInterest != CGRect(x:0,y:0,width:1,height:1) {
+                device.centerStageRectOfInterest = CGRect(x:0,y:0,width:1,height:1)
+            }
+            return
+        }
         guard let size = frontVideoOutputSize() else { return }
         let width = size.width, height = size.height
         guard width > 0, height > 0 else { return }
@@ -3762,7 +4000,7 @@ final class CameraEngine: NSObject, ObservableObject {
         return CGSize(width:width,height:height)
     }
     private func publishFrontVideoCenteringState(_ device: AVCaptureDevice) {
-        let enabled = frontVideoCenteringRequested && videoModeRequested && device.position == .front && dualCaptureSource == nil
+        let enabled = frontVideoCenteringRequested && videoModeRequested && device.position == .front
         let active = enabled && device.isCenterStageActive
         DispatchQueue.main.async {
             self.frontVideoCenteringEnabled = enabled
@@ -3921,6 +4159,7 @@ final class CameraEngine: NSObject, ObservableObject {
             }
 
         }
+        publishVideoStabilizationAvailability(device: device)
     }
 
     private func publishCapabilities(_ device: AVCaptureDevice, lensID: String, zoomRequest: UInt64? = nil) {
@@ -4040,8 +4279,12 @@ final class CameraEngine: NSObject, ObservableObject {
         try device.lockForConfiguration(); defer { device.unlockForConfiguration() }
         restoreDefaultAutoExposureLimit(device)
         device.videoZoomFactor = min(max(factor, device.minAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor)
-        if device.isFocusPointOfInterestSupported { device.focusPointOfInterest = CGPoint(x:0.5,y:0.5) }
-        if device.isFocusModeSupported(.continuousAutoFocus) { device.focusMode = .continuousAutoFocus }
+        if #available(iOS 26.0, *), requestedCinematicVideo || input?.isCinematicVideoCaptureEnabled == true {
+            // Cinematic 自己选择并跟踪主体；再写普通 AF 中心点会把焦点从主体抢到背景。
+        } else {
+            if device.isFocusPointOfInterestSupported { device.focusPointOfInterest = CGPoint(x:0.5,y:0.5) }
+            if device.isFocusModeSupported(.continuousAutoFocus) { device.focusMode = .continuousAutoFocus }
+        }
         if device.isExposurePointOfInterestSupported { device.exposurePointOfInterest = CGPoint(x:0.5,y:0.5) }
         if device.isExposureModeSupported(.continuousAutoExposure) { device.exposureMode = .continuousAutoExposure }
         if device.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) { device.whiteBalanceMode = .continuousAutoWhiteBalance }
@@ -7296,11 +7539,12 @@ final class CameraEngine: NSObject, ObservableObject {
     private struct DetachedMainSession {
         let input: AVCaptureDeviceInput?
         let outputs: [AVCaptureOutput]
+        let hardwareZoom: CGFloat?
     }
 
     private func detachMainSessionForIndependentNight() -> DetachedMainSession {
+        let detached = DetachedMainSession(input: input, outputs: session.outputs, hardwareZoom: input?.device.videoZoomFactor)
         session.stopRunning()
-        let detached = DetachedMainSession(input: input, outputs: session.outputs)
         session.beginConfiguration()
         for output in detached.outputs where session.outputs.contains(output) {
             session.removeOutput(output)
@@ -7321,15 +7565,80 @@ final class CameraEngine: NSObject, ObservableObject {
             if session.canAddOutput(output) { session.addOutput(output) }
         }
         session.commitConfiguration()
+        // 界面倍率与虚拟多摄的硬件倍率单位不同；恢复原值，避免夜景拍完后换视野或供图镜头。
+        if let input = detached.input, session.inputs.contains(input), let zoom = detached.hardwareZoom {
+            let device = input.device
+            do {
+                try device.lockForConfiguration()
+                defer { device.unlockForConfiguration() }
+                device.videoZoomFactor = min(max(zoom, device.minAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor)
+            } catch {
+                tracePhotoPhase("night-main-zoom-restore-failed")
+            }
+        }
         if wantsRunning, !session.isRunning { session.startRunning() }
     }
 
-    /// 48mm 夜景独立会话：暂停普通会话，采集 3 张 48MP 单帧，中心裁切后融合。
     private func captureIndependentNight(context: CaptureContext, physical: AVCaptureDevice,
                                           baseDisplayZoom: CGFloat) {
-        let virtual = self.input?.device
-        let meteredSeconds = virtual?.exposureDuration.seconds ?? physical.exposureDuration.seconds
-        let meteredISO = virtual.map { Double($0.iso) } ?? Double(physical.iso)
+        #if DEBUG
+        if let injected = nightAutomaticExposureForTesting {
+            startIndependentNightCapture(context: context, physical: physical, baseDisplayZoom: baseDisplayZoom, metered: injected)
+            return
+        }
+        #endif
+        guard let device = input?.device, wantsRunning, session.isRunning else {
+            hardwareFinished(token: context.token)
+            completeCapture(context, photo: nil, message: "相机尚未就绪，请重试夜景拍摄。")
+            return
+        }
+        let startedAt = CACurrentMediaTime()
+        livePreviewState.update {
+            $0.independentNightMeteringRequest = (startedAt, device.uniqueID)
+            $0.independentNightMeteringSample = nil
+        }
+        tracePhotoPhase("night-meter-start seconds=\(device.exposureDuration.seconds) iso=\(device.iso) adjusting=\(device.isAdjustingExposure)")
+        waitForIndependentNightMetering(context: context, physical: physical, baseDisplayZoom: baseDisplayZoom,
+            deviceID: device.uniqueID, lifecycle: recoveryRevision.current, metering: IndependentNightMetering(startedAt: startedAt))
+    }
+
+    private func waitForIndependentNightMetering(context: CaptureContext, physical: AVCaptureDevice,
+                                                 baseDisplayZoom: CGFloat, deviceID: String, lifecycle: UInt64,
+                                                 metering: IndependentNightMetering) {
+        var metering = metering
+        let elapsed = CACurrentMediaTime() - metering.startedAt
+        let routeValid = recoveryRevision.matches(lifecycle) && wantsRunning && session.isRunning
+            && !videoModeRequested && !manualMode && input?.device.uniqueID == deviceID
+        let sample = livePreviewState.snapshot().independentNightMeteringSample
+        let stable = routeValid && elapsed < IndependentNightMetering.timeout ? sample.flatMap { metering.observe($0) } : nil
+        if routeValid, elapsed < IndependentNightMetering.timeout, stable == nil {
+            let pending = metering
+            queue.asyncAfter(deadline: .now() + 0.05) { [self] in
+                waitForIndependentNightMetering(context: context, physical: physical, baseDisplayZoom: baseDisplayZoom,
+                    deviceID: deviceID, lifecycle: lifecycle, metering: pending)
+            }
+            return
+        }
+        livePreviewState.update {
+            guard $0.independentNightMeteringRequest?.startedAt == metering.startedAt else { return }
+            $0.independentNightMeteringRequest = nil
+            $0.independentNightMeteringSample = nil
+        }
+        guard let stable else {
+            tracePhotoPhase("night-meter-ended elapsed=\(elapsed) routeValid=\(routeValid)")
+            hardwareFinished(token: context.token)
+            completeCapture(context, photo: nil, message: routeValid ? "夜景测光尚未稳定，请保持取景片刻后重试。" : nil)
+            return
+        }
+        tracePhotoPhase("night-meter-selected seconds=\(stable.seconds) iso=\(stable.iso) wait=\(elapsed)")
+        startIndependentNightCapture(context: context, physical: physical, baseDisplayZoom: baseDisplayZoom, metered: stable)
+    }
+
+    /// 暂停普通会话，以稳定的预览曝光为基准完成独立夜景采集。
+    private func startIndependentNightCapture(context: CaptureContext, physical: AVCaptureDevice,
+                                              baseDisplayZoom: CGFloat, metered: NightAdaptiveCapturePolicy.Exposure) {
+        let meteredSeconds = metered.seconds
+        let meteredISO = metered.iso
         let lower = physical.activeFormat.minExposureDuration.seconds
         let upper = min(physical.activeFormat.maxExposureDuration.seconds,
                         max(lower, NightAdaptiveCapturePolicy.handheldMaximumExposureSeconds))
@@ -7341,7 +7650,8 @@ final class CameraEngine: NSObject, ObservableObject {
         #endif
         // 极暗场景的预览曝光乘积可能低于规划器阈值；用当前测光值兜底，
         // 不能直接把一次夜景判为“无法计算曝光”。
-        if plan == nil {
+        let usedFallback = plan == nil
+        if usedFallback {
             let fallbackSeconds = min(max(meteredSeconds, lower), upper)
             let fallbackISO = min(max(meteredISO, isoRange.lowerBound), isoRange.upperBound)
             if fallbackSeconds.isFinite, fallbackSeconds > 0, fallbackISO.isFinite, fallbackISO > 0 {
@@ -7353,6 +7663,7 @@ final class CameraEngine: NSObject, ObservableObject {
             completeCapture(context, photo: nil, message: "夜景独立采集无法计算曝光。")
             return
         }
+        tracePhotoPhase("night-exposure-plan seconds=\(plan.seconds) iso=\(plan.iso) demand=\(meteredSeconds * meteredISO) fallback=\(usedFallback)")
         context.nightHighResolutionCrop = true
         context.nightCaptureZoom = max(1, currentZoom / max(0.5, baseDisplayZoom))
         context.nightRestoreZoom = max(0.5, currentZoom)
@@ -7375,13 +7686,6 @@ final class CameraEngine: NSObject, ObservableObject {
                     self.configureOutputConnections(device)
                     self.configurePhotoOutput(device, publish: false)
                     self.syncPreviewState()
-                    do {
-                        try device.lockForConfiguration()
-                        let restore = max(0.5, self.currentZoom)
-                        device.videoZoomFactor = min(max(restore, device.minAvailableVideoZoomFactor),
-                                                     device.maxAvailableVideoZoomFactor)
-                        device.unlockForConfiguration()
-                    } catch {}
                 }
                 self.hardwareFinished(token: context.token)
                 switch result {
@@ -7965,11 +8269,25 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
             // 录制队列只负责快速送帧给写入器；预览渲染在独立队列完成，避免拖慢编码输入。
             previewQueue.async { [weak self] in
                 defer { self?.livePreviewState.finishRecordingPreviewRender() }
-                self?.renderPreviewFrame(sampleBuffer)
+                self?.renderPreviewFrame(sampleBuffer, fromRecordingOutput: true)
             }
             return
         }
-        renderPreviewFrame(sampleBuffer)
+        renderPreviewFrame(sampleBuffer, samplesIndependentNightMetering: output === videoOutput)
+    }
+
+    private func sampleIndependentNightMetering(time: TimeInterval, state: LivePreviewState.Snapshot) {
+        guard let request = state.independentNightMeteringRequest,
+              time >= request.startedAt,
+              let device = state.device, device.uniqueID == request.deviceID else { return }
+        let sourceID = device.activePrimaryConstituent?.uniqueID ?? device.uniqueID
+        let sample = IndependentNightMetering.Sample(time: time, sourceID: "\(state.readingsGeneration):\(sourceID)",
+            exposure: .init(seconds: device.exposureDuration.seconds, iso: Double(device.iso)), adjusting: device.isAdjustingExposure)
+        livePreviewState.update {
+            guard $0.independentNightMeteringRequest?.startedAt == request.startedAt,
+                  $0.readingsGeneration == state.readingsGeneration else { return }
+            $0.independentNightMeteringSample = sample
+        }
     }
 
     /// 独立夜景视频帧仍走主预览的 Core Image 管线，保持 look/方向/滤镜一致。
@@ -7987,18 +8305,47 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
         }
     }
 
-    private func renderPreviewFrame(_ sampleBuffer: CMSampleBuffer) {
-        autoreleasepool { renderPreviewFrameInPool(sampleBuffer) }
+    private func renderPreviewFrame(_ sampleBuffer: CMSampleBuffer, samplesIndependentNightMetering: Bool = false,
+                                    fromRecordingOutput: Bool = false) {
+        autoreleasepool {
+            renderPreviewFrameInPool(sampleBuffer, samplesIndependentNightMetering: samplesIndependentNightMetering,
+                                     fromRecordingOutput: fromRecordingOutput)
+        }
     }
 
-    private func renderPreviewFrameInPool(_ sampleBuffer: CMSampleBuffer) {
+    #if DEBUG
+    func setNightPreviewTraceStartForTesting(_ time: TimeInterval?) {
+        livePreviewState.update { $0.nightPreviewTraceStartForTesting = time }
+    }
+
+    /// 仅在真机诊断时读取主预览的曝光，限频避免控制台输出拖慢取景。
+    private func traceNightPreviewForTesting(time: TimeInterval, state: LivePreviewState.Snapshot) {
+        guard let startedAt = state.nightPreviewTraceStartForTesting, time >= startedAt,
+              time - lastNightPreviewTraceTime >= 0.10, let device = state.device else { return }
+        lastNightPreviewTraceTime = time
+        let primary = device.activePrimaryConstituent ?? device
+        print("NIGHT-PREVIEW elapsed=\(time - startedAt) generation=\(state.readingsGeneration) route=\(device.deviceType.rawValue) primary=\(primary.deviceType.rawValue) mode=\(device.exposureMode.rawValue) adjusting=\(device.isAdjustingExposure) seconds=\(device.exposureDuration.seconds) iso=\(device.iso) offset=\(device.exposureTargetOffset) bias=\(device.exposureTargetBias) zoom=\(device.videoZoomFactor)")
+    }
+    #endif
+
+    private func renderPreviewFrameInPool(_ sampleBuffer: CMSampleBuffer, samplesIndependentNightMetering: Bool,
+                                          fromRecordingOutput: Bool) {
         let state = livePreviewState.snapshot()
         guard state.running, state.acceptsFrames, !state.nightCapturePreviewHold else { return }
+        if fromRecordingOutput && !state.previewFromRecordingOutput { return }
         let time = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
         guard state.acceptsFrame(time: time), LivePreviewCadence.accepts(time: time, lastFrameTime: lastFrameTime, frameRate: state.videoFrameRate),
               let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
               livePreviewState.acceptsWarmFrame(generation: state.readingsGeneration) else { return }
         lastFrameTime = time
+        #if DEBUG
+        if samplesIndependentNightMetering {
+            traceNightPreviewForTesting(time: time, state: state)
+        }
+        #endif
+        if samplesIndependentNightMetering, state.independentNightMeteringRequest != nil {
+            sampleIndependentNightMetering(time: time, state: state)
+        }
         let refreshRequested = lastReadingsRefreshRevision != state.readingsRefreshRevision
         let readingsInterval = CACurrentMediaTime()<state.readingsFastUntil ? 0.08 : 0.4
         if refreshRequested || time-lastReadingsTime>=readingsInterval, let device = state.device {
@@ -8069,6 +8416,7 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
            (nativeSource.extent.width > nativeSource.extent.height) != state.nativeFrontSensorLandscape { return }
         livePreviewState.update {
             $0.extent = source.extent; $0.latestFrameHostTime = CACurrentMediaTime()
+            if fromRecordingOutput { $0.latestRecordingPreviewFrameHostTime = $0.latestFrameHostTime }
             #if DEBUG
             $0.rawBufferSizeForTesting = CGSize(width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
             if let format = CMSampleBufferGetFormatDescription(sampleBuffer) {
@@ -8206,6 +8554,13 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
         publishPreview(UIImage(cgImage: image), revision: state.revision, generation: state.readingsGeneration, userSwitchID: state.userSwitchID, frontLandscape: state.nativeFrontPhotoSensor ? state.nativeFrontSensorLandscape : nil)
     }
 
+}
+
+extension CameraEngine: AVCaptureMetadataOutputObjectsDelegate {
+    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject],
+                        from connection: AVCaptureConnection) {
+        // Cinematic 主体/对焦检测由系统处理；delegate 必须存在以驱动电影图。
+    }
 }
 
 extension CameraEngine: AVCapturePhotoCaptureDelegate {

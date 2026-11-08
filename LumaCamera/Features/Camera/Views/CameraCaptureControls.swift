@@ -48,7 +48,7 @@ extension CameraView {
             .rotatingCaptureContent().frame(width: diameter, height: diameter)
             .contentShape(Circle())
         }.buttonStyle(.plain)
-            .disabled(!camera.ready || camera.videoBusy || camera.dualCaptureEnabled || camera.dualCapturePreparing || camera.frontVideoCenteringPreparing)
+            .disabled(!camera.ready || camera.videoBusy || camera.dualCapturePreparing || camera.frontVideoCenteringPreparing)
             .accessibilityLabel("视频人物居中")
             .accessibilityValue(model.frontVideoCenteringRequested ? "开启" : "关闭")
             .accessibilityIdentifier("camera.frontVideoCentering")
@@ -191,13 +191,17 @@ extension CameraView {
                     .opacity(hidesSlowShutterControls ? 0 : 1)
                     .allowsHitTesting(!hidesSlowShutterControls)
                 Group {
-                    if model.captureKind == .video && (model.dualCaptureAvailable || camera.dualCaptureEnabled) {
-                        // 前置广角、人物居中和双拍作为一组居中，横拿只旋转图标。
-                        HStack(spacing: 8) {
-                            lensBar(availableWidth: lensWidth).fixedSize()
-                            if model.frontVideoCenteringVisible { frontVideoCenteringButton(diameter: diameter).padding(2).recordingHidden(camera.videoRecording) }
+                    if model.captureKind == .video && model.displayedFocalPosition == .front {
+                        // 视频前置固定超广角：不渲染任何焦段控件；追踪可用时只显示居中的追踪按钮。
+                        if model.frontVideoCenteringVisible {
+                            frontVideoCenteringButton(diameter: diameter).padding(2)
+                                .recordingHidden(camera.videoRecording)
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Color.clear.frame(maxWidth: .infinity, maxHeight: 1)
                         }
-                        .frame(maxWidth: .infinity)
+                    } else if model.captureKind == .video && (model.dualCaptureAvailable || camera.dualCaptureEnabled) {
+                        lensBar(availableWidth: lensWidth).fixedSize().frame(maxWidth: .infinity)
                     } else {
                         lensBar(availableWidth: lensWidth).frame(maxWidth: .infinity)
                     }
@@ -266,7 +270,7 @@ extension CameraView {
                 .contentShape(Rectangle().inset(by: -CameraControlLayout.buttonHitExpansion))
         }
         .accessibilityLabel("拍摄模式选项")
-        .accessibilityValue(model.captureKind == .video ? (camera.dualCaptureEnabled ? "同步双拍已开启" : model.timeLapseEnabled ? "延时摄影已开启" : model.slowMotionEnabled ? "慢动作已开启" : model.cinematicVideoEnabled ? "电影模式已开启" : model.virtualApertureEnabled ? "虚拟光圈已开启" : "视频模式") : model.nightModeEnabled ? "夜景已开启" : model.portraitModeEnabled ? "人像已开启" : model.burstModeEnabled ? "连拍已开启" : model.slowShutterEnabled ? "慢门已开启" : "照片模式")
+        .accessibilityValue(model.captureKind == .video ? (camera.dualCaptureEnabled ? "同步双拍已开启" : model.timeLapseEnabled ? "延时摄影已开启" : model.slowMotionEnabled ? "慢动作已开启" : model.cinematicVideoEnabled ? "电影模式已开启" : model.virtualApertureEnabled ? "虚拟光圈已开启" : "视频模式") : model.portraitModeEnabled ? "人像已开启" : model.burstModeEnabled ? "连拍已开启" : model.slowShutterEnabled ? "慢门已开启" : "照片模式")
         .disabled(camera.videoBusy)
         .recordingHidden(model.captureKind == .video && camera.videoRecording)
     }
@@ -397,7 +401,8 @@ extension CameraView {
                          size: size, iconSize: 20) {
                 model.setCaptureKind(model.captureKind == .video ? .photo : .video)
             }.captureControlGeometry("functions", model: model)
-                .disabled(camera.capturing || camera.videoBusy || library.videoSaving || model.isPreparingSubmode || model.captureKindSwitching)
+                .disabled(camera.capturing || camera.videoBusy || library.videoSaving
+                    || ((model.isPreparingSubmode || model.captureKindSwitching) && model.videoSubmodePreparing != .cinematic))
                 .recordingHidden(recording)
             Spacer(minLength: 0)
             Group {

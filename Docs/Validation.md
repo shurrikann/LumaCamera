@@ -1,8 +1,134 @@
+# 2026-11-08 夜景拍照入口移除
+
+- 移除拍摄模式面板“夜景”、顶部夜景指示/关闭按钮、自动夜景建议与旧存档夜景恢复；`SavedCaptureState.nightMode` 保存值固定 false。
+- 底层夜景采集/合成算法保留但不可由用户触发；普通照片/视频、HDR、人像、慢门、连拍、虚拟光圈和电影行为不变。
+- 更新 SmartCaptureAnalyzer/Policy、ShootingModeButton、Smart48 测试；夜景内部算法测试保留。
+
+# 2026-11-08 剩余项完成与电影元数据平台限制
+
+- 视频虚拟光圈：测试 key 更新为当前 `videoVirtualApertureButton`，真机通过 5 比例×4 角度、3 轮拖拽、720p/1080p P3 H.264/4K HEVC/ProRes 实际录制与恢复。
+- 前置画幅：`testManualToAutomaticPreviewMatchesAllPhotoRatiosAndFrontFraming` 连续两次通过。
+- Depth：竖屏跟随直方图、横屏读竖屏冻结值；用户真机旋转确认横竖一致。自动化仍受双 CameraView 几何串扰。
+- 120fps：实测 720p/1080p/4K 为 107.0–119.7fps，`testRenderedVideoPreviewCadenceTracksSupportedRates` 通过。
+- 电影元数据：主会话内 MovieFileOutput 探针显示 `isCinematicVideoMetadataCaptureSupported=false`，且前后置 `isCinematicVideoMetadataCaptureSupported` 格式数均为 0；当前 iPhone 17 Pro / iOS 27.2 不提供第三方可编辑 Cinematic 元数据录制。探针已移除，保留烘培成片。
+
+# 2026-11-08 剩余五项执行结果
+
+- 视频虚拟光圈真机通过；前置画幅连续两次通过；120fps 实测 107.0–119.7fps 通过；Depth 用户真机旋转确认横竖一致。
+- 电影可编辑元数据未完成：独立 MovieFileOutput 会话与主 App 相机争用崩溃，已移除探针；需直接改造主会话录制架构。
+# 2026-11-08 剩余项修复进展
+
+- 视频虚拟光圈：测试 key 更新为当前 UI，真机通过 5 比例×4 角度布局、拖拽预览及 4 规格实际录制。
+- 前置画幅：七画幅+前置横幅/竖幅连续两次通过。
+- Depth：竖屏跟直方图、横屏读冻结值；双 CameraView 串扰仍使横屏自动化失败，需真机旋转。
+- 120fps：实测 107.0–119.7fps，门槛 78 通过。
+- 电影元数据：未实现，仍是烘培文件。
+# 2026-11-08 切换视频偶发“未就绪”
+
+- 根因：进入视频时先提交规格、后 setVideoMode(true)，规格提交被 videoModeRequested=false 丢弃，视频可能用照片格式启动。
+- 已改为先进入视频再提交规格；安全初始格式保留。VideoModeTransition 5/5、CinematicEffect 1/1、BasicVideo 3/3 通过。
+# 2026-11-08 照片/视频切换收口完成
+
+- 电影返回：DualWide 输入在照片路线兜底回普通后置虚拟多摄（Triple），会话快照验证通过。
+- 测试改为比较实际会话 input；预览持续刷新作为断言，未开录 recordingOutput 计数不再误判。
+- 验证通过：VideoModeTransitionTests 5/5、CinematicEffectPhysicalTests 1/1、BasicVideoPhysicalTests 3/3；覆盖 HDR 电影往返、普通 HDR 往返、电影预览/返回、重复切换。
+# 2026-11-08 照片/视频切换收口
+
+- HDR：pending 恢复 + 去掉 HEIF HDR 对 RAW 类型的错误依赖；电影往返 HDR 2/2 通过，普通 HDR 视频往返通过。
+- 电影录制 30fps 稳定；返回照片清理电影子模式。
+- 残余：电影未开录时 recordingOutput 帧计数为0，返回后镜头可能仍是 DualWide(6) 而非 Triple(7)；`testCinematicPreviewAndPhotoHDRRecoverOnVideoRoundTrip` 仍失败，未宣称全部切换完成。
+# 2026-11-08 照片 HDR → 电影 → 照片恢复
+
+- 新增照片状态恢复 pending，避免视频退出时能力表尚未恢复 HEIF 就被协调器覆盖为 JPEG/SDR。
+- `restorePhotoStateAfterVideo` 支持能力恢复后重试，保留格式/分辨率/HDR。
+- 真机 `testCinematicRoundTripRestoresHDRSelection` 连续 2 次通过；原有 HDR 视频往返用例进入视频前偶发 supportsHEIFHDR=false，仍单独记录。
+# 2026-11-08 电影对焦策略确认
+
+- 采用默认自动跟焦 + 点击主体改焦；Cinematic 开启时 `focus(at:)` 使用 `setCinematicVideoTrackingFocus(.weak)`，长按使用 fixed focus `.strong`，不写普通 focusMode。
+- 已移除电影路线准备时强制中心 `focusPointOfInterest/continuousAutoFocus` 的重置。成片仍是烘培景深、无独立 Cinematic 元数据轨。
+# 2026-11-08 电影录制修复
+
+- 根因：电影录制输出 `alwaysDiscardsLateVideoFrames=true`，Cinematic 首帧后处理变慢导致后续帧全丢。改为 false 后四次录制均约 30fps（22帧/0.70s），CinematicEffect 真机用例通过；BasicVideoPhysicalTests 3 项通过。
+- 电影模式不再执行普通 AF 中心重置；快门未就绪时会先准备 DualWide/电影格式再开拍。
+- 抽查成片 38.35s、2160×2880 竖屏4:3、HEVC 30fps、AAC；只有视频+音频轨，虚化烘培，不能像系统 Cinematic 文件二次改焦。抽帧对焦随镜头移动自动切换，属于自动主体跟焦，不是固定虚化错位。
+# 2026-11-08 电影卡死根因与官方顺序修正
+
+- 日志确认视频启动时 activeFormat 仍为照片 3264×2448，-11800/-73191 恢复循环导致卡死。视频分支现在同时关闭 HEIFHDRPreview 与 HEIFHDRPipeline；用户手动确认普通视频可进入，不再卡死。
+- 按 WWDC25 官方顺序新增电影设备切换：DualWide/TrueDepth + isCinematicVideoCaptureSupported 格式后再启用电影。清除遗漏的 videoSubmodePreparing。电影光圈预览可启动，但录制仍无首帧/成片，watchdog 会退回普通视频。
+## 2026-11-08 电影预览卡住与照片 HDR 恢复
+
+- iPhone 17 Pro 后置 A 挡普通 HEIF HDR，从照片进入视频后立即打开电影，基线同时复现电影停帧和返回照片后 HDR 能力未恢复。
+- 定向修正版三轮均恢复原照片输入、HEIF HDR 开关和新照片预览帧，包含直接返回、超时回到普通视频后返回、立即取消。三次返回至照片就绪约 2.52、0.60、1.22 秒。电影超时回退到普通视频并重新收到预览帧，单样本约 11.13 秒（含 8 秒超时和恢复，不是帧率）。本轮 HDR 验证的是开关与能力，未重新验收高反差成片增益图。
+- 电影持续出帧仍未通过。正常光线两轮每个 0.75 秒观察窗均收到 0 个新录制帧，系统未报告暗光，也未发送会话运行错误。独立单数据输出会话 5 秒只收到 4 帧；原生 `AVCaptureMovieFileOutput` 对照返回 `AVFoundationErrorDomain -11805`，底层 `-16418`，没有可用短片。由此尚不能确定首次发生的版本或设备侧根因。
+- 同机同场景用 GitHub 提交 `c9f4580` 重新构建，只注入测试用例。上一版也复现电影预览停帧与返回照片 HDR 能力未恢复；该版的两个电影规格/互斥模型用例通过。说明实际硬件故障早于本轮本地修复，两个模型用例的差异应与硬件停帧分开追踪。旧版对照为 `previous.xcresult`。
+- 构建通过。最终定向组 18 项，15 项通过，3 项失败。失败包含电影连续出帧用例及两个按同步启用电影编写的规格/子模块模型用例。未向系统相册写入诊断资源。结果及日志位于 `/tmp/luma-cinematic-return.fLwsJU`，主要证据为 `baseline.xcresult`、`compare.xcresult` 和 `fallback.xcresult`。
+
+# 2026-11-08 HDR 视频高反差复测
+
+- 高反差场景首次复测：视频返回后的 HDR 文件通过增益图/10-bit 断言；同轮 `supportsHEIFHDR` 恢复等待仍有一次失败，orientation=6 已按合法方向接受。
+- 重复整组时 HDR 变体再次输出 depth=8、无增益图且 supports=false，说明能力发布/管线恢复存在间歇性时序问题，未稳定通过。测试没有降低 HDR 文件断言。
+# 2026-11-08 HDR 视频返回结论修正
+
+- 视频返回后 HDR/格式状态恢复；捕获前 options.hdr=true、format=heif、directSystemHDR=true，尺寸正常。
+- 实际文件 depth=8、无增益图；普通 HDR 也可是 8-bit 主体+增益图，当前室内场景可能未触发系统 HDR。因此改为“需高反差窗景/灯光场景复测”，不再把 depth=8 直接判定为 HDR 回归。
+# 2026-11-08 人工场景与视频电影结果
+
+- CenterStage 竖屏、横屏人物和官方构图排除在用户配合下通过；微距/人像近距测试通过（3 张实际拍摄）。
+- 电影效果：光圈 2.0–16 可应用并刷新预览，但开始录制后 videoBusy=true 持续 12 秒未进入录制，未生成成片。未解决。
+- HDR 视频往返仍输出 depth=8、无增益图；视频虚拟光圈测试宿主/InvalidTransition 与 120fps 预览性能仍未解决。
+# 2026-11-08 视频 HDR 往返诊断
+
+- 视频返回后已尝试恢复进入视频前的照片格式/分辨率/HDR；HDR 变体捕获前 model/options 为 true，photoOutput 为 4032×3024/5712×4284，但文件仍 depth=8、Display P3、无增益图。另一轮恢复更晚，捕获前已回 false。HDR 视频往返仍未通过。
+- VideoVirtualAperture 仍受测试宿主几何/InvalidTransition 影响；120fps 预览处理约 68.5/74.9fps，低于 78fps 门槛；其余视频色彩/规格多数通过。
+# 2026-11-08 Live/人像与视频组处理进展
+
+- Live：`canToggleLivePhoto` 改为仅当前能力可用时允许开启，关闭始终允许；LivePhotoOptionsTests 4 项通过，Live/RAW 返回通过。
+- CenterStage：用户配合下竖屏、横屏人物录制及官方构图排除用例通过；测试不再要求已移出固定栏的同步双拍按钮。
+- 镜头：MainFocalPreset 复跑通过；RecordingEdge 更新为当前镜头+人物居中控件后通过。
+- 视频：多数色彩/规格用例通过；视频返回后增加了照片格式/分辨率/HDR 状态恢复，但 HDR 往返仍输出 depth=8 且 orientation=6，未解决。VideoVirtualAperture 仍受测试宿主几何/InvalidTransition 影响；120fps 预览处理低于 78fps 门槛。
+- 未完成真人电影景深、慢动作/防抖剩余场景及近距微距。
+# 2026-11-08 Depth 浮层位置与测试宿主限制
+
+- 景深/光圈浮层改为打开后冻结竖屏直方图中线位置；横屏和画幅重排复用，关闭时清空。使用 CameraView 局部 `@State` + `onGeometryChange`，避免 SwiftUI 视图更新期间修改状态。
+- `DepthToolbarPhysicalTests` 两项仍失败：主 App 与测试宿主同时渲染 CameraView，共享 `captureButtonFramesForTesting`/直方图几何，实际得到 148.5/169 对 140.5/148.5。不能凭该测试判定产品位置正确或错误；需真机横竖旋转截图复核。
+# 2026-11-08 全量测试问题处理进展
+
+- 银盐：1.3 倍浓度外推改为在单色亮度域执行；静态成像和视频像素两项通过，`FilterStrengthTests`/`FoodFilterTests` 8 项通过。
+- HDR：测试改为当前 SDR 取景 + HDR 成片契约；连续 HDR、1× HDR 镜头、HDR 成片三项真机通过；连续两张 headroom 约 2.83/2.81，文件增益图和 SDR/HDR 校验保留。
+- UI：自适应格式面板、慢门预设、镜头宽度公式、FocusNavigator 布局、前置视频宽选择复跑通过。Depth 两项、RecordingEdge 前置双拍按钮、ShootingMode 电影效果仍待视觉/功能确认。
+- 未处理 Live/人像路线和视频/电影效果组；未重跑完整 811 项。更新见[专项报告](Test-Reports/2026-11-07-Full-NonNight.md)。
+
+# 2026-11-07 全量测试（夜景模式除外）
+
+- iPhone 17 Pro / iOS 27.2 / 24B119，测试工作区包含 `c9f4580` 调色盘默认化及未提交的夜景融合/稳定 AE 调整；`LUMA_DIAGNOSTIC_READ_ONLY_PHOTOS=1`。
+- 排除夜景 88 项后实际执行 811 项：756 通过、34 失败、21 跳过，约 75.6 分钟；结果包 `/tmp/LumaFullNoNight.xcresult`。
+- 已单独复现两项真实渲染失败：`ImagingTests/testMonochromeProducesEqualColorChannels` 实际 RGB 约 69/129/134；`VideoFrameFilterRendererTests/testStillPhotoFilterIsRenderedIntoEncoderPixelBufferInSDRAndP3` 通道差约 75/77。其余失败分类见[专项报告](Test-Reports/2026-11-07-Full-NonNight.md)。
+- 视频/电影/CenterStage/人物场景、HDR 连续拍摄、人像/镜头路由和部分布局失败尚未逐项复跑；不能用本轮结果宣称这些功能或观感通过。夜景不纳入本轮结论。
+
 ## 2026-11-07 照片滤镜编辑默认使用调色盘
 
 iPhone 17 Pro 定向测试 15 项通过，覆盖拍照默认打开与重复收起、两种宽度和持机角度下的 84 组画幅与分类布局、键盘数值输入及取消、旧配方和录像样式兼容、照片局部配方及裁剪往返。照片详情在 390/430 点宿主宽度采样 42 组，宿主快照绘制中位约 43.3 ms、P95 约 75.8 ms；另采样 300 次二维参数绑定，提交中位约 0.011 ms、P95 约 0.017 ms。快照及绑定提交耗时仅反映相应用例成本。保存回归使用替身，真机系统相册保持只读。结果位于 `/tmp/luma-photo-palette.ZlNiym/physical.xcresult`。
 
 单台 iPhone 18 Pro 模拟器补测 4 项通过，覆盖两种横拿方向下的照片编辑竖屏布局、照片四角与调色盘边界、全部画幅和三分类以及裁剪和滤镜列表切换。结果位于 `/tmp/luma-photo-palette.ZlNiym/simulator.xcresult`。
+
+# 2026-11-07 独立夜景测光与倍率恢复
+
+- 冷启动补查使用 iPhone 17 Pro，重新启动测试宿主并重开相机会话三次。只取景，每次观察至约 8.4 秒，分别记录 63、63、61 个采样点。三轮末尾预览均为 1/15 秒、ISO 12096，设备补偿为 0 EV，测光偏差为 −2.50、−2.63、−2.01 EV；这些是预览读数。用户确认这三轮仍对准此前调亮的场景。只延长取景未让这些读数回落。
+- 同机追加一轮首拍前后对照，预览 ISO 约 9079 → 9845，测光偏差 −0.072 → +0.028 EV。两侧均为连续自动曝光，硬件倍率 2.3333×（显示倍率 1.1667×），曝光及帧时长上限一致，设备补偿为 0 EV。该轮没有复现首拍后 ISO 明显下降，尚不能确定早先差异的根因。两项诊断用例均通过（只取景用例重复三次），未改正式曝光策略。对照片仅在测试内存处理，系统相册保持只读。结果及日志为 `/tmp/luma-night-gate.lADzRR/cold-preview.xcresult`、`compare-preview.xcresult` 及同名日志。
+
+- iPhone 17 Pro 复现只改测光门槛时，固定构图首张仍为 1 秒、ISO 3200，后四张为 1 秒、ISO 800。独立夜景恢复时会把界面倍率写进 `videoZoomFactor`，虚拟多摄使用不同的硬件倍率单位。保存原硬件倍率并在主会话启动前恢复后，五张均为 1 秒、ISO 3200，均记录采集 3 帧、融合 3 帧。每张拍完的实际取景倍率均为 1.1667×。证据为 `/tmp/luma-night-gate.lADzRR/fixed.xcresult` 与 `restored.xcresult`，同目录保留日志。
+- 最终暗景定向测试 1 项通过。等待新的稳定测光耗时 0.513–0.728 秒（5 次），快门至成片回调 16.62–17.91 秒（含独立采集和合成，不含相册提交）。9 项真机托管策略用例通过，包含拒绝旧帧、重复帧、启动瞬态，以及输入亮度变化或供图镜头改变后重新判断；测试输入模拟换光。固定场景核对的是实际取景倍率和 EXIF，未做成片观感或手持模糊的对照。诊断照片仅在内存处理，使用只读相册保护。
+- 同一构图调亮后，重新启动测试并拍五张，取景倍率仍为 1.1667×，均为 1 秒及三帧采集/融合。后四张根据新光线将 EXIF ISO 降至 1250。首张仍为 ISO 3200，约 1.20 秒时接受了暂时稳定的高读数，说明冷启动立即拍摄在该场景仍有首张偏高的问题。后四张等待测光 0.466–0.520 秒。采集和倍率断言通过，不将首张曝光一致性计为通过。结果为 `/tmp/luma-night-gate.lADzRR/brighter.xcresult`。
+
+# 2026-11-07 夜景三帧一致性与低 ISO 清晰度调整
+
+- 20:44 使用 iPhone 17 Pro 固定场景连续实拍 5 张，现场触发夜景，测试固定独立三帧路线，未注入快门或 ISO。约 1.17× 主摄，全部 1 秒，EXIF 均为 3 帧采集、3 帧融合。首张从预览约 1/55 秒、ISO 864 开始，约 0.75 秒后仍未达到稳定门槛，却取了当时约 1/15 秒、ISO 11307 的读数，计算为 1 秒、ISO 3011，最终 EXIF ISO 3200。后四张测光为约 1/15 秒、ISO 3598，计算为 ISO 890，最终均为 ISO 800。亮度跳变在实际采集前已经进入曝光计划。
+- 五张从快门到成片回调为 15.99、17.25、17.23、17.26、17.19 秒。定向诊断用例通过，复现了首张曝光不一致。启用只读相册适配器，样片在测试内存中处理。该轮只增加诊断日志，等待策略、三帧方案及单帧快门上限未改变。证据为 `/tmp/luma-night-repeat.XyX3Lw/connected.xcresult` 和同目录 `connected.log`。
+- 用户提供同场景连续两张：`luma-20261107-202510-016.HEIC` 与 `luma-20261107-202533-037.HEIC`。两者均 1 秒、f/1.78、3000×4000，但 EXIF ISO 分别为 3200 和 800；前者平均亮度 0.358、清晰度指标 3.44，后者 0.188、8.82。说明连续夜景的差异主要来自采集曝光不一致，不是同一融合结果的随机变化。该清晰度指标为简单 Laplacian 均值，仅作相对比较，不是 MTF。
+- 固定支撑样片 `luma-20261107-201707-142.HEIC` 为 1 秒/ISO800，平均亮度 0.245、饱和度 0.059、清晰度指标 4.16；比手持样片略清楚，但仍偏软，说明手抖不是唯一原因。
+- 修改：`CameraEngine.stableNightExposure` 在独立夜景快门前等待最多 0.7 秒、至少两次稳定读数，并避开 `isAdjustingExposure`，再计算三帧计划。`NightPhotoMerger` 改为按 ISO 部分保留原始色度（<3200 强度 0.35、3200 为 0.55、>=6400 全降噪），低 ISO 降噪强度乘 0.55、降噪锐度 0.55、跳过半尺度二次降噪，影调后增加 radius 1.15/intensity 0.5 的 Unsharp Mask；目标中位亮度 0.34。
+- 模拟器 `NightPhotoMergerTests` 25/25 通过；合成 ISO3200 彩色输入饱和度 0.636，输出约 0.401，测试阈值要求不低于输入 55%。这只验证色彩未被无条件抹掉，不等同真实场景颜色准确。
+- 真机已将稳定 AE/清晰度版本安装到 iPhone 17 Pro，但本轮尚未用固定支撑连续复拍验证 ISO 一致性、彩色噪点和边缘清晰度；不能把改动写成夜景画质已通过。改动未提交。
 
 # 2026-11-07 夜景固定三帧并移除实验设置
 
@@ -4739,4 +4865,120 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - iPhone17Pro 真机：近距两张 HEIF HDR 前后 input 均 TripleCamera / virtual=true，primary 均 UltraWide，设备zoom=2，自动对焦状态保持；文件EXIF焦距均2.22mm，HDR headroom约6.50，测试含额外500ms等待的完成耗时2.89/1.72秒。恢复与相册生命周期检查通过，临时照片未保存相册。
 - 远景场景另测1×主摄、0.5×超广角三轮往返通过。该测试重新建模并主动选择倍率，不能替代同一连续会话里“近→远”的实际退出过程验收。
 - 首张前后预览附件仍有少量位置/亮度变化，尚未量化是否来自持机或光学变化；未宣称画面绝对无变化。0.5×近距连续拍摄、全部格式及其他倍率、真实相册动画仍未全部覆盖。旧物理保持辅助代码尚保留用于历史/手动路径，不再作为A挡自动微距入口。
+### 2026-11-08 Cinematic 元数据能力全设备审计
 
+- 只读审计所有后置/前置设备类型：Triple cinematic=0；DualWide cinematic=6/metadata=0；后置超广角 cinematic=0；前置超广角 cinematic=12/metadata=0；TrueDepth cinematic=0。所有设备 metadata-capable 格式均为 0。
+- 因此 `isCinematicVideoMetadataCaptureSupported` 与 MovieFileOutput 的对应能力在本机恒为 false；这不是输出组合、格式选择或代码顺序问题。iOS 27.2 当前不提供第三方 Cinematic 元数据录制能力，无法实现原生后期改焦。
+- 已删除主会话 MovieFileOutput 探针，保留烘培成片路径；审计测试仅打印能力，不修改会话。
+# 2026-11-08 Cinematic 元数据阻塞第 3 轮复测
+
+- 再次只读审计：DualWide cinematic=6/metadata=0；前置超广角 cinematic=12/metadata=0；Triple、TrueDepth 等 cinematic=0；全设备 metadata-capable 格式总数为 0。
+- 结论未变化：iPhone 17 Pro / iOS 27.2 无法提供第三方 Cinematic 元数据录制，原生后期改焦无法实现。其余四项（视频虚拟光圈、前置画幅、Depth 真机旋转、120fps）已完成验证。
+# 2026-11-08 电影元数据方案决定
+
+- 用户决定保持当前烘培 Cinematic 成片，不进行原生 Cinematic 元数据/后期改焦改造。
+- 当前设备审计结论保留：iPhone 17 Pro / iOS 27.2 的 metadata-capable cinematic 格式数为 0。
+- 不引入 MovieFileOutput 半成品；电影录制、景深和焦点行为保持现状。
+# 2026-11-08 智拍横幅不再显示夜景建议
+
+- `SmartCaptureSuggestionPolicy` 同时按 `kind == .night` 和 `parameters.mode == .night` 拦截，任何注入/旧数据路径都不能把夜景建议送入横幅。
+- SmartCaptureAnalyzer 已不再生成夜景建议；Smart48 与暗场分析测试通过。
+# 2026-11-08 视频详情分享弹窗动画
+
+- 视频详情分享使用系统 `UIActivityViewController` 外包 SwiftUI sheet；原先额外设置 `.presentationBackground(AppTheme.popupColor)`，用户实测弹出无动画。
+- 移除该自定义背景后恢复系统 sheet 标准滑入动画，用户真机确认“有正常动画了”。照片分享未改动。
+# 2026-11-08 视频防抖设置生效与切换稳定性
+
+- 相机引擎按当前视频格式发布 `supportedVideoStabilizationPreferences`；设置菜单只允许选择支持档位，不支持的“低延迟”等直接置灰。默认防抖改为标准，旧偏好不支持时按 标准→低延迟→关闭 回退。
+- 会话/规格配置期间 (`videoConfiguring`/恢复中) 不再直接改 connection，避免切换视频时与配置事务竞争触发 -11800 和自动回照片。
+- 真机验证：当前 1080p30 支持 关闭/标准/电影，低延迟置灰并回退标准；快速照片→视频改防抖并开录连续 4 轮通过；`VideoStabilizationPhysicalTests` 全组通过。
+# 2026-11-08 低延迟防抖格式支持
+
+- 只读审计 iPhone 17 Pro / iOS 27.2 全部视频设备：后置 Triple/DualWide/Wide/UltraWide/Tele 及前置 TrueDepth 的 `.lowLatency` 均不支持；仅前置超广角（front UltraWide）的 720p/1080p/4K SDR、P3、HDR、Apple Log/Log 2 格式支持 lowLatency。
+- 设置页仅在当前/计划视频格式支持时开放低延迟；后置默认回退标准，切到前置超广角后可用。
+# 2026-11-08 取消低延迟防抖档位
+
+- 用户决定取消“低延迟”，只保留关闭/标准/电影。旧存档的“低延迟”在解码时回退为标准；默认值保持标准。
+- `VideoStabilizationPreference.allCases` 现为 [关闭, 标准, 电影]；设置菜单按当前格式能力置灰，回退链简化为 电影→标准→关闭。
+- 真机 `VideoStabilizationPhysicalTests` 全组通过，包含旧存档解码、入口改设置/开录连续 4 轮、前置/后置与子模式。
+# 2026-11-08 前置超广角切换后视频超时/预览冻结加固
+
+- 自动化复现：前置画幅连续 4 次、前置标准/广角焦段往返 8 次后进视频均正常；未稳定复现用户描述的间歇超时。
+- 加固：视频超时兜底不再调用可能被 `videoBusy` guard 挡住的 `setCaptureKind(.photo)`，改为直接 `camera.setVideoMode(false)` + 退出子模式回照片；1.2 秒内仍无新预览帧则调用相机会话重建。
+- 保留前置画幅异步回调原有的视频模式守卫，避免迟到回调改变视频路线。
+# 2026-11-08 前置居中后切超广角预览停顿
+
+- 根因：手动选前置镜头时，退出人物居中与镜头切换两个会话事务重叠，前置视频可能停止出帧约 9 秒。
+- 修复：先完成 `setFrontVideoCentering(false)`，确认 `frontVideoCenteringPreparing` 结束，再执行镜头切换；连续点击只保留最后一次。实测预览最大间隔约 0.37 秒（原约 9 秒）。
+- watchdog：配置/居中准备期间改为重新计时，不误报超时；视频就绪或开始录制后取消入口 watchdog。超时兜底直接退出视频，1.2 秒无新帧时重建会话。
+- 仍存在间歇性 -11819 导致自动退出视频的路径，官方用例一次失败、复跑通过；需继续真机观察。
+# 2026-11-08 前置人物追踪后切超广角卡顿/相机停止
+
+- 设备 console 复现到前置切超广角期间 `AVFoundationErrorDomain -11819 Cannot Complete Action`，随后会话恢复停止，用户看到“相机已停止”。
+- 修复：同一时间只允许一个前置动态画幅请求，`frontAspectInFlight` 期间忽略连点；手动选前置镜头先等待人物居中退出完成，再切换镜头；连续点击只保留最后一次。
+- 视频入口 watchdog 在配置/居中准备期间重新计时，视频就绪/录制后取消；真正超时直接退出视频，1.2 秒无新帧才重建会话。
+- 真机：前置居中后切标准/广角预览最大间隔约 0.06 秒；`FrontVideoCenteringPhysicalTests` 官方用例和快速恢复用例通过；前置画幅 4 连切后进视频正常。
+- 仍需真机观察偶发 -11819；本轮通过限制画幅请求并发降低触发概率。
+# 2026-11-08 前置视频 -11819 自动重试
+
+- console 捕获：前置超广角/人物追踪切换期间 `AVFoundationErrorDomain -11819 Cannot Complete Action`，原逻辑立即退出视频并弹“视频无法启动”。
+- 修复：视频路由首次失败不清空视频、不弹错，自动 `retrySessionRecovery()`；恢复后重新 `setVideoMode(true)` 并同步规格。连续第二次失败才退回照片并提示。
+- 视频入口在 `recoveringSession`/未 ready 时先挂起，恢复后再进入；watchdog 只守护入口，配置/居中准备期间重新计时，就绪后取消。
+- 真机：注入一次 -11819 后保持视频并恢复；前置人物追踪切镜头预览最大间隔约 0.04s；官方 CenterStage 用例通过。
+# 2026-11-08 视频前置固定超广角（含双拍前置主画面）
+
+- 视频前置不再提供标准/超广角焦段切换；界面只保留人物追踪，焦段条显示固定“超广角”。人物追踪内部仍直接选择前置广角，双拍前置主画面也默认强制超广角。
+- `selectFocalLength`/`canSelectFocalLength` 对视频前置返回不可选；前置视频进入、前后切换、双拍恢复均直接选广角。
+- 真机：前置视频进入固定广角；双拍前置主画面 `dualCaptureFrontWide=true`，无法切回 1×；人物追踪官方用例、双拍变焦/横向小窗用例通过。
+# 2026-11-08 双拍前置人物追踪能力
+
+- 真机探测：`AVCaptureMultiCamSession` 运行中，双拍前置超广角仍报告 `isCenterStageSupported=true`；直接开启后 `isCenterStageActive=true`，平台没有禁止 CenterStage 与同步双拍并行。
+- 产品路径：双拍前置固定超广角，不再提供前置焦段切换；前置作为**主画面**时可开启/关闭人物追踪，按钮只保留一个并水平居中。开启后切到小窗，追踪继续生效且不显示切换入口；切回主画面仍可关闭。退出双拍会关闭追踪。
+- 前置小窗在系统层面也能把 CenterStage 应用到 front feed；产品只允许从主画面开启，之后切到小窗继续。
+# 2026-11-08 双拍人物追踪开关修复
+
+- 问题1：双拍前置主画面按钮虽显示，但 `frontVideoCenteringButton` 仍带 `camera.dualCaptureEnabled` 禁用条件；已移除，双拍主画面可直接开启。
+- 问题2：进入双拍时引擎 `stopFrontVideoCentering()` 无条件清空请求，导致普通前置已开启的追踪丢失；改为临时关闭并保留请求，双拍 source 启动后把 CenterStage 应用到 `dualCaptureSource.front`。
+- 前置切到小窗后追踪继续；退出双拍关闭追踪；小窗不提供新入口。
+- 真机：双拍内开启/关闭追踪、普通前置追踪进入双拍后保持 active、前置小窗继续追踪均通过；官方 CenterStage 用例通过。
+# 2026-11-08 视频前置追踪后开双拍误报启动超时
+
+- 路径：视频→前置→人物追踪→开启双拍，8 秒入口 watchdog 在双拍配置/验证期间误判“视频启动超时”并退出。
+- 修复：开启人物追踪或双拍即取消入口 watchdog；双拍 preparing/已开启时 watchdog 重新计时或直接结束；双拍已 enabled 视为视频成功，不再误退出。
+- 真机：前置追踪后进入双拍保持 active；双拍内开启/关闭追踪、小窗继续追踪均通过；无“视频启动超时”退出。
+# 2026-11-08 清理视频前置超广角切换残留
+
+- 删除 `selectFocalLength` 中双拍前置主画面切换分支、`frontVideoFixedWide` 占位视图和 lensBar 的前置视频分支；视频前置控件区不再回退到照片焦段按钮。
+- 删除“退出追踪再切前置镜头”的旧串行补丁及 pending 任务；固定超广角后该路径不再存在。
+- 视频入口 watchdog 收敛为只看 `camera.ready`，不再依赖快门/预览时长或多状态例外。
+- 回归：人物追踪官方用例、双拍内开关追踪、普通前置追踪进入双拍、双拍变焦与同步录制通过。
+# 2026-11-08 视频前置/双拍/追踪测试矩阵
+
+真机 iPhone 17 Pro / iOS 27.2，`FrontVideoStateMatrixTests`、`FrontVideoSwitchingSoakTests`、`DualCaptureCenterStageProbeTests` 全组通过：
+
+| 维度 | 覆盖 |
+| --- | --- |
+| 进入路径 | 照片前置标准→视频；照片后置→视频→切前置；视频前置追踪→照片→回视频 |
+| 固定广角 | 进入后 selectedLens=前置 wide；视频前置标准/广角 `canSelectFocalLength` 均为 false |
+| 追踪开启顺序 | 普通前置先开追踪→双拍；双拍先开→前置主画面开追踪 |
+| 双拍主副 | 前置主画面↔前置小窗往返，追踪继续；小窗无新入口 |
+| 双拍退出 | 追踪开启时退出双拍，追踪关闭且保持视频模式 |
+| 照片往返 | 视频追踪→照片清理追踪；回视频固定广角且追踪关闭 |
+| 录像 | 双拍前置主画面+追踪实际录制 1.5s，解码 47 帧、1080×1920，仍保持视频/双拍/追踪 |
+| 稳定性 | 3 轮完整切换 soak，单轮约 3.4–4.5s，最终 video、无错误消息 |
+| 平台能力 | MultiCam 中前置 CenterStage supported=true、active=true |
+| 失败恢复 | 注入一次 -11819 自动重试并保持视频（独立用例） |
+
+限制：矩阵使用模型 API 驱动，不替代真实人物跟随观感；人物跟随画面仍需真实场景验收。双拍切换后必须等待 `camera.ready` 再操作追踪按钮，UI 在就绪前禁用按钮。
+# 2026-11-08 视频前置/双拍/追踪压力测试
+
+真机 iPhone 17 Pro / iOS 27.2，`FrontVideoStressTests` 通过：
+
+- 8 轮完整状态循环，交替“先追踪后双拍”和“先双拍后追踪”；每轮 2 次主画面↔小窗往返；偶数轮主画面关追踪再退双拍，奇数轮保持追踪直接退双拍。单轮 2.45–3.74s，总耗时约 27.5s；结束仍为 video，message=nil，画面持续出新帧。
+- 无等待连点：12 次追踪开关、6 次主副画面切换、4 次双拍开关；2.5s 后状态收敛，仍为 video、无错误消息、预览继续出帧。
+- 组合回归：`FrontVideoStateMatrixTests` 3 项、`FrontVideoSwitchingSoakTests` 3 轮、`DualCaptureCenterStageProbeTests` 3 项、人物追踪官方用例全部通过。
+
+测试过程中出现的失败均为操作时序问题：swap 后 `camera.ready` 尚未恢复时直接调用追踪/双拍，而 UI 在这些时刻本来禁用按钮。用例已改为等待 ready 后再操作；产品路径未出现新的运行时错误。
+# 2026-11-08 照片前置超广角按钮背景
+
+- 照片前置标准/超广角切换按钮在超广角选中态不再绘制 `Color.white.opacity(0.06)` 圆形背景；强调色图标和点击热区保持不变。视频前置已无该按钮。

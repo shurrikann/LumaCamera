@@ -2,6 +2,36 @@ import XCTest
 @testable import LumaCamera
 
 final class NightAdaptiveCapturePolicyTests: XCTestCase {
+    func testIndependentNightRejectsStartupSpikeAndUsesStableFreshFrames() {
+        var metering = IndependentNightMetering(startedAt: 10)
+        func read(_ time: Double, _ seconds: Double, _ iso: Double, source: String = "main", adjusting: Bool = false) -> NightAdaptiveCapturePolicy.Exposure? {
+            metering.observe(.init(time: time, sourceID: source, exposure: .init(seconds: seconds, iso: iso), adjusting: adjusting))
+        }
+        XCTAssertNil(read(9.9, 0.06657, 11307))
+        XCTAssertNil(read(10.05, 0.018268, 864))
+        XCTAssertNil(read(10.69, 0.06657, 11307))
+        XCTAssertNil(read(10.74, 0.06657, 11307))
+        XCTAssertNil(read(10.74, 0.06657, 11307))
+        XCTAssertNil(read(11.0, 0.066325, 3598))
+        XCTAssertNil(read(11.19, 0.066325, 3598))
+        XCTAssertEqual(read(11.36, 0.066325, 3598), .init(seconds: 0.066325, iso: 3598))
+    }
+
+    func testIndependentNightRestartsWindowAfterLightAndLensChange() {
+        var metering = IndependentNightMetering(startedAt: 0)
+        func read(_ time: Double, _ iso: Double, source: String = "main", adjusting: Bool = false) -> NightAdaptiveCapturePolicy.Exposure? {
+            metering.observe(.init(time: time, sourceID: source, exposure: .init(seconds: 1.0 / 15, iso: iso), adjusting: adjusting))
+        }
+        XCTAssertNil(read(0.05, 3500))
+        XCTAssertNil(read(0.2, 3500))
+        XCTAssertNil(read(0.45, 1800, adjusting: true))
+        XCTAssertNil(read(0.6, 1750))
+        XCTAssertNil(read(0.8, 1750))
+        XCTAssertNil(read(1.0, 1750, source: "other"))
+        XCTAssertNil(read(1.2, 1750, source: "other"))
+        XCTAssertEqual(read(1.38, 1750, source: "other"), .init(seconds: 1.0 / 15, iso: 1750))
+    }
+
     func testNightAndManualExposureUseSpeedToPreserveFrameTiming() {
         XCTAssertEqual(NightCapturePolicy.qualityPriority(nightMode: true, usesRAW: false, usesManualExposure: false,
                                                           maximum: .quality), .speed)

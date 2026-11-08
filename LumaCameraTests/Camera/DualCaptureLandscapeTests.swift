@@ -86,9 +86,8 @@ final class DualCaptureLandscapeTests: XCTestCase {
         }
         model.setCameraActive(true); try await wait("启动") { camera.ready }
         model.setCaptureKind(.video); try await wait("视频") { camera.ready && !camera.videoConfiguring }
-        let front = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard })
-        _ = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide })
-        model.selectFocalLength(front); try await wait("前置") { camera.ready && model.currentPosition == .front }
+        if model.currentPosition != .front { model.flipCamera() }
+        try await wait("前置") { camera.ready && model.currentPosition == .front }
         model.toggleDualCapture(frontWide: false); try await wait("双拍") { camera.ready && camera.dualCaptureEnabled && !camera.dualCapturePreparing }
         model.showHistogram = true; model.showsRecordingCapacity = true; model.showsAudioMeter = true
         model.refreshRecordingCapacity()

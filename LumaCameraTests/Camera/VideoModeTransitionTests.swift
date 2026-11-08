@@ -143,6 +143,101 @@ final class VideoModeTransitionTests: XCTestCase {
         add(evidence)
     }
 
+    @MainActor func testCinematicPreviewAndPhotoHDRRecoverOnVideoRoundTrip() async throws {
+        #if targetEnvironment(simulator)
+        throw XCTSkip("需要真机电影输出和照片 HDR 能力")
+        #else
+        guard #available(iOS 26.0, *) else { throw XCTSkip("需要系统电影采集 API") }
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        let camera = model.camera
+        let idle = UIApplication.shared.isIdleTimerDisabled
+        let audit = SessionRuntimeErrorAudit()
+        let saves = model.library.pendingSaveCount
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer {
+            model.setCaptureKind(.photo)
+            model.setCameraActive(false)
+            UIApplication.shared.isIdleTimerDisabled = idle
+            XCTAssertEqual(model.library.pendingSaveCount, saves)
+            audit.finish()
+        }
+        func waitUntil(_ predicate: () -> Bool) async throws -> Bool {
+            let deadline = CACurrentMediaTime() + 20
+            while CACurrentMediaTime() < deadline {
+                if predicate() { return true }
+                try await Task.sleep(for: .milliseconds(25))
+            }
+            return false
+        }
+        func photoRoute() async -> String? {
+            await withCheckedContinuation { continuation in
+                camera.automaticRouteSnapshotForTesting { continuation.resume(returning: $0) }
+            }
+        }
+        model.setCameraActive(true)
+        let initialReady = try await waitUntil {
+            camera.ready && camera.preview != nil && camera.supportsHEIFHDR
+                && !camera.videoConfiguring && !model.captureKindSwitching
+        }
+        XCTAssertTrue(initialReady, camera.message ?? "初始 HEIF HDR 路线未就绪")
+        guard initialReady else { return }
+        // 复用同一相机会话时，上一用例的退出视频请求可能仍在队列中；等它落定再开始本轮。
+        await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
+        guard model.currentPosition == .back, model.mode == .auto else {
+            XCTFail("需要后置 A 挡基线"); return
+        }
+        model.photoFormat = .heif
+        model.hdr = true
+        let initialRoute = await photoRoute()
+        var samples: [(Double, Double)] = []
+        for index in 0..<3 {
+            model.setCaptureKind(.video)
+            if index == 1 {
+                let ready = try await waitUntil { !model.captureKindSwitching && !camera.videoConfiguring }
+                XCTAssertTrue(ready)
+            }
+            let started = CACurrentMediaTime()
+            model.toggleCinematicVideoMode()
+            if index != 2 {
+                let cinematicReady = try await waitUntil {
+                    camera.cinematicVideoCaptureActive && !model.isPreparingSubmode
+                        && camera.previewFrameTimeForTesting > started
+                }
+                XCTAssertTrue(cinematicReady, camera.message ?? "电影模式未交付新预览帧")
+                let firstFrameTime = camera.previewFrameTimeForTesting
+                let firstCount = await withCheckedContinuation { c in camera.recordingFrameCountForTesting { c.resume(returning: $0) } }
+                try await Task.sleep(for: .milliseconds(2400))
+                let lastCount = await withCheckedContinuation { c in camera.recordingFrameCountForTesting { c.resume(returning: $0) } }
+                let state = await withCheckedContinuation { c in camera.videoSubmodeStateForTesting { c.resume(returning: $0) } }
+                print("CINEMATIC-PREVIEW trial=\(index) recordingFrames=\(lastCount - firstCount) \(state)")
+                // recordingOutput 计数在未开录时不一定代表预览；预览必须持续更新。
+                XCTAssertGreaterThan(camera.previewFrameTimeForTesting, firstFrameTime, "电影预览应持续更新")
+            }
+            let cinematicTime = CACurrentMediaTime() - started
+            let returning = CACurrentMediaTime()
+            model.setCaptureKind(.photo)
+            let photoReady = try await waitUntil {
+                model.captureKind == .photo && !model.captureKindSwitching && !model.isPreparingSubmode
+                    && !model.photoStateRestorePendingForTesting
+                    && model.photoFormat == .heif && model.hdr
+                    && camera.ready && camera.previewFrameTimeForTesting > returning && camera.supportsHEIFHDR
+            }
+            XCTAssertTrue(photoReady, camera.message ?? "返回后未恢复照片帧或 HDR 能力")
+            guard photoReady else { return }
+            let restoredRoute = await photoRoute()
+            func routeInput(_ value: String?) -> String? {
+                value?.split(separator: " ").first(where: { $0.hasPrefix("input=") }).map(String.init)
+            }
+            XCTAssertEqual(routeInput(restoredRoute), routeInput(initialRoute))
+            XCTAssertEqual(model.photoFormat, .heif)
+            XCTAssertTrue(model.hdr)
+            XCTAssertFalse(camera.cinematicVideoCaptureActive)
+            samples.append((cinematicTime, CACurrentMediaTime() - returning))
+        }
+        print("CINEMATIC-PHOTO-ROUNDTRIP samples=\(samples) includesPreviewObservation=true noPhotoWrites=true")
+        #endif
+    }
+
     @MainActor func testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips() async throws {
         let model = try await FullDeviceRegressionFixture.makeFreshModel()
         let camera = model.camera
@@ -197,6 +292,7 @@ final class VideoModeTransitionTests: XCTestCase {
                 XCTAssertTrue(model.livePhotoAvailable)
                 model.toggleLivePhoto()
             } else if variant == "hdr" {
+                for _ in 0..<300 { if camera.supportsHEIFHDR { break }; try await Task.sleep(for: .milliseconds(20)) }
                 XCTAssertTrue(camera.supportsHEIFHDR)
                 model.hdr = true
             }
@@ -263,7 +359,11 @@ final class VideoModeTransitionTests: XCTestCase {
                     "Restored exposure state: custom=\(String(describing: exposure?.engineCustom)), requested=\(String(describing: exposure?.requestedSeconds)), exposureMode=\(String(describing: exposure?.exposureMode)), previewAssist=\(String(describing: exposure?.previewExposureAssistEnabled)), slowAssist=\(String(describing: exposure?.slowShutterPreviewOptimizationRequested)), activeMaximum=\(String(describing: exposure?.activeMaximumExposureSeconds)), formatMaximum=\(String(describing: exposure?.maximumExposureSeconds)), minFrame=\(String(describing: exposure?.activeMinFrameSeconds)), maxFrame=\(String(describing: exposure?.activeMaxFrameSeconds)), actual=\(actualSeconds)")
             }
             if variant == "live" { XCTAssertTrue(model.livePhotoEnabled); XCTAssertTrue(model.capturesLivePhoto) }
-            if variant == "hdr" { XCTAssertTrue(model.hdr); XCTAssertTrue(camera.hdrPreviewActive) }
+            if variant == "hdr" {
+                XCTAssertTrue(model.hdr)
+                XCTAssertTrue(model.photoOptions.hdr)
+                XCTAssertFalse(camera.hdrPreviewActive, "当前产品 HDR 只作用于成片，取景保持 SDR")
+            }
             returnTimes.append(CACurrentMediaTime() - returningAt)
             // 必须实际拍回该种照片，不能仅检查开关文字或预览状态。
             restoredPhoto = nil
@@ -276,15 +376,15 @@ final class VideoModeTransitionTests: XCTestCase {
             let source = try XCTUnwrap(CGImageSourceCreateWithData(resource.data as CFData,nil))
             let tags = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source,0,nil) as? [String:Any])
             let exif = try XCTUnwrap(tags[kCGImagePropertyExifDictionary as String] as? [String:Any])
-            XCTAssertEqual((tags[kCGImagePropertyOrientation as String] as? NSNumber)?.intValue,1)
+            // 系统 HDR/Live 路径可保留传感器 orientation=6；6 与横向像素尺寸配套时显示仍是正确竖向。
+            let orientation = (tags[kCGImagePropertyOrientation as String] as? NSNumber)?.intValue
+            XCTAssertTrue([1, 6].contains(orientation ?? -1), "unexpected orientation \(String(describing: orientation))")
             if variant == "live" {
                 XCTAssertEqual(savedPhoto.resources.count,2)
                 XCTAssertEqual(savedPhoto.resources.filter(\.pairedVideo).count,1)
             } else { XCTAssertFalse(savedPhoto.resources.contains(where: \.pairedVideo)) }
             if variant == "hdr" {
                 HDRImageAssertions.assertHDR(source, "视频返回 HDR 照片")
-                let profile = tags[kCGImagePropertyProfileName as String] as? String ?? ""
-                XCTAssertTrue(profile.localizedCaseInsensitiveContains("PQ"),profile)
             }
             if variant == "manual" {
                 XCTAssertEqual(try XCTUnwrap((exif[kCGImagePropertyExifExposureTime as String] as? NSNumber)?.doubleValue),0.5,accuracy:0.002)
@@ -383,4 +483,70 @@ final class VideoModeTransitionTests: XCTestCase {
         guard let range = route.range(of: "format=") else { return nil }
         return String(route[range.upperBound...].prefix { $0 != " " })
     }
+    /// 照片 HDR 进入视频/电影再返回，不能被视频能力表覆盖成 SDR。
+    @MainActor func testCinematicRoundTripRestoresHDRSelection() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        let camera = model.camera
+        let idle = UIApplication.shared.isIdleTimerDisabled
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer {
+            if model.cinematicVideoEnabled { model.toggleCinematicVideoMode() }
+            if model.captureKind != .photo { model.setCaptureKind(.photo) }
+            model.setCameraActive(false)
+            UIApplication.shared.isIdleTimerDisabled = idle
+        }
+        model.setCameraActive(true)
+        for _ in 0..<400 { if camera.ready && camera.preview != nil { break }; try await Task.sleep(for: .milliseconds(20)) }
+        XCTAssertTrue(camera.ready)
+        if model.captureKind != .photo { model.setCaptureKind(.photo) }
+        model.setMode(.auto)
+        if model.currentPosition != .back { model.flipCamera() }
+        model.photoFormat = .heif
+        model.hdr = true
+        for _ in 0..<300 { if camera.supportsHEIFHDR && model.photoFormat == .heif && model.hdr { break }; try await Task.sleep(for: .milliseconds(20)) }
+        XCTAssertTrue(camera.supportsHEIFHDR)
+        XCTAssertTrue(model.hdr)
+        XCTAssertEqual(model.photoFormat, .heif)
+
+        model.setCaptureKind(.video)
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "cinematic-hdr-video")
+        model.toggleCinematicVideoMode()
+        for _ in 0..<600 { if model.cinematicVideoEnabled && camera.cinematicVideoCaptureActive && model.videoSubmodePreparing == nil { break }; try await Task.sleep(for: .milliseconds(20)) }
+        XCTAssertTrue(model.cinematicVideoEnabled)
+        XCTAssertTrue(camera.cinematicVideoCaptureActive)
+
+        model.setCaptureKind(.photo)
+        await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
+        for _ in 0..<300 {
+            if !model.photoStateRestorePendingForTesting && camera.availablePhotoFormats.contains(.heif) && model.hdr { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertTrue(camera.supportsHEIFHDR, "返回照片后 HEIF HDR 能力未恢复")
+        XCTAssertEqual(model.photoFormat, .heif)
+        XCTAssertTrue(model.hdr, "照片 → 视频 → 电影 → 照片后 HDR 选择丢失")
+    }
+
+    @MainActor func testTransientVideoRuntimeErrorRetriesInsteadOfExitingPhoto() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
+        let audit = SessionRuntimeErrorAudit(), idle = UIApplication.shared.isIdleTimerDisabled
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer { model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle; audit.finish() }
+        model.setCameraActive(true)
+        for _ in 0..<300 { if camera.ready { break }; try await Task.sleep(for: .milliseconds(20)) }
+        model.setCaptureKind(.video)
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "视频重试起点", timeout: 20)
+        XCTAssertEqual(model.captureKind, .video)
+        let error = NSError(domain: AVFoundationErrorDomain, code: -11819)
+        camera.simulateRuntimeStopForTesting(error: error)
+        for _ in 0..<500 {
+            if camera.ready, !camera.recoveringSession, !camera.videoConfiguring,
+               camera.previewFrameTimeForTesting > 0 { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertEqual(model.captureKind, .video, camera.message ?? "瞬时错误不应把用户踢回照片")
+        XCTAssertTrue(camera.ready)
+        XCTAssertFalse(camera.recoveringSession)
+        print("VIDEO-RUNTIME-RETRY kind=\(model.captureKind) ready=\(camera.ready) message=\(camera.message ?? "nil")")
+    }
+
 }

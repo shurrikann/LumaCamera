@@ -60,6 +60,7 @@ final class CinematicEffectPhysicalTests: XCTestCase {
             let previewAttachment = XCTAttachment(image:preview)
             previewAttachment.name = "Cinematic-\(label)-preview"; previewAttachment.lifetime = .keepAlways; add(previewAttachment)
             result = nil
+            try await wait("录制快门就绪") { model.videoShutterEnabled && !camera.videoBusy && !camera.videoConfiguring }
             model.toggleVideoRecording()
             try await wait("录制开始") { camera.videoRecording || result != nil }
             XCTAssertTrue(camera.videoRecording)

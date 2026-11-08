@@ -333,7 +333,6 @@ enum VideoCodec: String, CaseIterable, Identifiable {
 
 enum VideoStabilizationPreference: String, CaseIterable, Identifiable, Codable {
     case off = "关闭"
-    case lowLatency = "低延迟"
     case standard = "标准"
     case cinematic = "电影"
 
@@ -342,10 +341,17 @@ enum VideoStabilizationPreference: String, CaseIterable, Identifiable, Codable {
     var explanation: String {
         switch self {
         case .off: return "不启用防抖，画面无额外裁切，适合三脚架或固定机位。"
-        case .lowLatency: return "低延迟防抖，预览更跟手，裁切和稳定性居中。"
-        case .standard: return "标准防抖，稳定性更好，延迟和裁切略高于低延迟。"
+        case .standard: return "标准防抖，稳定性与裁切居中。"
         case .cinematic: return "电影防抖，稳定性最强，裁切最大，预览和录制延迟最明显。"
         }
+    }
+}
+
+extension VideoStabilizationPreference {
+    /// 旧版本保存过“低延迟”；该档位已取消，读取时回退为标准。
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = VideoStabilizationPreference(rawValue: raw) ?? .standard
     }
 }
 

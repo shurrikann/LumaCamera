@@ -14,7 +14,6 @@ extension CameraView {
         let options: [ShootingModeOption] = model.captureKind == .photo
             ? [
                 ShootingModeOption(title: "慢门", icon: PhotoSubmode.slowShutter.symbol),
-                ShootingModeOption(title: "夜景", icon: PhotoSubmode.night.symbol),
                 ShootingModeOption(title: "人像", icon: PhotoSubmode.portrait.symbol),
                 ShootingModeOption(title: "连拍", icon: PhotoSubmode.burst.symbol),
                 // 虚拟光圈仅模拟高亮星芒，真实镜头光圈与曝光不变。
@@ -36,7 +35,6 @@ extension CameraView {
             ForEach(visibleOptions) { option in
                 let isSlowShutter = option.title == "慢门" && model.captureKind == .photo
                 let isBurst = option.title == "连拍" && model.captureKind == .photo
-                let isNight = option.title == "夜景" && model.captureKind == .photo
                 let isPortrait = option.title == "人像" && model.captureKind == .photo
                 let isSmartCapture = option.title == "智拍" && model.captureKind == .photo
                 let isVirtualAperture = option.title == "虚拟光圈"
@@ -52,7 +50,6 @@ extension CameraView {
                     : isSlowMotion ? model.slowMotionEnabled
                     : isCinematic ? model.cinematicVideoEnabled
                     : isDualCapture ? camera.dualCaptureEnabled : false
-                let nightSelected = isNight && model.nightModeEnabled
                 // 规格不匹配只用于说明和自动适配，不再让子模块入口失去点击能力。
                 let enabled = camera.ready && !camera.capturing && !camera.videoBusy
                     && model.photoSubmodePreparing == nil && model.videoSubmodePreparing == nil
@@ -65,7 +62,7 @@ extension CameraView {
                         .disabled(!enabled)
                         .accessibilityLabel("人像模式")
                         .accessibilityValue(selected ? "已开启" : "关闭")
-                        .accessibilityHint("为人物场景请求系统深度遮罩并生成背景虚化。仅支持 12MP JPG 或 HEIF，不支持 HDR、Live、夜景、慢门或连拍；A/M 曝光仍可用。")
+                        .accessibilityHint("为人物场景请求系统深度遮罩并生成背景虚化。仅支持 12MP JPG 或 HEIF，不支持 HDR、Live、慢门或连拍；A/M 曝光仍可用。")
                     } else if isSlowShutter {
                         Button { model.toggleSlowShutterMode() } label: {
                             shootingModeOption(option, selected: selected, enabled: enabled)
@@ -75,19 +72,6 @@ extension CameraView {
                         .accessibilityLabel("慢门模式")
                         .accessibilityValue(selected ? "已开启" : "关闭")
                         .accessibilityHint("开启后选择光轨、流水、动态模糊、摇拍追焦或星轨。自动曝光按环境计算单帧参数并多帧合成，M挡手动设置会保留。再次点快门可提前结束。")
-                    } else if isNight {
-                        Button { model.toggleNightMode() } label: {
-                            shootingModeOption(option, selected: nightSelected, enabled: enabled)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!enabled)
-                        .accessibilityLabel("夜景模式")
-                        .accessibilityValue(nightSelected
-                            ? (model.nightIndicatorIsTriggered
-                                ? "夜景已触发"
-                                : model.nightIndicatorIsSupported ? "已开启，等待低照度" : "已开启，当前参数不支持")
-                            : model.nightUnavailableReason ?? "关闭")
-                        .accessibilityHint("低照度环境满足条件时使用三帧曝光包围合成；已触发后可点按取景框月亮关闭。")
                     } else if isBurst {
                         Button { model.toggleBurstMode() } label: {
                             shootingModeOption(option, selected: selected, enabled: enabled)
@@ -158,7 +142,7 @@ extension CameraView {
                         .disabled(!enabled)
                         .accessibilityLabel("智拍模式")
                         .accessibilityValue(selected ? "已开启" : "关闭")
-                        .accessibilityHint("识别逆光、夜景、人像和文档，给出一条拍摄建议；A 挡可应用，M 挡只作参考。")
+                        .accessibilityHint("识别逆光、人像和文档，给出一条拍摄建议；A 挡可应用，M 挡只作参考。")
                         .accessibilityIdentifier("camera.shooting-mode.smart-capture")
                     } else {
                         shootingModeOption(option, selected: false, enabled: false)

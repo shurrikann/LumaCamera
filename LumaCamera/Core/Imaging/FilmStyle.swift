@@ -65,9 +65,16 @@ enum FilmStyle: String, CaseIterable, Identifiable {
             // 80...100%: extrapolate the LUT difference up to 1.3x. The kernel
             // clamps negative channels, so a zero LUT channel cannot turn the
             // whole preview black as the old 1.5x linear path did.
-            if let kernel = Self.strengthKernel,
-               let extrapolated = kernel.apply(extent: input.extent, arguments: [input, filtered, strength]) {
-                return extrapolated.cropped(to: input.extent)
+            if let kernel = Self.strengthKernel {
+                // 超浓度外推只处理滤镜拥有的色彩。银盐只有黑白亮度，
+                // 因此先把输入转为单色，再做 1.3 倍外推；不能拿彩色 RGB 差值外推。
+                let extrapolationInput = self == .mono
+                    ? input.applyingFilter("CIPhotoEffectNoir")
+                    : input
+                if let extrapolated = kernel.apply(extent: input.extent,
+                    arguments: [extrapolationInput, filtered, strength]) {
+                    return extrapolated.cropped(to: input.extent)
+                }
             }
         }
         guard strength < 1 else { return filtered }

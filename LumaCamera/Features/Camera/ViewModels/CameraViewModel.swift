@@ -145,6 +145,9 @@ final class CameraViewModel: ObservableObject {
     private var photoManualSettingsBeforeVideo: SavedManualCaptureState?
     private var videoModeBeforePhoto: CameraShootingMode = .auto
     private var photoRatioBeforeVideo: FrameRatio = .standard
+    private var photoFormatBeforeVideo: PhotoFileFormat?
+    private var photoResolutionBeforeVideo: PhotoResolution = .standard
+    private var photoHDRBeforeVideo = false
     @Published private(set) var videoElapsed: TimeInterval = 0
     @Published private(set) var captureKindSwitching = false
     @Published private(set) var recordingCapacity: RecordingCapacity.Info?
@@ -180,6 +183,30 @@ final class CameraViewModel: ObservableObject {
     private var startupCaptureRestoreTask: Task<Void, Never>?
     private var restoringCaptureState = false
     private var restoringAuxiliaryPreferences = false
+    /// 当前视频格式实际支持的防抖档位；能力尚未发布时先全部开放，避免设置页闪烁。
+    func isVideoStabilizationAvailable(_ option: VideoStabilizationPreference) -> Bool {
+        let supported = camera.supportedVideoStabilizationPreferences
+        return supported.isEmpty || supported.contains(option)
+    }
+
+    private func videoStabilizationFallback(for preference: VideoStabilizationPreference,
+                                            supported: Set<VideoStabilizationPreference>) -> VideoStabilizationPreference? {
+        guard !supported.isEmpty else { return nil }
+        let chain: [VideoStabilizationPreference]
+        switch preference {
+        case .cinematic: chain = [.standard, .off]
+        case .standard: chain = [.off]
+        case .off: return nil
+        }
+        return chain.first(where: supported.contains)
+    }
+
+    private func reconcileVideoStabilizationPreference(_ supported: Set<VideoStabilizationPreference>) {
+        guard !supported.isEmpty, !supported.contains(preferences.videoStabilization),
+              let fallback = videoStabilizationFallback(for: preferences.videoStabilization, supported: supported) else { return }
+        preferences.videoStabilization = fallback
+    }
+
     @Published var preferences = CapturePreferences() {
         didSet {
             preferencesStore.save(preferences)
@@ -188,6 +215,12 @@ final class CameraViewModel: ObservableObject {
                 synchronizeVideoSettings()
             }
             if preferences.videoStabilization != oldValue.videoStabilization {
+                if !isVideoStabilizationAvailable(preferences.videoStabilization),
+                   let fallback = videoStabilizationFallback(for: preferences.videoStabilization,
+                       supported: camera.supportedVideoStabilizationPreferences) {
+                    preferences.videoStabilization = fallback
+                    return
+                }
                 camera.setVideoStabilizationPreference(preferences.videoStabilization)
             }
             if preferences.saveCaptureSettings != oldValue.saveCaptureSettings {
@@ -432,11 +465,33 @@ final class CameraViewModel: ObservableObject {
         cameraSelectionFeedback()
         let request = UUID()
         videoSubmodeRequest = request
+        if requested == .cinematic, !camera.cinematicVideoCaptureActive {
+            videoSubmodePreparing = .cinematic
+            camera.prepareCinematicInput { [weak self] success in
+                Task { @MainActor [weak self] in
+                    guard let self, self.videoSubmodeRequest == request, self.captureKind == .video else { return }
+                    if success,
+                       self.applyVideoSubmodeSettings(.cinematic,
+                           candidates: self.currentVideoSubmodeCandidates(.cinematic)) != nil {
+                        self.videoSubmodePreparing = nil
+                        self.activateVideoSubmode(.cinematic)
+                    } else {
+                        self.videoSubmodePreparing = nil
+                        self.setVideoSubmode(.cinematic, enabled: false)
+                        self.camera.message = "当前镜头无法启用电影效果"
+                    }
+                }
+            }
+            return
+        }
         let currentCandidates = currentVideoSubmodeCandidates(requested)
         let canKeepCurrentOpenGate = requested == .timeLapse && videoOpenGateEnabled
             && !camera.openGateVideoSettings.isEmpty
         let preserveCurrentOpenGate = requested != .timeLapse || !videoOpenGateEnabled || canKeepCurrentOpenGate
-        if applyVideoSubmodeSettings(requested, candidates: currentCandidates,
+        // 电影效果需要 DualWide 等电影设备；不能仅因当前规格表有候选就直接
+        // 在 TripleCamera 上启用，否则 AVFoundation 会反复 -11800 并卡住会话。
+        if requested != .cinematic,
+           applyVideoSubmodeSettings(requested, candidates: currentCandidates,
                                      preserveOpenGate: preserveCurrentOpenGate) != nil {
             let lensIDs: Set<String>
             if mode == .auto, currentPosition == .back, !rawVideoSelected {
@@ -450,6 +505,7 @@ final class CameraViewModel: ObservableObject {
             return
         }
         videoSubmodePreparing = requested
+        if requested == .cinematic { scheduleVideoEntryWatchdog() }
         let wantsOpenGate = requested == .timeLapse && videoOpenGateEnabled
         camera.compatibleVideoSubmodeRoutes(for: requested, position: currentPosition,
                                              openGateEnabled: wantsOpenGate) { [weak self] routes in
@@ -501,6 +557,13 @@ final class CameraViewModel: ObservableObject {
         }
         Task { @MainActor [weak self] in
             guard let self else { return }
+            // 先等普通视频完成换路由，避免电影重配置抢在视频的首帧之前。
+            if requested == .cinematic {
+                while captureKindSwitching {
+                    guard videoSubmodeRequest == request else { return }
+                    try? await Task.sleep(for: .milliseconds(20))
+                }
+            }
             guard videoSubmodeRequest == request else { return }
             compatibleSubmodeLensIDs = matchingRoutes
             // 先启用子模式意图，再由相机队列一次性切到目标模式与镜头，避免
@@ -508,6 +571,7 @@ final class CameraViewModel: ObservableObject {
             activateVideoSubmode(requested, finish: false)
             synchronizeVideoSettings(preferredLensID: targetLens.id)
             var routeReady = false
+            var cinematicConfiguredAt: TimeInterval?
             for _ in 0..<500 {
                 guard videoSubmodeRequest == request else { return }
                 if !camera.videoConfiguring && camera.ready {
@@ -522,11 +586,16 @@ final class CameraViewModel: ObservableObject {
                             routeReady = true
                         }
                     case .cinematic:
-                        routeReady = camera.cinematicVideoCaptureActive
+                        let configured = camera.cinematicVideoCaptureActive
                             && camera.cinematicVideoSettings.contains {
                                 $0.resolution == self.videoResolution && $0.frameRate == self.videoFrameRate
                                     && $0.colorSpace == self.videoColorSpace
                             }
+                        if configured {
+                            let threshold = cinematicConfiguredAt ?? CACurrentMediaTime()
+                            cinematicConfiguredAt = threshold
+                            routeReady = camera.latestRecordingPreviewFrameTime > threshold
+                        } else { cinematicConfiguredAt = nil }
                     case .timeLapse:
                         routeReady = camera.videoSettings.captureFrameRate == nil
                     }
@@ -718,14 +787,19 @@ final class CameraViewModel: ObservableObject {
             && candidate.colorSpace == (color ?? videoColorSpace) && candidate.codec == codec
             && (codec != .proRes || candidate.proRes == proResSpecification)
     }
+    private var isFrontVideoTrackingPosition: Bool {
+        camera.dualCaptureEnabled ? camera.dualCaptureMainIsFront : currentPosition == .front
+    }
+
     var frontVideoCenteringVisible: Bool {
-        !camera.dualCaptureEnabled && captureKind == .video && currentPosition == .front
+        captureKind == .video && isFrontVideoTrackingPosition
             && (camera.frontVideoCenteringAvailable || frontVideoCenteringRequested)
     }
     func toggleFrontVideoCentering() {
-        guard captureKind == .video, currentPosition == .front, camera.ready,
-              !camera.videoBusy, !camera.dualCaptureEnabled, !camera.dualCapturePreparing,
+        guard captureKind == .video, isFrontVideoTrackingPosition, camera.ready,
+              !camera.videoBusy, !camera.dualCapturePreparing,
               !camera.frontVideoCenteringPreparing else { return }
+        cancelVideoEntryWatchdog()
         cameraSelectionFeedback()
         endZoomDial(); cancelFocus(); startFocalTransition(fadeDuration: 0.14)
         frontVideoCenteringRequested.toggle()
@@ -739,9 +813,6 @@ final class CameraViewModel: ObservableObject {
                 restoringVideoSettings = false
             }
             synchronizeVideoSettings()
-            if let wide = camera.lenses.first(where: { $0.device.position == .front && $0.frontFraming == .wide }) {
-                camera.selectLens(wide, transitionID: focalTransitionID, preservingFrontAutoCentering: true)
-            }
         }
         camera.setFrontVideoCentering(frontVideoCenteringRequested, transitionID: focalTransitionID)
         scheduleCaptureStateSave()
@@ -756,11 +827,15 @@ final class CameraViewModel: ObservableObject {
     func toggleDualCapture(frontWide: Bool? = nil) {
         guard captureKind == .video, !camera.videoBusy, !camera.dualCapturePreparing,
               camera.dualCaptureEnabled || dualCaptureAvailable else { return }
-        disableFrontVideoCenteringForManualChoice()
+        cancelVideoEntryWatchdog()
         endZoomDial(); cancelFocus()
         cameraSelectionFeedback()
         startFocalTransition(fadeDuration: 0.14)
         if camera.dualCaptureEnabled {
+            if frontVideoCenteringRequested || camera.frontVideoCenteringEnabled {
+                frontVideoCenteringRequested = false
+                camera.setFrontVideoCentering(false)
+            }
             camera.setDualCaptureEnabled(false) { [weak self] _ in
                 guard let self else { return }
                 self.restoreVideoSettingsAfterDualCapture()
@@ -780,7 +855,8 @@ final class CameraViewModel: ObservableObject {
             restoringVideoSettings = false
             ratio = videoRatio.frameRatio
             updateLook()
-            let wide = frontWide ?? restoredDualFrontWide ?? (camera.lenses.first(where: { $0.id == camera.selectedLens })?.frontFraming == .wide)
+            // 视频前置固定超广角；双拍前置主画面也不再从存档恢复 1×。
+            let wide = frontWide ?? true
             restoredDualFrontWide = nil
             camera.setDualCaptureEnabled(true, settings: VideoCaptureSettings(resolution: videoResolution, frameRate: videoFrameRate,
                 colorSpace: videoColorSpace, codec: videoCodec, proRes: proResSpecification, bitratePreset: preferences.videoBitratePreset),
@@ -808,7 +884,7 @@ final class CameraViewModel: ObservableObject {
     }
     func swapDualCaptureCameras() {
         guard camera.dualCaptureEnabled else { return }
-        // 横幅小窗需要前置广角；前置是主画面时由用户自行选择焦段。
+        // 横幅小窗需要前置广角；前置主画面固定超广角，不再提供焦段切换。
         if camera.dualCaptureMainIsFront && camera.dualCaptureInsetLandscape {
             dualFrontWideBeforeLandscape = camera.dualCaptureFrontWide
             camera.setDualCaptureFrontWide(true)
@@ -1473,7 +1549,8 @@ final class CameraViewModel: ObservableObject {
         !slowShutterEnabled && !portraitModeEnabled && !nightModeEnabled && !burstModeEnabled && !virtualApertureEnabled && !hdr && (photoFormat == .jpeg || photoFormat == .heif) && photoResolution == .standard && camera.supportsLivePhoto
     }
     var canToggleLivePhoto: Bool {
-        photoSubmodePreparing == nil && (livePhotoEnabled || (!virtualApertureEnabled && !burstModeEnabled && !portraitModeEnabled && !nightModeEnabled && !slowShutterEnabled))
+        // 关闭始终允许；开启还必须满足当前格式/分辨率/HDR/模式与硬件能力。
+        photoSubmodePreparing == nil && (livePhotoEnabled || livePhotoAvailable)
     }
     var capturesLivePhoto: Bool { livePhotoEnabled && livePhotoAvailable }
     func toggleLivePhoto() {
@@ -1488,7 +1565,7 @@ final class CameraViewModel: ObservableObject {
         camera.setLiveAudioEnabled(captureKind == .photo && capturesLivePhoto && cameraActiveRequested, requestPermission: requestPermission)
     }
     private func reconcileCaptureCapabilities() {
-        guard camera.ready, pendingStartupCaptureState == nil else { return }
+        guard camera.ready, pendingStartupCaptureState == nil, !photoStateRestorePending else { return }
         // A video format and an in-progress return route cannot invalidate the
         // saved photo choices. Reconcile once the final photo graph has settled.
         if captureKind == .photo && !captureKindSwitching && !camera.videoConfiguring {
@@ -1558,6 +1635,15 @@ final class CameraViewModel: ObservableObject {
     @Published private(set) var burstCaptureActive = false { didSet { reconcileNightMode() } }
     @Published private(set) var burstCaptureCount = 0
     private var burstCaptureTask: Task<Void, Never>?
+    private var videoEntryWatchdog: Task<Void, Never>?
+    private var pendingCinematicStart = false
+    private var pendingVideoEntryAfterRecovery: Task<Void, Never>?
+    private var videoRouteFailureRetries = 0
+    private var photoStateRestorePending = false
+    private var photoStateRestoreTask: Task<Void, Never>?
+    #if DEBUG
+    var photoStateRestorePendingForTesting: Bool { photoStateRestorePending }
+    #endif
     private var burstCaptureRequest = UUID()
 
     @Published private(set) var slowShutterEnabled = false
@@ -1720,6 +1806,7 @@ final class CameraViewModel: ObservableObject {
     /// 子模块互斥；镜头与当前规格能力从会话发布的静态表读取，不在视图重绘时扫描 AVFoundation 格式。
     func canSelectFocalLength(_ lens: CameraLens) -> Bool {
         guard !camera.dualCapturePreparing, slowShutterSequence == nil else { return false }
+        if captureKind == .video, lens.device.position == .front { return false }
         if camera.videoRecording {
             guard let range = camera.dualCaptureEnabled ? camera.dualCaptureMainZoomRange : camera.videoRecordingZoomRange, range.contains(lens.displayZoom) else { return false }
         }
@@ -2280,8 +2367,6 @@ final class CameraViewModel: ObservableObject {
         if params.mode == .portrait, !portraitModeEnabled {
             togglePortraitMode()
             appliedPortrait = portraitModeEnabled
-        } else if params.mode == .night, !nightModeEnabled {
-            toggleNightMode()
         }
         // 逆光人像没有blur字段，也必须记录来源；异步切镜后再确认开启。
         if params.mode == .portrait {
@@ -3091,6 +3176,7 @@ final class CameraViewModel: ObservableObject {
 
     func updateFrontFramingForOrientation(isLandscape: Bool) {
         guard !camera.demo, !camera.dualCaptureEnabled, !camera.dualCapturePreparing else { return }
+        if captureKind == .video, currentPosition == .front { lastAppliedFrontOrientation = isLandscape; return }
         if frontVideoCenteringRequested { lastAppliedFrontOrientation = isLandscape; return }
         guard currentPosition == .front else {
             lastAppliedFrontOrientation = nil
@@ -3134,16 +3220,14 @@ final class CameraViewModel: ObservableObject {
             // 48MP仅在三个受支持原生焦段切换；当前1×不执行24/35mm轮换。
             if camera.selectedLens == lens.id && abs(camera.currentZoom-lens.displayZoom) < 0.015 { return }
         }
+        // 视频前置固定超广角，不再接受焦段/超广角切换；人物追踪内部直接选广角。
+        if captureKind == .video, lens.device.position == .front { return }
+        // 人物追踪已经强制使用前置超广角；再次点同一个“超广角”不能先关追踪再重配。
+        if lens.device.position == .front, camera.selectedLens == lens.id { return }
         camera.endSmartFocusHold()
         zoomSelectionFeedback()
         endZoomDial()
         if camera.dualCaptureEnabled {
-            if camera.dualCaptureMainIsFront, let framing = lens.frontFraming {
-                startFocalTransition(fadeDuration: 0.12)
-                camera.setDualCaptureFrontWide(framing == .wide)
-                camera.completeUserPreviewSwitch(focalTransitionID)
-                return
-            }
             if !camera.dualCaptureMainIsFront, lens.device.position == .back {
                 var target = lens.displayZoom
                 if abs(lens.displayZoom - 1) < 0.001 {
@@ -3154,7 +3238,6 @@ final class CameraViewModel: ObservableObject {
                 return
             }
         }
-        if lens.device.position == .front { disableFrontVideoCenteringForManualChoice() }
         // A deliberate front framing choice takes precedence over automatic composition,
         // including a tap on the framing currently recommended by the monitor.
         if lens.device.position == .front && camera.frontAutoCenteringEnabled {
@@ -3487,6 +3570,44 @@ final class CameraViewModel: ObservableObject {
             guard let self, self.burstModeEnabled, self.captureKind == .photo else { return }
             self.burstCaptureCount += 1
         }
+        camera.onVideoRouteFailure = { [weak self] message in
+            guard let self, self.captureKind == .video else { return }
+            self.cancelVideoEntryWatchdog()
+            self.videoSubmodePreparing = nil
+            self.videoSubmodeRequest = UUID()
+            self.setVideoSubmode(.timeLapse, enabled: false)
+            self.setVideoSubmode(.slowMotion, enabled: false)
+            self.setVideoSubmode(.cinematic, enabled: false)
+            // -11819/-11800 可能是前置切换后的瞬时系统错误；首次失败自动重建会话并重试视频，
+            // 不立刻把用户踢回照片。连续第二次失败才显示错误并退出。
+            if self.videoRouteFailureRetries == 0 {
+                self.videoRouteFailureRetries = 1
+                self.camera.message = nil
+                self.camera.retrySessionRecovery()
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    for _ in 0..<160 {
+                        if self.camera.ready, !self.camera.recoveringSession, !self.camera.videoConfiguring { break }
+                        try? await Task.sleep(for: .milliseconds(50))
+                    }
+                    guard self.captureKind == .video, self.camera.ready,
+                          !self.camera.recoveringSession, !self.camera.videoConfiguring else {
+                        self.camera.message = message
+                        return
+                    }
+                    self.camera.setVideoMode(true)
+                    self.synchronizeVideoSettings()
+                    self.scheduleVideoEntryWatchdog()
+                }
+                return
+            }
+            self.captureKindSwitching = false
+            self.captureKind = .photo
+            self.ratio = FrameRatio.photoOptions.contains(self.photoRatioBeforeVideo) ? self.photoRatioBeforeVideo : .standard
+            self.camera.setVideoMode(false)
+            self.camera.message = message
+            self.scheduleCaptureStateSave()
+        }
         camera.onVideoRecorded = { [weak self, weak library, weak camera] result in
             switch result {
             case .success(let url):
@@ -3505,6 +3626,9 @@ final class CameraViewModel: ObservableObject {
         }
         camera.$videoRecording.removeDuplicates().sink { [weak self] recording in
             self?.synchronizeVideoClock(recording: recording)
+        }.store(in: &subscriptions)
+        camera.$supportedVideoStabilizationPreferences.removeDuplicates().sink { [weak self] supported in
+            self?.reconcileVideoStabilizationPreference(supported)
         }.store(in: &subscriptions)
         externalVideoStorage.$available.dropFirst().sink { [weak self] available in
             guard let self else { return }
@@ -4296,8 +4420,14 @@ final class CameraViewModel: ObservableObject {
     }
 
     func setCaptureKind(_ kind: CaptureKind) {
+        if kind == .video, camera.recoveringSession || !camera.ready {
+            scheduleVideoEntryAfterRecovery()
+            return
+        }
+        let cancellingCinematicPreparation = kind == .photo && videoSubmodePreparing == .cinematic
         guard kind != captureKind,
-              !camera.videoBusy, !library.videoSaving, !isPreparingSubmode else { closePopups(); return }
+              !camera.videoBusy, !library.videoSaving,
+              !isPreparingSubmode || cancellingCinematicPreparation else { closePopups(); return }
         if kind == .photo, camera.dualCaptureEnabled {
             camera.setDualCaptureEnabled(false) { [weak self] success in
                 guard let self, success else { return }
@@ -4308,6 +4438,7 @@ final class CameraViewModel: ObservableObject {
         }
         // 旧照片请求不能跨模式存活，否则会在新模式弹“拍照超时”。
         camera.cancelPendingPhotoCapturesForModeSwitch()
+        if kind == .video { videoRouteFailureRetries = 0 }
         captureKindSwitching = true
         let switchToken = UUID(); captureKindSwitchToken = switchToken
         let previousPreview = camera.preview
@@ -4328,10 +4459,23 @@ final class CameraViewModel: ObservableObject {
                     iso: iso, shutter: shutter, wb: wb, tint: whiteBalanceTint, focus: focus, ev: ev)
                 : nil
             photoRatioBeforeVideo = FrameRatio.photoOptions.contains(ratio) ? ratio : .standard
+            photoFormatBeforeVideo = photoFormat
+            photoResolutionBeforeVideo = photoResolution
+            photoHDRBeforeVideo = hdr
             ratio = videoRatio.frameRatio
         } else {
             videoModeBeforePhoto = mode
             recordingCapacity = nil
+            // 离开视频即退出所有视频子模式；否则残留的 cinematicVideoEnabled
+            // 会在照片路线提交后再次把输入切回 DualWide。
+            videoSubmodeRequest = UUID()
+            videoSubmodePreparing = nil
+            setVideoSubmode(.timeLapse, enabled: false)
+            setVideoSubmode(.slowMotion, enabled: false)
+            setVideoSubmode(.cinematic, enabled: false)
+            compatibleSubmodeLensIDs = nil
+            pendingCinematicStart = false
+            photoStateRestorePending = true
             ratio = FrameRatio.photoOptions.contains(photoRatioBeforeVideo) ? photoRatioBeforeVideo : .standard
         }
         withAnimation(AppTheme.popupAnimation) { captureKind = kind }
@@ -4345,11 +4489,18 @@ final class CameraViewModel: ObservableObject {
             setMode(videoModeBeforePhoto)
             // Restore the photo HDR format before choosing the video preset;
             // restoring it afterwards would overwrite the 1080p configuration.
+            // 视频输出图不能沿用照片 HDR/HLG 管线；只关预览标志不够，
+            // 必须同时关闭 HEIFHDRPipeline，否则会以照片格式/输出组合启动视频并报 -11800。
             camera.setHEIFHDRPreview(false)
+            camera.setHEIFHDRPipeline(false)
             synchronizeLiveAudio()
-            synchronizeVideoSettings()
+            // 必须先进入视频模式，再提交视频规格；反过来 setVideoSettings 会被
+            // videoModeRequested=false 的 guard 丢弃，视频就可能用照片格式启动而报未就绪。
             camera.setVideoMode(cameraActiveRequested)
+            synchronizeVideoSettings()
+            scheduleVideoEntryWatchdog()
         } else {
+            cancelVideoEntryWatchdog()
             // Remove recording outputs before probing native Live support. Probing
             // against the video graph can wrongly disable the user's Live setting.
             // Queue route restoration before reapplying M values so their exposure
@@ -4365,9 +4516,141 @@ final class CameraViewModel: ObservableObject {
                 restoreDeviceParameters()
             }
             synchronizeLiveAudio()
+            // 视频不提供照片格式/HDR；返回照片时恢复进入视频前的选择，避免静默变 SDR/JPEG。
+            if let format = photoFormatBeforeVideo, camera.availablePhotoFormats.contains(format) {
+                photoFormat = format
+                photoResolution = photoResolutionBeforeVideo
+                if format == .heif || format == .heifPro { hdr = photoHDRBeforeVideo }
+            }
             synchronizeHDRPreview()
         }
         updateLook()
+    }
+
+    /// 视频结束后的能力发布是异步的；在最终照片路线可用后再恢复照片格式/HDR。
+    private func restorePhotoStateAfterVideo(retryIfNeeded: Bool = true) {
+        guard let format = photoFormatBeforeVideo else { photoStateRestorePending = false; return }
+        guard captureKind == .photo else { return }
+        guard camera.availablePhotoFormats.contains(format) else {
+            photoStateRestorePending = true
+            if retryIfNeeded { schedulePhotoStateRestore() }
+            return
+        }
+        if photoFormat != format { photoFormat = format }
+        if photoResolution != photoResolutionBeforeVideo { photoResolution = photoResolutionBeforeVideo }
+        if format == .heif || format == .heifPro {
+            if hdr != photoHDRBeforeVideo { hdr = photoHDRBeforeVideo }
+            else { synchronizeHDRPreview(); updateLook() }
+        }
+        photoStateRestorePending = false
+        photoStateRestoreTask?.cancel(); photoStateRestoreTask = nil
+    }
+
+    /// 视频退出后能力表是异步发布的；在 HEIF/HDR 重新可用前不能让协调器清掉用户选择。
+    private func schedulePhotoStateRestore() {
+        photoStateRestoreTask?.cancel()
+        photoStateRestoreTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            for _ in 0..<100 {
+                guard self.photoStateRestorePending, self.captureKind == .photo else { return }
+                self.restorePhotoStateAfterVideo(retryIfNeeded: false)
+                if !self.photoStateRestorePending { return }
+                try? await Task.sleep(for: .milliseconds(50))
+            }
+            self.photoStateRestorePending = false
+            self.reconcileCaptureCapabilities()
+        }
+    }
+
+    /// 前置切换/会话恢复期间用户点了视频：等恢复完成再进入，不能把停止中的会话当视频入口。
+    private func scheduleVideoEntryAfterRecovery() {
+        guard pendingVideoEntryAfterRecovery == nil else { return }
+        pendingVideoEntryAfterRecovery = Task { @MainActor [weak self] in
+            guard let self else { return }
+            defer { self.pendingVideoEntryAfterRecovery = nil }
+            for _ in 0..<240 {
+                if self.camera.ready, !self.camera.recoveringSession, !self.camera.videoConfiguring { break }
+                if self.camera.recoveryFailed { return }
+                try? await Task.sleep(for: .milliseconds(50))
+            }
+            guard !Task.isCancelled, self.captureKind == .photo,
+                  self.camera.ready, !self.camera.recoveringSession, !self.camera.videoConfiguring else { return }
+            self.setCaptureKind(.video)
+        }
+    }
+
+    private func cancelVideoEntryWatchdog() {
+        videoEntryWatchdog?.cancel()
+        videoEntryWatchdog = nil
+    }
+
+    /// 视频/电影进入配置可能被 AVFoundation 卡住；超时后必须回到可用界面。
+    private func scheduleVideoEntryWatchdog() {
+        cancelVideoEntryWatchdog()
+        videoEntryWatchdog = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(8))
+            guard let self, !Task.isCancelled, self.captureKind == .video else { return }
+            // 正常换画幅/居中/规格配置也会短暂停止预览；这不是入口卡死，
+            // 不能触发强制退出，否则用户切前置画幅时会误报视频超时并冻结。
+            if self.captureKindSwitching || self.camera.videoConfiguring || self.camera.recoveringSession
+                || self.camera.dualCapturePreparing
+                || self.videoSubmodePreparing != nil || self.camera.frontVideoCenteringPreparing
+                || (self.camera.videoBusy && !self.camera.videoRecording) {
+                self.scheduleVideoEntryWatchdog()
+                return
+            }
+            let cinematicPreviewStalled = self.cinematicVideoEnabled && !self.camera.videoBusy
+                && CACurrentMediaTime() - self.camera.latestRecordingPreviewFrameTime > 1
+            if self.videoSubmodePreparing == .cinematic || cinematicPreviewStalled {
+                self.videoSubmodePreparing = nil
+                self.videoSubmodeRequest = UUID()
+                self.setVideoSubmode(.cinematic, enabled: false)
+                self.compatibleSubmodeLensIDs = nil
+                self.synchronizeVideoSettings()
+                self.camera.message = "电影预览启动超时，正在恢复普通视频。"
+                self.scheduleVideoEntryWatchdog()
+                return
+            }
+            // ready 只有在目标输出图真正交付新帧后才发布；它才是“视频入口成功”的唯一权威信号。
+            if self.camera.ready {
+                self.cancelVideoEntryWatchdog()
+                return
+            }
+            if self.cinematicVideoEnabled && !self.camera.cinematicVideoCaptureActive {
+                self.videoSubmodePreparing = nil
+                self.videoSubmodeRequest = UUID()
+                self.setVideoSubmode(.cinematic, enabled: false)
+                self.synchronizeVideoSettings()
+                self.camera.message = "电影效果无法启用，已返回普通视频。"
+                return
+            }
+            self.abortStuckVideoRoute(message: "视频启动超时，已退出视频模式。")
+        }
+    }
+
+    private func abortStuckVideoRoute(message: String) {
+        cancelVideoEntryWatchdog()
+        videoSubmodePreparing = nil
+        videoSubmodeRequest = UUID()
+        setVideoSubmode(.timeLapse, enabled: false)
+        setVideoSubmode(.slowMotion, enabled: false)
+        setVideoSubmode(.cinematic, enabled: false)
+        // 超时路径不能走 setCaptureKind 的 videoBusy guard，否则会停在视频图并冻结预览。
+        captureKindSwitching = false
+        camera.setVideoMode(false)
+        captureKind = .photo
+        ratio = FrameRatio.photoOptions.contains(photoRatioBeforeVideo) ? photoRatioBeforeVideo : .standard
+        restorePhotoStateAfterVideo()
+        camera.message = message
+        scheduleCaptureStateSave()
+        let abortedAt = CACurrentMediaTime()
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(1200))
+            guard let self, self.captureKind == .photo, !self.captureKindSwitching,
+                  !self.camera.recoveringSession, !self.camera.videoConfiguring,
+                  self.camera.latestPreviewFrameTime < abortedAt else { return }
+            self.camera.retrySessionRecovery()
+        }
     }
 
     private func finishCaptureKindSwitch(token: UUID, previousPreview: UIImage?) {
@@ -4386,7 +4669,15 @@ final class CameraViewModel: ObservableObject {
                 try? await Task.sleep(for: .milliseconds(20))
             }
             guard self.captureKindSwitchToken == token else { return }
+            if self.captureKind == .photo {
+                self.restorePhotoStateAfterVideo()
+            }
             self.captureKindSwitching = false
+            if self.captureKind == .video, self.currentPosition == .front,
+               !self.frontVideoCenteringRequested,
+               let wide = self.frontVideoWideLens, self.camera.selectedLens != wide.id {
+                self.camera.selectLens(wide)
+            }
             self.reconcileCaptureCapabilities()
         }
     }
@@ -4395,7 +4686,11 @@ final class CameraViewModel: ObservableObject {
         guard captureKind == .video, !captureKindSwitching else { return }
         if camera.videoRecording {
             camera.stopVideoRecording()
-        } else if !camera.videoBusy && !camera.videoConfiguring && !frontVideoCenteringStarting && camera.ready && !library.videoSaving {
+        } else if videoShutterEnabled {
+            if cinematicVideoEnabled, !camera.cinematicVideoCaptureActive {
+                startCinematicWhenReady()
+                return
+            }
             videoElapsed = 0
             camera.startVideoRecording(aspect: videoRatio.frameRatio, copyright: preferences.copyright, look: effectiveCaptureLook,
                                        logLUTCube: selectedLogLUTCube,
@@ -4407,6 +4702,34 @@ final class CameraViewModel: ObservableObject {
                                        timeLapseInterval: timeLapseEnabled ? timeLapseInterval.seconds : nil,
                                        timeLapseFrameLimit: timeLapseEnabled ? timeLapseFrameCount.target : nil,
                                        cinematicVideo: cinematicVideoEnabled)
+        }
+    }
+
+    /// 电影 UI 已开启但系统图尚未激活时，快门先完成设备/格式准备再自动开拍。
+    private func startCinematicWhenReady() {
+        guard !pendingCinematicStart, !camera.videoConfiguring else { return }
+        pendingCinematicStart = true
+        videoSubmodePreparing = .cinematic
+        camera.prepareCinematicInput { [weak self] success in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                defer { self.pendingCinematicStart = false }
+                self.videoSubmodePreparing = nil
+                guard success else {
+                    self.camera.message = "当前镜头无法启用电影效果"
+                    return
+                }
+                self.synchronizeVideoSettings()
+                for _ in 0..<250 {
+                    if self.camera.cinematicVideoCaptureActive, !self.camera.videoConfiguring { break }
+                    try? await Task.sleep(for: .milliseconds(20))
+                }
+                guard self.camera.cinematicVideoCaptureActive, !self.camera.videoConfiguring else {
+                    self.camera.message = "电影效果尚未准备好，请稍后重试。"
+                    return
+                }
+                self.toggleVideoRecording()
+            }
         }
     }
 
@@ -4425,9 +4748,10 @@ final class CameraViewModel: ObservableObject {
 
     /// 等系统实际激活后再允许开拍，不能把用户开关意图当作已生效的录像状态。
     private var frontVideoCenteringStarting: Bool { camera.frontVideoCenteringPreparing || (frontVideoCenteringRequested && !camera.frontVideoCenteringActive) }
-    var videoShutterBusy: Bool { camera.videoConfiguring || frontVideoCenteringStarting || (camera.videoBusy && !camera.videoRecording) || library.videoSaving || (logVideoLUTControlsEnabled && burnLogLUT && logLUTLoading) }
+    var videoShutterBusy: Bool { camera.videoConfiguring || videoSubmodePreparing == .cinematic || frontVideoCenteringStarting || (camera.videoBusy && !camera.videoRecording) || library.videoSaving || (logVideoLUTControlsEnabled && burnLogLUT && logLUTLoading) }
     var videoShutterEnabled: Bool {
         camera.videoRecording || (camera.ready && !camera.videoBusy && !camera.videoConfiguring && !frontVideoCenteringStarting && !library.videoSaving && !captureKindSwitching
+            && videoSubmodePreparing != .cinematic
             && !camera.capturing && camera.pendingPhotoCount == 0
             && !(logVideoLUTControlsEnabled && burnLogLUT && (logLUTLoading || selectedLogLUTCube == nil)))
     }
@@ -4455,11 +4779,13 @@ final class CameraViewModel: ObservableObject {
         cancelFocus()
         endZoomDial()
         guard camera.ready, !camera.capturing, let lens = oppositeLens else { return }
+        let target = captureKind == .video && lens.device.position == .front
+            ? (frontVideoWideLens ?? lens) : lens
         cancelCountdown()
         // 前后切镜沿用旧帧轻微模糊、新路由出帧后淡出的路径。
         // 新画面已确认后缩短收尾，避免后置管线较慢时额外叠加完整焦段淡出时长。
         startFocalTransition(fadeDuration: 0.10)
-        camera.selectLens(lens, transitionID: focalTransitionID); flash = false; focusPoint = nil
+        camera.selectLens(target, transitionID: focalTransitionID); flash = false; focusPoint = nil
     }
 
     private var hardwareControlsUpdatePending = false
@@ -5034,6 +5360,10 @@ final class CameraViewModel: ObservableObject {
         camera.lenses.first(where: { $0.id == camera.selectedLens })?.device.position ?? .back
     }
 
+    private var frontVideoWideLens: CameraLens? {
+        camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide }
+    }
+
     var oppositeLens: CameraLens? {
         if currentPosition == .back {
             return camera.lenses.first(where: { $0.device.position == .front })
@@ -5309,7 +5639,7 @@ final class CameraViewModel: ObservableObject {
         state.photoMode = photoModeBeforeVideo.rawValue; state.photoRatio = photoRatioBeforeVideo.rawValue
         state.videoMode = (captureKind == .video ? mode : videoModeBeforePhoto).rawValue
         state.ratio = ratio.rawValue; state.photoFormat = photoFormat.rawValue; state.photoResolution = photoResolution.rawValue
-        state.flash = flashMode.rawValue; state.live = livePhotoEnabled; state.hdr = hdr; state.nightMode = nightModeEnabled
+        state.flash = flashMode.rawValue; state.live = livePhotoEnabled; state.hdr = hdr; state.nightMode = false
         state.adaptiveHighDynamic = adaptiveHighDynamic
         state.portraitMode = portraitModeEnabled
         state.portraitBlurStrength = portraitBlurStrength
@@ -5432,9 +5762,9 @@ final class CameraViewModel: ObservableObject {
         flashMode = CameraFlashMode(rawValue: state.flash) ?? .off
         livePhotoEnabled = state.live
         if restoringPortrait { livePhotoEnabled = false }
-        nightModeEnabled = state.nightMode ?? false
-        if restoringPortrait { nightModeEnabled = false }
-        if nightModeEnabled && mode == .manual { mode = .auto }
+        // 夜景拍照功能已取消：旧存档中的夜景开关不再恢复。
+        nightModeEnabled = false
+        nightCaptureRuntimeUnavailable = false
         slowShutterEnabled = captureKind == .photo && (state.slowShutter ?? false)
         selectedSlowShutterPreset = slowShutterEnabled
             ? state.slowShutterPreset.flatMap(SlowShutterPreset.init(rawValue:))
@@ -5483,7 +5813,7 @@ final class CameraViewModel: ObservableObject {
         toolPage = min(max(state.toolPage, 0), 1)
         if !preferences.saveCaptureSettings {
             preferences.videoBitratePreset = .systemDefault
-            preferences.videoStabilization = .lowLatency
+            preferences.videoStabilization = .standard
         }
         lastBackLensID = state.lastBackLensID
         restoringVideoSettings = false; restoringCaptureState = false

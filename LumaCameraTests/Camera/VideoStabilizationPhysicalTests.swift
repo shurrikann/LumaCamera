@@ -209,4 +209,63 @@ import AVFoundation
             print("STABILIZATION_MOVIE front=\(front) mode=\(mode) active=\(String(describing:during.recordingActive)) decoded=\(count) maxPTSGap=\(gaps.max() ?? 0) startMS=\(startMS) noPhotosWrites=true")
         }
     }
+    func testLegacyLowLatencyPreferenceDecodesAsStandard() throws {
+        let legacy = Data("\"低延迟\"".utf8)
+        XCTAssertEqual(try JSONDecoder().decode(VideoStabilizationPreference.self, from: legacy), .standard)
+        XCTAssertEqual(VideoStabilizationPreference.allCases, [.off, .standard, .cinematic])
+    }
+
+    func testStabilizationPreferenceAppliesAndEntryChangeDoesNotAbortVideo() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
+        let idle = UIApplication.shared.isIdleTimerDisabled, audit = SessionRuntimeErrorAudit()
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer { model.closePopups(); model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle; audit.finish() }
+        model.setCameraActive(true)
+        try await PresetToolbarChecks.wait("相机") { camera.ready }
+        // 照片模式先选电影防抖，进入视频后应真正应用（不支持时按回退链）。
+        model.preferences.videoStabilization = .cinematic
+        model.setCaptureKind(.video)
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "防抖入口", timeout: 20)
+        var s = try await state(camera)
+        print("STABILIZATION_SUPPORT modes=\(camera.supportedVideoStabilizationPreferences.map(\.rawValue).sorted())")
+        print("STABILIZATION_PREFERENCE entry=cinematic recordSupported=\(s.recordingSupported) preferred=\(String(describing:s.recordingPreferred)) active=\(String(describing:s.recordingActive))")
+        if s.recordingSupported { XCTAssertNotEqual(s.recordingPreferred, 0); XCTAssertNotEqual(s.recordingActive, 0) }
+
+        // 视频待机中切换每个偏好，不能留下旧的 connection 模式。
+        for pref in [VideoStabilizationPreference.off, .standard, .cinematic] {
+            model.preferences.videoStabilization = pref
+            try await Task.sleep(for: .milliseconds(250))
+            s = try await state(camera)
+            XCTAssertTrue(camera.supportedVideoStabilizationPreferences.contains(.off))
+            if pref != .off { XCTAssertTrue(model.isVideoStabilizationAvailable(pref) == camera.supportedVideoStabilizationPreferences.contains(pref)) }
+            print("STABILIZATION_PREFERENCE set=\(pref.rawValue) recordSupported=\(s.recordingSupported) preferred=\(String(describing:s.recordingPreferred)) active=\(String(describing:s.recordingActive))")
+            if pref == .off {
+                XCTAssertEqual(s.recordingPreferred, 0)
+            } else if s.recordingSupported {
+                XCTAssertNotEqual(s.recordingPreferred, 0)
+            }
+            if !camera.supportedVideoStabilizationPreferences.contains(pref) {
+                XCTAssertFalse(model.isVideoStabilizationAvailable(pref))
+            }
+        }
+
+        // 快速照片→视频，并在配置中改偏好；不能因竞争自动退回照片。
+        for _ in 0..<4 {
+            model.setCaptureKind(.photo)
+            try await PresetToolbarChecks.wait("回照片") { camera.ready && !camera.videoConfiguring }
+            model.setCaptureKind(.video)
+            model.preferences.videoStabilization = .cinematic
+            try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "防抖竞争", timeout: 20)
+            XCTAssertEqual(model.captureKind, .video)
+            XCTAssertFalse(camera.message?.contains("已退出视频") == true, camera.message ?? "")
+            s = try await state(camera)
+            if s.recordingSupported { XCTAssertNotEqual(s.recordingPreferred, 0) }
+            model.toggleVideoRecording()
+            try await PresetToolbarChecks.wait("防抖开拍") { camera.videoRecording }
+            XCTAssertTrue(camera.videoRecording, camera.message ?? "")
+            camera.stopVideoRecording()
+            try await PresetToolbarChecks.wait("防抖停止") { !camera.videoBusy }
+        }
+    }
+
 }

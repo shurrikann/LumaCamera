@@ -63,7 +63,6 @@ final class ShootingModeButtonTests: XCTestCase {
         if model.livePhotoEnabled { model.toggleLivePhoto() }
         let photos: [(String, () -> Void)] = [
             (PhotoSubmode.slowShutter.symbol,{ model.toggleSlowShutterMode() }),
-            (PhotoSubmode.night.symbol,{ model.toggleNightMode() }),
             (PhotoSubmode.portrait.symbol,{ model.togglePortraitMode() }),
             (PhotoSubmode.burst.symbol,{ model.toggleBurstMode() })]
         var latencies = [Double]()

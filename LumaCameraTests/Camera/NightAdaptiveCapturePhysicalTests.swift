@@ -867,6 +867,102 @@ final class NightAdaptiveCapturePhysicalTests: XCTestCase {
         }
     }
 
+    @MainActor func testIndependentNightColdPreviewWithoutCapture() async throws {
+        try await withCamera(beforeStart: { model in
+            model.camera.setNightPreviewTraceStartForTesting(CACurrentMediaTime())
+        }) { model in
+            let camera = model.camera
+            defer { camera.setNightPreviewTraceStartForTesting(nil) }
+            model.photoFormat = .heif
+            if !model.nightModeEnabled { model.toggleNightMode() }
+            try await self.wait { model.nightModeEnabled && !model.isPreparingSubmode && camera.ready }
+            let observedFrom = CACurrentMediaTime()
+            print("NIGHT-PREVIEW-READY host=\(observedFrom)")
+            try await Task.sleep(for: .seconds(8))
+            XCTAssertGreaterThan(camera.previewFrameTimeForTesting, observedFrom + 7,
+                                 "等待期间应持续收到预览帧")
+            XCTAssertEqual(camera.pendingPhotoCount, 0)
+        }
+    }
+
+    @MainActor func testIndependentNightComparesPreviewBeforeAndAfterFirstCapture() async throws {
+        try await withCamera(beforeStart: { model in
+            model.camera.setNightPreviewTraceStartForTesting(CACurrentMediaTime())
+        }) { model in
+            let camera = model.camera
+            defer { camera.setNightPreviewTraceStartForTesting(nil) }
+            camera.setForceOrdinaryNightForTesting(false)
+            model.photoFormat = .heif
+            if !model.nightModeEnabled { model.toggleNightMode() }
+            try await self.wait { model.nightModeEnabled && !model.isPreparingSubmode && camera.ready }
+            let originalForce = model.forceIndependentNightEnabled
+            defer { model.forceIndependentNightEnabled = originalForce }
+            model.forceIndependentNightEnabled = true
+            try await Task.sleep(for: .seconds(3))
+            try await self.logNightPreviewConfiguration(camera, phase: "before-capture")
+            let result = try await self.capture(camera, format: .heif)
+            XCTAssertTrue(result.diagnostics?.rows.contains { $0.title == "夜景独立采集" } == true)
+            try await self.wait { camera.ready && !camera.shutterBusy && camera.pendingPhotoCount == 0 }
+            try await Task.sleep(for: .seconds(3))
+            try await self.logNightPreviewConfiguration(camera, phase: "after-capture")
+        }
+    }
+
+    @MainActor private func logNightPreviewConfiguration(_ camera: CameraEngine, phase: String) async throws {
+        let snapshot = await withCheckedContinuation { continuation in
+            camera.exposureColorState { continuation.resume(returning: $0) }
+        }
+        let state = try XCTUnwrap(snapshot)
+        print("NIGHT-PREVIEW-CONFIG phase=\(phase) maxExposure=\(state.maximumExposureSeconds) activeMaxExposure=\(state.activeMaximumExposureSeconds) minFrame=\(state.activeMinFrameSeconds) maxFrame=\(state.activeMaxFrameSeconds) exposureMode=\(state.exposureMode.rawValue) focusMode=\(state.focusMode.rawValue) focus=\(state.lensPosition) focusPoint=\(state.focusPoint) color=\(state.colorSpace.rawValue) hdr=\(state.hdr) toneMap=\(state.globalToneMapping) seconds=\(state.seconds) iso=\(state.iso) offset=\(state.exposureOffset) zoom=\(state.physicalZoomFactor)")
+    }
+
+    @MainActor func testIndependentNightObservesFiveSameSceneExposures() async throws {
+        try await withCamera { model in
+            let camera = model.camera
+            let originalForce = model.forceIndependentNightEnabled
+            defer { model.forceIndependentNightEnabled = originalForce }
+            camera.setForceOrdinaryNightForTesting(false)
+            model.photoFormat = .heif
+            if !model.nightModeEnabled { model.toggleNightMode() }
+            try await self.wait { model.nightModeEnabled && !model.isPreparingSubmode && camera.ready }
+            // 只固定采集路线，仍使用现场实际测光、ISO 和快门。
+            let naturallyTriggered = model.photoOptions.nightMode
+            model.forceIndependentNightEnabled = true
+            await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
+            let originalZoom = await withCheckedContinuation { continuation in
+                camera.zoomStateForTesting { zoom, _, _ in continuation.resume(returning: zoom) }
+            }
+            print("NIGHT-SAME-SCENE gateNaturallyTriggered=\(naturallyTriggered) zoom=\(originalZoom)")
+            for index in 1...5 {
+                try await self.wait { camera.ready && !camera.shutterBusy && camera.pendingPhotoCount == 0 }
+                let done = self.expectation(description: "同场景夜景 \(index)")
+                var photo: CapturedPhoto?
+                camera.onCaptureCompleted = { photo = $0; done.fulfill() }
+                var options = model.photoOptions
+                options.nightMode = true
+                options.nightProfile = .standard
+                let started = CACurrentMediaTime()
+                print("NIGHT-SAME-SCENE shutter=\(index) frameAge=\(started - camera.previewFrameTimeForTesting) preview=\(String(describing: camera.readings))")
+                camera.capture(flashMode: .off, options: options)
+                await self.fulfillment(of: [done], timeout: 45)
+                let result = try XCTUnwrap(photo, camera.message ?? "夜景未出片")
+                XCTAssertTrue(result.diagnostics?.rows.contains { $0.title == "夜景独立采集" } == true)
+                let data = try XCTUnwrap(result.resources.first?.data)
+                let source = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData, nil))
+                let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any])
+                let exif = try XCTUnwrap(properties[kCGImagePropertyExifDictionary as String] as? [String: Any])
+                let seconds = try XCTUnwrap(exif[kCGImagePropertyExifExposureTime as String] as? NSNumber)
+                let iso = try XCTUnwrap((exif[kCGImagePropertyExifISOSpeedRatings as String] as? [NSNumber])?.first)
+                let frames = exif[kCGImagePropertyExifSourceImageNumberOfCompositeImage as String] as? [Int]
+                let restoredZoom = await withCheckedContinuation { continuation in
+                    camera.zoomStateForTesting { zoom, _, _ in continuation.resume(returning: zoom) }
+                }
+                XCTAssertEqual(restoredZoom, originalZoom, accuracy: 0.01, "恢复后应保持实际取景倍率")
+                print("NIGHT-SAME-SCENE file=\(index) seconds=\(seconds) iso=\(iso) frames=\(frames ?? []) restoredZoom=\(restoredZoom) callbackSeconds=\(CACurrentMediaTime() - started)")
+            }
+        }
+    }
+
     @MainActor func testIndependentNightFiveConsecutive48mmCaptures() async throws {
         try await withCamera { model in
             let camera = model.camera
@@ -1052,7 +1148,8 @@ final class NightAdaptiveCapturePhysicalTests: XCTestCase {
         return try XCTUnwrap(result, camera.message ?? "No adaptive night result")
     }
 
-    @MainActor private func withCamera(_ action: (CameraViewModel) async throws -> Void) async throws {
+    @MainActor private func withCamera(beforeStart: (CameraViewModel) -> Void = { _ in },
+                                       _ action: (CameraViewModel) async throws -> Void) async throws {
         let model = try await FullDeviceRegressionFixture.makeFreshModel()
         let camera = model.camera
         let oldCallback = camera.onCaptureCompleted
@@ -1073,6 +1170,7 @@ final class NightAdaptiveCapturePhysicalTests: XCTestCase {
             XCTAssertEqual(model.library.pendingSaveCount, pending)
             audit.finish()
         }
+        beforeStart(model)
         model.setCameraActive(true)
         try await wait { camera.ready && camera.preview != nil }
         model.setCaptureKind(.photo); model.setMode(.auto)

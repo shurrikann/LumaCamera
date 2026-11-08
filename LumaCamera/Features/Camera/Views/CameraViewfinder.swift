@@ -519,22 +519,6 @@ extension CameraView {
                 .frame(width: buttonWidth, height: buttonWidth)
                 .padding(2)
                 .opacity(model.hidesFocalStripForZoomDial ? 0.001 : 1)
-        } else if useFrontWideToggle, model.captureKind == .video, let wide = frontWide, let ultra = frontUltraWide {
-            let isWide = camera.dualCaptureEnabled ? camera.dualCaptureFrontWide : camera.selectedLens == ultra.id
-            CameraFocalButton(title: "", imageName: isWide ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
-                selected: isWide,
-                enabled: camera.ready && !camera.capturing && model.canSelectFocalLength(isWide ? wide : ultra),
-                accessibilityLabel: isWide ? "切换回前置 1 倍" : "切换前置广角",
-                usesEnclosingGlassBackground: true,
-                acceptsNewTouches: { !model.zoomDialVisible },
-                onTap: { model.selectFocalLength(isWide ? wide : ultra) },
-                onLongPress: { model.openZoomDial() },
-                onDrag: { model.dragZoomDial(translation: $0, width: $1) },
-                onFinish: { model.finishZoomDrag() })
-                .frame(width: buttonWidth, height: buttonWidth)
-                .padding(2)
-                .opacity(model.hidesFocalStripForZoomDial ? 0.001 : 1)
-                .captureControlGeometry("frontVideoWide", model: model)
         } else if useFrontWideToggle, let wide = frontWide, let ultra = frontUltraWide {
             let isWide = camera.selectedLens == ultra.id
             let isLandscapePhoto = camera.frontPhotoLandscapeEnabled && model.photoFormat != .raw
@@ -544,7 +528,6 @@ extension CameraView {
                         .font(.system(size: isWide ? 16 : 15, weight: .medium))
                         .foregroundStyle(isWide ? AppTheme.accent : Color.white.opacity(0.9))
                         .frame(width: buttonWidth, height: buttonWidth)
-                        .background(isWide ? Color.white.opacity(0.06) : .clear, in: Circle())
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
