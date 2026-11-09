@@ -96,7 +96,7 @@ enum AdaptiveRAWDeveloper {
         // 再小幅提亮无法补回预览中的室内层次；此处不覆盖默认localToneMapAmount。
         filter.exposure = Float(adjustments[.exposure])
         if adjustments[.temperature] != 0 { filter.neutralTemperature = min(50000,max(2000,filter.neutralTemperature + Float(adjustments[.temperature])*20)) }
-        if adjustments[.tint] != 0 { filter.neutralTint = min(150,max(-150,filter.neutralTint + Float(adjustments[.tint]))) }
+        if adjustments[.tint] != 0 { filter.neutralTint = min(150,max(-150,filter.neutralTint - Float(adjustments[.tint]))) }
     }
     static func withoutRAWControls(_ value:FilterAdjustments) -> FilterAdjustments {
         var result = value

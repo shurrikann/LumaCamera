@@ -22,7 +22,7 @@ enum FilterAdjustmentRenderer {
         if settings[.temperature] != 0 || settings[.tint] != 0 {
             image = image.applyingFilter("CITemperatureAndTint", parameters: [
                 "inputNeutral": CIVector(x: 6500, y: 0),
-                "inputTargetNeutral": CIVector(x: CGFloat(6500 - settings[.temperature] * 25), y: CGFloat(settings[.tint] * 0.5))])
+                "inputTargetNeutral": CIVector(x: CGFloat(6500 - settings[.temperature] * 25), y: CGFloat(-settings[.tint] * 0.5))])
         }
         if settings[.exposure] != 0 { image = image.applyingFilter("CIExposureAdjust", parameters: [kCIInputEVKey: settings[.exposure]]) }
         if settings[.saturation] != 0 || settings[.brightness] != 0 || settings[.contrast] != 0 {

@@ -5073,3 +5073,9 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 编译通过；`ShootingModeButtonTests`、`LivePhotoPhysicalTests`、`CaptureKindModeLatencyPhysicalTests` 真机回归通过。
 - 另跑 NightAdaptiveCapturePhysicalTests 28通过/6失败、PortraitCapturePhysicalTests 2通过/1失败、SlowShutterLifecyclePhysicalTests 2通过/1跳过。失败伴随 start failed/IPC、夜景低照度和拍照超时，本轮未复验，不能判定为智拍移除回归，也不能宣称全量通过。
 - 历史智拍验证记录保留在本文档旧章节，不再代表当前产品能力。
+
+# 2026-11-09 滤镜色调轴方向
+
+- 问题：色彩调色盘向上（正值）应偏洋红，实际偏绿。
+- 修复：`CITemperatureAndTint` 的 tint 轴和 RAW `neutralTint` 统一改为正值=洋红、负值=绿。
+- 新增 `FilterTintDirectionTests` 像素验证：tint=+100 输出 (R,G,B)=(140,121,138) 偏洋红；tint=-100 输出 (114,133,117) 偏绿。`FilterAdjustmentStateTests` 同轮通过。
