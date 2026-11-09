@@ -5108,3 +5108,9 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 输入：Log 缓冲和 LUT 应用改为 code-value 路径，不再强制 sRGB 标记；LUT 使用 `CIColorCube`，避免显示色彩管理二次转换。
 - 真机 `testAppleLogLUTBurnWritesRec709TagsAndTenBitPixels` 通过：烧录后无 Log transfer 扩展，Rec.709 transfer/primaries，10-bit，1.09s 临时片段。
 - 仍未验证：真实 Log 素材的肤色/灰阶视觉准确性、Log2 实际录制烧录、预览与成片逐像素一致性。
+
+# 2026-11-09 Apple Log / Log2 LUT 验证方法修正
+
+- 核对 OpenColorIO Apple 生成说明：Apple Log 2 与 Apple Log 使用同一传递函数，区别是 Apple Wide Gamut（Log2）与 BT.2020（Log1）原色，不是两条灰度曲线。
+- 因此灰阶/中性轴无法区分 Log1/Log2 LUT；此前用灰阶评分自动识别的方案不成立，已放弃。分类继续依据来源/显式命名：Apple Log 55、Apple Log2 2。
+- 功能验证必须使用宽色域饱和色/ColorChecker + 同一场景的 Apple Log、Log2 实拍，而不是灰阶。当前只完成静态分类和烧录标签测试，LUT 原色匹配尚未验收。

@@ -11,7 +11,8 @@ struct LogLUTPreset: Identifiable, Hashable, Sendable {
     let title: String
     var displayName: String { [equipment, title].compactMap { $0 }.joined(separator: " ") }
 
-    /// Apple Log and Apple Log2 are different transfer functions; never mix their LUTs.
+    /// Apple Log 2 uses the same transfer curve as Apple Log but Apple Wide Gamut
+    /// primaries instead of BT.2020. Their LUTs differ by gamut, not by a gray ramp.
     var requiredColorSpace: VideoColorSpace {
         // The original 55-LUT library was authored/used for Apple Log; Log 2 LUTs
         // were added later and are explicitly named. Keep that historical mapping

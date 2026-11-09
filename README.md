@@ -1,3 +1,7 @@
+## 2026-11-09 Apple Log 2 验证结论
+
+- Apple Log 2 与 Apple Log 同为一条 Log 曲线，差异是 Apple Wide Gamut 与 BT.2020 原色；不能靠灰阶区分 LUT，需用色卡/饱和色与实拍验证。
+
 ## 2026-11-09 Apple Log LUT 区分与烧录标签
 
 - Apple Log 55支、Apple Log2 2支分开显示；烧录 LUT 后文件改为 Rec.709 标签，未烧录保留 Log 标签；Log LUT 输入走 code-value，不再强制 sRGB。
