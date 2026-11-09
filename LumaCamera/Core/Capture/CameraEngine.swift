@@ -2194,8 +2194,11 @@ final class CameraEngine: NSObject, ObservableObject {
                 self.selectLensOnQueue(lens, previousID: lens.id, revision: self.zoomRevision.advance())
                 return
             }
+            // 规格提交必须只有一个事务：configureConnections 默认会再开一层，
+            // 前置4:3/16:9切换时嵌套事务会让 activeFormat 回退并触发 -11819。
             self.session.beginConfiguration()
-            self.configureConnections(device: device)
+            self.configureVideoFormat(device)
+            self.configureConnections(device: device, configuresVideoFormat: false)
             self.session.commitConfiguration()
             self.publishCapabilities(device, lensID: self.selectedLens)
         }
@@ -3659,7 +3662,7 @@ final class CameraEngine: NSObject, ObservableObject {
         videoOutput.videoSettings = settings
     }
 
-    private func configureConnections(device: AVCaptureDevice) {
+    private func configureConnections(device: AVCaptureDevice, configuresVideoFormat: Bool = true) {
         recordSessionOperation("configureConnections target=\(device.deviceType.rawValue)")
         if #available(iOS 26.0, *), !videoModeRequested, let input, input.activeLockedVideoFrameDuration.isValid {
             // 返回照片后归还帧周期，避免手动照片继承录像快门上限。
@@ -3668,11 +3671,11 @@ final class CameraEngine: NSObject, ObservableObject {
         if !videoModeRequested, let input, input.videoMinFrameDurationOverride.isValid {
             input.videoMinFrameDurationOverride = .invalid
         }
-        if videoModeRequested {
+        if videoModeRequested, configuresVideoFormat {
             session.beginConfiguration()
             configureVideoFormat(device)
             session.commitConfiguration()
-        } else if let original = photoColorBeforeVideo.removeValue(forKey: device.uniqueID) {
+        } else if !videoModeRequested, let original = photoColorBeforeVideo.removeValue(forKey: device.uniqueID) {
             do {
                 try device.lockForConfiguration()
                 let restored = device.activeFormat.supportedColorSpaces.contains(original) ? original : .sRGB

@@ -319,14 +319,23 @@ final class BasicVideoPhysicalTests: XCTestCase {
     static func makeFreshModel() async throws -> CameraViewModel {
         let model = try XCTUnwrap(AppDependencies.runningAppCameraModel)
         model.setCameraActive(false)
+        if model.camera.videoBusy { model.camera.stopVideoRecording() }
         await Task.yield()
-        for _ in 0..<200 {
+        // 上一个用例可能刚停止录像/切换；给输出拆除和会话停止留更长时间，避免污染下一个基线。
+        for _ in 0..<500 {
             let running = await withCheckedContinuation { c in model.camera.actualSessionRunningForTesting { c.resume(returning: $0) } }
-            if !running && !model.camera.ready { break }
+            if !running && !model.camera.ready && !model.camera.videoBusy { break }
             try await Task.sleep(for: .milliseconds(20))
         }
         let running = await withCheckedContinuation { c in model.camera.actualSessionRunningForTesting { c.resume(returning: $0) } }
-        XCTAssertFalse(running, "建立测试基线前必须真正停止会话")
+        if running || model.camera.ready {
+            // 再发一次失活请求，覆盖上一个用例末尾排队的 start。
+            model.setCameraActive(false)
+            await withCheckedContinuation { c in model.camera.afterPendingSessionTasks { c.resume() } }
+            try await Task.sleep(for: .milliseconds(300))
+        }
+        let finalRunning = await withCheckedContinuation { c in model.camera.actualSessionRunningForTesting { c.resume(returning: $0) } }
+        XCTAssertFalse(finalRunning, "建立测试基线前必须真正停止会话")
         model.resetCaptureStateForTesting()
         await withCheckedContinuation { c in model.camera.afterPendingSessionTasks { c.resume() } }
         return model
