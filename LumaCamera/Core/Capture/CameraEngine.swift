@@ -931,6 +931,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private struct DemoPreview {
         var look: CaptureLook
         let logLUTCube: LogLUTCube?
+        let logLUTLog2ToLog1: Bool
         let videoColorSpace: VideoColorSpace?
         let revision: UInt64
         let zoom: CGFloat
@@ -2867,6 +2868,7 @@ final class CameraEngine: NSObject, ObservableObject {
                                       recordingAccess: ExternalVideoStorage.RecordingAccess?,
                                       rawSettings: [String: Any]?, recordingMetadata: [AVMetadataItem],
                                       look: CaptureLook, logLUTCube: LogLUTCube?,
+                                      logLUTLog2ToLog1: Bool = false,
                                       timeLapseInterval: TimeInterval?, timeLapseFrameLimit: Int? = nil,
                                       nativeCaptureRotationAngle: CGFloat? = nil,
                                       rearCaptureRotationAngle: CGFloat? = nil) {
@@ -2882,6 +2884,7 @@ final class CameraEngine: NSObject, ObservableObject {
                                                  rawSettings: rawSettings,
                                                  externalRecordingAccess: recordingAccess, look: look,
                                                  logLUTCube: logLUTCube,
+                                                 logLUTLog2ToLog1: logLUTLog2ToLog1,
                                                  timeLapseInterval: timeLapseInterval,
                                                  timeLapseFrameLimit: timeLapseFrameLimit,
                                                  nativeCaptureRotationAngle: nativeCaptureRotationAngle,
@@ -2918,7 +2921,8 @@ final class CameraEngine: NSObject, ObservableObject {
     }
 
     func startVideoRecording(aspect: FrameRatio, copyright: String? = nil, look: CaptureLook = CaptureLook(),
-                              logLUTCube: LogLUTCube? = nil, burnLogLUT: Bool = false,
+                              logLUTCube: LogLUTCube? = nil, logLUTLog2ToLog1: Bool = false,
+                              burnLogLUT: Bool = false,
                               logLUTName: String? = nil, lockWhiteBalance: Bool = false,
                               timeLapsePreset: TimeLapsePreset? = nil,
                               timeLapseEnabled: Bool = false,
@@ -3030,6 +3034,7 @@ final class CameraEngine: NSObject, ObservableObject {
                     recordingURL: recordingURL, recordingAccess: recordingAccess,
                     rawSettings: rawSettings, recordingMetadata: recordingMetadata,
                     look: look, logLUTCube: burnLogLUT ? logLUTCube : nil,
+                    logLUTLog2ToLog1: burnLogLUT && logLUTLog2ToLog1,
                     timeLapseInterval: timeLapseInterval ?? timeLapsePreset?.intervalSeconds,
                     timeLapseFrameLimit: timeLapseFrameLimit,
                     nativeCaptureRotationAngle: centerStageCaptureAngle,
@@ -5463,12 +5468,16 @@ final class CameraEngine: NSObject, ObservableObject {
 
     func setFilterParameterEditing(_ active: Bool) { previewRevision.setInteractive(active) }
 
-    func updateVideoLogLUT(_ cube: LogLUTCube?) {
+    func updateVideoLogLUT(_ cube: LogLUTCube?, convertLog2ToLog1: Bool = false) {
         let revision = previewRevision.advance(resetInteractiveFloor: true)
         let update = lookUpdateRevision.advance()
         queue.async {
             guard self.lookUpdateRevision.matches(update) else { return }
-            self.livePreviewState.update { $0.logLUTCube = cube; $0.revision = revision }
+            self.livePreviewState.update {
+                $0.logLUTCube = cube
+                $0.logLUTLog2ToLog1 = convertLog2ToLog1
+                $0.revision = revision
+            }
             self.lookRevision = revision
             #if targetEnvironment(simulator)
             if self.previewRevision.canRender(revision) { self.renderDemo() }
@@ -5575,14 +5584,19 @@ final class CameraEngine: NSObject, ObservableObject {
     private func renderDemo() {
         guard previewRevision.canRender(lookRevision), wantsRunning else { return }
         let state = livePreviewState.snapshot()
-        demoPreviewThrottle.submit(DemoPreview(look: look, logLUTCube: state.logLUTCube, videoColorSpace: state.videoColorSpace, revision: lookRevision, zoom: demoZoom, quarterTurns: previewQuarterTurns, histogram: histogramEnabled, focusPeaking: focusPeakingEnabled))
+        demoPreviewThrottle.submit(DemoPreview(look: look, logLUTCube: state.logLUTCube,
+            logLUTLog2ToLog1: state.logLUTLog2ToLog1, videoColorSpace: state.videoColorSpace,
+            revision: lookRevision, zoom: demoZoom, quarterTurns: previewQuarterTurns, histogram: histogramEnabled, focusPeaking: focusPeakingEnabled))
     }
     private func renderDemoFrame(_ frame: DemoPreview) {
         guard previewRevision.canRender(frame.revision), livePreviewState.snapshot().running,
               let source = CIImage(image: DemoImageFactory.make()) else { return }
         let sourceFrame = ContinuousZoomPolicy.demoFrame(source, zoom: frame.zoom)
         var lookImage = Imaging.filtered(sourceFrame, look: frame.look)
-        if frame.videoColorSpace?.isLog == true, let cube = frame.logLUTCube { lookImage = cube.apply(to: lookImage) }
+        if frame.videoColorSpace?.isLog == true, let cube = frame.logLUTCube {
+            if frame.logLUTLog2ToLog1 { lookImage = AppleLogLUTInput.log2ToLog1(lookImage) }
+            lookImage = cube.apply(to: lookImage)
+        }
         let filtered = PreviewRotation.image(lookImage, quarterTurns: frame.quarterTurns)
         let display = frame.focusPeaking ? FocusPeakingRenderer.apply(to: filtered, analysis: PreviewRotation.image(sourceFrame, quarterTurns: frame.quarterTurns)) : filtered
         guard let cg = previewContext.createCGImage(display, from: display.extent, format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!, deferred: false) else { return }
@@ -8495,6 +8509,7 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
             lookImage = lookImage.settingContentHeadroom(HDRToneMapping.headroom)
         }
         if state.videoColorSpace?.isLog == true, let cube = state.logLUTCube {
+            if state.logLUTLog2ToLog1 { lookImage = AppleLogLUTInput.log2ToLog1(lookImage) }
             lookImage = cube.apply(to: lookImage)
         }
         var effected = PreviewRotation.image(lookImage, quarterTurns: state.quarterTurns)

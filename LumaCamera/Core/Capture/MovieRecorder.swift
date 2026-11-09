@@ -124,6 +124,7 @@ final class MovieRecorder {
     private var filterLook: CaptureLook?
     private let filterColorSpace: CGColorSpace?
     private let logLUTCube: LogLUTCube?
+    private let logLUTLog2ToLog1: Bool
     private let outputColorProperties: [String: Any]
     private let frameFilterRenderer = VideoFrameFilterRenderer()
     private var filterFrameCounter: UInt64 = 0
@@ -140,7 +141,8 @@ final class MovieRecorder {
          rawSettings: [String: Any]? = nil,
          externalRecordingAccess: ExternalVideoStorage.RecordingAccess? = nil,
          look: CaptureLook = CaptureLook(),
-         logLUTCube: LogLUTCube? = nil, timeLapseInterval: TimeInterval? = nil,
+         logLUTCube: LogLUTCube? = nil, logLUTLog2ToLog1: Bool = false,
+         timeLapseInterval: TimeInterval? = nil,
          timeLapseFrameLimit: Int? = nil,
          nativeCaptureRotationAngle: CGFloat? = nil,
          rearCaptureRotationAngle: CGFloat? = nil) throws {
@@ -189,6 +191,7 @@ final class MovieRecorder {
         filterColorSpace = appliesFilter ? colorSpace : nil
         let bakesLogLUT = !settings.isRAW && settings.colorSpace.isLog && filterLook == nil && logLUTCube != nil
         self.logLUTCube = bakesLogLUT ? logLUTCube : nil
+        self.logLUTLog2ToLog1 = bakesLogLUT && logLUTLog2ToLog1
         // A baked Apple Log LUT produces a display-referred Rec.709 image. Keeping the
         // Apple Log transfer/primaries on the file makes players reinterpret it as Log.
         self.outputColorProperties = bakesLogLUT
@@ -374,7 +377,8 @@ final class MovieRecorder {
             var filteredBuffer: CVPixelBuffer?
             guard CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &filteredBuffer) == kCVReturnSuccess,
                   let filteredBuffer else { reportFailure(); return }
-            frameFilterRenderer.renderLogLUT(source: pixelBuffer, destination: filteredBuffer, cube: logLUTCube)
+            frameFilterRenderer.renderLogLUT(source: pixelBuffer, destination: filteredBuffer,
+                                             cube: logLUTCube, log2ToLog1: logLUTLog2ToLog1)
             outputBuffer = filteredBuffer
         } else if let filterLook {
             guard let videoAdaptor, let pool = videoAdaptor.pixelBufferPool, let filterColorSpace else {

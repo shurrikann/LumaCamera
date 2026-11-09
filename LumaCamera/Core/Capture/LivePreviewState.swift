@@ -23,6 +23,8 @@ final class LivePreviewState {
         /// 实际传感器动态画幅独立于最终裁切方向；1:1 没有横竖方向，但输入仍可能是横幅。
         var nativeFrontSensorLandscape = false
         var logLUTCube: LogLUTCube?
+        /// Log2 needs a Log1 conversion before generic/Log1 LUTs.
+        var logLUTLog2ToLog1 = false
         var acceptsFrames = true
         /// 夜景跨批次及慢门回退曝光期间保留有效取景，避免曝光切换帧覆盖画面。
         var nightCapturePreviewHold = false

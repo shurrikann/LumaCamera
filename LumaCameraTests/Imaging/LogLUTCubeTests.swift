@@ -109,4 +109,20 @@ final class LogLUTCubeTests: XCTestCase {
         XCTAssertFalse(untouchedLog.hasFilter)
         XCTAssertNil(untouchedLog.logLUTID)
     }
+
+    func testAppleLog2ToLog1KernelMapsNeutralGrayBackToSameCodeValue() throws {
+        let value = 0.48827245852686763 // 18% scene gray in Apple Log
+        let input = CIImage(color: CIColor(red: value, green: value, blue: value))
+            .cropped(to: CGRect(x: 0, y: 0, width: 2, height: 2))
+        let output = AppleLogLUTInput.log2ToLog1(input)
+        let context = CIContext()
+        var pixels = [UInt8](repeating: 0, count: 4)
+        context.render(output, toBitmap: &pixels, rowBytes: 4,
+                       bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                       format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())
+        let expected = Int((value * 255).rounded())
+        XCTAssertEqual(Int(pixels[0]), expected, accuracy: 2)
+        XCTAssertEqual(Int(pixels[1]), expected, accuracy: 2)
+        XCTAssertEqual(Int(pixels[2]), expected, accuracy: 2)
+    }
 }

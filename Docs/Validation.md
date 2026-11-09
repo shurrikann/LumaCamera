@@ -5164,3 +5164,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 从 Log LUT bundle 移除 `Arri_色调V1.lutcube` 至 `Arri_色调V11.lutcube` 共11支。
 - Log LUT 总数由57降至46：固定 Log1 1支、固定 Log2 2支、两者都支持43支。
 - 白纸筛查中的 V1/V2 记录保留为历史，不再出现在当前列表。
+
+# 2026-11-09 Log2→Apple Log 统一 LUT 输入
+
+- 通用 LUT（`requiredColorSpace=nil`）和 Log1 固定 LUT 在 Apple Log 2 下使用前，先经 Metal kernel 做 Apple Log 2→Apple Log 转换：Apple Log 反解 → Apple Wide Gamut→BT.2020 矩阵 → 同一 Apple Log 编码；显式 Log2 LUT 不转换。
+- 预览、Demo 预览、烧录录制均接入同一转换；未烧录文件仍保留原生 Log2 标签，烧录后仍写 Rec.709 标签。
+- 矩阵由 Apple Wide Gamut / BT.2020 primaries + D65 推导；18% 中性灰回归测试通过（0.488272→124±2），`LogLUTCubeTests`/分类测试通过。
+- 未完成：真机 Log2 预览与烧录视觉对比、色卡/饱和色验证；矩阵为推导值，不是 Apple 发布的官方矩阵。

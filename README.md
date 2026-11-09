@@ -1,3 +1,7 @@
+## 2026-11-09 Log2→Apple Log LUT 输入统一
+
+- 通用/Log1 LUT 在 Log2 下先转换为 Apple Log 输入；显式 Log2 LUT 保持原生。预览、烧录同链路，18% 灰内核测试通过。
+
 ## 2026-11-09 移除 Arri 色调 V1–V11
 
 - Log 滤镜移除 11 支 `Arri_色调V1–V11`；当前 Log LUT 共46支（Log1 1、Log2 2、两者43）。

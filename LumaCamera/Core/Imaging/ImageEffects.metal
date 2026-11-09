@@ -159,6 +159,35 @@ inline float hdrExpansionGain(float peak) {
     return premultiply(result);
 }
 
+// Log2 uses Apple Wide Gamut primaries; decode to scene linear, convert to
+// BT.2020, then re-encode the same Apple Log transfer for Log1-compatible LUTs.
+[[stitchable]] float4 appleLog2ToAppleLog(sample_t image, float3 r0, float3 r1, float3 r2) {
+    const float R0 = -0.05641088;
+    const float Rt = 0.01;
+    const float C = 47.28711236;
+    const float Beta = 0.00964052;
+    const float Gamma = 0.08550479;
+    const float Delta = 0.69336945;
+    const float Pt = C * (Rt - R0) * (Rt - R0);
+    float4 c = unpremultiply(image);
+    float3 p = clamp(c.rgb, 0.0, 1.0);
+    float3 linear;
+    for (int i = 0; i < 3; i++) {
+        float v = p[i];
+        linear[i] = v >= Pt ? pow(2.0, (v - Delta) / Gamma) - Beta
+                            : (v >= 0.0 ? sqrt(v / C) + R0 : R0);
+    }
+    linear = max(linear, 0.0);
+    float3 bt = float3(dot(r0, linear), dot(r1, linear), dot(r2, linear));
+    float3 encoded;
+    for (int i = 0; i < 3; i++) {
+        float v = max(bt[i], 0.0);
+        encoded[i] = v >= Rt ? Gamma * log2(v + Beta) + Delta
+                             : (v >= R0 ? C * (v - R0) * (v - R0) : 0.0);
+    }
+    return float4(clamp(encoded, 0.0, 1.0), c.a);
+}
+
 [[stitchable]] float4 filterStrength(sample_t original, sample_t filtered, float strength) {
     // 浓度最高 1.3 倍外推；负值钳到 0，保留 >1 高光。
     float3 mixed = mix(original.rgb, filtered.rgb, strength);

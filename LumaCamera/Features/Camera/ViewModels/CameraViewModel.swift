@@ -282,6 +282,7 @@ final class CameraViewModel: ObservableObject {
     @Published private(set) var logLUTThumbnailLoading: Set<String> = []
     @Published private(set) var logLUTLoading = false
     @Published private(set) var selectedLogLUTCube: LogLUTCube?
+    @Published private(set) var logLUTConvertsLog2ToLog1 = false
     @Published var selectedLogLUTID: String? = UserDefaults.standard.string(forKey: "camera.selectedLogVideoLUT") ?? LogLUTPreset.originalID {
         didSet {
             guard selectedLogLUTID != oldValue else { return }
@@ -1382,12 +1383,16 @@ final class CameraViewModel: ObservableObject {
 
     private func reconcileLogLUTForColorSpace() {
         guard let id = selectedLogLUTID, id != LogLUTPreset.originalID,
-              let preset = logLUTPresets.first(where: { $0.id == id }),
-              let required = preset.requiredColorSpace, required != videoColorSpace else { return }
+              let preset = logLUTPresets.first(where: { $0.id == id }) else { return }
+        if let required = preset.requiredColorSpace, required != videoColorSpace {
         selectedLogLUTID = LogLUTPreset.originalID
         selectedLogLUTCube = nil
+        logLUTConvertsLog2ToLog1 = false
         camera.updateVideoLogLUT(nil)
         burnLogLUT = false
+        return
+        }
+        loadSelectedLogLUT()
     }
 
     func selectLogLUTCategory(_ category: FilterCategory) {
@@ -1412,12 +1417,14 @@ final class CameraViewModel: ObservableObject {
         logLUTLoadRequest = request
         guard let id = selectedLogLUTID else {
             selectedLogLUTCube = nil
+            logLUTConvertsLog2ToLog1 = false
             logLUTLoading = false
             camera.updateVideoLogLUT(nil)
             return
         }
         if id == LogLUTPreset.originalID {
             selectedLogLUTCube = nil
+            logLUTConvertsLog2ToLog1 = false
             logLUTLoading = false
             camera.updateVideoLogLUT(nil)
             return
@@ -1434,10 +1441,13 @@ final class CameraViewModel: ObservableObject {
                 self.logLUTLoading = false
                 switch result {
                 case .success(let cube):
+                    let convert = self.videoColorSpace == .appleLog2 && preset.requiredColorSpace != .appleLog2
                     self.selectedLogLUTCube = cube
-                    self.camera.updateVideoLogLUT(cube)
+                    self.logLUTConvertsLog2ToLog1 = convert
+                    self.camera.updateVideoLogLUT(cube, convertLog2ToLog1: convert)
                 case .failure(let error):
                     self.selectedLogLUTCube = nil
+                    self.logLUTConvertsLog2ToLog1 = false
                     self.camera.updateVideoLogLUT(nil)
                     self.camera.message = "Log 滤镜载入失败：\(error.localizedDescription)"
                 }
@@ -4286,6 +4296,7 @@ final class CameraViewModel: ObservableObject {
             videoElapsed = 0
             camera.startVideoRecording(aspect: videoRatio.frameRatio, copyright: preferences.copyright, look: effectiveCaptureLook,
                                        logLUTCube: selectedLogLUTCube,
+                                       logLUTLog2ToLog1: logLUTConvertsLog2ToLog1,
                                        burnLogLUT: logVideoLUTControlsEnabled && burnLogLUT,
                                        logLUTName: selectedLogLUTPreset?.displayName,
                                        lockWhiteBalance: preferences.lockVideoWhiteBalance,
