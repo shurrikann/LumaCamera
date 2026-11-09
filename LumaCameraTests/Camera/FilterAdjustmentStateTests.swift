@@ -43,7 +43,7 @@ final class FilterAdjustmentStateTests: XCTestCase {
         model.filterParameterBinding(.temperature).wrappedValue = 18
         XCTAssertEqual(model.filterAdjustments[.temperature], 18)
         model.style = .leicaM9
-        XCTAssertEqual(model.filterParameterText(.strength), "80")
+        XCTAssertEqual(model.filterParameterText(.strength), "72")
     }
     @MainActor func testVisibleCatalogTabsAndShootingEntriesMatchRequestedScope() {
         let model = AppDependencies.makeCameraModel(automaticallySave: false)

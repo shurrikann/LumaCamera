@@ -26,10 +26,12 @@ struct FilmColorLUT {
 
     func apply(to image: CIImage) -> CIImage {
         guard let data else { return image }
+        // SDR 目录里的 LUT 均按 Rec.709 显示色彩空间制作，不是 LogC/Cineon。
+        let cubeColorSpace = CGColorSpace(name: CGColorSpace.itur_709) ?? CGColorSpace(name: CGColorSpace.sRGB)!
         return image.applyingFilter("CIColorCubeWithColorSpace", parameters: [
             "inputCubeDimension": dimension,
             "inputCubeData": data,
-            "inputColorSpace": CGColorSpace(name: CGColorSpace.sRGB)!,
+            "inputColorSpace": cubeColorSpace,
             "inputExtrapolate": true
         ]).cropped(to: image.extent)
     }

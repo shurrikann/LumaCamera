@@ -45,6 +45,52 @@ enum FilmStyle: String, CaseIterable, Identifiable {
         default: return "REFERENCE LUT"
         }
     }
+
+    var filterCategory: FilterCategory {
+        switch self {
+        case .daylightNegative400, .warmNegative200,
+             .fujiNC, .fujiCC,
+             .lut65f12b4421, .lut68decd78c9, .lut65079c544d, .lut366e84500d,
+             .lut7e90ddc039, .lut1775a81171, .lutabf0a1a1fc, .lut4d6b1a3c06:
+            return .film
+        case .cinema, .lut8e01931695, .lut2822fe566f, .lut49ad230de7, .lut6e13efd4c3,
+             .lute3e60113bd, .lut4680f1508c, .lut8eac246ff8, .lutff68264412,
+             .lut5de92d3636, .lut2873feea08:
+            return .cinema
+        case .mono, .lut74f0c757a6, .lutfcee0c278b, .lut80c7455c11:
+            return .mono
+        case .lut0f0bbcb69e, .lut2141527536, .lut54ce806fbb, .lut836114786e, .lutf83466e34f:
+            return .portrait
+        case .lut384a1211b6, .lut9e49d5257b, .lute3d53fa666, .lut1e53d98a81, .lut64f854a875:
+            return .landscape
+        default:
+            return .life
+        }
+    }
+
+    /// 默认强度按使用场景和 LUT 强度分级；仍可由用户逐支覆盖。
+    var defaultIntensity: Double {
+        switch self {
+        case .original: return 0.8
+        case .leicaM9: return 0.72
+        case .fujiNC, .fujiCC: return 0.75
+        case .lut8e01931695, .lut2822fe566f: return 0.62
+        case .lut49ad230de7, .lut6e13efd4c3: return 0.66
+        case .lute3e60113bd, .lut4680f1508c, .lut8eac246ff8: return 0.70
+        case .lut5de92d3636, .lut2873feea08: return 0.68
+        case .daylightNegative400, .warmNegative200: return 0.80
+        default:
+            switch filterCategory {
+            case .cinema: return 0.68
+            case .film: return 0.80
+            case .portrait: return 0.76
+            case .landscape: return 0.75
+            case .mono: return 0.80
+            default: return 0.78
+            }
+        }
+    }
+
     private static let strengthKernel = MetalImageKernels.color("filterStrength")
 
     static func effectStrength(for intensity: Double) -> Double {
@@ -118,24 +164,25 @@ enum FilmStyle: String, CaseIterable, Identifiable {
         case .mono:
             output = input.applyingFilter("CIPhotoEffectNoir")
         case .daylightNegative400:
-            // 肤色优先的日光负片：柔和肩部、轻微绿阴影、低饱和，保留中性肤色。
+            // 高光柔和、中调偏暖、暗部通透：肩部压缩，抬黑并保留轻微冷色，
+            // 中间调用暖色矩阵和色温，不使用整体褪色把画面压灰。
             output = input
                 .applyingFilter("CIToneCurve", parameters: [
-                    "inputPoint0": CIVector(x: 0, y: 0.018),
-                    "inputPoint1": CIVector(x: 0.25, y: 0.24),
-                    "inputPoint2": CIVector(x: 0.5, y: 0.51),
-                    "inputPoint3": CIVector(x: 0.75, y: 0.755),
-                    "inputPoint4": CIVector(x: 1, y: 0.935)])
+                    "inputPoint0": CIVector(x: 0, y: 0.032),
+                    "inputPoint1": CIVector(x: 0.22, y: 0.235),
+                    "inputPoint2": CIVector(x: 0.5, y: 0.535),
+                    "inputPoint3": CIVector(x: 0.78, y: 0.80),
+                    "inputPoint4": CIVector(x: 1, y: 0.915)])
                 .applyingFilter("CIColorMatrix", parameters: [
-                    "inputRVector": CIVector(x: 1.015, y: 0.008, z: 0, w: 0),
-                    "inputGVector": CIVector(x: 0.004, y: 1.01, z: 0.006, w: 0),
-                    "inputBVector": CIVector(x: 0, y: 0.008, z: 1.015, w: 0),
-                    "inputBiasVector": CIVector(x: 0.004, y: 0.006, z: 0.007, w: 0)])
+                    "inputRVector": CIVector(x: 1.025, y: 0.012, z: 0, w: 0),
+                    "inputGVector": CIVector(x: 0.004, y: 1.008, z: 0.008, w: 0),
+                    "inputBVector": CIVector(x: 0, y: 0.008, z: 1.018, w: 0),
+                    "inputBiasVector": CIVector(x: 0.006, y: 0.008, z: 0.012, w: 0)])
                 .applyingFilter("CIColorControls", parameters: [
-                    kCIInputSaturationKey: 0.82, kCIInputContrastKey: 1.02, kCIInputBrightnessKey: 0.006])
+                    kCIInputSaturationKey: 0.80, kCIInputContrastKey: 1.0, kCIInputBrightnessKey: 0.006])
                 .applyingFilter("CITemperatureAndTint", parameters: [
                     "inputNeutral": CIVector(x: 6500, y: 0),
-                    "inputTargetNeutral": CIVector(x: 5900, y: 1)])
+                    "inputTargetNeutral": CIVector(x: 5800, y: 1)])
         case .warmNegative200:
             // 暖调负片200：更强的琥珀高光、轻微绿阴影和更明显对比。
             output = input

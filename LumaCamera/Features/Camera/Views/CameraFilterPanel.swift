@@ -214,10 +214,12 @@ extension CameraView {
                         } label: {
                             Group {
                                 if category == .all { Image(systemName: "line.3.horizontal.decrease").font(.system(size: 13)) }
-                                else { Image(systemName: "star.fill").rotatingCaptureContent().font(.system(size: 13)) }
+                                else if category == .favorites { Image(systemName: "star.fill").rotatingCaptureContent().font(.system(size: 13)) }
+                                else { Text(category.rawValue).rotatingCaptureContent().font(.system(size: 11, weight: .medium)) }
                             }
                             .foregroundStyle(filters.category == category ? AppTheme.accentForeground : .white.opacity(0.9))
-                            .frame(minWidth: 38).frame(height: 28)
+                            .frame(minWidth: category == .all || category == .favorites ? 38 : 44).frame(height: 28)
+                            .padding(.horizontal, category == .all || category == .favorites ? 0 : 4)
                             .background(filters.category == category ? AppTheme.accent : .white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
                         }.id(category.id).accessibilityLabel(category.rawValue + "滤镜")
                             .accessibilityAddTraits(filters.category == category ? .isSelected : [])

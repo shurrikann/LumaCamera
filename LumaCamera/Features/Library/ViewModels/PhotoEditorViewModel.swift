@@ -78,7 +78,7 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         guard !saving, style != self.style, FilmStyle.availableStyles.contains(style) else { return }
         dismissFilterNumericInput(); setParameterEditing(false); dismissReset(); resetRevision &+= 1
         recipes[adjustments.filterID] = SavedFilterSettings(intensity: adjustments.filterIntensity, adjustments: adjustments.filterAdjustments)
-        let saved = recipes[style.rawValue] ?? SavedFilterSettings()
+        let saved = recipes[style.rawValue] ?? SavedFilterSettings(intensity: style.defaultIntensity, adjustments: FilterAdjustments())
         var next = adjustments; next.filterID = style.rawValue; next.filterIntensity = saved.intensity; next.filterAdjustments = saved.adjustments
         adjustments = next
     }

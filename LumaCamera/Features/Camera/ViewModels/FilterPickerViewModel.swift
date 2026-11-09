@@ -58,7 +58,7 @@ final class FilterPickerViewModel: ObservableObject {
                 var images: [FilmStyle: UIImage] = [:]
                 for style in FilmStyle.availableStyles {
                     autoreleasepool {
-                        images[style] = Imaging.render(scaled, look: CaptureLook(style: style, intensity: 0.8, ratio: .square), context: context)
+                        images[style] = Imaging.render(scaled, look: CaptureLook(style: style, intensity: style.defaultIntensity, ratio: .square), context: context)
                     }
                 }
                 return images

@@ -126,13 +126,17 @@ struct PhotoEditorView: View {
     }
     private var filterPanel: some View {
         VStack(spacing: 10) {
-            HStack(spacing: 20) {
-                ForEach(FilterCategory.allCases) { category in
-                    Button { filters.category = category } label: {
-                        Text(category.rawValue).rotatingCaptureContent().font(.system(size: 12)).foregroundStyle(filters.category == category ? AppTheme.accent : .white.opacity(0.55))
-                    }
+            HStack(spacing: 8) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 14) {
+                        ForEach(FilterCategory.allCases) { category in
+                            Button { filters.category = category } label: {
+                                Text(category.rawValue).rotatingCaptureContent().font(.system(size: 11))
+                                    .foregroundStyle(filters.category == category ? AppTheme.accent : .white.opacity(0.55))
+                            }
+                        }
+                    }.padding(.vertical, 4)
                 }
-                Spacer(minLength: 0)
                 Button { model.closeEditorControls() } label: {
                     Image(systemName: "xmark").frame(width: 28, height: 32)
                 }.accessibilityLabel("收起滤镜列表")

@@ -36,7 +36,9 @@ final class FilterSettingsStore {
         guard FilmStyle.availableStyles.contains(style) else { return }
         selectedStyle = style; defaults?.set(style.rawValue, forKey: "camera.selectedFilmStyle")
     }
-    func settings(for style: FilmStyle) -> SavedFilterSettings { values[style.rawValue] ?? SavedFilterSettings() }
+    func settings(for style: FilmStyle) -> SavedFilterSettings {
+        values[style.rawValue] ?? SavedFilterSettings(intensity: style.defaultIntensity, adjustments: FilterAdjustments())
+    }
     func set(_ settings: SavedFilterSettings, for style: FilmStyle) {
         var safe = settings
         safe.intensity = safe.intensity.isFinite ? min(max(safe.intensity, 0), 1) : 0.8
