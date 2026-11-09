@@ -5036,3 +5036,13 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 底部模式按钮不再在 `captureKindSwitching`/视频子模式准备时禁用；点击先立即触发共享触感，`requestCaptureKind` 在 `camera.videoBusy`/视频保存时排队，结束后执行最后一次请求。
 - 视频入口中立即点回照片会取消入口 watchdog/待恢复任务并优先完成照片切换；新增 `testPhotoRequestDuringVideoEntryReturnsImmediatelyWithFeedback`，真机请求到照片约1.3s，impacts=1、message=nil。
 - `CaptureKindModeLatencyPhysicalTests` 三组通过；常规照片↔视频配置约0.36–0.55s，可见新帧约0.58–0.79s（含过渡）。
+
+# 2026-11-09 稳定性收口与视频 -11819
+
+- 检查点：提交 `2a131ad`，标签 `stability-checkpoint-20261109`。
+- 模式切换：按钮点击立即触感；`camera.videoBusy`/保存期间排队最后一次请求，视频入口中可立即返回照片。真机 `CaptureKindModeLatencyPhysicalTests` 三组通过，请求到照片约1.3–1.4s。
+- `-11819` 复现：5×12轮 soak 中捕获前置视频/照片往返错误。先修掉 `setVideoSettings` 的嵌套会话事务：外层 begin 内又调用默认会 begin/commit 的 `configureConnections`。现改为单一事务内 `configureVideoFormat` + `configureConnections(configuresVideoFormat:false)`。
+- 修复后同一 soak：5轮×12周期、约65s/轮，不再出现“视频无法启动，已退出视频模式”弹窗；前置矩阵、双拍追踪、回前台 wide、模式请求测试通过。
+- 剩余限制：同 soak 第4轮仍出现1次“视频返回照片”阶段的 `-11819`，发生时 `videoModeRequested=false`，表现为照片会话重建/停止，不弹视频退出提示；仍需继续收敛前置4:3/16:9返回照片的格式切换。
+- 测试 fixture 增加停止录像与最长10s会话停止等待，减少用例间污染。
+- 仍未完成：30–60分钟连续 soak、`testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips` 在视频往返后拍 Live 照片失败（编码/方向断言）、4K前置4:3回退16:9。
