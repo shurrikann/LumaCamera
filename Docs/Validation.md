@@ -5060,3 +5060,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 修复：双拍退出不再包外层事务，由 `configureConnections` 单独管理；视频规格提交也已是单事务。
 - 验证：修复后 `CameraStabilitySoakTests` 5×12轮（约65s/轮）全部通过，0次 runtime error、0次视频退出。
 - 仍未完成：修复后的30轮连续 soak、全量回归、功耗测试。
+
+# 2026-11-09 视频入口嵌套事务
+
+- 30轮复跑：29/30轮通过，第30轮在“照片→前置视频”入口再次 `-11819`。历史显示 setVideoMode 外层事务内 configureConnections 又 begin/commit。
+- 修复：视频入口在已持有事务时直接 configureVideoFormat + configureConnections(configuresVideoFormat:false)，不再嵌套。
+- 验证：修复后 10×12轮（120周期）全部通过，0 runtime error、0视频退出。
+- 当前仍未完成：修复后的30轮长 soak、全量回归、功耗测试。

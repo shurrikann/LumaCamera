@@ -2110,7 +2110,14 @@ final class CameraEngine: NSObject, ObservableObject {
                         : (changedPhotoInput ? nil : zoomBeforeTransition)
                     self.restorePhotoDeviceConfigurationsAfterVideo(preservingActiveZoom: preserveZoom)
                 }
-                self.configureConnections(device: device)
+                if enabled {
+                    // setVideoMode 已持有最外层事务；configureConnections 默认还会
+                    // 再开一层，视频入口反复切换时会间歇触发 -11819。
+                    self.configureVideoFormat(device)
+                    self.configureConnections(device: device, configuresVideoFormat: false)
+                } else {
+                    self.configureConnections(device: device)
+                }
                 if !enabled { self.configurePhotoOutput(device) }
                 if !enabled {
                     // Video formats can leave a frame-rate exposure ceiling on the
