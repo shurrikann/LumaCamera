@@ -1,3 +1,7 @@
+## 2026-11-09 Apple Log LUT 区分与烧录标签
+
+- Apple Log 55支、Apple Log2 2支分开显示；烧录 LUT 后文件改为 Rec.709 标签，未烧录保留 Log 标签；Log LUT 输入走 code-value，不再强制 sRGB。
+
 ## 2026-11-09 LUT 场景分类与默认强度
 
 - SDR LUT 按 Rec.709 标记，撤销 LogC/Cineon 转换；新增胶片/电影/人像/生活/风光/黑白分类。

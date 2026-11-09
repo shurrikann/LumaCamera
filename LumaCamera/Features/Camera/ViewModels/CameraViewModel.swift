@@ -267,7 +267,14 @@ final class CameraViewModel: ObservableObject {
     @Published var videoOpenGateEnabled = false {
         didSet { if videoOpenGateEnabled != oldValue { synchronizeVideoSettings() } }
     }
-    @Published var videoColorSpace = VideoColorSpace.sdr { didSet { if videoColorSpace != oldValue { synchronizeVideoSettings() } } }
+    @Published var videoColorSpace = VideoColorSpace.sdr {
+        didSet {
+            if videoColorSpace != oldValue {
+                reconcileLogLUTForColorSpace()
+                synchronizeVideoSettings()
+            }
+        }
+    }
     @Published private(set) var logLUTPresets = LogLUTCubeRepository.presets()
     @Published private(set) var logLUTCategory: FilterCategory = .all
     @Published private(set) var logLUTFavorites: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "camera.favoriteLogLUTs") ?? [])
@@ -1368,8 +1375,19 @@ final class CameraViewModel: ObservableObject {
         return logLUTPresets.first { $0.id == selectedLogLUTID }
     }
     var logLUTOptions: [LogLUTPreset] {
-        if logLUTCategory == .favorites { return logLUTPresets.filter { logLUTFavorites.contains($0.id) } }
-        return [.original] + logLUTPresets
+        let compatible = logLUTPresets.filter { $0.requiredColorSpace == videoColorSpace }
+        if logLUTCategory == .favorites { return compatible.filter { logLUTFavorites.contains($0.id) } }
+        return [.original] + compatible
+    }
+
+    private func reconcileLogLUTForColorSpace() {
+        guard let id = selectedLogLUTID, id != LogLUTPreset.originalID,
+              let preset = logLUTPresets.first(where: { $0.id == id }),
+              preset.requiredColorSpace != videoColorSpace else { return }
+        selectedLogLUTID = LogLUTPreset.originalID
+        selectedLogLUTCube = nil
+        camera.updateVideoLogLUT(nil)
+        burnLogLUT = false
     }
 
     func selectLogLUTCategory(_ category: FilterCategory) {

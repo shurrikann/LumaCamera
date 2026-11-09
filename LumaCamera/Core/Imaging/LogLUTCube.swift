@@ -11,6 +11,15 @@ struct LogLUTPreset: Identifiable, Hashable, Sendable {
     let title: String
     var displayName: String { [equipment, title].compactMap { $0 }.joined(separator: " ") }
 
+    /// Apple Log and Apple Log2 are different transfer functions; never mix their LUTs.
+    var requiredColorSpace: VideoColorSpace {
+        // The original 55-LUT library was authored/used for Apple Log; Log 2 LUTs
+        // were added later and are explicitly named. Keep that historical mapping
+        // instead of showing every generic LUT under both Log curves.
+        if id.contains("AppleLog2") { return .appleLog2 }
+        return .appleLog
+    }
+
     init(id: String, equipment: String?, title: String) {
         self.id = id
         self.equipment = equipment
@@ -81,10 +90,11 @@ final class LogLUTCube: NSObject {
     }
 
     func apply(to image: CIImage) -> CIImage {
-        image.applyingFilter("CIColorCubeWithColorSpace", parameters: [
+        // Apple Log LUTs consume encoded Log code values, not display sRGB.
+        // Use the raw cube path so Core Image does not linearize/tag the input as sRGB.
+        image.applyingFilter("CIColorCube", parameters: [
             "inputCubeDimension": dimension,
             "inputCubeData": rgbaData,
-            "inputColorSpace": CGColorSpace(name: CGColorSpace.sRGB)!,
             "inputExtrapolate": true
         ]).cropped(to: image.extent)
     }

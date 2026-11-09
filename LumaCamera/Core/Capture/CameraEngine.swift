@@ -8387,9 +8387,8 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
         // would turn a left-right selfie mirror into a top-bottom flip.
         // Log preview is an ungraded proxy of the recorded curve; never bake a
         // display conversion or LUT into the buffers sent to the movie writer.
-        let bufferImage = state.videoColorSpace?.isLog == true
-            ? CIImage(cvPixelBuffer: pixelBuffer, options: [.colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
-            : CIImage(cvPixelBuffer: pixelBuffer)
+        // Log 输入保留编码值，不能在这里强制按 sRGB 解释；后续 Log LUT 需要原始 code values。
+        let bufferImage = CIImage(cvPixelBuffer: pixelBuffer)
         // 系统动态画幅决定实际视野。新前置的零旋转缓冲已经朝向竖屏上方，
         // 不因缓冲是横图或竖图额外转动；旧镜头和视频仍沿用原方向路线。
         let nativeSource = state.nativeFrontPhotoSensor || state.nativeFrontCenterStageSensor

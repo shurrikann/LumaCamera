@@ -132,7 +132,7 @@ final class VideoColorPhysicalTests: XCTestCase {
         print("VIDEO-COLOR-MATRIX count=\(samples) elapsed=\(CACurrentMediaTime()-began) thermal=\(ProcessInfo.processInfo.thermalState.rawValue)")
     }
 
-    @MainActor func testAppleLogLUTBurnKeepsLogVideoTagsAndTenBitPixels() async throws {
+    @MainActor func testAppleLogLUTBurnWritesRec709TagsAndTenBitPixels() async throws {
         let audit = SessionRuntimeErrorAudit()
         defer { audit.finish() }
         let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
@@ -188,8 +188,12 @@ final class VideoColorPhysicalTests: XCTestCase {
         let descriptions = try await track.load(.formatDescriptions)
         let description = try XCTUnwrap(descriptions.first)
         let extensions = CMFormatDescriptionGetExtensions(description) as? [String: Any] ?? [:]
-        XCTAssertEqual(extensions[kCMFormatDescriptionExtension_LogTransferFunction as String] as? String,
-                       kCVImageBufferLogTransferFunction_AppleLog as String)
+        XCTAssertNil(extensions[kCMFormatDescriptionExtension_LogTransferFunction as String],
+                     "烧录 LUT 后不能继续标为 Apple Log")
+        XCTAssertEqual(extensions[kCMFormatDescriptionExtension_TransferFunction as String] as? String,
+                       kCVImageBufferTransferFunction_ITU_R_709_2 as String)
+        XCTAssertEqual(extensions[kCMFormatDescriptionExtension_ColorPrimaries as String] as? String,
+                       kCVImageBufferColorPrimaries_ITU_R_709_2 as String)
         XCTAssertEqual((extensions[kCMFormatDescriptionExtension_BitsPerComponent as String] as? NSNumber)?.intValue, 10)
         XCTAssertTrue(VideoCaptureBadges.forRecording(colorSpace: .appleLog, burnedLogLUT: true).hasFilter)
         let duration = try await asset.load(.duration)

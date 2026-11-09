@@ -124,6 +124,7 @@ final class MovieRecorder {
     private var filterLook: CaptureLook?
     private let filterColorSpace: CGColorSpace?
     private let logLUTCube: LogLUTCube?
+    private let outputColorProperties: [String: Any]
     private let frameFilterRenderer = VideoFrameFilterRenderer()
     private var filterFrameCounter: UInt64 = 0
     private var timeLapseScheduler: TimeLapseFrameScheduler?
@@ -186,7 +187,13 @@ final class MovieRecorder {
         let appliesFilter = !settings.isRAW && colorSpace != nil && look.requiresImageProcessing
         filterLook = appliesFilter ? look : nil
         filterColorSpace = appliesFilter ? colorSpace : nil
-        self.logLUTCube = !settings.isRAW && settings.colorSpace.isLog && filterLook == nil ? logLUTCube : nil
+        let bakesLogLUT = !settings.isRAW && settings.colorSpace.isLog && filterLook == nil && logLUTCube != nil
+        self.logLUTCube = bakesLogLUT ? logLUTCube : nil
+        // A baked Apple Log LUT produces a display-referred Rec.709 image. Keeping the
+        // Apple Log transfer/primaries on the file makes players reinterpret it as Log.
+        self.outputColorProperties = bakesLogLUT
+            ? VideoColorSpace.sdr.encodingColorProperties
+            : settings.colorSpace.encodingColorProperties
         try? FileManager.default.removeItem(at: url)
 
         let sourceIsPortrait = nativeCaptureRotationAngle != nil || sourceSize.height >= sourceSize.width
@@ -263,7 +270,7 @@ final class MovieRecorder {
             AVVideoWidthKey: Int(outputSize.width),
             AVVideoHeightKey: Int(outputSize.height),
             AVVideoScalingModeKey: AVVideoScalingModeResizeAspectFill,
-            AVVideoColorPropertiesKey: settings.colorSpace.encodingColorProperties,
+            AVVideoColorPropertiesKey: outputColorProperties,
             AVVideoCompressionPropertiesKey: compression
         ]
         guard writer.canApply(outputSettings: videoSettings, forMediaType: .video) else {

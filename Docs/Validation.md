@@ -5100,3 +5100,11 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 默认强度按 LUT/场景分级：ARRI V1/V2 62%，柯达打印 66%，常规电影 68–70%，相机/人像 72–76%，负片 80%；原有强度仍可覆盖。
 - 日光负片400三档灰阶：暗部(44,43,44)、中调(145,141,134)、高光(235,228,217)，满足抬黑、中调偏暖、高光压缩。
 - 模拟器 `FilmNegativeFilterTests`、`FilterAdjustmentStateTests`、`PhotoFilterEditorTests` 布局通过；真机安装需设备解锁后复跑。
+
+# 2026-11-09 Apple Log LUT 区分与烧录标签
+
+- 分类：原55支通用库按 Apple Log 使用；显式含 AppleLog2 的2支（AppleLog2_Rec709、ARRI_AppleLog2）归 Apple Log 2。`LogLUTClassificationTests` 真机/模拟器通过（55+2=57）。
+- 烧录：`MovieRecorder` 检测到 LUT 实际烧录时，视频输出色彩属性改为 Rec.709；未烧录仍保留 Apple Log/Log 2 标签。
+- 输入：Log 缓冲和 LUT 应用改为 code-value 路径，不再强制 sRGB 标记；LUT 使用 `CIColorCube`，避免显示色彩管理二次转换。
+- 真机 `testAppleLogLUTBurnWritesRec709TagsAndTenBitPixels` 通过：烧录后无 Log transfer 扩展，Rec.709 transfer/primaries，10-bit，1.09s 临时片段。
+- 仍未验证：真实 Log 素材的肤色/灰阶视觉准确性、Log2 实际录制烧录、预览与成片逐像素一致性。
