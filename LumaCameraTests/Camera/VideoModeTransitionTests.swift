@@ -378,7 +378,12 @@ final class VideoModeTransitionTests: XCTestCase {
             let exif = try XCTUnwrap(tags[kCGImagePropertyExifDictionary as String] as? [String:Any])
             // 系统 HDR/Live 路径可保留传感器 orientation=6；6 与横向像素尺寸配套时显示仍是正确竖向。
             let orientation = (tags[kCGImagePropertyOrientation as String] as? NSNumber)?.intValue
-            XCTAssertTrue([1, 6].contains(orientation ?? -1), "unexpected orientation \(String(describing: orientation))")
+            let pixelWidth = (tags[kCGImagePropertyPixelWidth as String] as? NSNumber)?.intValue ?? -1
+            let pixelHeight = (tags[kCGImagePropertyPixelHeight as String] as? NSNumber)?.intValue ?? -1
+            print("PHOTO-ORIENTATION variant=\(variant) orientation=\(String(describing: orientation)) size=\(pixelWidth)x\(pixelHeight)")
+            // 横拍像素允许 1/3（设备方向可能是 180° 横拿）；竖拍只允许 1/6。
+            let allowedOrientations = pixelWidth >= pixelHeight ? [1, 3] : [1, 6]
+            XCTAssertTrue(allowedOrientations.contains(orientation ?? -1), "unexpected orientation \(String(describing: orientation)) size=\(pixelWidth)x\(pixelHeight)")
             if variant == "live" {
                 XCTAssertEqual(savedPhoto.resources.count,2)
                 XCTAssertEqual(savedPhoto.resources.filter(\.pairedVideo).count,1)

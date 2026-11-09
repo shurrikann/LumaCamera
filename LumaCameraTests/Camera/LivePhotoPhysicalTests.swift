@@ -89,26 +89,24 @@ final class LivePhotoPhysicalTests: XCTestCase {
         XCTAssertEqual(camera.pendingPhotoCount, 0)
     }
 
-    @MainActor func testSmartCaptureSupportsLivePhoto() async throws {
+    @MainActor func testSmartCaptureDisablesAndForbidsLivePhoto() async throws {
         let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
-        var photo: CapturedPhoto?
-        let oldCallback = camera.onCaptureCompleted
-        camera.onCaptureCompleted = { photo = $0 }
-        defer { camera.onCaptureCompleted = oldCallback; model.setCameraActive(false) }
+        defer { model.setCameraActive(false) }
         model.setCameraActive(true)
         for _ in 0..<300 { if camera.ready && camera.preview != nil { break }; try await Task.sleep(for: .milliseconds(20)) }
         model.photoFormat = .jpeg; model.photoResolution = .standard; model.hdr = false; model.setMode(.auto)
-        if !model.smartCaptureEnabled { model.toggleSmartCaptureMode() }
         if !model.livePhotoEnabled { model.toggleLivePhoto() }
-        XCTAssertTrue(model.smartCaptureEnabled)
         XCTAssertTrue(model.livePhotoEnabled)
         XCTAssertTrue(model.capturesLivePhoto)
-        camera.capture(flashMode: .off, options: model.photoOptions)
-        for _ in 0..<900 { if photo != nil || camera.pendingPhotoCount == 0 { break }; try await Task.sleep(for: .milliseconds(20)) }
-        let captured = try XCTUnwrap(photo, camera.message ?? "智拍 Live 未返回照片")
-        print("SMART-LIVE resources=\(captured.resources.count) paired=\(captured.resources.filter(\.pairedVideo).count)")
-        XCTAssertEqual(captured.resources.count, 2)
-        XCTAssertEqual(captured.resources.filter(\.pairedVideo).count, 1)
+        if !model.smartCaptureEnabled { model.toggleSmartCaptureMode() }
+        XCTAssertTrue(model.smartCaptureEnabled)
+        XCTAssertFalse(model.livePhotoEnabled, "进入智拍必须关闭 Live")
+        XCTAssertFalse(model.capturesLivePhoto)
+        XCTAssertFalse(model.canToggleLivePhoto, "智拍期间 Live 开关必须禁用")
+        model.toggleLivePhoto()
+        XCTAssertFalse(model.livePhotoEnabled, "智拍期间不能重新打开 Live")
+        XCTAssertFalse(model.photoOptions.capturesLive)
+        print("SMART-LIVE forbidden=true smart=\(model.smartCaptureEnabled) live=\(model.livePhotoEnabled)")
     }
 
     @MainActor func testRearLiveTogglePreserves24mmAnd35mmFraming() async throws {

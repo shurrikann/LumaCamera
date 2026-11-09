@@ -5046,3 +5046,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 剩余限制：同 soak 第4轮仍出现1次“视频返回照片”阶段的 `-11819`，发生时 `videoModeRequested=false`，表现为照片会话重建/停止，不弹视频退出提示；仍需继续收敛前置4:3/16:9返回照片的格式切换。
 - 测试 fixture 增加停止录像与最长10s会话停止等待，减少用例间污染。
 - 仍未完成：30–60分钟连续 soak、`testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips` 在视频往返后拍 Live 照片失败（编码/方向断言）、4K前置4:3回退16:9。
+
+# 2026-11-09 智拍禁止 Live 与 Live 回调时序
+
+- 智拍模式下 Live 不可用：进入智拍自动关闭 Live 并断开 Live 音频/预览，`livePhotoAvailable`/`capturesLivePhoto` 均为 false，Live 按钮禁用。新增 `testSmartCaptureDisablesAndForbidsLivePhoto`，真机通过。
+- 修复 Live 电影回调晚到：`finishPhotoCapture` 不再立即移除 captureContext，等 `liveMovieReady` 后完成配对；避免回调找不到上下文删除 movie 后误报“无法编码所选照片格式”。
+- 独立 Live 套件（手动参数、原生 JPEG/HEIF 配对、后置 24/35mm、智拍禁用）均通过。
+- 剩余限制：`testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips` 仍偶发失败；日志显示 movie duration≈2.17s 但 video tracks=0。AVFoundation 输出的 Live 电影文件偶发无视频轨，组合重试无效，已移除重试。横拍照片 orientation=3 在测试自身 rear angle=180/landscape 下已按横图允许；不再作为失败原因。

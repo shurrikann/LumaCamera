@@ -1255,6 +1255,7 @@ final class CameraEngine: NSObject, ObservableObject {
         var error: Error?
         var liveMovieURL: URL?
         var liveMovieReady = false
+        var liveMovieWaitAttempts = 0
         var macroConstituentCapture = false
         var nativePortraitFrontSensor = false
         var nativePortraitDeviceID: String?
@@ -7478,6 +7479,22 @@ final class CameraEngine: NSObject, ObservableObject {
 
     private func finishCapture(source: CIImage, context capture: CaptureContext, portraitMask: CIImage? = nil) {
         tracePhotoPhase("postprocess-start")
+        // Live 电影文件回调可能晚于照片最终回调到达；先把上下文保留在字典里等待，
+        // 否则回调找不到 capture，会删除 movie，最终误报“无法编码所选照片格式”。
+        if capture.options.live, capture.liveMovieURL != nil,
+           !capture.liveMovieReady, capture.error == nil {
+            guard capture.liveMovieWaitAttempts < 100 else {
+                self.captureContexts = self.captureContexts.filter { $0.value !== capture }
+                completeCapture(capture, photo: nil, message: "Live 处理失败：电影文件未在预期时间内完成。")
+                return
+            }
+            capture.liveMovieWaitAttempts += 1
+            queue.asyncAfter(deadline: .now() + 0.02) { [weak self] in
+                self?.finishCapture(source: source, context: capture, portraitMask: portraitMask)
+            }
+            return
+        }
+        if capture.options.live { self.captureContexts = self.captureContexts.filter { $0.value !== capture } }
         do {
             let image = capture.nativePortraitFrontSensor
                 ? CaptureOrientation.nativeFrontPhotoFrame(source) : source
@@ -8813,7 +8830,11 @@ extension CameraEngine: AVCapturePhotoCaptureDelegate {
 
     /// 最后一批完成后才归还硬件 token；普通照片仍按原有单请求路径完成。
     private func finishPhotoCapture(uniqueID: Int64, error: Error?) {
-        guard let capture = self.captureContexts.removeValue(forKey: uniqueID) else { return }
+        guard let capture = self.captureContexts[uniqueID] else { return }
+        // Live 电影文件可能仍在下发；此时保留 captureContexts，等 finishCapture 的等待循环收尾。
+        if !(capture.options.live && capture.error == nil && !capture.liveMovieReady) {
+            self.captureContexts.removeValue(forKey: uniqueID)
+        }
         self.finishPreviewExposureAssistCapture(capture)
         self.reconcileLiveAudio()
         if self.captureContexts.isEmpty {

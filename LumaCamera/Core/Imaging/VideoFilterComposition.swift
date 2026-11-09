@@ -7,7 +7,10 @@ enum VideoFilterComposition {
     static func make(asset: AVAsset, handler: @escaping @Sendable (AVAsynchronousCIImageFilteringRequest) -> Void) async throws -> AVMutableVideoComposition {
         let tracks = try await asset.loadTracks(withMediaType: .video)
         let duration = try await asset.load(.duration).seconds
-        guard let track = tracks.first, duration > 0 else { throw PhotoEncodingError.encoding }
+        guard let track = tracks.first, duration > 0 else {
+            NSLog("VFC-FAIL tracks=%d duration=%.3f", tracks.count, duration)
+            throw PhotoEncodingError.encoding
+        }
         _ = try await track.load(.formatDescriptions, .preferredTransform, .naturalSize, .timeRange)
         return try await withCheckedThrowingContinuation { continuation in
             AVMutableVideoComposition.videoComposition(with: asset, applyingCIFiltersWithHandler: handler) { composition, error in

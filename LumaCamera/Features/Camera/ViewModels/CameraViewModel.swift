@@ -1549,7 +1549,7 @@ final class CameraViewModel: ObservableObject {
         didSet { reconcileNightMode() }
     }
     var livePhotoAvailable: Bool {
-        !slowShutterEnabled && !portraitModeEnabled && !nightModeEnabled && !burstModeEnabled && !virtualApertureEnabled && !hdr && (photoFormat == .jpeg || photoFormat == .heif) && photoResolution == .standard && camera.supportsLivePhoto
+        !slowShutterEnabled && !portraitModeEnabled && !nightModeEnabled && !burstModeEnabled && !virtualApertureEnabled && !hdr && !smartCaptureEnabled && (photoFormat == .jpeg || photoFormat == .heif) && photoResolution == .standard && camera.supportsLivePhoto
     }
     var canToggleLivePhoto: Bool {
         // 关闭始终允许；开启还必须满足当前格式/分辨率/HDR/模式与硬件能力。
@@ -2179,6 +2179,11 @@ final class CameraViewModel: ObservableObject {
             if virtualApertureEnabled { toggleVirtualAperture() }
             if let active = activePhotoSubmode { togglePhotoSubmode(active) }
             adaptiveHighDynamic = false
+            // 智拍自动构图期间禁止 Live Photo；进入智拍时主动关闭并断开 Live 音频/预览。
+            if livePhotoEnabled {
+                livePhotoEnabled = false
+                synchronizeLiveAudio()
+            }
             smartCaptureEnabled = true
             startSmartCaptureAnalysis()
         } else {
