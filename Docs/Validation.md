@@ -5151,3 +5151,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - `日系清新.lutcube`：0.199/0.190
 - `秋季Fll.lutcube`：0.259/0.259
 - 局限：本次只验证白纸/中性轴，未验证高饱和原色。通用LUT“两者都支持”表示没有白纸层面的Log曲线偏好，不等于所有色域下完全一致。
+
+# 2026-11-09 Log LUT 输入链路回退
+
+- 回归：Apple Log + Log LUT 预览/烧录不可用。原因是对 Log 输入做了三处实验性修改：`LogLUTCube.apply` 从 `CIColorCubeWithColorSpace(sRGB)` 改为裸 `CIColorCube`；预览缓冲移除 sRGB；录制渲染使用 `colorSpace:nil`。
+- 已回退三处到原来的 sRGB 色彩管理路径；保留“烧录 LUT 后视频标签改 Rec.709”和 54/1/2 可见性分类。
+- `LogLUTCubeTests` 全部通过（33/65网格、可应用、命名、徽章），`LogLUTClassificationTests` 通过。
+- 说明：此前用裸 code-value 路径做的 Log1/Log2 理论交叉和白纸筛查，不再代表当前 App 的实际渲染路径；相关结论暂按“实验路径结果”，不能当作当前版本验收。

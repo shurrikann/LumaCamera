@@ -92,11 +92,13 @@ final class LogLUTCube: NSObject {
     }
 
     func apply(to image: CIImage) -> CIImage {
-        // Apple Log LUTs consume encoded Log code values, not display sRGB.
-        // Use the raw cube path so Core Image does not linearize/tag the input as sRGB.
-        image.applyingFilter("CIColorCube", parameters: [
+        // Existing bundled Log LUTs were validated through the sRGB display path.
+        // Keep that color-managed route; the earlier raw CIColorCube experiment
+        // broke preview and burned-video colors.
+        image.applyingFilter("CIColorCubeWithColorSpace", parameters: [
             "inputCubeDimension": dimension,
             "inputCubeData": rgbaData,
+            "inputColorSpace": CGColorSpace(name: CGColorSpace.sRGB)!,
             "inputExtrapolate": true
         ]).cropped(to: image.extent)
     }
