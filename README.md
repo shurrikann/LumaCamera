@@ -1,3 +1,7 @@
+## 2026-11-09 Apple Log LUT 实拍验证
+
+- 用同场景 Apple Log、Log2、SDR 参考交叉验证：AppleLog_Rec709 匹配 Log，AppleLog2_Rec709 匹配 Log2；蓝通道区域错误套用误差约翻倍。55 支通用创意 LUT 仍按来源归 Apple Log，未逐支验证。
+
 ## 2026-11-09 Apple Log 2 验证结论
 
 - Apple Log 2 与 Apple Log 同为一条 Log 曲线，差异是 Apple Wide Gamut 与 BT.2020 原色；不能靠灰阶区分 LUT，需用色卡/饱和色与实拍验证。

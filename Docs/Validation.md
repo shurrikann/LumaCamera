@@ -5114,3 +5114,18 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 核对 OpenColorIO Apple 生成说明：Apple Log 2 与 Apple Log 使用同一传递函数，区别是 Apple Wide Gamut（Log2）与 BT.2020（Log1）原色，不是两条灰度曲线。
 - 因此灰阶/中性轴无法区分 Log1/Log2 LUT；此前用灰阶评分自动识别的方案不成立，已放弃。分类继续依据来源/显式命名：Apple Log 55、Apple Log2 2。
 - 功能验证必须使用宽色域饱和色/ColorChecker + 同一场景的 Apple Log、Log2 实拍，而不是灰阶。当前只完成静态分类和烧录标签测试，LUT 原色匹配尚未验收。
+
+# 2026-11-09 Apple Log / Log2 转换 LUT 实拍验证
+
+素材：iPhone 17 Pro 静止桌面，同一构图分别录 Apple Log、Apple Log 2、SDR Rec.709；Log 均为 10-bit HEVC，SDR 为 8-bit Rec.709，均未烧录 LUT。
+- `LumaVideo-57E5DE86...`：Apple Log，ITU_R_2020，`com.apple.rec2020.apple-log`
+- `LumaVideo-EF4E9652...`：Apple Log 2，`com.apple.apple-wide-gamut.apple-log`
+- `LumaVideo-687DD86D...`：SDR Rec.709 参考
+
+方法：按 Apple Log 官方编码反解，分别用 BT.2020 / Apple Wide Gamut→Rec.709 矩阵生成理论 Rec.709 参考；对同一帧交叉套 `AppleLog_Rec709` 和 `AppleLog2_Rec709`。
+- Log1：正确 `AppleLog_Rec709` 平均绝对误差 16.50，错误 `AppleLog2_Rec709` 18.52；蓝区域误差 15.65 vs 30.02。
+- Log2：正确 `AppleLog2_Rec709` 平均绝对误差 15.93，错误 `AppleLog_Rec709` 17.31；蓝区域误差 17.31 vs 30.46。
+- 主要差异集中在高饱和蓝，符合 Log1/Log2 传递函数相同、原色不同的预期。
+
+结论：`AppleLog_Rec709` 与 Apple Log 匹配，`AppleLog2_Rec709` 与 Apple Log 2 匹配。验证覆盖这两支显式转换 LUT；55 支通用创意 LUT 仍按来源默认 Apple Log，未逐支验证。
+局限：桌面场景无标准色卡；理论参考包含 Apple Log 反解与矩阵推断，误差包含相机 SDR 处理/曝光差异，不能当作完整 DeltaE 验收。
