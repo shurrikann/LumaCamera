@@ -1,3 +1,7 @@
+## 2026-11-09 双拍退出稳定性
+
+- 修复双拍退出时 `releaseDualCaptureOnQueue` 与 `configureConnections` 的嵌套会话事务；5×12轮前置/4:3/追踪/双拍/后台 soak 全部通过，无 runtime error。
+
 ## 2026-11-09 智拍禁止 Live
 
 - 智拍模式自动关闭并禁用 Live Photo，避免智拍自动构图与 Live 电影回调竞争；保留 Live 电影回调晚到的上下文等待修复。

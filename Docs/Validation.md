@@ -5053,3 +5053,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 修复 Live 电影回调晚到：`finishPhotoCapture` 不再立即移除 captureContext，等 `liveMovieReady` 后完成配对；避免回调找不到上下文删除 movie 后误报“无法编码所选照片格式”。
 - 独立 Live 套件（手动参数、原生 JPEG/HEIF 配对、后置 24/35mm、智拍禁用）均通过。
 - 剩余限制：`testLiveHDRAndManualPhotoRoutesSurviveVideoRoundTrips` 仍偶发失败；日志显示 movie duration≈2.17s 但 video tracks=0。AVFoundation 输出的 Live 电影文件偶发无视频轨，组合重试无效，已移除重试。横拍照片 orientation=3 在测试自身 rear angle=180/landscape 下已按横图允许；不再作为失败原因。
+
+# 2026-11-09 双拍退出 -11819
+
+- 30轮 soak 第13轮复现：前置4:3、人物追踪、双拍退出时 `-11819`，视频自动退出。历史显示 `releaseDualCaptureOnQueue` 外层 begin 后调用会自行 begin/commit 的 `configureConnections`，形成嵌套会话事务。
+- 修复：双拍退出不再包外层事务，由 `configureConnections` 单独管理；视频规格提交也已是单事务。
+- 验证：修复后 `CameraStabilitySoakTests` 5×12轮（约65s/轮）全部通过，0次 runtime error、0次视频退出。
+- 仍未完成：修复后的30轮连续 soak、全量回归、功耗测试。

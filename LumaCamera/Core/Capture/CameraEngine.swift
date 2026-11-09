@@ -385,13 +385,11 @@ final class CameraEngine: NSObject, ObservableObject {
         dualCaptureSource?.release(); dualCaptureSource = nil; dualMainIsFront = false
         DispatchQueue.main.async { self.dualCaptureMainIsFront = false; self.dualCaptureMainZoomRange = nil }
         // 恢复单摄的格式/连接和用户参数，不能沿用双拍临时的1080p格式。
-        if configured {
-            session.beginConfiguration()
-            if let device = input?.device {
-                configureConnections(device: device)
-                publishCapabilities(device, lensID: selectedLens)
-            }
-            session.commitConfiguration()
+        // configureConnections 在视频路由内部会自己管理 begin/commit；这里再包一层
+        // 会形成嵌套事务，双拍退出+前置4:3时触发 -11819。
+        if configured, let device = input?.device {
+            configureConnections(device: device)
+            publishCapabilities(device, lensID: selectedLens)
         }
         DispatchQueue.main.async { self.dualCaptureEnabled = false }
     }
