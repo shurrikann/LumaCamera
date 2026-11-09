@@ -1,9 +1,9 @@
 import CoreImage
 
 enum FilmStyle: String, CaseIterable, Identifiable {
-    case original, daylight, amber, cinema, leicaM9, fujiNC, fujiCC, mono, food
+    case original, daylight, amber, cinema, leicaM9, fujiNC, fujiCC, mono, food, film400
     case lut8e01931695, lut2822fe566f, lut0f0bbcb69e, lut3d9aec28a2, lut32a8226ccc, lut5f95b51579, lut3675b050d8, lutabf0a1a1fc, lut74f0c757a6, lut65f12b4421, lutff68264412, lut68decd78c9, lut65079c544d, lut366e84500d, lut7e90ddc039, lut1775a81171, lut1e53d98a81, lut2141527536, lut49ad230de7, lut6e13efd4c3, lute3e60113bd, lut4680f1508c, lut8eac246ff8, lut3831567476, lut6be6214def, lutfcee0c278b, lut7e0ef8bdc8, lut4d6b1a3c06, lut00ce8780b3, lut5de92d3636, lut2873feea08, lut384a1211b6, lut54ce806fbb, lut64f854a875, lut80c7455c11, lutc18fc9c98c, lute3d53fa666, lut9e49d5257b, lut78143f1938, lut836114786e, lutf83466e34f
-    static let availableStyles: [FilmStyle] = [.original] + ImportedFilterCatalog.entries.map(\.style)
+    static let availableStyles: [FilmStyle] = [.original, .film400] + ImportedFilterCatalog.entries.map(\.style)
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -16,6 +16,7 @@ enum FilmStyle: String, CaseIterable, Identifiable {
         case .fujiCC: return "富士 CC"
         case .mono: return "银盐"
         case .food: return "美食"
+        case .film400: return "胶片 400"
         default: return ImportedFilterCatalog.definition(for: self)?.title ?? rawValue
         }
     }
@@ -36,6 +37,7 @@ enum FilmStyle: String, CaseIterable, Identifiable {
         case .fujiCC: return "CLASSIC CHROME"
         case .mono: return "SILVER & SHADOW"
         case .food: return "FOOD LUT"
+        case .film400: return "WARM NEGATIVE"
         default: return "REFERENCE LUT"
         }
     }
@@ -111,6 +113,25 @@ enum FilmStyle: String, CaseIterable, Identifiable {
             output = CameraFilmProfiles.apply(self, to: input)
         case .mono:
             output = input.applyingFilter("CIPhotoEffectNoir")
+        case .film400:
+            // SDR 胶片测试配方：暖高光、轻微绿阴影、低饱和和柔和肩部。
+            output = input
+                .applyingFilter("CIToneCurve", parameters: [
+                    "inputPoint0": CIVector(x: 0, y: 0.025),
+                    "inputPoint1": CIVector(x: 0.25, y: 0.23),
+                    "inputPoint2": CIVector(x: 0.5, y: 0.52),
+                    "inputPoint3": CIVector(x: 0.75, y: 0.77),
+                    "inputPoint4": CIVector(x: 1, y: 0.94)])
+                .applyingFilter("CIColorMatrix", parameters: [
+                    "inputRVector": CIVector(x: 1.06, y: 0.022, z: 0.0, w: 0),
+                    "inputGVector": CIVector(x: 0.006, y: 1.005, z: 0.01, w: 0),
+                    "inputBVector": CIVector(x: 0.0, y: 0.012, z: 0.965, w: 0),
+                    "inputBiasVector": CIVector(x: 0.016, y: 0.008, z: 0.004, w: 0)])
+                .applyingFilter("CIColorControls", parameters: [
+                    kCIInputSaturationKey: 0.78, kCIInputContrastKey: 1.035, kCIInputBrightnessKey: 0.008])
+                .applyingFilter("CITemperatureAndTint", parameters: [
+                    "inputNeutral": CIVector(x: 6500, y: 0),
+                    "inputTargetNeutral": CIVector(x: 5200, y: 2)])
         default: output = input
         } }
         return ReferenceFilterCalibration.apply(self, to: output).cropped(to: input.extent)

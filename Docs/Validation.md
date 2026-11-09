@@ -5079,3 +5079,9 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 问题：色彩调色盘向上（正值）应偏洋红，实际偏绿。
 - 修复：`CITemperatureAndTint` 的 tint 轴和 RAW `neutralTint` 统一改为正值=洋红、负值=绿。
 - 新增 `FilterTintDirectionTests` 像素验证：tint=+100 输出 (R,G,B)=(140,121,138) 偏洋红；tint=-100 输出 (114,133,117) 偏绿。`FilterAdjustmentStateTests` 同轮通过。
+
+# 2026-11-09 SDR 胶片测试滤镜
+
+- 新增内置 `FilmStyle.film400`（显示名“胶片 400”，副标题 WARM NEGATIVE），照片/视频滤镜列表可见，默认强度80%。
+- 配方：柔和肩部曲线 + 暖高光/轻绿阴影矩阵 + 低饱和 + 5200K 暖色目标；只改滤镜色彩，不自动加颗粒或光晕。
+- 像素测试：中灰输入 (117,122,133) → 输出 (137,129,121)，暖色且非中性；`FilmStyle.availableStyles` 数量由46更新为47。
