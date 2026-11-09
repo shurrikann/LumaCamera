@@ -5129,3 +5129,25 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 
 结论：`AppleLog_Rec709` 与 Apple Log 匹配，`AppleLog2_Rec709` 与 Apple Log 2 匹配。验证覆盖这两支显式转换 LUT；55 支通用创意 LUT 仍按来源默认 Apple Log，未逐支验证。
 局限：桌面场景无标准色卡；理论参考包含 Apple Log 反解与矩阵推断，误差包含相机 SDR 处理/曝光差异，不能当作完整 DeltaE 验收。
+
+# 2026-11-09 55支Log LUT白纸筛查
+
+新增白纸特写：`LumaVideo-88B1335F...`（Apple Log）与 `LumaVideo-2A9ED894...`（Apple Log 2），均为10-bit，白纸区域构图接近。
+- 输入白纸平均色差很小；对所有57支LUT逐一套用后，Log1/Log2白纸饱和度最大差仅0.012，没有出现“一边中性、一边明显偏色”的LUT。
+- 分类调整为：显式转换 LUT 固定归属（AppleLog_Rec709→Log1；AppleLog2_Rec709、ARRI_AppleLog2→Log2）；其余54支通用 LUT 归为 Log1/Log2 都可用（`requiredColorSpace = nil`）。`LogLUTClassificationTests` 通过（1/2/54）。
+- 两边都明显偏色的14支记录如下（白纸饱和度 Log1/Log2 均>0.08，属于创意LUT的明显白色偏移，不等于不可用）：
+- `Arri_色调V2.lutcube`：0.089/0.092
+- `馆长_动漫风.lutcube`：0.093/0.086
+- `波西米亚_V2.lutcube`：0.097/0.098
+- `Arri_牙买加.lutcube`：0.095/0.099
+- `Arri_色调V1.lutcube`：0.103/0.098
+- `Arri_冰蓝色.lutcube`：0.117/0.111
+- `顾屿_琥珀.lutcube`：0.120/0.124
+- `Kim_冰蓝调.lutcube`：0.130/0.125
+- `馆长_复古暖 .lutcube`：0.142/0.145
+- `韩风Kor.lutcube`：0.159/0.161
+- `波西米亚_V1.lutcube`：0.169/0.173
+- `晴空绿丘.lutcube`：0.179/0.173
+- `日系清新.lutcube`：0.199/0.190
+- `秋季Fll.lutcube`：0.259/0.259
+- 局限：本次只验证白纸/中性轴，未验证高饱和原色。通用LUT“两者都支持”表示没有白纸层面的Log曲线偏好，不等于所有色域下完全一致。

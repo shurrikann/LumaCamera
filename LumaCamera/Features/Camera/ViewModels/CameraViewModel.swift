@@ -1375,7 +1375,7 @@ final class CameraViewModel: ObservableObject {
         return logLUTPresets.first { $0.id == selectedLogLUTID }
     }
     var logLUTOptions: [LogLUTPreset] {
-        let compatible = logLUTPresets.filter { $0.requiredColorSpace == videoColorSpace }
+        let compatible = logLUTPresets.filter { $0.requiredColorSpace == nil || $0.requiredColorSpace == videoColorSpace }
         if logLUTCategory == .favorites { return compatible.filter { logLUTFavorites.contains($0.id) } }
         return [.original] + compatible
     }
@@ -1383,7 +1383,7 @@ final class CameraViewModel: ObservableObject {
     private func reconcileLogLUTForColorSpace() {
         guard let id = selectedLogLUTID, id != LogLUTPreset.originalID,
               let preset = logLUTPresets.first(where: { $0.id == id }),
-              preset.requiredColorSpace != videoColorSpace else { return }
+              let required = preset.requiredColorSpace, required != videoColorSpace else { return }
         selectedLogLUTID = LogLUTPreset.originalID
         selectedLogLUTCube = nil
         camera.updateVideoLogLUT(nil)

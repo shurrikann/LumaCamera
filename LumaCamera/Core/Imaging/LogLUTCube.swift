@@ -13,12 +13,13 @@ struct LogLUTPreset: Identifiable, Hashable, Sendable {
 
     /// Apple Log 2 uses the same transfer curve as Apple Log but Apple Wide Gamut
     /// primaries instead of BT.2020. Their LUTs differ by gamut, not by a gray ramp.
-    var requiredColorSpace: VideoColorSpace {
-        // The original 55-LUT library was authored/used for Apple Log; Log 2 LUTs
-        // were added later and are explicitly named. Keep that historical mapping
-        // instead of showing every generic LUT under both Log curves.
+    var requiredColorSpace: VideoColorSpace? {
+        // Explicit conversion LUTs are curve-specific. Generic creative LUTs have
+        // no measurable white-paper preference between Log and Log2, so they are
+        // available under both curves; gamut remains user-selectable.
         if id.contains("AppleLog2") { return .appleLog2 }
-        return .appleLog
+        if id.contains("AppleLog") { return .appleLog }
+        return nil
     }
 
     init(id: String, equipment: String?, title: String) {

@@ -1,3 +1,7 @@
+## 2026-11-09 55支Log LUT筛查
+
+- 白纸校准显示54支通用 LUT 在 Apple Log/Log2 下无单边偏色，归为两者都支持；显式转换 LUT 仍固定 Log1/Log2。14支两边均明显偏色的创意 LUT 已在 Validation 记录。
+
 ## 2026-11-09 Apple Log LUT 实拍验证
 
 - 用同场景 Apple Log、Log2、SDR 参考交叉验证：AppleLog_Rec709 匹配 Log，AppleLog2_Rec709 匹配 Log2；蓝通道区域错误套用误差约翻倍。55 支通用创意 LUT 仍按来源归 Apple Log，未逐支验证。
