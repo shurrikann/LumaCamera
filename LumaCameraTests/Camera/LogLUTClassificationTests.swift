@@ -12,6 +12,7 @@ final class LogLUTClassificationTests: XCTestCase {
         XCTAssertTrue(log2.contains { $0.id == "AppleLog2_Rec709" })
         XCTAssertTrue(log2.contains { $0.id == "ARRI_AppleLog2" })
         XCTAssertEqual(presets.count, log.count + log2.count + both.count)
-        XCTAssertEqual(log.count, 1); XCTAssertEqual(log2.count, 2); XCTAssertEqual(both.count, 54)
+        XCTAssertEqual(log.count, 1); XCTAssertEqual(log2.count, 2); XCTAssertEqual(both.count, 43)
+        XCTAssertEqual(presets.count, 46)
     }
 }

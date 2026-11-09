@@ -1,3 +1,7 @@
+## 2026-11-09 移除 Arri 色调 V1–V11
+
+- Log 滤镜移除 11 支 `Arri_色调V1–V11`；当前 Log LUT 共46支（Log1 1、Log2 2、两者43）。
+
 ## 2026-11-09 Log LUT 回归修复
 
 - 回退 Log LUT 的裸 `CIColorCube`/去 sRGB 实验，恢复预览与烧录的 sRGB 色彩管理；保留烧录 Rec.709 标签与 LUT 可见性分类。

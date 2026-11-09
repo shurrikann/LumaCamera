@@ -5,7 +5,7 @@ import XCTest
 final class LogLUTCubeTests: XCTestCase {
     func testBundledLUTsRetainTheirOriginal33Or65Grid() throws {
         let presets = LogLUTCubeRepository.presets()
-        XCTAssertEqual(presets.count, 57)
+        XCTAssertEqual(presets.count, 46)
         for preset in presets {
             let cube = try LogLUTCubeRepository.load(preset)
             XCTAssertTrue(cube.dimension == 33 || cube.dimension == 65)
@@ -18,7 +18,7 @@ final class LogLUTCubeTests: XCTestCase {
         let pickerOptions = [LogLUTPreset.original] + presets
         XCTAssertEqual(LogLUTPreset.original.title, "原片")
         XCTAssertEqual(LogLUTPreset.original.id, LogLUTPreset.originalID)
-        XCTAssertEqual(presets.count, 57)
+        XCTAssertEqual(presets.count, 46)
         XCTAssertEqual(Array(pickerOptions.prefix(3).map(\.id)), [
             LogLUTPreset.originalID, "AppleLog_Rec709", "AppleLog2_Rec709"
         ])
