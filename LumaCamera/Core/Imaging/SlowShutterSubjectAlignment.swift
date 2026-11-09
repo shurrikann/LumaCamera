@@ -8,6 +8,8 @@ final class SlowShutterSubjectAlignment {
     private var reference: CGImage?
     private var referencePixels: [Double]?
     private var referenceExtent: CGRect?
+    /// 最近一帧相对参考主体的平移；供摇拍背景方向模糊使用，不代表相机绝对运动。
+    private(set) var lastShift = CGVector.zero
     init(context: CIContext) { self.context = context }
 
     func evaluate(_ image: CIImage) -> (image:CIImage,reliable:Bool,sharpness:Double) {
@@ -39,7 +41,8 @@ final class SlowShutterSubjectAlignment {
                   let pixels = grayscale(alignedProbe), let score = correlation(referencePixels,pixels) else { continue }
             if score > (best?.0 ?? -1) { best = (score,dx,dy) }
         } }
-        guard let best, best.0 >= 0.75 else { return (image,false,sharpness) }
+        guard let best, best.0 >= 0.75 else { lastShift = .zero; return (image,false,sharpness) }
+        lastShift = CGVector(dx: best.1/scale, dy: best.2/scale)
         return (image.transformed(by:CGAffineTransform(translationX:best.1/scale,y:best.2/scale)),true,sharpness)
     }
 

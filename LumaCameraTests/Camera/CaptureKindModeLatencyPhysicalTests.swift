@@ -113,5 +113,37 @@ final class CaptureKindModeLatencyPhysicalTests: XCTestCase {
         let text = report.joined(separator: "\n"); print(text)
         let attachment = XCTAttachment(string: text); attachment.name = "Photo-video-cross-mode-latency"; attachment.lifetime = .keepAlways; add(attachment)
     }
+    @MainActor func testPhotoRequestDuringVideoEntryReturnsImmediatelyWithFeedback() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
+        let audit = SessionRuntimeErrorAudit(), idle = UIApplication.shared.isIdleTimerDisabled
+        UIApplication.shared.isIdleTimerDisabled = true
+        var impacts = 0
+        CameraHaptics.recorderForTesting = { if case .impact = $0 { impacts += 1 } }
+        defer { CameraHaptics.recorderForTesting = nil; model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle; audit.finish() }
+        model.setCameraActive(true)
+        for _ in 0..<400 { if camera.ready { break }; try await Task.sleep(for: .milliseconds(20)) }
+        model.setCaptureKind(.photo)
+        await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
+        for _ in 0..<250 {
+            if model.captureKind == .photo, camera.ready, !camera.videoConfiguring { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertEqual(model.captureKind, .photo)
+        let started = CACurrentMediaTime()
+        model.setCaptureKind(.video)
+        XCTAssertEqual(model.captureKind, .video)
+        // 视频入口事务尚未完成时立刻请求返回照片，模拟用户连续点模式按钮。
+        model.requestCaptureKind(.photo)
+        for _ in 0..<500 {
+            if model.captureKind == .photo, camera.ready, !camera.videoConfiguring, !model.captureKindSwitching { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertEqual(model.captureKind, .photo, camera.message ?? "视频入口中切照片没有生效")
+        XCTAssertTrue(camera.ready)
+        XCTAssertNil(camera.message)
+        XCTAssertGreaterThanOrEqual(impacts, 1, "模式按钮点击必须立即触发触感")
+        print("CAPTURE-KIND-REQUEST elapsed=\(CACurrentMediaTime()-started) kind=photo impacts=\(impacts) message=\(camera.message ?? "nil")")
+    }
+
     #endif
 }

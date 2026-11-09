@@ -4982,3 +4982,57 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 # 2026-11-08 照片前置超广角按钮背景
 
 - 照片前置标准/超广角切换按钮在超广角选中态不再绘制 `Color.white.opacity(0.06)` 圆形背景；强调色图标和点击热区保持不变。视频前置已无该按钮。
+# 2026-11-08 视频防抖菜单选中样式
+
+- 视频防抖选择恢复系统 `Menu` 样式：选中项显示系统对勾，不支持档位继续置灰；自定义 popover 和弹窗内橙色文字方案已撤回。
+# 2026-11-08 慢门动态模糊/摇拍合成优化
+
+- 动态模糊改为背景锁定 + 时间差异轨迹增强；摇拍改为主体锁定 + 沿运动方向背景模糊 + 中央羽化主体保护。两者不再共用普通平均合成。
+- 真机 iPhone 17 Pro / iOS 27.2：`SlowShutterHandheldTests`、`AdaptiveSlowShutterTests`、`SlowShutterSequenceTests`、预设/时长测试通过；motionBlur 实测 3000×4000，全流程约 4.5s、峰值约 632MB；panning 约 2.4s、峰值约 660MB。
+- 限制：摇拍主体仍是中央 ROI + 羽化蒙版，不是语义主体跟踪；亮环境尚未提供可见 ND 提示，强光下仍需外部 ND 才能获得更长单帧曝光。
+# 2026-11-08 视频前置固定广角不再改写照片取景
+
+- 路径：照片前置超广角 → 切回标准 → 视频前置 → 回照片。修复前视频入口后再次 `selectLens(wide)` 造成短暂呼吸，并让照片回退到超广角。
+- 修复：视频 wide 在格式配置和切换事务提交后直接写设备倍率，保持 `selectedLens` 为照片标准；退出视频用 `frontPhotoZoomAfterVideo` 恢复照片倍率。
+- 真机：照片标准倍率 1.5855 → 视频硬件倍率 1.0 → 回照片 1.5855，`selectedLens` 全程保持标准；矩阵/压力/双拍追踪用例通过。
+# 2026-11-09 预览节流与慢动作规格顺序
+
+- `LivePreviewCadence` 改为：普通 <60fps 实际帧率，≥60fps 上限60fps；有慢动作采集帧率时固定30fps。120/240fps 慢动作均按30fps预览。
+- 慢动作视频规格弹窗采集帧率按120fps、240fps升序显示；默认采集档仍优先设备最高慢动作帧率。
+- 单测 `testOpenGateSwitchLimitsVideoRatiosAndPreviewCadenceFollowsSelectedRate` 通过，覆盖24/25/30/50/60实际、120→60、慢动作120/240→30。真机帧率采样待补。
+# 2026-11-09 智拍白点稳定与自适应节流
+
+- 新增 `SmartSubjectContinuity`：新主体连续0.6秒且验证通过才替换；旧点短丢失保留0.65秒；首个未验证点不显示。录屏中“白点跳到另一个目标/短暂消失”的路径由身份切换和未验证候选触发，本改动直接限制该路径。
+- 新增 `SmartCaptureCadence`：有白点15Hz、无白点8Hz、弹窗4Hz、低电量/热压力10/5Hz；不再固定66ms轮询。
+- 真机回归：`SmartAutoFramingTests` 全组通过（含0.6秒身份切换后的自动取景重触发）；`SmartCapturePhysicalTests` 通过；无白点现场发布中位间隔约0.133秒，符合8Hz分支；`SmartSubjectContinuityTests`、`SmartCaptureCadenceTests` 通过。
+- 限制：录屏没有直接回放到新版本；真实树影/远处小目标下的白点稳定性仍需同场景复测。
+# 2026-11-09 中性预览/定位/Grain/DockKit 功耗优化
+
+- 中性预览跳过滤镜链；Grain 跟随实际预览帧（照片/视频各自预览帧率，慢动作30fps）；定位25m距离过滤+系统自动暂停；DockKit按需监听。
+- 真机/单测：`CapturePreferencesTests`、`SmartSubjectContinuityTests`、`SmartCaptureCadenceTests`、`SmartAutoFramingTests/testManualAlignment...`、`VideoSpecificationTests/testOpenGate...`、`SmartCapturePhysicalTests`两项通过；中性现场无样式预览和位置元数据路径仍需用户实拍确认。
+- 注意：DockKit默认关闭时不再自动发现已连接云台；需要在设置开启“云台追踪”，之后进入相机才会监听/恢复追踪。
+# 2026-11-09 相机按钮触感稳定
+
+- 统一 `CameraHaptics`：常驻生成器、进入相机预热、触发后 prepare；替换相机页和设置页临时生成器。缩放刻度已有生成器同步预热。
+- 真机构建通过；顶部工具栏切换按钮不再经过 `cameraPopupOpen` 抑制，面板打开时点击另一个顶部按钮仍有触感。连续点击/录像/Live 场景需真机复测，无法用 XCTest 断言物理马达。
+# 2026-11-09 视频前置后台恢复与入口 watchdog
+
+- 视频前置退出 App/回前台复测：回前台后实际设备倍率仍为前置 wide，`captureKind` 保持 video（`testFrontVideoWideSurvivesForegroundResume` 通过）。
+- 相机失活时取消入口 watchdog 与待恢复视频进入任务，避免后台休眠后回前台误报“视频启动超时，已退出视频模式”；`VideoEntryWatchdogLifecycleTests` 模拟器通过。
+- 视频中从后置切前置仍保持照片逻辑镜头标准、设备实际 wide；`start()` 冷启动/回前台恢复后再补一次视频前置 wide 校正，矩阵全组（进入、后台恢复、双拍追踪、照片往返）通过。
+# 2026-11-09 前置视频4:3视角偏窄
+
+- 真机诊断：照片前置4:3使用4032×4032方形传感器、设备1.0×；视频4:3虽输出4:3，但实际采集格式为1920×1080（16:9）再裁，横向视野明显小于照片。
+- 原因：`VideoCaptureSettings.format` 对4:3/1:1只检查宽高下限，1920×1080也满足1440×1080下限，按面积最小被选中。现优先原生4:3格式；前置1080p4:3实际格式变为1920×1440，设备仍1.0×。
+- 验证：`FrontAspectFOVDiagnosticTests` 显示照片4032×4032 / 视频1920×1440；`testOrdinaryFourThreeUsesNativeFourThreeFormat`（1080/1:1/16:9/2:1/2.39及4K4:3）、前置视频矩阵、Open Gate节流测试通过。
+- 限制：4K前置4:3若无原生4:3视频格式仍回退16:9；稳定防抖仍有少量裁切。
+# 2026-11-09 视频瞬时错误重试计数
+
+- 修复自动重试计数在恢复成功后未清零：此前一次偶发-11819成功恢复后，下一次独立瞬时错误会被误判为“连续第二次”，直接弹“视频无法启动，已退出视频模式”。
+- 恢复并重新进入视频、ready/videoConfiguring稳定后清零；新增 `testTwoSeparatedTransientVideoErrorsEachGetRetry` 注入两次间隔错误，均保持video且无message。
+- 若同一恢复过程中连续两次失败，仍按设计退出视频并提示。
+# 2026-11-09 照片/视频模式切换响应
+
+- 底部模式按钮不再在 `captureKindSwitching`/视频子模式准备时禁用；点击先立即触发共享触感，`requestCaptureKind` 在 `camera.videoBusy`/视频保存时排队，结束后执行最后一次请求。
+- 视频入口中立即点回照片会取消入口 watchdog/待恢复任务并优先完成照片切换；新增 `testPhotoRequestDuringVideoEntryReturnsImmediatelyWithFeedback`，真机请求到照片约1.3s，impacts=1、message=nil。
+- `CaptureKindModeLatencyPhysicalTests` 三组通过；常规照片↔视频配置约0.36–0.55s，可见新帧约0.58–0.79s（含过渡）。

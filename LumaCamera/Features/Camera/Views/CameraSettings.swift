@@ -42,11 +42,7 @@ private struct CameraSettingsPanel: View {
                                 Button {
                                     model.preferences.videoStabilization = option
                                 } label: {
-                                    if model.preferences.videoStabilization == option {
-                                        Label(option.rawValue, systemImage: "checkmark")
-                                    } else {
-                                        Text(option.rawValue)
-                                    }
+                                    Text(option.rawValue)
                                 }
                                 .disabled(!model.isVideoStabilizationAvailable(option))
                             }
@@ -206,7 +202,7 @@ private struct CameraSettingsPanel: View {
 
     private func settingInfoButton(title: String, message: String) -> some View {
         Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            CameraHaptics.impact(.light)
             withAnimation(.easeInOut(duration: reduceMotion ? 0.12 : 0.2)) {
                 settingExplanation = SettingExplanation(title: title, message: message)
             }

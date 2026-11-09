@@ -308,6 +308,8 @@ final class CameraViewModel: ObservableObject {
     @Published private(set) var compatibleSubmodeLensIDs: Set<String>?
     private var photoSubmodeRequest = UUID()
     private var captureKindSwitchToken = UUID()
+    private var pendingCaptureKindRequest: CaptureKind?
+    private var pendingCaptureKindTask: Task<Void, Never>?
     private var videoSubmodeRequest = UUID()
     private var selectedSlowMotionCaptureRate: VideoFrameRate?
     let externalVideoStorage = ExternalVideoStorage.shared
@@ -1087,7 +1089,8 @@ final class CameraViewModel: ObservableObject {
     }
     var videoFrameRateOptions:[VideoFrameRate] {
         if camera.dualCaptureEnabled { return VideoFrameRate.allCases.filter { value in dualSupportedSettings.contains { dualMatchesSelection($0,rate:value) } } }
-        if slowMotionEnabled { return slowMotionCaptureFrameRateOptions.sorted { $0.rawValue > $1.rawValue } }
+        // 规格弹窗按低到高展示采集帧率；240 放在 120 后面。
+        if slowMotionEnabled { return slowMotionCaptureFrameRateOptions.sorted { $0.rawValue < $1.rawValue } }
         return VideoFrameRate.allCases.filter { value in videoCapabilitiesForCurrentRatio.contains {
             $0.resolution == videoResolution && $0.frameRate == value && $0.colorSpace == videoColorSpace
         } }
@@ -2160,6 +2163,7 @@ final class CameraViewModel: ObservableObject {
     private var suppressedSmartSuggestionSignature: String?
     private var suppressedSuggestionMissingChecks = 0
     private var smartCompositionStabilizer = SmartCompositionStabilizer()
+    private var smartSubjectContinuity = SmartSubjectContinuity()
     private let smartCaptureQueue = DispatchQueue(label: "camera.smart-capture", qos: .userInitiated)
     // 仅在smartCaptureQueue访问；低频场景检测不阻塞每次跟踪都重复跑显著性/人脸。
     private let smartSceneAnalysisState = SmartSceneAnalysisState()
@@ -2288,7 +2292,10 @@ final class CameraViewModel: ObservableObject {
     }
     private func publishSmartComposition(_ guide:SmartCompositionGuide?,candidates:[SmartCompositionGuide]) {
         guard smartRecommendationRangeAllowed else { return }
-        if let next = guide?.subjectID, let previous = smartCompositionGuide?.subjectID, previous != next {
+        let now = CACurrentMediaTime()
+        // 先做主体身份迟滞，再做提示阶段迟滞；新主体不能靠单帧胜出替换白点。
+        let stable = smartSubjectContinuity.update(guide, at: now)
+        if let next = stable?.subjectID, let previous = smartCompositionGuide?.subjectID, previous != next {
             smartAlignmentLatched = false
             smartCompositionStabilizer.reset()
             if smartFramingComplete, candidates.contains(where: { $0.subjectID == previous }) {
@@ -2299,9 +2306,9 @@ final class CameraViewModel: ObservableObject {
         }
         smartCompositionCandidates = activePhotoSubmode == nil ? candidates : []
         smartCompositionGuide = activePhotoSubmode == nil
-            ? smartCompositionStabilizer.update(guide,at:CACurrentMediaTime()) : nil
+            ? smartCompositionStabilizer.update(stable, at: now) : nil
         // 未对齐阶段不额外发起AF扫描；对齐后的单次对焦继续由finishAutomaticSmartFraming提交。
-        updateSmartFraming(for:guide == nil ? nil : smartCompositionGuide)
+        updateSmartFraming(for: stable == nil ? nil : smartCompositionGuide)
     }
     private func finishAutomaticSmartFraming(_ result:SmartFramingEvaluator.Evaluation,guide:SmartCompositionGuide,work:SmartFramingWork,generation:UUID) {
         // 没有可评分裁切也要完成主体对焦和反馈；只有可靠评分才允许改变倍率。
@@ -2406,9 +2413,13 @@ final class CameraViewModel: ObservableObject {
             while !Task.isCancelled {
                 guard let self, self.smartCaptureEnabled else { return }
                 self.refreshSmartSuggestion(generation: generation)
-                // Composition needs a much faster cadence than scene advice;
-                // otherwise the subject dot visibly jumps while panning.
-                try? await Task.sleep(for: .milliseconds(66))
+                let process = ProcessInfo.processInfo
+                let interval = SmartCaptureCadence.interval(
+                    hasVisibleGuide: self.smartCompositionGuide != nil,
+                    analysisAllowed: self.smartCaptureAnalysisAllowed,
+                    lowPower: process.isLowPowerModeEnabled,
+                    thermalSerious: process.thermalState == .serious || process.thermalState == .critical)
+                try? await Task.sleep(for: .milliseconds(max(16, Int(interval * 1000))))
             }
         }
     }
@@ -2423,6 +2434,7 @@ final class CameraViewModel: ObservableObject {
         smartCompositionGuide = nil; smartCompositionCandidates = []
         smartFramingRecommendation = nil
         smartCompositionStabilizer.reset()
+        smartSubjectContinuity.reset()
         smartPortraitMissingChecks = 0
         suppressedSmartSuggestionSignature = nil
         suppressedSuggestionMissingChecks = 0
@@ -3067,8 +3079,9 @@ final class CameraViewModel: ObservableObject {
     }
 
     func toggleToolbarPanel(_ next: CameraToolbarPanel) {
+        // 触感必须在任何状态/会话重配前触发，避免主线程负载或音频会话把这一次反馈吞掉。
+        CameraHaptics.impact(.light)
         dismissDepthControls()
-        cameraImpactFeedback(.light)
         endZoomDial()
         withAnimation(AppTheme.popupAnimation) {
             focusLockPickerVisible = false
@@ -3489,11 +3502,11 @@ final class CameraViewModel: ObservableObject {
     }
     private func cameraSelectionFeedback() {
         guard !cameraPopupOpen else { return }
-        UISelectionFeedbackGenerator().selectionChanged()
+        CameraHaptics.selectionChanged()
     }
     private func cameraImpactFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
         guard !cameraPopupOpen else { return }
-        UIImpactFeedbackGenerator(style: style).impactOccurred()
+        CameraHaptics.impact(style)
     }
     private var manualModeSettleTask: Task<Void, Never>?
     private var manualModeRouteSettling = false
@@ -3580,6 +3593,9 @@ final class CameraViewModel: ObservableObject {
             self.setVideoSubmode(.cinematic, enabled: false)
             // -11819/-11800 可能是前置切换后的瞬时系统错误；首次失败自动重建会话并重试视频，
             // 不立刻把用户踢回照片。连续第二次失败才显示错误并退出。
+            #if DEBUG
+            print("VIDEO-ROUTE-FAIL retries=\(self.videoRouteFailureRetries) message=\(message) kind=\(self.captureKind) front=\(self.currentPosition == .front)")
+            #endif
             if self.videoRouteFailureRetries == 0 {
                 self.videoRouteFailureRetries = 1
                 self.camera.message = nil
@@ -3598,6 +3614,15 @@ final class CameraViewModel: ObservableObject {
                     self.camera.setVideoMode(true)
                     self.synchronizeVideoSettings()
                     self.scheduleVideoEntryWatchdog()
+                    // 恢复成功且重新进入视频后清零；否则一次旧失败会永久占掉后续重试机会。
+                    for _ in 0..<120 {
+                        if self.camera.ready, !self.camera.recoveringSession, !self.camera.videoConfiguring { break }
+                        try? await Task.sleep(for: .milliseconds(50))
+                    }
+                    if self.captureKind == .video, self.camera.ready,
+                       !self.camera.recoveringSession, !self.camera.videoConfiguring {
+                        self.videoRouteFailureRetries = 0
+                    }
                 }
                 return
             }
@@ -3992,18 +4017,31 @@ final class CameraViewModel: ObservableObject {
             "slowShutter": String(slowShutterEnabled), "preset": selectedSlowShutterPreset?.rawValue ?? "none",
             "zoomAtRequest": String(Double(camera.currentZoom))
         ])
+        if !active {
+            // 后台休眠期间不能让入口 watchdog 继续计时，否则回前台会误报“视频启动超时”。
+            cancelVideoEntryWatchdog()
+            pendingVideoEntryAfterRecovery?.cancel()
+            pendingVideoEntryAfterRecovery = nil
+        }
         if !active { cancelSlowShutterSequence() }
         if !active { stopBurstCapture() }
         if !active && !review { dismissDepthControls() }
         if !active && camera.videoBusy { camera.stopVideoRecording() }
         if !active && !review { closePopups() }
         cameraActiveRequested = active
+        if active {
+            CameraHaptics.prepare()
+            zoomTickFeedback.prepare()
+            zoomAnchorFeedback.prepare()
+        }
         synchronizePortraitPreview()
         if active {
-            dockKitTracking.startMonitoring()
-            dockKitTracking.setTrackingEnabled(preferences.dockKitTrackingEnabled)
+            if preferences.dockKitTrackingEnabled || dockKitTracking.accessoryConnected {
+                dockKitTracking.startMonitoring()
+                dockKitTracking.setTrackingEnabled(preferences.dockKitTrackingEnabled)
+            }
         } else {
-            dockKitTracking.stopTracking()
+            dockKitTracking.stopMonitoring()
         }
         locationService.setActive(active && preferences.recordLocation)
         let request = UUID()
@@ -4047,12 +4085,17 @@ final class CameraViewModel: ObservableObject {
 
     func setDockKitTrackingEnabled(_ enabled: Bool) {
         guard !dockKitTrackingUpdating, preferences.dockKitTrackingEnabled != enabled else { return }
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        CameraHaptics.impact(.light)
         var updated = preferences
         updated.dockKitTrackingEnabled = enabled
         preferences = updated
-        if cameraActiveRequested {
-            dockKitTracking.setTrackingEnabled(enabled, reportFailure: true)
+        if enabled {
+            if cameraActiveRequested {
+                dockKitTracking.startMonitoring()
+                dockKitTracking.setTrackingEnabled(true, reportFailure: true)
+            }
+        } else {
+            dockKitTracking.stopMonitoring()
         }
     }
 
@@ -4419,15 +4462,54 @@ final class CameraViewModel: ObservableObject {
         [("视频", "video.fill"), ("照片", "camera.fill")]
     }
 
+    /// 模式按钮立即反馈；正在配置/收尾时排队，不能静默吞掉用户点击。
+    func requestCaptureKind(_ kind: CaptureKind) {
+        guard kind != captureKind else {
+            pendingCaptureKindRequest = nil
+            pendingCaptureKindTask?.cancel()
+            pendingCaptureKindTask = nil
+            return
+        }
+        CameraHaptics.impact(.light)
+        if kind == .photo {
+            cancelVideoEntryWatchdog()
+            pendingVideoEntryAfterRecovery?.cancel()
+            pendingVideoEntryAfterRecovery = nil
+        }
+        guard camera.videoBusy || library.videoSaving else {
+            pendingCaptureKindRequest = nil
+            pendingCaptureKindTask?.cancel()
+            pendingCaptureKindTask = nil
+            setCaptureKind(kind)
+            return
+        }
+        pendingCaptureKindRequest = kind
+        pendingCaptureKindTask?.cancel()
+        pendingCaptureKindTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            for _ in 0..<240 {
+                if !self.camera.videoBusy, !self.library.videoSaving { break }
+                try? await Task.sleep(for: .milliseconds(50))
+            }
+            guard !Task.isCancelled, self.pendingCaptureKindRequest == kind,
+                  !self.camera.videoBusy, !self.library.videoSaving else { return }
+            self.pendingCaptureKindRequest = nil
+            self.pendingCaptureKindTask = nil
+            self.setCaptureKind(kind)
+        }
+    }
+
     func setCaptureKind(_ kind: CaptureKind) {
+        if kind == .photo { cancelVideoEntryWatchdog() }
         if kind == .video, camera.recoveringSession || !camera.ready {
             scheduleVideoEntryAfterRecovery()
             return
         }
         let cancellingCinematicPreparation = kind == .photo && videoSubmodePreparing == .cinematic
+        // 返回照片可以取消正在准备的视频子模式；不能因为 preparing 状态静默无响应。
         guard kind != captureKind,
               !camera.videoBusy, !library.videoSaving,
-              !isPreparingSubmode || cancellingCinematicPreparation else { closePopups(); return }
+              kind == .photo || !isPreparingSubmode || cancellingCinematicPreparation else { closePopups(); return }
         if kind == .photo, camera.dualCaptureEnabled {
             camera.setDualCaptureEnabled(false) { [weak self] success in
                 guard let self, success else { return }
@@ -4584,6 +4666,11 @@ final class CameraViewModel: ObservableObject {
         videoEntryWatchdog = nil
     }
 
+    #if DEBUG
+    func armVideoEntryWatchdogForTesting() { scheduleVideoEntryWatchdog() }
+    var videoEntryWatchdogActiveForTesting: Bool { videoEntryWatchdog != nil }
+    #endif
+
     /// 视频/电影进入配置可能被 AVFoundation 卡住；超时后必须回到可用界面。
     private func scheduleVideoEntryWatchdog() {
         cancelVideoEntryWatchdog()
@@ -4673,11 +4760,6 @@ final class CameraViewModel: ObservableObject {
                 self.restorePhotoStateAfterVideo()
             }
             self.captureKindSwitching = false
-            if self.captureKind == .video, self.currentPosition == .front,
-               !self.frontVideoCenteringRequested,
-               let wide = self.frontVideoWideLens, self.camera.selectedLens != wide.id {
-                self.camera.selectLens(wide)
-            }
             self.reconcileCaptureCapabilities()
         }
     }
@@ -4779,8 +4861,10 @@ final class CameraViewModel: ObservableObject {
         cancelFocus()
         endZoomDial()
         guard camera.ready, !camera.capturing, let lens = oppositeLens else { return }
+        // 视频前置保持照片的标准取景作为逻辑镜头；实际设备倍率由视频配置强制 wide。
         let target = captureKind == .video && lens.device.position == .front
-            ? (frontVideoWideLens ?? lens) : lens
+            ? (camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard } ?? lens)
+            : lens
         cancelCountdown()
         // 前后切镜沿用旧帧轻微模糊、新路由出帧后淡出的路径。
         // 新画面已确认后缩短收尾，避免后置管线较慢时额外叠加完整焦段淡出时长。
@@ -5244,12 +5328,18 @@ final class CameraViewModel: ObservableObject {
             diagnostics.add("拍摄模式", input.captureMode)
             diagnostics.add("慢门合成", "\(input.presetTitle) · \(composer.effectiveFrameCount) 帧")
             diagnostics.add("合成方式", input.blend == .handheldAlignedLighten ? (composer.usedSingleFrameFallback ? "背景对齐不足，使用清晰单帧" : "手持背景对齐亮部叠加") : input.blend == .lighten ? "亮部叠加"
+                : input.blend == .handheldAlignedMotionBlur ? (composer.usedSingleFrameFallback ? "背景对齐不足，使用清晰单帧" : "背景锁定 + 运动轨迹增强")
+                : input.blend == .subjectAlignedPanning ? (composer.usedSingleFrameFallback ? "中央主体对齐不足，使用清晰单帧" : "主体锁定 + 背景方向模糊")
                 : input.blend == .subjectAlignedAverage ? (composer.usedSingleFrameFallback ? "中央主体对齐不足，使用清晰单帧" : "中央主体对齐平均")
                 : input.blend == .handheldAlignedAverage ? (composer.usedSingleFrameFallback ? "背景对齐不足，使用清晰单帧" : "手持全画面对齐平均") : "多帧平均")
-            if input.blend == .subjectAlignedAverage || input.blend == .handheldAlignedAverage || input.blend == .handheldAlignedLighten {
+            if input.blend == .subjectAlignedAverage || input.blend == .subjectAlignedPanning
+                || input.blend == .handheldAlignedAverage || input.blend == .handheldAlignedMotionBlur
+                || input.blend == .handheldAlignedLighten {
                 diagnostics.add("实际采集", "\(input.frameCount) 帧")
             }
-            if input.blend == .handheldAlignedAverage || input.blend == .handheldAlignedLighten || input.blend == .subjectAlignedAverage {
+            if input.blend == .handheldAlignedAverage || input.blend == .handheldAlignedMotionBlur
+                || input.blend == .handheldAlignedLighten || input.blend == .subjectAlignedAverage
+                || input.blend == .subjectAlignedPanning {
                 diagnostics.add("对齐剔除", "\(composer.rejectedFrameCount) 帧")
             }
             if let seconds = input.captureSeconds { diagnostics.add("采集时长",String(format:"%.2f 秒",seconds)) }
@@ -5358,10 +5448,6 @@ final class CameraViewModel: ObservableObject {
 
     var currentPosition: AVCaptureDevice.Position {
         camera.lenses.first(where: { $0.id == camera.selectedLens })?.device.position ?? .back
-    }
-
-    private var frontVideoWideLens: CameraLens? {
-        camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide }
     }
 
     var oppositeLens: CameraLens? {
@@ -5543,7 +5629,7 @@ final class CameraViewModel: ObservableObject {
     func confirmFilterReset() {
         guard filterResetVisible, filterResetStyle == style else { dismissFilterReset(); return }
         resetCurrentFilter()
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        CameraHaptics.success()
     }
     func resetCurrentFilter() {
         dismissFilterNumericInput()

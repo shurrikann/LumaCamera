@@ -236,6 +236,10 @@ final class SmartAutoFramingTests:XCTestCase {
         model.injectSmartCandidatesForTesting([guide(id:a),guide(x:0.7,id:b)])
         try await wait { model.smartFramingComplete && model.smartFramingFeedbackVisible }
         model.injectSmartCandidatesForTesting([guide(x:0.59,id:a),guide(id:b)])
+        // 新目标必须先保持稳定，不能单帧抢走当前白点。
+        XCTAssertEqual(model.smartCompositionGuide?.subjectID,a)
+        try await Task.sleep(for:.milliseconds(700))
+        model.injectSmartCandidatesForTesting([guide(x:0.59,id:a),guide(id:b)])
         XCTAssertEqual(model.smartCompositionGuide?.subjectID,b)
         XCTAssertFalse(model.smartFramingComplete); XCTAssertFalse(model.smartFramingFeedbackVisible)
         XCTAssertEqual(model.smartCompositionCandidates.count,2)

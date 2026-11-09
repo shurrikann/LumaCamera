@@ -1141,7 +1141,7 @@ M挡手动WB/焦点保留，否则拍前锁定读数；结束、失败、取消�
 
 `SlowShutterGlobalAlignment`以最长边640像素的单张参考图保存几何锚点，调用`NightPhotoMerger.alignHandheldFrame`共享经过方向修正的Vision几何配准；只复用几何，不应用夜景影调或运动保护融合。平移优先，残差较大时尝试受界限约束的单应与小角度补偿。残差以96×72探针的6×4纹理区域评估，保留误差较小的一半、至少6块，降低流水/车辆局部变化对背景判定的干扰；缺少足够纹理则使用整幅残差，不虚构稳定区域。共享夜景调用的评分默认参数不变。
 
-流水和动态模糊使用`handheldAlignedAverage`，光轨使用新增`handheldAlignedLighten`。星轨保持`lighten`，不把星体整体运动当作手抖消除。摇拍继续只估计中央主体平移，Vision的targeted/handler按floating/reference方向修正。低纹理首帧不锁死跟踪参考；`SlowShutterComposer`统一区分采集数、接受数和拒绝数，拒绝帧不参与权重，后续可恢复。尚无可融合结果时保留清晰单帧，至少两张有效帧后恢复融合，不再将一次失跟作为永久单帧标志。
+流水使用`handheldAlignedAverage`，动态模糊使用`handheldAlignedMotionBlur`，光轨使用`handheldAlignedLighten`。星轨保持`lighten`，不把星体整体运动当作手抖消除。摇拍继续只估计中央主体平移，Vision的targeted/handler按floating/reference方向修正。低纹理首帧不锁死跟踪参考；`SlowShutterComposer`统一区分采集数、接受数和拒绝数，拒绝帧不参与权重，后续可恢复。尚无可融合结果时保留清晰单帧，至少两张有效帧后恢复融合，不再将一次失跟作为永久单帧标志。
 
 自动曝光在现有±0.2EV匹配与硬件范围内，流水/动态模糊/摇拍优先≤1/60秒，光轨≤1/30秒，星轨≤0.5秒；ISO耗尽时可放宽，手动数值不经过该偏好。预设时长范围、默认时长和采集/预览分离策略保持。流式处理持续只保留有界检查点：累积图、清晰单帧备选和小参考；原生源帧队列不随序列增长。诊断记录实际采集/接受/拒绝和单帧回退，不能以请求张数冒充融合帧数。
 
@@ -1220,6 +1220,33 @@ A挡预览沿用系统虚拟多摄，不再由macroActive预切物理输入，�
 ## 视频前置固定超广角与中心追踪（2026-11-08）
 
 - 视频前置只使用同一个前置超广角输入，固定 wide 取景；不再渲染标准/广角焦段按钮，`selectFocalLength`/`canSelectFocalLength` 对视频前置直接拒绝。照片前置的宽高比与标准/广角逻辑不受影响。
+- 固定 wide 由 `configureVideoFormat` 和 `finishCaptureKindConfiguration` 直接写设备倍率完成，不调用 `selectLens`；`selectedLens` 始终保留照片取景。退出视频时 `frontPhotoZoomAfterVideo` 恢复进入前的照片物理倍率，避免视频入口后二次变焦呼吸和照片被改成超广角。
 - 视频前置主控件区只保留人物追踪按钮，且单独水平居中；“超广角”文字提示已删除。前置追踪不可用时该区域为空，不回退显示照片焦段按钮。
 - 人物追踪开启走系统 CenterStage；普通前置目标为普通会话 input，双拍目标为 `DualCaptureSource.front`。进入双拍时保留追踪请求，双拍设备启动后重新应用；主画面开启后切到小窗继续追踪，小窗不提供新入口，退出双拍关闭追踪。双拍前置默认 `frontWide=true`，不再从存档恢复 1×。
 - 视频入口 watchdog 只判断 `camera.ready`：ready 由目标输出图真实交付新帧后发布，是入口成功的唯一权威信号；用户进入追踪/双拍即取消入口 watchdog，避免配置期误报“视频启动超时”。首次 -11819 仍自动重建会话重试一次。
+## 慢门动态模糊与摇拍拆分（2026-11-08）
+
+- `SlowShutterBlendMode` 新增 `handheldAlignedMotionBlur` 和 `subjectAlignedPanning`；预设映射：动态模糊→前者，摇拍→后者。两者不再复用普通平均的最终结果。
+- 动态模糊：全局对齐累积后，用 `CIDifferenceBlendMode` 取累积平均相对首张背景参考的时间差异，`CIColorMatrix` 放大 RGB，再 `CILinearDodgeBlendMode` 叠加回参考背景。静止背景保持首帧清晰，运动主体轨迹增强；不使用 `CIAdditionCompositing`（实测其输出会退化为背景参考）。
+- 摇拍：主体对齐仍由中央 40% Vision 平移估计；`SlowShutterSubjectAlignment` 暴露最近平移，合成器累计平均方向。背景用 `CIMotionBlur` 沿该方向模糊，再以中央径向羽化蒙版把首张主体参考贴回，主体区域保持清晰。当前蒙版半径 24%–42% 短边，不是语义主体跟踪。
+- 验收：`SLOW-MOTION-TRAIL` 轨迹误差 0.001204 vs 普通平均 0.000871（约 1.38×），静止背景误差 0；`SLOW-PANNING-COMPOSER` 主体误差约 0，背景差异 0.2489 vs 普通对齐平均 0.2156（约 1.15×）。真机 motion/panning 序列与全量慢门单元通过。
+## 预览节流与慢动作预览（2026-11-09）
+
+- `LivePreviewCadence` 统一控制预览消费：普通视频低于60fps按实际帧率；60fps及以上最多60fps；慢动作捕获（`captureFrameRate != nil`，120/240fps）固定30fps预览，不跟随采集帧率。
+- `LivePreviewState` 分开保存 `videoFrameRate`（播放/普通采集）与 `videoCaptureFrameRate`（慢动作采集）；普通120fps只走60fps预览，慢动作120/240都走30fps。
+- 慢动作规格弹窗的采集帧率按低到高显示：120fps在240fps之前；实际默认采集率仍优先设备提供的最高档。
+## 智拍白点身份稳定与自适应采样（2026-11-09）
+
+- `SmartSubjectContinuity` 位于提示发布前：同一 subjectID 实时跟随；新 subjectID 必须连续稳定 0.60 秒且 `trackingVerified=true` 才允许替换。旧点短暂丢失最多保留 0.65 秒并标记未验证；首个点也必须已通过验证，避免在错误目标上先点亮。
+- `publishSmartComposition` 先过身份迟滞，再过 `SmartCompositionStabilizer` 的阶段/方向迟滞；只有身份真正切换才重置构图阶段和自动取景门控。未验证候选可以显示在其他候选列表中，但不能抢走当前白点。
+- `SmartCaptureCadence` 替代固定 66ms 轮询：有可见白点15Hz，无白点8Hz，弹窗/设置不可分析时4Hz，低电量或 thermal serious/critical 时10Hz/5Hz。分析 in-flight 门控保留，不并行叠加 Vision 请求。
+## 低风险功耗优化（2026-11-09）
+
+- 中性预览：`state.hdr == false && !renderLook.requiresImageProcessing` 时跳过 `Imaging.filtered`，直接复用已做色彩归一化的源图；Log LUT、夜间辅助和HDR路径保持原样。
+- Grain 相位跟随实际送显的预览帧：照片跟随照片预览帧率，普通视频跟随节流后的视频预览帧率（<60实际、≥60最多60），慢动作固定30fps；不再按墙钟24fps分桶。
+- 定位：`distanceFilter=25m`、`pausesLocationUpdatesAutomatically=true`，仍使用十米级精度；拍照位置可能比原先略旧。
+- DockKit：相机进入只在该偏好开启或配件已连接时启动 `accessoryStateChanges` 监听；离开相机或关闭设置即停止。首次使用需在设置中开启“云台追踪”才开始发现配件，默认关闭时不再常驻扫描。
+## 相机触感统一（2026-11-09）
+
+- 新增主线程 `CameraHaptics`，常驻 selection/light/medium/notification 生成器；进入相机活跃时统一 `prepare()`，每次触发后立即准备下一次。相机页原先每次点击临时创建 `UISelectionFeedbackGenerator`/`UIImpactFeedbackGenerator` 的调用改为共用实例，降低高负载或音频会话下首次反馈被丢弃的概率。
+- 缩放刻度仍使用独立常驻生成器，并在相机活跃时预热。`toggleToolbarPanel` 在面板已打开时直接触发共享 light 触感，绕过 `cameraPopupOpen` 抑制；其他弹窗内模型层触感仍沿用既有抑制规则，避免与视图内直接触感重复。

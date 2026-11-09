@@ -24,6 +24,11 @@ final class FrontVideoStateMatrixTests: XCTestCase {
         defer { model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle; audit.finish() }
         let wide = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide })
         let standard = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard })
+        func physicalZoom() async -> Double {
+            await withCheckedContinuation { c in
+                camera.exposureColorState { state in c.resume(returning: Double(state?.physicalZoomFactor ?? 0)) }
+            }
+        }
 
         model.setCameraActive(true)
         try await wait("启动", { camera.ready }, camera)
@@ -32,11 +37,14 @@ final class FrontVideoStateMatrixTests: XCTestCase {
         try await wait("照片前置", { camera.ready && model.currentPosition == .front }, camera)
         model.selectFocalLength(standard)
         try await wait("照片标准", { camera.selectedLens == standard.id }, camera)
+        let entryPhotoZoom = await physicalZoom()
+        XCTAssertEqual(entryPhotoZoom, Double(standard.zoomFactor), accuracy: 0.01)
 
         // 路径1：照片前置标准 → 视频，必须自动回固定超广角且拒绝焦段切换。
         model.setCaptureKind(.video)
         try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "照片前置换视频", timeout: 20)
-        XCTAssertEqual(camera.selectedLens, wide.id)
+        // 视频前置固定 wide 由设备倍率完成，不改写照片镜头选择。
+        XCTAssertEqual(camera.selectedLens, standard.id)
         XCTAssertFalse(model.canSelectFocalLength(standard))
         XCTAssertFalse(model.canSelectFocalLength(wide))
 
@@ -49,7 +57,10 @@ final class FrontVideoStateMatrixTests: XCTestCase {
         try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "后置换视频", timeout: 20)
         model.flipCamera()
         try await wait("视频切前置", { camera.ready && model.currentPosition == .front && !camera.videoConfiguring }, camera)
-        XCTAssertEqual(camera.selectedLens, wide.id)
+        let flipZoom = await physicalZoom()
+        XCTAssertEqual(camera.selectedLens, standard.id)
+        XCTAssertEqual(flipZoom, Double(wide.zoomFactor), accuracy: 0.01,
+                       "视频中从后置切前置也必须实际使用超广角")
         XCTAssertFalse(model.canSelectFocalLength(standard))
 
         // 路径3：视频前置追踪 → 照片，追踪必须清理；再进视频恢复固定广角且追踪关闭。
@@ -60,12 +71,84 @@ final class FrontVideoStateMatrixTests: XCTestCase {
         XCTAssertFalse(model.frontVideoCenteringRequested)
         model.setCaptureKind(.video)
         try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "追踪后回视频", timeout: 20)
-        XCTAssertEqual(camera.selectedLens, wide.id)
+        XCTAssertEqual(camera.selectedLens, standard.id)
         XCTAssertFalse(model.frontVideoCenteringRequested)
         XCTAssertFalse(camera.frontVideoCenteringEnabled)
         print("FRONT-VIDEO-MATRIX entryPaths=photoFront,videoBackToFront,photoRoundTrip focalLocked=true")
     }
 
+
+    @MainActor func testFrontVideoUsesWideWithoutChangingPhotoFraming() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        let camera = model.camera, audit = SessionRuntimeErrorAudit()
+        let idle = UIApplication.shared.isIdleTimerDisabled
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer { model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle; audit.finish() }
+        let standard = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard })
+        let wide = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide })
+        func physicalZoom() async -> Double {
+            await withCheckedContinuation { c in
+                camera.exposureColorState { state in c.resume(returning: Double(state?.physicalZoomFactor ?? 0)) }
+            }
+        }
+        model.setCameraActive(true)
+        try await wait("启动", { camera.ready }, camera)
+        if model.currentPosition != .front { model.flipCamera() }
+        try await wait("照片前置", { camera.ready && model.currentPosition == .front }, camera)
+        camera.setFrontPhotoLandscapeEnabled(false)
+        // 复现用户路径：照片超广角 → 切回标准 → 视频前置 → 回照片。
+        model.selectFocalLength(wide)
+        try await wait("照片超广角", { camera.selectedLens == wide.id && !camera.capturing }, camera)
+        model.selectFocalLength(standard)
+        try await wait("照片标准", { camera.selectedLens == standard.id && !camera.capturing }, camera)
+        let photoZoom = await physicalZoom()
+        XCTAssertEqual(photoZoom, Double(standard.zoomFactor), accuracy: 0.01)
+
+        model.setCaptureKind(.video)
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "前置视频", timeout: 20)
+        let videoZoom = await physicalZoom()
+        XCTAssertEqual(camera.selectedLens, standard.id, "视频固定广角不能改写照片镜头选择")
+        XCTAssertEqual(videoZoom, Double(wide.zoomFactor), accuracy: 0.01, "视频前置实际硬件倍率应为超广角")
+
+        model.setCaptureKind(.photo)
+        try await wait("回照片", { camera.ready && model.captureKind == .photo && !camera.videoConfiguring }, camera)
+        let returnedZoom = await physicalZoom()
+        XCTAssertEqual(camera.selectedLens, standard.id)
+        XCTAssertEqual(returnedZoom, photoZoom, accuracy: 0.01, "回照片必须恢复进入视频前的取景倍率")
+        print("FRONT-VIDEO-MATRIX photoFraming photoZoom=\(photoZoom) videoZoom=\(videoZoom) returnedZoom=\(returnedZoom) selected=\(camera.selectedLens)")
+    }
+
+    @MainActor func testFrontVideoWideSurvivesForegroundResume() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        let camera = model.camera, audit = SessionRuntimeErrorAudit()
+        let idle = UIApplication.shared.isIdleTimerDisabled
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer { model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle; audit.finish() }
+        let wide = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide })
+        func physicalZoom() async -> Double {
+            await withCheckedContinuation { c in
+                camera.exposureColorState { state in c.resume(returning: Double(state?.physicalZoomFactor ?? 0)) }
+            }
+        }
+        model.setCameraActive(true)
+        try await wait("启动", { camera.ready }, camera)
+        model.setCaptureKind(.video)
+        if model.currentPosition != .front { model.flipCamera() }
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "恢复前视频前置", timeout: 20)
+        let beforeResume = await physicalZoom()
+        XCTAssertEqual(beforeResume, Double(wide.zoomFactor), accuracy: 0.01)
+
+        model.setCameraActive(false)
+        try await wait("停止", { !camera.ready }, camera)
+        try await Task.sleep(for: .milliseconds(400))
+        model.setCameraActive(true)
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "回前台视频前置", timeout: 20)
+        let afterResume = await physicalZoom()
+        XCTAssertEqual(afterResume, Double(wide.zoomFactor), accuracy: 0.01,
+                       "回前台后仍必须保持视频前置超广角")
+        XCTAssertEqual(model.captureKind, .video)
+        print("FRONT-VIDEO-MATRIX foregroundResumeWide=true")
+    }
     @MainActor func testTrackingDualStateTransitionsIncludingInsetAndExit() async throws {
         let model = try await FullDeviceRegressionFixture.makeFreshModel()
         let camera = model.camera, audit = SessionRuntimeErrorAudit()

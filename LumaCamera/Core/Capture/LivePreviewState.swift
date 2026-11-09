@@ -14,6 +14,8 @@ final class LivePreviewState {
         var hdr = false
         var videoColorSpace: VideoColorSpace?
         var videoFrameRate: Int?
+        /// 慢动作的采集帧率；与播放帧率分开，预览按30fps送显。
+        var videoCaptureFrameRate: Int?
         /// 仅照片路线使用新前置传感器的固定方向校正；视频沿用已有方向策略。
         var nativeFrontPhotoSensor = false
         /// 新前置人物居中格式的零旋转缓冲按原生传感器朝向交付，不能按宽高猜测再转90度。
@@ -115,12 +117,15 @@ final class LivePreviewState {
 }
 
 enum LivePreviewCadence {
-    static func minimumInterval(frameRate: Int?) -> Double {
-        let rate = min(120, max(1, frameRate ?? 30))
+    static func minimumInterval(frameRate: Int?, captureFrameRate: Int? = nil) -> Double {
+        // 慢动作采集120/240fps只用于成片时间拉伸，取景仍按30fps播放节奏送显。
+        if captureFrameRate != nil { return 1.0 / 30 }
+        // 普通视频低于60fps保持实际节奏；60fps及以上统一限制到60fps预览。
+        let rate = min(60, max(1, frameRate ?? 30))
         return 1.0 / Double(rate)
     }
 
-    static func accepts(time: Double, lastFrameTime: Double, frameRate: Int?) -> Bool {
-        time.isFinite && (time - lastFrameTime) >= minimumInterval(frameRate: frameRate) - 0.001
+    static func accepts(time: Double, lastFrameTime: Double, frameRate: Int?, captureFrameRate: Int? = nil) -> Bool {
+        time.isFinite && (time - lastFrameTime) >= minimumInterval(frameRate: frameRate, captureFrameRate: captureFrameRate) - 0.001
     }
 }

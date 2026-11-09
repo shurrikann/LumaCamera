@@ -266,7 +266,7 @@ extension CameraView {
 
     func toolbarIcon(_ icon: String, label: String, active: Bool = false, feedback: Bool = true, action: @escaping () -> Void) -> some View {
         Button {
-            if feedback { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+            if feedback { CameraHaptics.impact(.light) }
             action()
         } label: {
             Image(systemName: icon).rotatingCaptureContent().font(.system(size: 15, weight: .regular))
@@ -305,7 +305,7 @@ extension CameraView {
                 .accessibilityValue(model.virtualApertureText)
                 .accessibilityIdentifier("camera.virtualAperture.slider")
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                CameraHaptics.impact(.light)
                 model.virtualAperture = VirtualApertureRenderer.defaultValue
             } label: {
                 Text(model.virtualApertureText)
@@ -336,7 +336,7 @@ extension CameraView {
                 .accessibilityValue("\(Int(model.portraitBlurStrength * 100))%")
                 .accessibilityIdentifier("camera.portrait.depth.slider")
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                CameraHaptics.impact(.light)
                 model.portraitBlurStrength = 0.5
             } label: {
                 Text("\(Int((model.portraitBlurStrength * 100).rounded()))%")

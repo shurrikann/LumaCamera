@@ -139,4 +139,20 @@ final class SlowShutterHandheldTests:XCTestCase {
         }
         fullTimes.sort(); print("SLOW-ACCUMULATION-FULL n=12 source=4032x3024 previewMax=900 medianSeconds=\(fullTimes[6]) maxSeconds=\(fullTimes.last!) notFPS=true")
     }
+    func testMotionBlurAmplifiesMovingTrailAndKeepsStaticBackground() throws {
+        let motion = SlowShutterComposer(blend: .handheldAlignedMotionBlur, context: context, materializeFrames: true)
+        let average = SlowShutterComposer(blend: .handheldAlignedAverage, context: context, materializeFrames: true)
+        let reference = scene(0, water: false)
+        for index in 0..<8 { XCTAssertTrue(motion.add(scene(index, water: false))); average.add(scene(index, water: false)) }
+        let motionResult = try XCTUnwrap(motion.result), averageResult = try XCTUnwrap(average.result)
+        let motionTrail = error(motionResult, reference, rect: extent)
+        let averageTrail = error(averageResult, reference, rect: extent)
+        // 画面下方是静止纹理，不能被整体加亮或糊掉。
+        let motionBackground = error(motionResult, reference, rect: CGRect(x: 45, y: 130, width: 210, height: 65))
+        XCTAssertGreaterThan(motionTrail, averageTrail * 1.15, "动态模糊轨迹应比普通平均更明显")
+        XCTAssertLessThan(motionBackground, 0.01, "静止背景不能被整体加亮或糊掉")
+        XCTAssertFalse(motion.usedSingleFrameFallback)
+        print("SLOW-MOTION-TRAIL sources=8 trail=\(motionTrail) average=\(averageTrail) background=\(motionBackground) effective=\(motion.effectiveFrameCount)")
+    }
+
 }

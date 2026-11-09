@@ -103,12 +103,15 @@ final class VideoSpecificationTests: XCTestCase {
         XCTAssertEqual(VideoRatio.options(openGateEnabled: true), [.ratio4x3, .square])
         XCTAssertFalse(VideoRatio.aspectOptions.contains(.openGate))
 
-        for rate in [24, 25, 30, 50, 60, 120] {
+        for rate in [24, 25, 30, 50, 60] {
             let interval = LivePreviewCadence.minimumInterval(frameRate: rate)
             XCTAssertEqual(interval, 1.0 / Double(rate), accuracy: 0.000_001)
             XCTAssertFalse(LivePreviewCadence.accepts(time: 10 + interval - 0.002, lastFrameTime: 10, frameRate: rate))
             XCTAssertTrue(LivePreviewCadence.accepts(time: 10 + interval, lastFrameTime: 10, frameRate: rate))
         }
+        XCTAssertEqual(LivePreviewCadence.minimumInterval(frameRate: 120), 1.0 / 60, accuracy: 0.000_001)
+        XCTAssertEqual(LivePreviewCadence.minimumInterval(frameRate: 120, captureFrameRate: 120), 1.0 / 30, accuracy: 0.000_001)
+        XCTAssertEqual(LivePreviewCadence.minimumInterval(frameRate: 30, captureFrameRate: 240), 1.0 / 30, accuracy: 0.000_001)
         XCTAssertEqual(LivePreviewCadence.minimumInterval(frameRate: nil), 1.0 / 30, accuracy: 0.000_001)
         XCTAssertFalse(LivePreviewCadence.accepts(time: .infinity, lastFrameTime: 0, frameRate: 30))
     }

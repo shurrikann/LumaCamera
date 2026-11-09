@@ -51,6 +51,15 @@ final class DockKitTrackingController: ObservableObject {
         setTrackingEnabled(!trackingEnabled, reportFailure: true)
     }
 
+    func stopMonitoring() {
+        stateTask?.cancel()
+        stateTask = nil
+        if trackingEnabled { setTrackingEnabled(false) }
+        accessoryConnected = false
+        accessory = nil
+        pendingTrackingRequest = nil
+    }
+
     func stopTracking() {
         setTrackingEnabled(false)
     }
@@ -142,6 +151,7 @@ final class DockKitTrackingController: ObservableObject {
 
     func startMonitoring() {}
     func toggleTracking() {}
+    func stopMonitoring() { trackingEnabled = false; accessoryConnected = false }
     func stopTracking() { trackingEnabled = false }
     func selectSubject(at unitPoint: CGPoint) {}
     func setRegionOfInterest(_ unitRect: CGRect) {}

@@ -197,7 +197,9 @@ enum SlowShutterBlendMode: String, Equatable {
     case handheldAlignedLighten
     case average
     case handheldAlignedAverage
+    case handheldAlignedMotionBlur
     case subjectAlignedAverage
+    case subjectAlignedPanning
 }
 
 struct SlowShutterSequenceSpec: Equatable {
@@ -218,9 +220,9 @@ extension SlowShutterPreset {
         switch self {
         case .lightTrails: return .init(frameCount:96,totalDuration:10,blend:.handheldAlignedLighten,captureDuration:10,minimumFrames:8)
         case .silkyWater: return .init(frameCount:64,totalDuration:8,blend:.handheldAlignedAverage,captureDuration:8,minimumFrames:8)
-        case .motionBlur: return .init(frameCount:24,totalDuration:2,blend:.handheldAlignedAverage,captureDuration:2,minimumFrames:6)
+        case .motionBlur: return .init(frameCount:24,totalDuration:2,blend:.handheldAlignedMotionBlur,captureDuration:2,minimumFrames:6)
         case .starTrails: return .init(frameCount:512,totalDuration:120,blend:.lighten,captureDuration:120,minimumFrames:16)
-        case .panning: return .init(frameCount:8,totalDuration:1,blend:.subjectAlignedAverage,captureDuration:1,minimumFrames:3)
+        case .panning: return .init(frameCount:8,totalDuration:1,blend:.subjectAlignedPanning,captureDuration:1,minimumFrames:3)
         }
     }
 

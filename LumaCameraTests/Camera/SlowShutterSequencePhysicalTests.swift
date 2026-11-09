@@ -635,7 +635,9 @@ final class SlowShutterSequencePhysicalTests: XCTestCase {
         XCTAssertNotNil(photo.diagnostics?.parameters)
         let row = photo.diagnostics?.rows.first { $0.title == "慢门合成" }?.value
         XCTAssertEqual(photo.diagnostics?.parameters?.mode, mode == .auto ? "A" : "M")
-        if preset.sequenceSpec?.blend == .subjectAlignedAverage || preset.sequenceSpec?.blend == .handheldAlignedAverage || preset.sequenceSpec?.blend == .handheldAlignedLighten {
+        if preset.sequenceSpec?.blend == .subjectAlignedAverage || preset.sequenceSpec?.blend == .subjectAlignedPanning
+            || preset.sequenceSpec?.blend == .handheldAlignedAverage || preset.sequenceSpec?.blend == .handheldAlignedMotionBlur
+            || preset.sequenceSpec?.blend == .handheldAlignedLighten {
             let method = photo.diagnostics?.rows.first { $0.title == "合成方式" }?.value
             let rejected = Int(photo.diagnostics?.rows.first { $0.title == "对齐剔除" }?.value
                 .split(separator: " ").first ?? "0") ?? 0

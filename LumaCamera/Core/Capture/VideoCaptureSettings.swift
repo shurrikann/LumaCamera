@@ -152,16 +152,26 @@ struct VideoCaptureSettings: Equatable, Hashable {
                 && frameRateIsSupported
                 && (!requiringOpenGate || OpenGateCapability.supportsNativeVideoDimensions(width: Int(dimensions.width), height: Int(dimensions.height)))
         }
+        // 4:3/1:1 不能只靠“宽高都够”选择；1920×1080 也满足 1440×1080 的下限，
+        // 但它是16:9源，竖拍裁成4:3会损失大量横向视野。优先原生4:3/1:1格式。
+        let nativeAspectMatches = matches.filter { format in
+            guard !requiringOpenGate, ratio == .standard || ratio == .square else { return true }
+            let d = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+            let target = 4.0 / 3.0
+            let aspect = Double(max(d.width, d.height)) / Double(min(d.width, d.height))
+            return abs(aspect - target) <= 0.02
+        }
+        let candidates = nativeAspectMatches.isEmpty ? matches : nativeAspectMatches
         // Open Gate must use the largest native 4:3/1:1 readout, not the smallest
         // format that happens to satisfy the selected ordinary resolution.
         if requiringOpenGate {
-            return matches.max { a, b in
+            return candidates.max { a, b in
                 let da = CMVideoFormatDescriptionGetDimensions(a.formatDescription)
                 let db = CMVideoFormatDescriptionGetDimensions(b.formatDescription)
                 return Int(da.width) * Int(da.height) < Int(db.width) * Int(db.height)
             }
         }
-        return matches.min { a, b in
+        return candidates.min { a, b in
             let x = CMVideoFormatDescriptionGetDimensions(a.formatDescription)
             let y = CMVideoFormatDescriptionGetDimensions(b.formatDescription)
             let ax = Int64(x.width) * Int64(x.height), by = Int64(y.width) * Int64(y.height)

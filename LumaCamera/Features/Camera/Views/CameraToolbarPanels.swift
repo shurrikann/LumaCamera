@@ -98,7 +98,7 @@ extension CameraView {
                     .accessibilityIdentifier("camera.format.proTone")
                     .captureControlGeometry("format.proTone", model: model)
                     Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        CameraHaptics.impact(.light)
                         let reduceMotion = UIAccessibility.isReduceMotionEnabled
                         withAnimation(reduceMotion ? .linear(duration: 0.01) : .easeInOut(duration: 0.18)) {
                             model.setAdaptiveHighDynamic(!model.adaptiveHighDynamic)
@@ -142,7 +142,7 @@ extension CameraView {
                 HStack(spacing: 6) {
                     let hdrDisabled = camera.hdrPreviewConfiguring || model.isPreparingSubmode || model.burstModeEnabled || model.nightModeEnabled || model.portraitModeEnabled || (model.photoFormat != .heifPro && model.photoFormat != .heif) || model.border || (model.photoFormat == .heif && !model.hdr && !camera.supportsHEIFHDR)
                     Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        CameraHaptics.impact(.light)
                         let reduceMotion = UIAccessibility.isReduceMotionEnabled
                         withAnimation(reduceMotion ? .linear(duration: 0.01) : .easeInOut(duration: 0.18)) {
                             model.hdr.toggle()

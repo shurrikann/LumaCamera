@@ -19,11 +19,11 @@ final class SlowShutterSequenceTests: XCTestCase {
         let motion = SlowShutterPreset.motionBlur.sequenceSpec
         XCTAssertEqual(motion?.frameCount, 24)
         XCTAssertEqual(motion?.captureDuration, 2)
-        XCTAssertEqual(motion?.blend, .handheldAlignedAverage)
+        XCTAssertEqual(motion?.blend, .handheldAlignedMotionBlur)
         XCTAssertTrue(SlowShutterPreset.starTrails.usesStreamingComposition)
         XCTAssertTrue(SlowShutterPreset.motionBlur.usesStreamingComposition)
         XCTAssertTrue(SlowShutterPreset.lightTrails.usesStreamingComposition)
-        XCTAssertEqual(SlowShutterPreset.panning.sequenceSpec?.blend,.subjectAlignedAverage)
+        XCTAssertEqual(SlowShutterPreset.panning.sequenceSpec?.blend,.subjectAlignedPanning)
     }
 
     func testLightenKeepsBrightestChannels() throws {

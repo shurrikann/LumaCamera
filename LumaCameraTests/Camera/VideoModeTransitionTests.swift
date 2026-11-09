@@ -549,4 +549,27 @@ final class VideoModeTransitionTests: XCTestCase {
         print("VIDEO-RUNTIME-RETRY kind=\(model.captureKind) ready=\(camera.ready) message=\(camera.message ?? "nil")")
     }
 
+    @MainActor func testTwoSeparatedTransientVideoErrorsEachGetRetry() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
+        let audit = SessionRuntimeErrorAudit(), idle = UIApplication.shared.isIdleTimerDisabled
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer { model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle; audit.finish() }
+        model.setCameraActive(true)
+        for _ in 0..<300 { if camera.ready { break }; try await Task.sleep(for: .milliseconds(20)) }
+        model.setCaptureKind(.video)
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "两次瞬时错误起点", timeout: 20)
+        let error = NSError(domain: AVFoundationErrorDomain, code: -11819)
+        for attempt in 0..<2 {
+            camera.simulateRuntimeStopForTesting(error: error)
+            for _ in 0..<600 {
+                if camera.ready, !camera.recoveringSession, !camera.videoConfiguring { break }
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "瞬时错误恢复\(attempt)", timeout: 20)
+            XCTAssertEqual(model.captureKind, .video, "第\(attempt + 1)次独立瞬时错误不应退出视频: \(camera.message ?? "nil")")
+            XCTAssertNil(camera.message)
+        }
+        print("VIDEO-RUNTIME-RETRY separatedErrors=2 kind=\(model.captureKind)")
+    }
+
 }

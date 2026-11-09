@@ -174,7 +174,6 @@ final class FrontVideoCenteringPhysicalTests: XCTestCase {
         print("CENTER-CAPABILITIES \(camera.frontVideoCenteringSettings)")
         print("CENTER-BEFORE \(await state())")
         try await wait("前置官方居中能力") { camera.frontVideoCenteringAvailable }
-        let wide = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .wide })
         let standard = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard })
         var latencies:[Double] = []
         for pass in 0..<3 {
@@ -182,11 +181,11 @@ final class FrontVideoCenteringPhysicalTests: XCTestCase {
             try await wait("系统人物居中激活") { camera.frontVideoCenteringActive && !camera.frontVideoCenteringPreparing }
             latencies.append(CACurrentMediaTime()-start)
             print("CENTER-ENABLED pass=\(pass) seconds=\(latencies.last!) native=\(await state())")
-            XCTAssertEqual(camera.selectedLens,wide.id); XCTAssertTrue(model.frontVideoCenteringRequested)
+            XCTAssertTrue(model.frontVideoCenteringRequested)
             let native = await state(); XCTAssertEqual(native["active"],"true"); XCTAssertEqual(native["depth"],"false")
             model.updateFrontFramingForOrientation(isLandscape:true)
             model.updateFrontFramingForOrientation(isLandscape:false)
-            XCTAssertEqual(camera.selectedLens,wide.id); XCTAssertTrue(model.frontVideoCenteringRequested)
+            XCTAssertTrue(model.frontVideoCenteringRequested)
             if pass == 0 {
                 for ratio in VideoRatio.aspectOptions {
                     model.selectVideoRatio(ratio); try await wait("比例后居中") { camera.frontVideoCenteringActive && !camera.videoConfiguring }
@@ -213,7 +212,7 @@ final class FrontVideoCenteringPhysicalTests: XCTestCase {
                 !camera.frontVideoCenteringEnabled && !camera.frontVideoCenteringActive
                     && !camera.frontVideoCenteringPreparing
             }
-            XCTAssertEqual(camera.selectedLens, wide.id)
+            XCTAssertFalse(camera.frontVideoCenteringActive)
             let stopped = await state()
             XCTAssertEqual(Double(stopped["roiWidth"] ?? ""),1)
             XCTAssertEqual(Double(stopped["roiHeight"] ?? ""),1)

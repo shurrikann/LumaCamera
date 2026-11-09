@@ -86,7 +86,7 @@ extension CameraView {
                         Slider(value: Binding(get: { model.ev }, set: { model.updateAutomaticEVFromSlider($0) }), in: model.exposureCompensationRange)
                             .tint(AppTheme.accent).disabled(!camera.ready || camera.demo).accessibilityLabel("自动曝光补偿")
                     }
-                    Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); model.ev = 0; model.applyExposure() } label: {
+                    Button { CameraHaptics.impact(.light); model.ev = 0; model.applyExposure() } label: {
                         Text("A").rotatingCaptureContent().font(.system(size: 15, weight: .semibold)).foregroundStyle(AppTheme.accent)
                             .frame(width: 30, height: 30).background(AppTheme.accent.opacity(0.08), in: Circle())
                     }.accessibilityLabel("重置曝光补偿")
@@ -95,7 +95,7 @@ extension CameraView {
                 HStack(spacing: 4) {
                     ForEach(model.displayedManualParameters, id: \.self) { item in
                         Button {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            CameraHaptics.impact(.light)
                             model.openParameter(item)
                         } label: {
                             Image(systemName: model.parameterIcon(item)).rotatingCaptureContent().font(.system(size: 17, weight: .regular))
@@ -260,7 +260,7 @@ extension CameraView {
 
     private func shootingModeButton(diameter: CGFloat) -> some View {
         Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            CameraHaptics.impact(.light)
             model.openShootingModes()
         } label: {
             ShootingModeButtonSymbol(symbol: model.shootingModeButtonSymbol)
@@ -362,7 +362,7 @@ extension CameraView {
     private func captureButtonRow(size: CGFloat) -> some View {
         let recording = model.captureKind == .video && camera.videoRecording
         return HStack(spacing: 0) {
-            Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); model.openLibrary() } label: {
+            Button { CameraHaptics.impact(.light); model.openLibrary() } label: {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06))
                     // Only media rotates; the circular hit target and progress stay fixed.
@@ -399,10 +399,10 @@ extension CameraView {
             bottomButton(model.captureKind == .video ? "video.fill" : "camera.fill",
                          label: model.captureKind == .video ? "切换到照片模式" : "切换到视频模式",
                          size: size, iconSize: 20) {
-                model.setCaptureKind(model.captureKind == .video ? .photo : .video)
+                model.requestCaptureKind(model.captureKind == .video ? .photo : .video)
             }.captureControlGeometry("functions", model: model)
-                .disabled(camera.capturing || camera.videoBusy || library.videoSaving
-                    || ((model.isPreparingSubmode || model.captureKindSwitching) && model.videoSubmodePreparing != .cinematic))
+                // 配置/子模式准备/快速切换期间点击也要立即反馈，必要时由模型排队执行。
+                .disabled(camera.capturing || library.videoSaving)
                 .recordingHidden(recording)
             Spacer(minLength: 0)
             Group {
@@ -418,7 +418,7 @@ extension CameraView {
                         .accessibilityAction { model.takePhoto() }
                 } else {
                     Button {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        CameraHaptics.impact(.medium)
                         if model.captureKind == .video { model.toggleVideoRecording() } else { model.takePhoto() }
                     } label: { captureShutterFace }
                         // 序列进行中再次点按是提前结束，不应被单帧原生捕获的忙碌状态阻挡。
@@ -433,7 +433,7 @@ extension CameraView {
             .captureControlGeometry("shutter", model: model)
             Spacer(minLength: 0)
             let showsStyle = model.filtersEnabled || model.hdr || model.captureKind == .video
-            Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); model.togglePanel(.film) } label: {
+            Button { CameraHaptics.impact(.light); model.togglePanel(.film) } label: {
                 let isLog = model.logVideoLUTControlsEnabled
                 CameraFilterButtonLabel(
                     title: isLog ? (model.selectedLogLUTPreset?.title ?? "Log LUT")
@@ -452,7 +452,7 @@ extension CameraView {
                 .recordingHidden(recording)
             Spacer(minLength: 0)
             Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                CameraHaptics.impact(.light)
                 if !UIAccessibility.isReduceMotionEnabled {
                     withAnimation(.easeInOut(duration: 0.32)) { flipButtonRotation += 180 }
                 } else {
@@ -526,7 +526,7 @@ extension CameraView {
 
     func bottomButton(_ icon: String, label: String, active: Bool = false, size: CGFloat = 52, dimmed: Bool = false, iconSize: CGFloat? = nil, action: @escaping () -> Void) -> some View {
         Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            CameraHaptics.impact(.light)
             action()
         } label: {
             Image(systemName: icon).rotatingCaptureContent().font(.system(size: iconSize ?? (size >= 50 ? 23 : 21)))

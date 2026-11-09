@@ -21,6 +21,9 @@ final class SlowShutterComposer: @unchecked Sendable {
     private var globalAlignment: SlowShutterGlobalAlignment?
     private var bestSingleFrame: CIImage?
     private var bestSharpness = -Double.infinity
+    private var sharpReference: CIImage?
+    private var subjectShiftSum = CGVector.zero
+    private var subjectShiftSamples = 0
     private(set) var usedSingleFrameFallback = false
     private(set) var rejectedFrameCount = 0
     private var acceptedFrameCount = 0
@@ -30,8 +33,13 @@ final class SlowShutterComposer: @unchecked Sendable {
         self.blend = blend
         self.context = context
         self.materializeFrames = materializeFrames
-        if blend == .subjectAlignedAverage { subjectAlignment = SlowShutterSubjectAlignment(context:context) }
-        if blend == .handheldAlignedAverage || blend == .handheldAlignedLighten { globalAlignment = SlowShutterGlobalAlignment(context: context) }
+        if blend == .subjectAlignedAverage || blend == .subjectAlignedPanning {
+            subjectAlignment = SlowShutterSubjectAlignment(context:context)
+        }
+        if blend == .handheldAlignedAverage || blend == .handheldAlignedMotionBlur
+            || blend == .handheldAlignedLighten {
+            globalAlignment = SlowShutterGlobalAlignment(context: context)
+        }
     }
 
     var frameCount: Int { count }
@@ -40,7 +48,68 @@ final class SlowShutterComposer: @unchecked Sendable {
         if usedSingleFrameFallback && count > 0 { return 1 }
         return subjectAlignment != nil || globalAlignment != nil ? acceptedFrameCount : count
     }
-    var result: CIImage? { usedSingleFrameFallback ? bestSingleFrame : accumulator }
+    var result: CIImage? {
+        if usedSingleFrameFallback { return bestSingleFrame }
+        guard let accumulator else { return nil }
+        guard count >= 2, let sharpReference else { return accumulator }
+        switch blend {
+        case .handheldAlignedMotionBlur:
+            return motionTrail(reference: sharpReference, average: accumulator)
+        case .subjectAlignedPanning:
+            return panningFrame(reference: sharpReference, average: accumulator)
+        default:
+            return accumulator
+        }
+    }
+
+    /// 动态模糊：背景保持参考帧清晰，把相对背景的时间差异放大成可见轨迹。
+    private func motionTrail(reference: CIImage, average: CIImage) -> CIImage? {
+        let extent = reference.extent
+        guard let difference = CIFilter(name: "CIDifferenceBlendMode", parameters: [
+            kCIInputImageKey: average,
+            kCIInputBackgroundImageKey: reference
+        ])?.outputImage else { return average }
+        let gain = 2.8
+        let boosted = difference.applyingFilter("CIColorMatrix", parameters: [
+            "inputRVector": CIVector(x: gain, y: 0, z: 0, w: 0),
+            "inputGVector": CIVector(x: 0, y: gain, z: 0, w: 0),
+            "inputBVector": CIVector(x: 0, y: 0, z: gain, w: 0),
+            "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+        ])
+        return CIFilter(name: "CILinearDodgeBlendMode", parameters: [
+            kCIInputImageKey: boosted,
+            kCIInputBackgroundImageKey: reference
+        ])?.outputImage?.cropped(to: extent) ?? average
+    }
+
+    /// 摇拍：主体参考帧保持清晰，背景按主体补偿位移方向做运动模糊，再以中央羽化蒙版融合。
+    private func panningFrame(reference: CIImage, average: CIImage) -> CIImage? {
+        let extent = reference.extent
+        let samples = max(1, subjectShiftSamples)
+        let shift = CGVector(dx: subjectShiftSum.dx / CGFloat(samples),
+                             dy: subjectShiftSum.dy / CGFloat(samples))
+        let magnitude = hypot(shift.dx, shift.dy)
+        var background = average
+        if magnitude > 2 {
+            background = average.applyingFilter("CIMotionBlur", parameters: [
+                kCIInputRadiusKey: min(48, max(6, magnitude * 1.8)),
+                kCIInputAngleKey: atan2(shift.dy, shift.dx)
+            ])
+        }
+        let shortSide = min(extent.width, extent.height)
+        guard shortSide > 0, let mask = CIFilter(name: "CIRadialGradient", parameters: [
+            "inputCenter": CIVector(x: extent.midX, y: extent.midY),
+            "inputRadius0": shortSide * 0.24,
+            "inputRadius1": shortSide * 0.42,
+            "inputColor0": CIColor.white,
+            "inputColor1": CIColor.black
+        ])?.outputImage else { return background }
+        return CIFilter(name: "CIBlendWithMask", parameters: [
+            kCIInputImageKey: reference,
+            kCIInputBackgroundImageKey: background,
+            kCIInputMaskImageKey: mask
+        ])?.outputImage?.cropped(to: extent) ?? background
+    }
 
     /// 仅渲染当前真实累积结果的小图；与add在同一串行队列调用，不重新融合或编码照片。
     func renderPreview(look:CaptureLook,maximumDimension:CGFloat = 900)->UIImage? {
@@ -73,13 +142,16 @@ final class SlowShutterComposer: @unchecked Sendable {
             image = result.image
             if acceptedFrameCount == 0 {
                 guard let stored = checkpoint(image) else { return false }
-                accumulator = stored; count += 1; acceptedFrameCount = 1; usedSingleFrameFallback = true
+                accumulator = stored
+                if blend == .handheldAlignedMotionBlur || blend == .subjectAlignedPanning { sharpReference = stored }
+                count += 1; acceptedFrameCount = 1; usedSingleFrameFallback = true
                 return true
             }
         }
         guard let current = accumulator else {
             guard let stored = checkpoint(image) else { return false }
             accumulator = stored
+            if blend == .handheldAlignedMotionBlur || blend == .subjectAlignedPanning { sharpReference = stored }
             count = 1
             acceptedFrameCount = 1
             return true
@@ -99,7 +171,8 @@ final class SlowShutterComposer: @unchecked Sendable {
                 kCIInputImageKey: image,
                 kCIInputBackgroundImageKey: current
             ])?.outputImage ?? current
-        case .average, .subjectAlignedAverage, .handheldAlignedAverage:
+        case .average, .subjectAlignedAverage, .subjectAlignedPanning,
+             .handheldAlignedAverage, .handheldAlignedMotionBlur:
             let blendedCount = alignment != nil ? acceptedFrameCount : count
             let newWeight = 1.0 / Double(blendedCount + 1)
             // 用标量权重在工作色彩空间插值；同时缩放 RGB 和 alpha 会重复预乘、逐帧变暗。
@@ -113,6 +186,11 @@ final class SlowShutterComposer: @unchecked Sendable {
         guard let stored = checkpoint(combined.cropped(to: extent)) else { return false }
         count += 1
         acceptedFrameCount += 1
+        if blend == .subjectAlignedPanning, let subjectAlignment {
+            subjectShiftSum.dx += subjectAlignment.lastShift.dx
+            subjectShiftSum.dy += subjectAlignment.lastShift.dy
+            subjectShiftSamples += 1
+        }
         usedSingleFrameFallback = false
         // 已有两张有效融合后不会再回退单帧，无需长期多持有一张全分辨率检查点。
         bestSingleFrame = nil
