@@ -1549,7 +1549,7 @@ final class CameraViewModel: ObservableObject {
         didSet { reconcileNightMode() }
     }
     var livePhotoAvailable: Bool {
-        !slowShutterEnabled && !portraitModeEnabled && !nightModeEnabled && !burstModeEnabled && !virtualApertureEnabled && !hdr && !smartCaptureEnabled && (photoFormat == .jpeg || photoFormat == .heif) && photoResolution == .standard && camera.supportsLivePhoto
+        !slowShutterEnabled && !portraitModeEnabled && !nightModeEnabled && !burstModeEnabled && !virtualApertureEnabled && !hdr && (photoFormat == .jpeg || photoFormat == .heif) && photoResolution == .standard && camera.supportsLivePhoto
     }
     var canToggleLivePhoto: Bool {
         // 关闭始终允许；开启还必须满足当前格式/分辨率/HDR/模式与硬件能力。
@@ -1735,13 +1735,12 @@ final class CameraViewModel: ObservableObject {
         return nil
     }
 
-    /// 仅展示真正启用的子模块；规格适配尚未完成或智拍占位点击不伪装成已开启。
+    /// 仅展示真正启用的子模块；规格适配尚未完成时不伪装成已开启。
     var shootingModeButtonSymbol: String {
         // Photo entry is a camera by default, then follows the selected
         // submodule's semantic icon; the popup options keep those icons too.
         if captureKind == .photo {
             if virtualApertureEnabled { return "camera.aperture" }
-            if smartCaptureEnabled { return "sparkles" }
             return activePhotoSubmode?.symbol ?? "camera.fill"
         }
         if camera.dualCaptureEnabled { return "rectangle.on.rectangle" }
@@ -1753,7 +1752,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     var shootingSubmodeEnabled: Bool {
-        captureKind == .photo ? (virtualApertureEnabled || smartCaptureEnabled || activePhotoSubmode != nil)
+        captureKind == .photo ? (virtualApertureEnabled || activePhotoSubmode != nil)
             : camera.dualCaptureEnabled || virtualApertureEnabled || timeLapseEnabled || slowMotionEnabled || cinematicVideoEnabled
     }
 
@@ -1931,10 +1930,6 @@ final class CameraViewModel: ObservableObject {
     }
 
     private func togglePhotoSubmode(_ requested: PhotoSubmode) {
-        if smartCaptureEnabled {
-            smartCaptureEnabled = false
-            stopSmartCaptureAnalysis()
-        }
         adaptiveHighDynamic = false
         if virtualApertureEnabled { virtualApertureEnabled = false; updateLook() }
         if activePhotoSubmode == requested {
@@ -1992,9 +1987,6 @@ final class CameraViewModel: ObservableObject {
     private func activatePreparedPhotoSubmode(_ mode: PhotoSubmode) {
         if mode == .portrait { preparePortraitPreviewTransition() }
         setPhotoSubmode(mode, enabled: true)
-        if mode == .portrait, smartPortraitPendingRequest == photoSubmodeRequest {
-            portraitAutoEnabledBySmartCapture = true; smartPortraitPendingRequest = nil
-        }
     }
 
     private func setPhotoSubmode(_ mode: PhotoSubmode, enabled: Bool) {
@@ -2086,488 +2078,6 @@ final class CameraViewModel: ObservableObject {
         }
     }
 
-    func showSmartCaptureStatus() {
-        toggleSmartCaptureMode()
-    }
-
-    #if DEBUG
-    func setSmartCaptureForTesting(_ enabled: Bool) {
-        guard smartCaptureEnabled != enabled else { return }
-        toggleSmartCaptureMode()
-    }
-    #endif
-
-    @Published private(set) var smartCaptureEnabled = false
-    @Published private(set) var smartSuggestion: SmartCaptureSuggestion?
-    @Published private(set) var smartCompositionGuide: SmartCompositionGuide?
-    @Published private(set) var smartCompositionCandidates:[SmartCompositionGuide] = []
-    private let smartSubjectTracker = SmartSubjectTracker() // 只在smartCaptureQueue访问。
-    private var smartTrackingEpoch = UUID()
-    @Published private(set) var smartFramingRecommendation: SmartFramingRecommendation?
-    @Published private(set) var smartFramingInProgress = false
-    @Published private(set) var smartFramingComplete = false
-    @Published private(set) var smartFramingFeedbackVisible = false
-    @Published private(set) var smartAlignmentLatched = false
-    private var smartFramingFeedbackTask: Task<Void,Never>?
-    private var smartAutoFramingGate = SmartAutoFramingGate()
-    private var smartFramingWork: SmartFramingWork?
-    private var smartFramingTask: Task<Void,Never>?
-    private var smartPortraitPendingRequest: UUID?
-    private var smartRecommendationRangePolicy = SmartRecommendationRangePolicy()
-    private var smartRecommendationRangeAllowed = true
-    #if DEBUG
-    var smartAnalysisOverrideForTesting = false
-    var smartFramingEvaluatorForTesting: ((UIImage,SmartCompositionGuide,CGFloat,ClosedRange<CGFloat>,SmartFramingWork)->SmartFramingEvaluator.Evaluation)?
-    private(set) var smartAutoFramingCountForTesting = 0
-    struct SmartTrackingSample {
-        let publishedAt: Double
-        let requestToPublication: Double
-        let processingSeconds: Double
-        let detectedScene: Bool
-        let verifiedCandidates: Int
-        let displayedCandidates: Int
-        let retainedCandidates: Int
-        let recommendationsAllowed: Bool
-        let objectTrackedCandidates: Int
-        let appearanceVerifiedCandidates: Int
-    }
-    private(set) var smartTrackingSamplesForTesting: [SmartTrackingSample] = []
-    func resetSmartTrackingSamplesForTesting() { smartTrackingSamplesForTesting.removeAll(keepingCapacity: true) }
-    func injectSmartCompositionForTesting(_ guide:SmartCompositionGuide?) {
-        smartRecommendationRangeAllowed = true // 注入测试明确绕过实景范围判断。
-        smartCompositionGuide = guide; updateSmartFraming(for:guide)
-    }
-    func injectSmartCandidatesForTesting(_ candidates:[SmartCompositionGuide]) {
-        smartRecommendationRangeAllowed = true
-        let selected = SmartSubjectTracker.selectedID(candidates:candidates,previous:smartCompositionGuide?.subjectID,
-            retained:Set(candidates.compactMap(\.subjectID)))
-        publishSmartComposition(candidates.first { $0.subjectID == selected },candidates:candidates)
-    }
-    func injectSmartTrackingForTesting(_ result:SmartSubjectTracker.Result,bypassRangePolicy:Bool = true) {
-        if bypassRangePolicy { smartRecommendationRangeAllowed = true }
-        publishSmartComposition(result.selected,candidates:result.candidates)
-    }
-    func injectSmartRangeForTesting(_ readings:CameraReadings?,macro:Bool) {
-        applySmartRecommendationRange(readings,macro:macro)
-    }
-    var smartPortraitAutoForTesting:Bool { portraitAutoEnabledBySmartCapture }
-    func injectSmartSuggestionForTesting(_ suggestion:SmartCaptureSuggestion) { smartSuggestion = presentedSmartSuggestion(suggestion) }
-    #endif
-    private var smartCaptureTask: Task<Void, Never>?
-    private var smartCaptureGeneration = UUID()
-    private var smartSuggestionPausedUntil: CFAbsoluteTime = 0
-    private var smartAnalysisInFlight = false
-    private var portraitAutoEnabledBySmartCapture = false
-    private var smartPortraitMissingChecks = 0
-    private var smartCurrentSceneSignature: String?
-    private var suppressedSmartSuggestionSignature: String?
-    private var suppressedSuggestionMissingChecks = 0
-    private var smartCompositionStabilizer = SmartCompositionStabilizer()
-    private var smartSubjectContinuity = SmartSubjectContinuity()
-    private let smartCaptureQueue = DispatchQueue(label: "camera.smart-capture", qos: .userInitiated)
-    // 仅在smartCaptureQueue访问；低频场景检测不阻塞每次跟踪都重复跑显著性/人脸。
-    private let smartSceneAnalysisState = SmartSceneAnalysisState()
-    private var smartAIAdvisoryTask: Task<Void,Never>?
-    private var smartAIAdvisoryBatch = ""
-
-    func toggleSmartCaptureMode() {
-        guard captureKind == .photo, camera.ready, !camera.capturing, !camera.videoBusy,
-              photoSubmodePreparing == nil, videoSubmodePreparing == nil else { return }
-        cameraSelectionFeedback()
-        if !smartCaptureEnabled {
-            // 智拍与手动预设互斥：先退出当前预设，再进入智拍。
-            if virtualApertureEnabled { toggleVirtualAperture() }
-            if let active = activePhotoSubmode { togglePhotoSubmode(active) }
-            adaptiveHighDynamic = false
-            // 智拍自动构图期间禁止 Live Photo；进入智拍时主动关闭并断开 Live 音频/预览。
-            if livePhotoEnabled {
-                livePhotoEnabled = false
-                synchronizeLiveAudio()
-            }
-            smartCaptureEnabled = true
-            startSmartCaptureAnalysis()
-        } else {
-            smartCaptureEnabled = false
-            stopSmartCaptureAnalysis()
-        }
-    }
-
-    /// 状态快照用于丢弃页面、格式、镜头或倍率变化前启动的异步结果。
-    private var smartContext: String {
-        "\(mode)|\(currentPosition)|\(ratio)|\(photoFormat)|\(photoResolution)|\(hdr)|\(camera.selectedLens)|\(camera.currentZoom)|\(previewQuarterTurns)|\(effectiveCaptureLook.landscape)"
-    }
-    private var smartCaptureAnalysisAllowed: Bool {
-        let autoPortrait = portraitAutoEnabledBySmartCapture && portraitModeEnabled && activePhotoSubmode == .portrait
-        return smartCaptureEnabled && cameraActiveRequested && captureKind == .photo && !review && !settings
-            && !camera.capturing && !camera.videoBusy && !popupVisible && toolbarPanel == nil && panel == nil
-            && camera.ready && !camera.highResolutionPhotoConfiguring && !camera.shutterBusy && !isPreparingSubmode && !virtualApertureEnabled && (activePhotoSubmode == nil || autoPortrait)
-    }
-    private var smartAutomaticAllowed: Bool {
-        smartCaptureAnalysisAllowed && activePhotoSubmode == nil && smartRecommendationRangeAllowed
-            && !camera.targetLockActive && !zoomDialVisible && previewPinchOrigin == nil
-    }
-    private func interruptSmartFraming() {
-        smartAlignmentLatched = false
-        smartAIAdvisoryTask?.cancel(); smartAIAdvisoryTask = nil; smartAIAdvisoryBatch = ""
-        smartFramingFeedbackTask?.cancel(); smartFramingFeedbackTask = nil; smartFramingFeedbackVisible = false
-        smartFramingWork?.cancel(); smartFramingWork = nil
-        smartFramingTask?.cancel(); smartFramingTask = nil
-        smartFramingInProgress = false; smartFramingRecommendation = nil
-        smartAutoFramingGate.interrupt()
-    }
-    private func rearmSmartAfterPhoto() {
-        guard smartCaptureEnabled else { return }
-        interruptSmartFraming(); smartAutoFramingGate.reset(); smartFramingComplete = false
-        // 保留仍有效的点位；不清空缩略图或重建画面，同场景下一张也能重新对齐。
-    }
-    private func refreshSmartRecommendationRange() {
-        applySmartRecommendationRange(camera.readings,macro:camera.macroActive)
-    }
-    private func applySmartRecommendationRange(_ readings:CameraReadings?,macro:Bool) {
-        let allowed = smartRecommendationRangePolicy.update(position:readings?.recommendationFocusPosition,
-            adjusting:readings?.adjustingFocus ?? true,macro:macro,
-            deviceID:readings?.recommendationFocusDeviceID,sampleTime:readings?.sampleHostTime)
-        guard allowed != smartRecommendationRangeAllowed else { return }
-        smartRecommendationRangeAllowed = allowed
-        interruptSmartFraming(); smartAutoFramingGate.reset(); smartFramingComplete = false
-        smartCompositionGuide = nil; smartCompositionCandidates = []; smartCompositionStabilizer.reset()
-        smartTrackingEpoch = UUID()
-        if !allowed { camera.endSmartFocusHold() } // 归还既有AF，避免保持在旧近焦点而不能恢复中远景判断。
-    }
-    var smartDisplayedCompositionGuide: SmartCompositionGuide? { smartCompositionGuide ?? smartCompositionCandidates.first }
-    private func requestSmartAIAdvice(image:CGImage,candidates:[SmartCompositionGuide],trackingContext:String,
-                                      context:String,generation:UUID) {
-        guard !smartFramingInProgress, !smartFramingComplete, !candidates.isEmpty else { return }
-        let batch = trackingContext + candidates.compactMap(\.subjectID).map(\.uuidString).sorted().joined()
-        guard batch != smartAIAdvisoryBatch else { return }
-        smartAIAdvisoryTask?.cancel(); smartAIAdvisoryBatch = batch
-        let started = CACurrentMediaTime(), tracker = smartSubjectTracker
-        smartAIAdvisoryTask = Task { @MainActor [weak self] in
-            let advice = await SmartLocalCompositionAI.shared.advise(image:image,candidates:candidates)
-            guard !Task.isCancelled, let self, let advice, CACurrentMediaTime()-started <= 3,
-                  self.smartCaptureGeneration == generation, self.smartContext == context,
-                  self.smartAIAdvisoryBatch == batch, self.smartCaptureAnalysisAllowed,
-                  !self.smartFramingInProgress, !self.smartFramingComplete else { return }
-            self.smartCaptureQueue.async { tracker.applyAdvice(advice,context:trackingContext) }
-        }
-    }
-    private func updateSmartFraming(for guide: SmartCompositionGuide?) {
-        guard smartAutomaticAllowed else { interruptSmartFraming(); return }
-        guard !smartFramingInProgress else { return }
-        if guide == nil || (guide?.trackingVerified == true && (guide?.alignmentDistance ?? 0) > SmartCompositionGuide.alignmentRadius * 1.6) {
-            smartAlignmentLatched = false
-        }
-        let shouldFrame = smartAutoFramingGate.update(guide,at:CACurrentMediaTime())
-        if smartAutoFramingGate.alignmentConfirmed { smartAlignmentLatched = true }
-        let wasComplete = smartFramingComplete
-        smartFramingComplete = smartAutoFramingGate.completed
-        if wasComplete, !smartFramingComplete {
-            smartFramingFeedbackTask?.cancel(); smartFramingFeedbackTask = nil
-            smartFramingFeedbackVisible = false
-        }
-        guard shouldFrame, let guide, let source = camera.preview else { return }
-        let work = SmartFramingWork(), context = smartContext, generation = smartCaptureGeneration
-        let zoom = camera.currentZoom
-        let range:ClosedRange<CGFloat> = photoResolution == .high ? zoom...zoom : zoomRange
-        let look = effectiveCaptureLook, aspect = look.landscape ? 1/look.ratio.portraitRatio : look.ratio.portraitRatio
-        smartFramingWork = work; smartFramingInProgress = true
-        #if DEBUG
-        let override = smartFramingEvaluatorForTesting
-        #endif
-        smartCaptureQueue.async { [weak self] in
-            guard !work.isCancelled else { return }
-            guard let image = SmartCaptureAnalyzer.visibleImage(source,aspect:aspect) else {
-                DispatchQueue.main.async { if self?.smartFramingWork === work { self?.interruptSmartFraming() } }; return
-            }
-            let result:SmartFramingEvaluator.Evaluation
-            #if DEBUG
-            if let override { result = override(image,guide,zoom,range,work) }
-            else { result = SmartFramingEvaluator.evaluate(image:image,guide:guide,currentZoom:zoom,range:range,work:work) }
-            #else
-            result = SmartFramingEvaluator.evaluate(image:image,guide:guide,currentZoom:zoom,range:range,work:work)
-            #endif
-            DispatchQueue.main.async {
-                guard let self, !work.isCancelled, self.smartFramingWork === work else { return }
-                guard self.smartCaptureGeneration == generation, self.smartContext == context, self.smartAutomaticAllowed else {
-                    self.interruptSmartFraming(); return
-                }
-                self.finishAutomaticSmartFraming(result,guide:guide,work:work,generation:generation)
-            }
-        }
-    }
-    private func publishSmartComposition(_ guide:SmartCompositionGuide?,candidates:[SmartCompositionGuide]) {
-        guard smartRecommendationRangeAllowed else { return }
-        let now = CACurrentMediaTime()
-        // 先做主体身份迟滞，再做提示阶段迟滞；新主体不能靠单帧胜出替换白点。
-        let stable = smartSubjectContinuity.update(guide, at: now)
-        if let next = stable?.subjectID, let previous = smartCompositionGuide?.subjectID, previous != next {
-            smartAlignmentLatched = false
-            smartCompositionStabilizer.reset()
-            if smartFramingComplete, candidates.contains(where: { $0.subjectID == previous }) {
-                // 同一批中对齐另一个候选是新一轮；自身变焦重新提名后旧UUID不在本批，不重复触发。
-                smartAutoFramingGate.reset(); smartFramingComplete = false
-                smartFramingFeedbackTask?.cancel(); smartFramingFeedbackTask = nil; smartFramingFeedbackVisible = false
-            } else { smartAutoFramingGate.interrupt() }
-        }
-        smartCompositionCandidates = activePhotoSubmode == nil ? candidates : []
-        smartCompositionGuide = activePhotoSubmode == nil
-            ? smartCompositionStabilizer.update(stable, at: now) : nil
-        // 未对齐阶段不额外发起AF扫描；对齐后的单次对焦继续由finishAutomaticSmartFraming提交。
-        updateSmartFraming(for: stable == nil ? nil : smartCompositionGuide)
-    }
-    private func finishAutomaticSmartFraming(_ result:SmartFramingEvaluator.Evaluation,guide:SmartCompositionGuide,work:SmartFramingWork,generation:UUID) {
-        // 没有可评分裁切也要完成主体对焦和反馈；只有可靠评分才允许改变倍率。
-        let recommendation = result.scores.isEmpty ? nil : result.recommendation
-        let targetZoom = recommendation?.zoom ?? camera.currentZoom
-        let focusTarget = SmartFramingRecommendation.focusPoint(for:guide,from:camera.currentZoom,to:targetZoom)
-        let position = currentPosition, format = photoFormat, resolution = photoResolution, frameRatio = ratio, captureMode = mode
-        if let recommendation {
-            smartFramingRecommendation = recommendation
-            camera.setContinuousZoom(recommendation.zoom,smooth:true)
-        }
-        #if DEBUG
-        smartAutoFramingCountForTesting += 1
-        #endif
-        smartFramingTask = Task { @MainActor [weak self] in
-            guard let self else { return }
-            // 等官方变焦爬坡真正结束，再对焦到主体在新视野中的投影位置；不依据界面提前显示的倍率。
-            try? await Task.sleep(for:.milliseconds(220))
-            for _ in 0..<25 {
-                guard !Task.isCancelled, !work.isCancelled, self.smartCaptureGeneration == generation,
-                      self.smartAutomaticAllowed, self.currentPosition == position, self.photoFormat == format,
-                      self.photoResolution == resolution, self.ratio == frameRatio, self.mode == captureMode,
-                      abs(self.camera.currentZoom-targetZoom) < 0.04 else { self.interruptSmartFraming(); return }
-                let settled:Bool = await withCheckedContinuation { continuation in self.camera.smartZoomSettled { continuation.resume(returning:$0) } }
-                if settled {
-                    // 用户授权M挡智拍也自动取景/对焦；只释放手动焦点，不重写曝光或白平衡。
-                    self.manualFocus = false
-                    self.camera.focus(at:focusTarget,smartSingleShot:true)
-                    self.smartAutoFramingGate.finish() // 只封住当前对齐轮；拍完照即开启下一轮。
-                    self.smartFramingComplete = true; self.smartFramingFeedbackVisible = true; self.smartFramingInProgress = false
-                    // 完成勾选短暂出现后消失，让用户看清最终取景再手动拍照。
-                    self.smartFramingFeedbackTask?.cancel()
-                    self.smartFramingFeedbackTask = Task { @MainActor [weak self] in
-                        try? await Task.sleep(for:.milliseconds(250))
-                        guard !Task.isCancelled, let self, self.smartCaptureGeneration == generation else { return }
-                        self.smartFramingFeedbackVisible = false; self.smartFramingFeedbackTask = nil
-                    }
-                    self.smartFramingRecommendation = nil; self.smartFramingWork = nil; self.smartFramingTask = nil
-                    return
-                }
-                try? await Task.sleep(for:.milliseconds(80))
-            }
-            self.interruptSmartFraming()
-        }
-    }
-
-    private func presentedSmartSuggestion(_ suggestion:SmartCaptureSuggestion?) -> SmartCaptureSuggestion? {
-        SmartCaptureSuggestionPolicy.presented(suggestion,format:photoFormat,resolution:photoResolution,available:Set(camera.availablePhotoFormats))
-    }
-
-    func applySmartSuggestion() {
-        guard mode == .auto, let suggestion = smartSuggestion,
-              camera.ready, !camera.highResolutionPhotoConfiguring, !camera.shutterBusy, !camera.capturing, !camera.videoBusy else { return }
-        guard let actual = presentedSmartSuggestion(suggestion), actual.actionTitle != nil else { return }
-        // 用户刚换格式/分辨率时，先更新建议文字；不按过期文案悄悄降规格。
-        guard actual == suggestion else { smartSuggestion = actual; return }
-        cameraSelectionFeedback()
-        suppressedSmartSuggestionSignature = smartCurrentSceneSignature
-        suppressedSuggestionMissingChecks = 0
-        if smartCaptureEnabled { toggleSmartCaptureMode() }
-        let params = suggestion.parameters
-        var appliedPortrait = false
-        if params.mode == .portrait, !portraitModeEnabled {
-            togglePortraitMode()
-            appliedPortrait = portraitModeEnabled
-        }
-        // 逆光人像没有blur字段，也必须记录来源；异步切镜后再确认开启。
-        if params.mode == .portrait {
-            if appliedPortrait { portraitAutoEnabledBySmartCapture = true }
-            else if photoSubmodePreparing == .portrait { smartPortraitPendingRequest = photoSubmodeRequest }
-        }
-        if let blur = params.portraitBlur, portraitModeEnabled { portraitBlurStrength = min(max(blur, 0), 1) }
-        if let delta = params.evDelta {
-            ev = min(max(ev + delta, -5), 5)
-            applyExposure()
-        }
-        if params.hdr == true {
-            if (photoFormat == .heif || photoFormat == .heifPro), !border {
-                hdr = true
-            }
-        }
-        dismissSmartSuggestion()
-    }
-
-    func dismissSmartSuggestion() {
-        // Closing or applying a recommendation suppresses this scene, not just
-        // this exact frame; changing parameters will not bring it back.
-        if suppressedSmartSuggestionSignature == nil {
-            suppressedSmartSuggestionSignature = smartCurrentSceneSignature
-        }
-        suppressedSuggestionMissingChecks = 0
-        smartSuggestion = nil
-        smartSuggestionPausedUntil = CACurrentMediaTime() + 2
-    }
-
-    private func startSmartCaptureAnalysis() {
-        smartRecommendationRangePolicy.reset()
-        smartCaptureTask?.cancel()
-        let generation = UUID()
-        smartCaptureGeneration = generation
-        smartCaptureTask = Task { @MainActor [weak self] in
-            while !Task.isCancelled {
-                guard let self, self.smartCaptureEnabled else { return }
-                self.refreshSmartSuggestion(generation: generation)
-                let process = ProcessInfo.processInfo
-                let interval = SmartCaptureCadence.interval(
-                    hasVisibleGuide: self.smartCompositionGuide != nil,
-                    analysisAllowed: self.smartCaptureAnalysisAllowed,
-                    lowPower: process.isLowPowerModeEnabled,
-                    thermalSerious: process.thermalState == .serious || process.thermalState == .critical)
-                try? await Task.sleep(for: .milliseconds(max(16, Int(interval * 1000))))
-            }
-        }
-    }
-
-    private func stopSmartCaptureAnalysis() {
-        camera.endSmartFocusHold()
-        smartCaptureTask?.cancel()
-        smartCaptureTask = nil
-        interruptSmartFraming(); smartAutoFramingGate.reset(); smartFramingComplete = false
-        smartCaptureGeneration = UUID()
-        smartSuggestion = nil
-        smartCompositionGuide = nil; smartCompositionCandidates = []
-        smartFramingRecommendation = nil
-        smartCompositionStabilizer.reset()
-        smartSubjectContinuity.reset()
-        smartPortraitMissingChecks = 0
-        suppressedSmartSuggestionSignature = nil
-        suppressedSuggestionMissingChecks = 0
-        smartCurrentSceneSignature = nil
-    }
-
-    private func refreshSmartSuggestion(generation: UUID) {
-        #if DEBUG
-        if smartAnalysisOverrideForTesting { return }
-        #endif
-        if smartCaptureAnalysisAllowed { refreshSmartRecommendationRange() }
-        guard smartCaptureAnalysisAllowed, generation == smartCaptureGeneration,
-              !smartAnalysisInFlight, !smartFramingInProgress, camera.preview != nil else {
-            if !smartCaptureAnalysisAllowed {
-                interruptSmartFraming(); smartSuggestion = nil; smartCompositionGuide = nil; smartCompositionCandidates = []
-                smartTrackingEpoch = UUID(); smartCompositionStabilizer.reset()
-            }
-            return
-        }
-        let context = smartContext, look = effectiveCaptureLook, recommendationsAllowed = smartRecommendationRangeAllowed
-        let trackingEpoch = smartTrackingEpoch
-        let tracker = smartSubjectTracker, sceneState = smartSceneAnalysisState
-        let trackingContext = "\(generation)|\(smartTrackingEpoch)|\(context)"
-        let aspect = look.landscape ? 1/look.ratio.portraitRatio : look.ratio.portraitRatio
-        let readings = camera.readings
-        let active = activePhotoSubmode
-        smartAnalysisInFlight = true
-        #if DEBUG
-        let requestedAt = CACurrentMediaTime()
-        #endif
-        camera.readSmartAnalysisPreview { [weak self] neutral in
-            guard let self else { return }
-            guard let source = neutral, self.smartCaptureGeneration == generation, self.smartCaptureAnalysisAllowed else {
-                self.smartAnalysisInFlight = false; return
-            }
-            self.smartCaptureQueue.async { [weak self] in
-            #if DEBUG
-            let processingStarted = CACurrentMediaTime()
-            #endif
-            guard let image = SmartCaptureAnalyzer.visibleImage(source,aspect:aspect) else {
-                DispatchQueue.main.async { self?.smartAnalysisInFlight = false }; return
-            }
-            guard let self else { return }
-            let detected = sceneState.context != trackingContext
-                || CACurrentMediaTime() - sceneState.timestamp >= 0.8 || sceneState.result == nil
-            let analysis: SmartCaptureResult
-            if detected {
-                analysis = SmartCaptureAnalyzer.analyze(image:image,readings:readings,activeSubmode:active,
-                    nominateComposition: recommendationsAllowed && !tracker.hasTrackedTargets(context: trackingContext))
-                sceneState.context = trackingContext
-                sceneState.timestamp = CACurrentMediaTime()
-                sceneState.result = analysis
-            } else { analysis = sceneState.result! }
-            let tracked = recommendationsAllowed ? image.cgImage.map { tracker.update(image:$0,candidates:detected ? analysis.candidates : [],context:trackingContext) } : nil
-            #if DEBUG
-            let processingSeconds = CACurrentMediaTime() - processingStarted
-            #endif
-            let result = SmartCaptureResult(suggestion:analysis.suggestion,composition:tracked?.selected,hasPerson:analysis.hasPerson,candidates:tracked?.candidates ?? [])
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.smartAnalysisInFlight = false
-                guard self.smartCaptureAnalysisAllowed, self.smartContext == context,
-                      self.smartCaptureGeneration == generation, self.smartTrackingEpoch == trackingEpoch else { return }
-                #if DEBUG
-                self.smartTrackingSamplesForTesting.append(.init(publishedAt:CACurrentMediaTime(),
-                    requestToPublication:CACurrentMediaTime()-requestedAt,processingSeconds:processingSeconds,
-                    detectedScene:detected,verifiedCandidates:result.candidates.filter(\.trackingVerified).count,
-                    displayedCandidates:result.candidates.count,retainedCandidates:tracked?.retainedCount ?? 0,
-                    recommendationsAllowed:recommendationsAllowed,objectTrackedCandidates:tracked?.objectTrackedCount ?? 0,
-                    appearanceVerifiedCandidates:tracked?.appearanceVerifiedCount ?? 0))
-                if self.smartTrackingSamplesForTesting.count > 120 { self.smartTrackingSamplesForTesting.removeFirst() }
-                #endif
-                self.publishSmartComposition(result.composition,candidates:result.candidates)
-                if let cg = image.cgImage {
-                    self.requestSmartAIAdvice(image:cg,candidates:result.candidates,trackingContext:trackingContext,
-                                              context:context,generation:generation)
-                }
-                // 建议抑制和人物离开计数只跟随真实场景检测，关闭建议也不暂停点位跟踪。
-                guard detected, CACurrentMediaTime() >= self.smartSuggestionPausedUntil else { return }
-                let suggestion = self.presentedSmartSuggestion(result.suggestion)
-                let signature = suggestion.map { suggestion in
-                    let target = result.composition.map { "\(Int($0.target.x * 10)):\(Int($0.target.y * 10))" } ?? "-"
-                    return "\(suggestion.kind.rawValue)|\(result.hasPerson)|\(target)"
-                }
-                self.smartCurrentSceneSignature = signature
-                if self.portraitAutoEnabledBySmartCapture && self.portraitModeEnabled {
-                    // 从A切到M后只作参考，不因人物离开而自动改动人像拍摄状态。
-                    guard self.mode == .auto else { self.smartPortraitMissingChecks = 0; self.smartSuggestion = nil; return }
-                    if result.hasPerson {
-                        self.smartPortraitMissingChecks = 0
-                    } else {
-                        self.smartPortraitMissingChecks += 1
-                        if self.smartPortraitMissingChecks >= 2, !self.camera.capturing {
-                            self.portraitAutoEnabledBySmartCapture = false
-                            self.smartPortraitMissingChecks = 0
-                            if self.portraitModeEnabled { self.togglePortraitMode() }
-                        }
-                    }
-                    self.smartSuggestion = nil
-                    return
-                }
-                if let suppressed = self.suppressedSmartSuggestionSignature {
-                    if signature == suppressed {
-                        self.suppressedSuggestionMissingChecks = 0
-                        self.smartSuggestion = nil
-                    } else if signature != nil {
-                        self.suppressedSmartSuggestionSignature = nil
-                        self.suppressedSuggestionMissingChecks = 0
-                        self.smartSuggestion = suggestion
-                    } else {
-                        // The scene no longer matches any recommendation. Two
-                        // stable misses count as a scene change; a later scene
-                        // with the same kind is then a new recommendation.
-                        self.suppressedSuggestionMissingChecks += 1
-                        if self.suppressedSuggestionMissingChecks >= 2 {
-                            self.suppressedSmartSuggestionSignature = nil
-                            self.suppressedSuggestionMissingChecks = 0
-                        }
-                        self.smartSuggestion = nil
-                    }
-                } else if self.smartSuggestion != suggestion {
-                    self.smartSuggestion = suggestion
-                }
-            }
-        }
-        }
-    }
-
     @Published private(set) var virtualApertureEnabled = false
     @Published private(set) var isAdjustingDepthControl = false
     @Published var virtualApertureSliderVisible = false {
@@ -2653,11 +2163,6 @@ final class CameraViewModel: ObservableObject {
         virtualAperture = VirtualApertureRenderer.defaultValue
     }
     func toggleVirtualAperture() {
-        if smartCaptureEnabled {
-            smartCaptureEnabled = false
-            stopSmartCaptureAnalysis()
-            adaptiveHighDynamic = false
-        }
         guard camera.ready, !camera.capturing, !camera.videoBusy, photoSubmodePreparing == nil,
               videoSubmodePreparing == nil, !camera.dualCapturePreparing else { return }
         if camera.dualCaptureEnabled {
@@ -2864,8 +2369,6 @@ final class CameraViewModel: ObservableObject {
     }
 
     func togglePortraitMode() {
-        smartPortraitPendingRequest = nil
-        portraitAutoEnabledBySmartCapture = false
         togglePhotoSubmode(.portrait)
     }
 
@@ -3242,7 +2745,6 @@ final class CameraViewModel: ObservableObject {
         if captureKind == .video, lens.device.position == .front { return }
         // 人物追踪已经强制使用前置超广角；再次点同一个“超广角”不能先关追踪再重配。
         if lens.device.position == .front, camera.selectedLens == lens.id { return }
-        camera.endSmartFocusHold()
         zoomSelectionFeedback()
         endZoomDial()
         if camera.dualCaptureEnabled {
@@ -3738,9 +3240,6 @@ final class CameraViewModel: ObservableObject {
         Publishers.CombineLatest3(camera.$currentZoom, camera.$ready, camera.$videoRecording).sink { [weak self] _ in
             DispatchQueue.main.async { self?.refreshFocusNavigatorPreference() }
         }.store(in: &subscriptions)
-        camera.$deliveredPhotoRevision.dropFirst().sink { [weak self] _ in
-            self?.rearmSmartAfterPhoto()
-        }.store(in: &subscriptions)
         camera.$capturing.dropFirst().removeDuplicates().sink { [weak self] _ in
             DispatchQueue.main.async { self?.refreshFocusNavigatorPreference() }
         }.store(in: &subscriptions)
@@ -4056,7 +3555,6 @@ final class CameraViewModel: ObservableObject {
             self.synchronizeLiveAudio()
             self.camera.setVideoMode(self.captureKind == .video && (active || self.camera.dualCaptureEnabled))
             if active {
-                if self.smartCaptureEnabled { self.startSmartCaptureAnalysis() }
                 // 前台恢复的排队回调不能把刚启动的慢门序列重新切回虚拟A挡输入。
                 let captureManualRoute = self.mode == .manual || self.slowShutterSequence != nil
                 self.camera.setManualMode(captureManualRoute, customExposure: captureManualRoute && self.manualExposure)
@@ -4074,7 +3572,6 @@ final class CameraViewModel: ObservableObject {
                 self.camera.enableHistogram(self.showHistogram)
                 self.camera.enableFocusPeaking(self.focusPeaking)
             } else {
-                self.stopSmartCaptureAnalysis()
                 self.cancelFocus()
                 self.cancelCountdown()
                 self.endZoomDial()
@@ -4153,7 +3650,7 @@ final class CameraViewModel: ObservableObject {
         camera.setWhiteBalance(kelvin: manual && manualWB ? wb : nil, tint: manual && manualWB ? whiteBalanceTint : 0)
         // A user may lock a target on the first ready frame before this deferred
         // restoration runs. Do not turn that new lock back into automatic focus/metering.
-        if !camera.targetFocusLockActive, !camera.smartFocusHolding { camera.setFocus(position: manual && manualFocus ? focus : nil) }
+        if !camera.targetFocusLockActive { camera.setFocus(position: manual && manualFocus ? focus : nil) }
         if !camera.targetLockActive { camera.setMetering(effectiveMetering) }
     }
 
@@ -4259,12 +3756,6 @@ final class CameraViewModel: ObservableObject {
         guard slowShutterSequence == nil else { return }
         guard !camera.capturing, !camera.videoBusy, countdown == nil, !isPreparingSubmode else { return }
         if next == .manual, nightModeEnabled { setPhotoSubmode(.night, enabled: false) }
-        if next != mode {
-            camera.endSmartFocusHold()
-            if smartCaptureEnabled {
-                interruptSmartFraming(); smartAutoFramingGate.reset(); smartFramingComplete = false
-            }
-        }
         if slowShutterEnabled, next != mode {
             // A→M 固定从 1s 开始；M→A 恢复上次预设及合法时长，无预设则回到 1s。
             if next == .manual {
@@ -4566,10 +4057,6 @@ final class CameraViewModel: ObservableObject {
             ratio = FrameRatio.photoOptions.contains(photoRatioBeforeVideo) ? photoRatioBeforeVideo : .standard
         }
         withAnimation(AppTheme.popupAnimation) { captureKind = kind }
-        if kind == .video, smartCaptureEnabled {
-            smartCaptureEnabled = false
-            stopSmartCaptureAnalysis()
-        }
         synchronizeHighResolutionPhotoRoute()
         if kind == .video {
             // 先退出照片子模块，再恢复视频自己的挡位，避免被照片夜景等限制拦截。

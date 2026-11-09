@@ -95,23 +95,6 @@ extension CameraView {
                 } else {
                     focusSurface(size: CGSize(width: width, height: height))
                 }
-                if model.smartCaptureEnabled,
-                   let guide = model.smartDisplayedCompositionGuide,
-                   !model.popupVisible, model.toolbarPanel == nil, model.panel != .film,
-                   !camera.videoBusy {
-                    smartCompositionGuideOverlay(guide)
-                        .frame(width: width, height: height)
-                        .transition(.opacity)
-                        .zIndex(4)
-                }
-                if model.smartCaptureEnabled, let framing = model.smartFramingRecommendation,
-                   !model.popupVisible, model.toolbarPanel == nil, model.panel != .film,
-                   !camera.videoBusy {
-                    smartFramingOverlay(framing)
-                        .frame(width: width, height: height)
-                        .transition(.opacity)
-                        .zIndex(5)
-                }
                 if model.captureKind == .video, model.timeLapseEnabled, camera.videoRecording {
                     VStack {
                         Spacer(minLength: 0)

@@ -53,7 +53,7 @@ import XCTest
                 XCTAssertEqual(camera.activeCaptureDeviceID,routeID)
                 let enabled = await withCheckedContinuation { c in camera.cinematicCaptureStateForTesting { c.resume(returning:$1) } }
                 XCTAssertTrue(enabled)
-                let hardware = await withCheckedContinuation { c in camera.smartCaptureHardwareStateForTesting { c.resume(returning:$0) } }
+                let hardware = await withCheckedContinuation { c in camera.captureHardwareStateForTesting { c.resume(returning:$0) } }
                 XCTAssertFalse(try XCTUnwrap(hardware).customExposure,"隐藏ISO/快门期间应使用自动曝光")
                 model.endZoomDial()
             }

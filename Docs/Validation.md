@@ -4001,7 +4001,7 @@ SDR/P3/HLG HDR/Apple Log/Log 2 的采集、预览和文件标记已接入。HDR 
 
 - 拍照的慢门、夜景、人像、连拍与视频的延时、慢动作、电影入口不再按当前规格是否兼容来禁用；相机未就绪、正在拍摄/录像或正在准备子模式时仍锁定入口，避免并发改写会话。
 - 启用时先尝试沿用当前镜头和兼容参数；不兼容时，照片按当前相机公布的镜头能力选择兼容镜头、格式和分辨率，视频在相机串行队列检查各镜头公开的视频格式能力后选兼容镜头与最接近的安全规格。视频能力按物理设备 ID 缓存，避免每次弹窗或参数刷新重复扫描格式。切换期间禁用规格与焦段调整；启用后只开放当前子模块兼容的参数和已确认兼容的镜头。用户选择 Open Gate 延时但没有可用 Open Gate 路线时，回退到普通视频兼容路线并关闭 Open Gate。
-- 当前子模式遇到设备能力异步刷新时，视频规格会尝试在当前路线内重新匹配；没有可用候选则退出该子模式，避免继续以不兼容参数录制。智拍入口当时保持可点并反馈“尚未开放”；该历史状态已被 2026-10-27 的智拍接入取代，详见 [智拍功能说明](SmartCapture.md)。
+- 当前子模式遇到设备能力异步刷新时，视频规格会尝试在当前路线内重新匹配；没有可用候选则退出该子模式，避免继续以不兼容参数录制。智拍入口当时保持可点并反馈“尚未开放”；该历史状态已被 2026-10-27 的智拍接入取代，详见 。
 - 回归覆盖新增的照片/视频兼容策略、备用视频镜头路线能力和既有 60 次视频子模式快速切换用例；所有测试均随 Xcode 测试 target 编译。Xcode 27.1 / iOS 27.1 SDK 执行 generic iOS `build-for-testing`，退出码 0（`/private/tmp/LumaCamera-Submode-Derived`）。编译只发现 `CameraRuler.swift`、`DockKitTrackingController.swift` 的既有未使用变量警告及 App Intents 元数据跳过提示，没有本次修改文件的编译警告。
 - 本次没有执行 XCTest：`xcrun devicectl list devices` 报 `Timed out waiting for CoreDeviceService to fully initialize`；`simctl` 报 CoreSimulatorService 连接失效。因此真机/模拟器运行样本数均为 0，不能据此确认镜头实际切换、子模式体验、重复切换稳定性或实机耗时。代码将设备格式扫描移到相机串行队列并缓存，但本轮没有取得真实时间指标；应在设备服务恢复后定向验证不兼容点按、自动换镜头、启用后禁用不兼容选项，以及 60 次快速切换和取消/返回路径。
 
@@ -5067,3 +5067,9 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 修复：视频入口在已持有事务时直接 configureVideoFormat + configureConnections(configuresVideoFormat:false)，不再嵌套。
 - 验证：修复后 10×12轮（120周期）全部通过，0 runtime error、0视频退出。
 - 当前仍未完成：修复后的30轮长 soak、全量回归、功耗测试。
+# 2026-11-09 移除智拍
+
+- 已删除智拍模型、分析队列、白点/构图引导、建议横幅、自动取景对焦、入口与专项测试；照片子模块保留慢门、夜景、人像、连拍、虚拟光圈。
+- 编译通过；`ShootingModeButtonTests`、`LivePhotoPhysicalTests`、`CaptureKindModeLatencyPhysicalTests` 真机回归通过。
+- 另跑 NightAdaptiveCapturePhysicalTests 28通过/6失败、PortraitCapturePhysicalTests 2通过/1失败、SlowShutterLifecyclePhysicalTests 2通过/1跳过。失败伴随 start failed/IPC、夜景低照度和拍照超时，本轮未复验，不能判定为智拍移除回归，也不能宣称全量通过。
+- 历史智拍验证记录保留在本文档旧章节，不再代表当前产品能力。

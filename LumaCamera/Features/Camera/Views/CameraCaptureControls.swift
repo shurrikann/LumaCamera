@@ -243,17 +243,7 @@ extension CameraView {
                 .opacity(camera.videoRecording && model.mode == .manual ? 0 : 1)
                 .allowsHitTesting(!(camera.videoRecording && model.mode == .manual))
                 .accessibilityHidden(camera.videoRecording && model.mode == .manual)
-            if model.smartCaptureEnabled, let suggestion = model.smartSuggestion,
-               !model.popupVisible, model.toolbarPanel == nil, model.panel != .film,
-               !model.review, !model.settings, !camera.videoBusy {
-                smartSuggestionBanner(suggestion)
-                    .padding(.horizontal, 70)
-                    .padding(.bottom, CameraControlLayout.compositionBottom + 44 + diameter / 2 + 2)
-                    .transition(.opacity)
-                    .zIndex(2)
-            }
         }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-            .animation(AppTheme.popupAnimation, value: model.smartSuggestion?.kind)
             .animation(AppTheme.popupAnimation, value: camera.videoRecording)
             .animation(AppTheme.popupAnimation, value: model.zoomDialVisible)
     }

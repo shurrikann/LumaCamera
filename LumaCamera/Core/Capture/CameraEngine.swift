@@ -18,13 +18,9 @@ final class CameraEngine: NSObject, ObservableObject {
     @Published private(set) var targetExposureLocked = false
     @Published private(set) var targetFocusLockActive = false
     @Published private(set) var targetFocusLocked = false
-    @Published private(set) var smartFocusHolding = false
     var targetLockActive: Bool { targetExposureLockActive || targetFocusLockActive }
     var targetLocked: Bool { targetLockActive && (!targetExposureLockActive || targetExposureLocked) && (!targetFocusLockActive || targetFocusLocked) }
     private var targetFocusLockRequested = false // session queue
-    private var smartFocusHoldOnQueue = false // session queue，智拍单次AF保持，不等同用户AF锁。
-    private var smartFocusObservation: NSKeyValueObservation? // session queue
-    private var smartFocusScanBegan = false
     private let targetExposureRevision = PreviewRevision()
     private var targetLockRequested = false
     private var targetSensorPoint = CGPoint(x: 0.5, y: 0.5)
@@ -66,12 +62,7 @@ final class CameraEngine: NSObject, ObservableObject {
         let position: AVCaptureDevice.Position
         let revision: UInt64
         var transitionID: UUID? = nil
-        var smooth = false // 仅智拍自动取景启用官方变焦爬坡。
-    }
-    private var smartAnalysisPreviewCallback:((UIImage?)->Void)? // 只在previewQueue访问，一次请求只渲染一张小图。
-    /// 场景识别不使用已套滤镜/虚化的显示图；不请求时不增加渲染负担。
-    func readSmartAnalysisPreview(_ completion:@escaping (UIImage?)->Void) {
-        previewQueue.async { self.smartAnalysisPreviewCallback = completion }
+        var smooth = false
     }
     private lazy var zoomThrottle = LatestValueThrottle<ZoomRequest>(queue: queue, interval: 1.0 / 60) { [weak self] in self?.applyContinuousZoom($0) }
     @Published private(set) var isoRange: ClosedRange<Double> = 25...1600
@@ -685,7 +676,7 @@ final class CameraEngine: NSObject, ObservableObject {
     var onPhotoRequestDimensionsForTesting: ((CMVideoDimensions) -> Void)?
     var previewFrameTimeForTesting: Double { livePreviewState.snapshot().latestFrameHostTime }
     var nightPreviewHoldForTesting: Bool { livePreviewState.snapshot().nightCapturePreviewHold }
-    struct SmartCaptureHardwareState {
+    struct CaptureHardwareState {
         let iso: Double
         let seconds: Double
         let customExposure: Bool
@@ -693,20 +684,17 @@ final class CameraEngine: NSObject, ObservableObject {
         let focusMode: AVCaptureDevice.FocusMode
         let lensPosition: Float
         let adjustingFocus: Bool
-        let smartFocusRequests: Int
         let focusPoint: CGPoint
         let whiteBalanceGains: AVCaptureDevice.WhiteBalanceGains
     }
-    private var smartSingleShotFocusRequestsForTesting = 0 // session queue
-    func smartCaptureHardwareStateForTesting(_ completion: @escaping (SmartCaptureHardwareState?) -> Void) {
+    func captureHardwareStateForTesting(_ completion: @escaping (CaptureHardwareState?) -> Void) {
         queue.async {
             let state = self.input.map { input in
                 let device = input.device
-                return SmartCaptureHardwareState(iso:Double(device.iso),seconds:device.exposureDuration.seconds,
+                return CaptureHardwareState(iso:Double(device.iso),seconds:device.exposureDuration.seconds,
                     customExposure:device.exposureMode == .custom,
                     automaticFocus:device.focusMode == .autoFocus || device.focusMode == .continuousAutoFocus,
                     focusMode:device.focusMode,lensPosition:device.lensPosition,adjustingFocus:device.isAdjustingFocus,
-                    smartFocusRequests:self.smartSingleShotFocusRequestsForTesting,
                     focusPoint:device.focusPointOfInterest,whiteBalanceGains:device.deviceWhiteBalanceGains)
             }
             DispatchQueue.main.async { completion(state) }
@@ -1562,7 +1550,6 @@ final class CameraEngine: NSObject, ObservableObject {
         resumeDiagnostics.stop()
         nightPreviewReveal = nil
         cancelledNightCaptureTokens.formUnion(nightCaptureTokens)
-        smartFocusHolding = false
         if videoBusy { stopVideoRecording() }
         runRequested = false; startPending = false; _ = recoveryRevision.advance()
         recoveringSession = false; recoveryFailed = false
@@ -1575,8 +1562,6 @@ final class CameraEngine: NSObject, ObservableObject {
         livePreviewState.cancelMacroRouteChange()
         queue.async {
             self.wantsRunning = false
-            self.smartFocusHoldOnQueue = false
-            self.smartFocusObservation = nil
             self.stopFocusNavigatorOnQueue()
             // 不再追加夜景批次；正在执行的系统请求等待回调后释放，不向相册交付取消结果。
             for capture in self.captureContexts.values {
@@ -4359,8 +4344,6 @@ final class CameraEngine: NSObject, ObservableObject {
         zoomThrottle.cancel()
         queue.async {
             guard self.manualMode != enabled else { return }
-            self.smartFocusHoldOnQueue = false; self.smartFocusObservation = nil
-            DispatchQueue.main.async { self.smartFocusHolding = false }
             self.stopFocusNavigatorOnQueue()
             defer { self.syncPreviewState(); self.refreshHDRPreviewConfiguration() }
             self.manualMode = enabled
@@ -4615,7 +4598,6 @@ final class CameraEngine: NSObject, ObservableObject {
         guard !highResolutionPhotoZoomLocked || highResolutionLensIDs.contains(lens.id) else { return }
         guard !highResolutionPhotoConfiguring else { return }
         guard !dualCaptureEnabled, !dualCapturePreparing, ready, !capturing, !videoBusy, selectedLens != lens.id || abs(currentZoom - lens.displayZoom) > 0.001 else { return }
-        endSmartFocusHold()
         // Don't carry the previous route's macro badge across a deliberate focal
         // selection. The new route will publish its own system-selected state.
         macroActive = false
@@ -4836,7 +4818,6 @@ final class CameraEngine: NSObject, ObservableObject {
         guard !highResolutionPhotoZoomLocked || videoRecording else { return }
         guard !dualCaptureEnabled, !dualCapturePreparing, ready, !capturing,
               (!videoBusy || videoRecording), !videoConfiguring, value.isFinite else { return }
-        if !smooth { endSmartFocusHold() }
         let revision = zoomRevision.advance()
         continuousZoomActive = true
         let range: ClosedRange<CGFloat> = videoRecording ? (videoRecordingZoomRange ?? continuousZoomRange) : (demo ? 1...5 : continuousZoomRange)
@@ -4845,14 +4826,6 @@ final class CameraEngine: NSObject, ObservableObject {
         if demo { continuousZoomRange = 1...5 }
         let position = lenses.first(where: { $0.id == selectedLens })?.device.position ?? .back
         zoomThrottle.submit(ZoomRequest(value: target, position: position, revision: revision, transitionID: transitionID,smooth:smooth))
-    }
-
-    /// 智拍等待硬件爬坡结束；不把currentZoom提前发布的目标值当作实际完成。
-    func smartZoomSettled(_ completion:@escaping (Bool)->Void) {
-        queue.async {
-            let settled = self.demo || (self.input?.device.isRampingVideoZoom == false)
-            DispatchQueue.main.async { completion(settled) }
-        }
     }
 
     func flushRestoredZoom(completion: @escaping () -> Void) {
@@ -5783,7 +5756,6 @@ final class CameraEngine: NSObject, ObservableObject {
     }
 
     func setFocus(position: Double?) {
-        smartFocusHolding = false
         if position != nil, targetFocusLockActive {
             targetFocusLockActive = false; targetFocusLocked = false
             queue.async { self.targetFocusLockRequested = false }
@@ -5793,8 +5765,6 @@ final class CameraEngine: NSObject, ObservableObject {
                 self.globalMeteringPolicy.reset(); self.globalMeteringRevision = UUID()
                 self.manualGlobalMeteringSuggestion = nil
             }
-            self.smartFocusHoldOnQueue = false
-            self.smartFocusObservation = nil
             if #available(iOS 26.0, *), self.input?.isCinematicVideoCaptureEnabled == true {
                 // Cinematic 模式由系统的主体跟踪/固定点 API 控制焦点，不接受镜头位置刻度值。
                 device.setCinematicVideoTrackingFocus(at: self.targetSensorPoint, focusMode: .weak)
@@ -5810,9 +5780,8 @@ final class CameraEngine: NSObject, ObservableObject {
         }
     }
 
-    func focus(at point: CGPoint, lockExposure: Bool = false, lockFocus: Bool = false, smartSingleShot: Bool = false) {
+    func focus(at point: CGPoint, lockExposure: Bool = false, lockFocus: Bool = false) {
         guard ready, !capturing, point.x.isFinite, point.y.isFinite else { return }
-        smartFocusHolding = smartSingleShot
         let revision = targetExposureRevision.advance()
         targetExposureLockActive = lockExposure
         targetExposureLocked = demo && lockExposure
@@ -5820,49 +5789,11 @@ final class CameraEngine: NSObject, ObservableObject {
         if demo { return }
         configureDevice(onFailure: {
             guard self.targetExposureRevision.matches(revision) else { return }
-            self.smartFocusHoldOnQueue = false
-            self.smartFocusObservation = nil
-            DispatchQueue.main.async {
-                if self.targetExposureRevision.matches(revision) { self.smartFocusHolding = false }
-            }
             self.targetLockRequested = false; self.targetFocusLockRequested = false
             self.publishTargetFocusLock(false, active: false, revision: revision)
             self.publishTargetExposureLock(false, active: false, revision: revision)
         }) { [self] device in
             guard self.targetExposureRevision.matches(revision) else { return }
-            self.smartFocusHoldOnQueue = smartSingleShot && device.isFocusModeSupported(.autoFocus) && device.isFocusPointOfInterestSupported
-            self.smartFocusObservation = nil
-            if self.smartFocusHoldOnQueue {
-                self.smartFocusScanBegan = device.isAdjustingFocus
-                self.smartFocusObservation = device.observe(\.isAdjustingFocus,options:[.new]) { [weak self, weak device] _, change in
-                    guard let self, let device, let adjusting = change.newValue else { return }
-                    self.queue.async { [weak self, weak device] in
-                        guard let self, let device, self.smartFocusHoldOnQueue,
-                              self.targetExposureRevision.matches(revision), self.input?.device.uniqueID == device.uniqueID else { return }
-                        if adjusting { self.smartFocusScanBegan = true; return }
-                        guard self.smartFocusScanBegan, device.isFocusModeSupported(.locked) else { return }
-                        self.smartFocusObservation = nil
-                        do {
-                            try device.lockForConfiguration(); defer { device.unlockForConfiguration() }
-                            device.focusMode = .locked
-                        } catch {
-                            self.smartFocusHoldOnQueue = false
-                            DispatchQueue.main.async {
-                                if self.targetExposureRevision.matches(revision) { self.smartFocusHolding = false }
-                            }
-                            self.report("保持智拍焦点失败：\(error.localizedDescription)")
-                        }
-                    }
-                }
-            }
-            if smartSingleShot, !self.smartFocusHoldOnQueue {
-                DispatchQueue.main.async {
-                    if self.targetExposureRevision.matches(revision) { self.smartFocusHolding = false }
-                }
-            }
-            #if DEBUG
-            if self.smartFocusHoldOnQueue { self.smartSingleShotFocusRequestsForTesting += 1 }
-            #endif
             self.targetLockRequested = lockExposure
             self.targetFocusLockRequested = lockFocus
             if !lockExposure, device.exposureMode == .locked, device.isExposureModeSupported(.continuousAutoExposure) {
@@ -5897,9 +5828,7 @@ final class CameraEngine: NSObject, ObservableObject {
             } else {
                 if device.isFocusPointOfInterestSupported {
                     device.focusPointOfInterest = sensorPoint
-                    if smartSingleShot, device.isFocusModeSupported(.autoFocus) {
-                        device.focusMode = .autoFocus
-                    } else if !lockFocus, device.isFocusModeSupported(.continuousAutoFocus) {
+                    if !lockFocus, device.isFocusModeSupported(.continuousAutoFocus) {
                         device.focusMode = .continuousAutoFocus
                     } else if device.isFocusModeSupported(.autoFocus) { device.focusMode = .autoFocus }
                 }
@@ -5935,7 +5864,7 @@ final class CameraEngine: NSObject, ObservableObject {
     /// Let the virtual camera reconsider a close-up after the scene changes. Never
     /// cancel an intentional target lock or a manual-mode focus setting.
     private func resumeFocusAfterSceneChange(deviceID: String) {
-        guard wantsRunning, !manualMode, !targetLockRequested, !targetFocusLockRequested, !smartFocusHoldOnQueue,
+        guard wantsRunning, !manualMode, !targetLockRequested, !targetFocusLockRequested,
               let device = input?.device,
               device.uniqueID == deviceID || device.constituentDevices.contains(where: { $0.uniqueID == deviceID }) else { return }
         if #available(iOS 26.0, *), input?.isCinematicVideoCaptureEnabled == true { return }
@@ -5954,19 +5883,6 @@ final class CameraEngine: NSObject, ObservableObject {
             sceneFocusReconfigurationsForTesting += 1
             #endif
         } catch { /* A later scene-change notification can retry while configuration is busy. */ }
-    }
-
-    /// 退出智拍时归还普通连续AF；用户主动点焦/改手动焦点已先清除保持，不覆盖这些操作。
-    func endSmartFocusHold() {
-        guard smartFocusHolding else { return }
-        smartFocusHolding = false
-        configureDevice { device in
-            guard self.smartFocusHoldOnQueue else { return }
-            self.smartFocusHoldOnQueue = false
-            self.smartFocusObservation = nil
-            guard !self.targetFocusLockRequested, device.isFocusModeSupported(.continuousAutoFocus) else { return }
-            device.focusMode = .continuousAutoFocus
-        }
     }
 
     private func publishTargetFocusLock(_ locked: Bool, active: Bool, revision: UInt64) {
@@ -8617,13 +8533,6 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
             let histogramSource = !state.hdr && !state.focusPeaking ? CIImage(cgImage: image) : filtered
             histogramThrottle.submit(HistogramFrame(image: state.look.ratio.crop(histogramSource, landscape: state.look.landscape), revision: state.revision,
                                                    generation: state.readingsGeneration))
-        }
-        if let callback = smartAnalysisPreviewCallback {
-            smartAnalysisPreviewCallback = nil
-            let scale = min(1,768/max(analysisSource.extent.width,analysisSource.extent.height))
-            let small = analysisSource.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
-            let cg = previewContext.createCGImage(small,from:small.extent,format:.RGBA8,colorSpace:CGColorSpace(name:CGColorSpace.sRGB)!,deferred:false)
-            DispatchQueue.main.async { callback(cg.map { UIImage(cgImage:$0) }) }
         }
         #if DEBUG
         if let callback = previewPairForTesting {

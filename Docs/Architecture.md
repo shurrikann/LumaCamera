@@ -174,7 +174,7 @@ CameraViewModel在生命周期请求入口提交模式/格式/预设等固定字
 
 ## 顶部景深与光圈完整浮层（2026-11-01）
 
-DepthToolbarButtonAnchorKey同时传递按钮与工具栏bounds；toolStrip通过transformAnchorPreference合并父锚点。CameraView在完整高度的工具栏容器解析浮层，避免滑条绘制和触摸区域悬在短工具栏之外。位置仍为工具栏下10点、190×32、对应按钮正下方并限位14点，保持局部淡入淡出、减弱动态效果和焦段条固定。真手势在App原窗口观察绑定，不另建共享模型的相机页；光圈压力夹具只复用取景及控件，避免第二份CameraView生命周期启停同一会话。智拍累计执行数按测试增量验收，48MP恢复等待会话请求后再检查准备完成。[本轮记录](Test-Reports/2026-11-01-Other-Six-Fixes.md)。
+DepthToolbarButtonAnchorKey同时传递按钮与工具栏bounds；toolStrip通过transformAnchorPreference合并父锚点。CameraView在完整高度的工具栏容器解析浮层，避免滑条绘制和触摸区域悬在短工具栏之外。位置仍为工具栏下10点、190×32、对应按钮正下方并限位14点，保持局部淡入淡出、减弱动态效果和焦段条固定。真手势在App原窗口观察绑定，不另建共享模型的相机页；光圈压力夹具只复用取景及控件，避免第二份CameraView生命周期启停同一会话。[本轮记录](Test-Reports/2026-11-01-Other-Six-Fixes.md)。
 
 ## 视频真机回归的实际快门就绪条件（2026-11-01）
 
@@ -256,23 +256,13 @@ NightPhotoMerger只有自动计划曝光且实际融合成功时，才启用64×
 
 AdaptiveRAWDeveloper不再把localToneMapAmount固定为0.35，保留各底片默认值；编辑预览复用解码器时仍先恢复该底片初始值。AdaptiveDynamicRenderer在192点线性统计上判断大面积亮区与高反差，以0.14中位目标/最高3EV决定强度，Metal有理曲线在0–0.45严格单调，黑位仍为0。捕获和RAW重新显影共用，普通照片/视频不受影响。正式PhotoKit保存以HEIF为photo、DNG为alternatePhoto；本机已验证读回DNG及覆盖编辑再打开，未扩展为iCloud保证。
 
-## 智拍候选锁定与自动取景（2026-10-27）
-
-SmartCaptureAnalyzer先按可见画幅裁图、最长边768；2026-10-29起跟踪轮询间隔66ms、场景检测间隔0.8秒，最多一次在途。已有目标时`nominateComposition=false`跳过显著性/人体框重新提名，仍保留场景参数判断。显著人物可结合身体范围，其他对象优先objectness显著性，必要时attention回退。最多3个可靠候选交给SmartSubjectTracker，用VNSequenceRequestHandler/VNTrackObjectRequest在同一串行队列维护UUID，并以固定纹理锚点复核；提名顺序变化不会换身份。
-
-2026-10-29修正：对象框输入每帧延续，纹理允许独立恢复；移除0.008坐标死区、主体坐标低通和UI位置补间。短暂漏检显示宽限0.18秒、身份保留0.45秒，不用帧数推断时间；预测位置通过`trackingVerified=false`与真实确认位置区分，自动取景门控拒绝未确认状态。ViewModel对nil也实际调用显示稳定器，且仅在收到不同非空身份时重置；不会一帧漏检就抹掉候选身份。提示迟滞期间也保存最新点位，避免随后漏检跳回旧位置。场景建议抑制不暂停跟踪。候选框、纹理和显示宽限是项目策略，非平台可靠性保证。
-
-SmartAutoFramingGate使用与固定中心圈一致的实际短边半径，稳定0.75秒后最多一次评分/应用；SmartFramingEvaluator结合不同主体占幅目标、边缘留白和有限Vision美学评分，在后台比较至多4幅中心取景。没有可靠改善时保留当前倍率。CameraEngine.ZoomRequest新增默认false的smooth字段，只有智拍启用官方ramp；其他变焦行为默认保持。实际硬件爬坡结束后按倍率投影，对焦到选中主体在新画面的位置，用户AE/AF锁、M挡、48MP倍率边界保留。
-
-CameraViewModel以生命周期/模式/比例/格式/分辨率/倍率/方向快照丢弃过期结果，SmartFramingWork可取消Vision请求；后台停止轮询，恢复重新建立代次。场景建议仍需点应用；逆光人像及异步开启补记来源，M挡不自动退出人像。SmartCompositionGuideOverlay只画最多3个白点和固定白圈，圈短边10%、描边3、点径圈径−6，完成短暂橙色再淡出；不拦截对焦操作。详情见[功能说明](SmartCapture.md)。
-
 ## A/M挡48MP固定物理路由（2026-10-30）
 
 普通A挡仍使用系统虚拟多摄。48MP选择后，CameraEngine.highResolutionPhotoRequested在A/M两挡均有效，按当前传感器选择其原生镜头；从2×/8×/35mm等裁切倍率进入时归位同传感器原生焦段。highResolutionLensIDs由会话队列从真实格式能力、物理倍率1及0.5/1/4白名单计算，镜头目录建立后才发布，避免首次启动空能力缓存。48MP选镜固定物理输入，不改动普通A挡的系统微距策略。
 
 prepareHighResolutionPhotoRoute用setPreparedPhotoSettingsArray准备最大尺寸、balanced优先级的JPG/HEIF资源，不再拍摄丢弃帧。highResolutionPhotoConfiguring在资源完成回调后释放，准备时只在对应焦段按钮内显示小加载圈；有代次校验、错误说明及8秒超时释放。回普通分辨率清空prepared设置释放资源，系统普通路由按原规则恢复。maxPhotoDimensions和资源准备仍不是平台保证交付高像素，实际文件继续核对。
 
-模型fixedHighResolutionFocalsOnly过滤裁切档位，但lensBar槽宽仍按完整普通焦段数量计算，所以按钮不放大、共同背景按实际三个按钮收缩。长按识别器、转盘、捏合、A挡实体连续滑块及引擎连续变焦/过期节流请求均禁用；离开48MP恢复。1×不执行24/35mm轮换，智拍仅在当前固定倍率对焦，不改变倍率。
+模型fixedHighResolutionFocalsOnly过滤裁切档位，但lensBar槽宽仍按完整普通焦段数量计算，所以按钮不放大、共同背景按实际三个按钮收缩。长按识别器、转盘、捏合、A挡实体连续滑块及引擎连续变焦/过期节流请求均禁用；离开48MP恢复。1×不执行24/35mm轮换，
 
 M挡选择48MP时manualExposure=false、使用系统实际AE读数，进入M挡及恢复高像素设置同样不恢复过期手动曝光标记；用户调ISO/快门令manualExposure=true时先切回standard再应用真实曝光。48MP自动曝光用balanced优先级，严格手动12MP仍按speed。手动白平衡保留，快门按下时快照已验证的色温/tint，并在高像素提交前等待官方白平衡锁定回调，避免快速切镜后首张仍带自动WB。焦点控制不改。完整格式边界见[验证记录](Validation.md)。
 
@@ -425,7 +415,7 @@ ViewModel暂存普通视频规格，双拍基础档锁定HEVC SDR 1080p30/16:9�
 
 ## 子模块入口图标（2026-10-25）
 
-`PhotoSubmode.symbol`和`VideoSubmode.symbol`是弹窗选项与入口按钮共用的系统图标映射。视频顶部格式按钮在 `videoCodec == .proRes` 时把 `proResSpecification.rawValue` 作为 `videoToolbarButton` 的第二行 detail；HEVC/H.264 保持单行，不改变按钮高度和其他四项布局。`CameraViewModel.shootingModeButtonSymbol`读取当前真正启用的子模块，照片默认`camera.aperture`、视频默认`video`；未完成适配的子模块不伪造启用状态；智拍已接入实际逻辑。`shootingSubmodeEnabled`统一入口选中颜色，包含夜景/人像。`ShootingModeButtonSymbol`在固定22点区域局部opacity过渡，外层按钮热区、玻璃背景及既有方向旋转不重排；减弱动态效果沿用`AppTheme.popupAnimation`。不新增相机配置请求或采集任务。
+`PhotoSubmode.symbol`和`VideoSubmode.symbol`是弹窗选项与入口按钮共用的系统图标映射。视频顶部格式按钮在 `videoCodec == .proRes` 时把 `proResSpecification.rawValue` 作为 `videoToolbarButton` 的第二行 detail；HEVC/H.264 保持单行，不改变按钮高度和其他四项布局。`CameraViewModel.shootingModeButtonSymbol`读取当前真正启用的子模块，照片默认`camera.aperture`、视频默认`video`；未完成适配的子模块不伪造启用状态；`shootingSubmodeEnabled`统一入口选中颜色，包含夜景/人像。`ShootingModeButtonSymbol`在固定22点区域局部opacity过渡，外层按钮热区、玻璃背景及既有方向旋转不重排；减弱动态效果沿用`AppTheme.popupAnimation`。不新增相机配置请求或采集任务。
 
 ## 组织方式
 
@@ -824,7 +814,7 @@ HDR 视频使用 HEVC Main10 和 HLG BT.2020 输出属性。iOS 26 及以上将 
 
 子模块入口点按不再由当前规格兼容性决定是否可点。`CameraViewModel` 先检查当前相机路线是否已有兼容设置；有则保留当前路线和用户选择，没有则按应用策略选择最接近的兼容设置。视频备用镜头查询通过 `CameraEngine.compatibleVideoSubmodeRoutes` 在相机串行队列读取各镜头格式，并按物理设备 ID 缓存普通视频、Open Gate 与 Cinematic 能力；等待目标镜头就绪后才启用模式。切换准备期间参数和焦段入口暂时禁用，避免会话切换过程中的交叉写入。
 
-照片镜头格式与分辨率从会话发布的每镜头能力表中筛选；夜景/连拍需要 JPG 或 HEIF 与标准分辨率，人像按当前路由公布的处理格式、ProRAW 和尺寸开放，慢门沿用当前路线能力。视频启用后，顶栏参数通过 `videoCapabilitiesForCurrentRatio` 和相应支持方法筛选，焦段按钮只接受该子模式记录为兼容的镜头路线。异步视频能力更新导致当前组合失效时，先在当前路线内回退；无法恢复则退出子模式，不保留失配状态。智拍按钮已接入场景建议、中心对齐和拍前取景；详见 [智拍功能说明](SmartCapture.md)。
+照片镜头格式与分辨率从会话发布的每镜头能力表中筛选；夜景/连拍需要 JPG 或 HEIF 与标准分辨率，人像按当前路由公布的处理格式、ProRAW 和尺寸开放，慢门沿用当前路线能力。视频启用后，顶栏参数通过 `videoCapabilitiesForCurrentRatio` 和相应支持方法筛选，焦段按钮只接受该子模式记录为兼容的镜头路线。异步视频能力更新导致当前组合失效时，先在当前路线内回退；无法恢复则退出子模式，不保留失配状态。
 
 点按后的参数回退与每镜头扫描属于应用策略；Apple API 只提供可查询的设备/格式能力，不保证某个具体子模块的默认组合或不同镜头间相同规格。设备扫描缓存与切换事务已通过 Xcode 测试 target 编译，但本次设备服务不可用，行为、耗时与稳定性尚未在运行时验证，详见 `Docs/Validation.md`。
 
@@ -1080,11 +1070,11 @@ M挡手动WB/焦点保留，否则拍前锁定读数；结束、失败、取消�
 
 ## 子模块弹窗三列布局（2026-10-26）
 
-`ShootingModePanelLayout` 新增 `rowSpacing = 10` 和 `panelHeight(for:)`；选项超过 3 个时按两行计算高度。照片选项为慢门、夜景、人像、连拍、虚拟光圈、智拍，使用 3 列 `LazyVGrid`；视频为延时、慢动作、电影一行。虚拟光圈是占位入口，图标 `camera.aperture`，点击只显示未开放提示，不接入捕获、景深或光圈参数。按钮尺寸、选中/禁用样式和无障碍标识保持原组件规则。
+`ShootingModePanelLayout` 新增 `rowSpacing = 10` 和 `panelHeight(for:)`；选项超过 3 个时按两行计算高度。照片选项为慢门、夜景、人像、连拍、虚拟光圈，使用 3 列 `LazyVGrid`；视频为延时、慢动作、电影一行。虚拟光圈是占位入口，图标 `camera.aperture`，点击只显示未开放提示，不接入捕获、景深或光圈参数。按钮尺寸、选中/禁用样式和无障碍标识保持原组件规则。
 
 ### 拍照子模块入口图标（2026-10-26）
 
-`CameraViewModel.shootingModeButtonSymbol` 在照片模式默认返回 `camera.fill`；存在 `activePhotoSubmode` 时返回该子模块的 `symbol`，关闭后回到相机图标。弹窗内部恢复 `PhotoSubmode.symbol` 原语义图标：慢门 `timer`、夜景 `moon.stars.fill`、人像 `person.crop.rectangle`、连拍 `square.stack.3d.up`；虚拟光圈 `camera.aperture`、智拍 `sparkles`。图标只影响入口/弹窗显示，不改变子模块能力、按钮尺寸和触控逻辑。
+`CameraViewModel.shootingModeButtonSymbol` 在照片模式默认返回 `camera.fill`；存在 `activePhotoSubmode` 时返回该子模块的 `symbol`，关闭后回到相机图标。弹窗内部恢复 `PhotoSubmode.symbol` 原语义图标：慢门 `timer`、夜景 `moon.stars.fill`、人像 `person.crop.rectangle`、连拍 `square.stack.3d.up`；虚拟光圈 `camera.aperture`。图标只影响入口/弹窗显示，不改变子模块能力、按钮尺寸和触控逻辑。
 
 ## 2026-10-28 遗留失败修正后的捕获边界
 
@@ -1147,22 +1137,6 @@ M挡手动WB/焦点保留，否则拍前锁定读数；结束、失败、取消�
 
 慢门累积预览：每次源帧在`slowShutterCompositionQueue`完成真实融合后，按至少0.5秒的采样间隔调用`SlowShutterComposer.renderPreview`，以最长边900像素小图应用当前滤镜/画幅，不重新编码、融合或改变累积图。主线程用序列token复核再发布`SlowShutterAccumulationPreview`，`SlowShutterAccumulationView`只在原预览框内按版本交叉淡化（220ms，减弱动态效果80ms），不推移或拦截控件。结束时以正式`photo.preview`淡化接替，650ms后清理；取消、失败、后台即时清理，迟到回调不得复活旧序列。延迟清理只捕获ID，不额外持有整个序列合成器。
 
-## 智拍短过渡与有效对齐计时（2026-10-29补充）
-
-在直接跟踪坐标发布的基础上，`SmartCompositionGuideOverlay`仅给候选点/选中点的position附加45ms线性动画，不恢复低通或旧160ms补间；选中点以UUID作为视图身份，切对象不插值。正式入口读取系统减弱动态效果，传给纯内容组件，开启时不做位置动画；圈和按钮位置固定。可靠点实际进入绘制半径时，A/M均立即显示对齐颜色，不依赖提示文字迟滞。
-
-`SmartAutoFramingGate`用pausedSince维护最多0.20秒短暂停顿：未确认或圈边15%范围内越界只暂停，恢复确认且点重新进圈后扣除暂停时间；未确认/圈外不能触发。大幅位移、持续失踪和显式取消仍清空计时。稳定性比较使用相邻确认帧，避免缓慢手持累计漂移不断触发起始点距离阈值。
-
-评分空结果不代表对齐失败：`finishAutomaticSmartFraming`只在有评分时采纳推荐倍率，否则保持原倍率。等待硬件变焦稳定后提交主体对焦、标记gate完成并播放既有反馈；移除评分空时提前完成/静默返回。完成只表示取景流程与对焦指令已提交，未读取或保证硬件已合焦。工作被取消或等待失败时gate尚未封住，允许重新稳定对齐。场景建议、M挡仅参考和用户手动快门保持。
-
-## M挡智拍与拍后重新引导（2026-10-29最新要求）
-
-本节替代上文M挡仅参考及“明显换场景后重新引导”的描述。`smartAutomaticAllowed`允许A/M，仍检查媒体、锁定、弹窗和生命周期；完成变焦后只释放`manualFocus`并按主体投影对焦，保留曝光、WB及其自动/手动标志。等待硬件阶段还校验原A/M，切挡不让旧工作落地。M挡复用既有固定物理镜头的数字变焦，不切A/虚拟多摄。
-
-`CameraEngine.deliveredPhotoRevision`仅在真实CapturedPhoto按快门顺序交付时递增。模型订阅后清除本轮完成/反馈并重置gate，保留当前仍有效的点；失败、单纯缩略图改变和慢门源帧不触发。`smartDisplayedCompositionGuide`允许主选暂失时用其他有效候选构建显示层，避免整层隐藏。普通状态没有隐藏计时器，只有对齐完成且位于1.6倍圈半径容差内、或实际拍摄时隐藏；不做场景切换检测。
-
-同批选择先检查实际进圈的可靠点，旧的0.15锁定区不再挡住已对齐的另一点。同批切换到另一ID会重置本轮；自身变焦后全部ID重建不视作用户改选。模型正常与测试共用`publishSmartComposition`，覆盖候选选择、显示稳定器和自动取景链路。
-
 ## 端侧语义建议与跟踪分离（2026-10-29）
 
 `SmartLocalCompositionAI`是单在途actor，输入最长边768的分析图和最多3个已有候选；Vision分类读取全景和安全裁切，给出受限目标偏好及保留环境标志。分类标签优先级、0.25/0.4置信门限和主体排序是项目规则，不当作专用审美模型已训练。无需自带/下载模型权重。
@@ -1173,29 +1147,13 @@ iOS27的`SystemLanguageModel.default`在available、vision及guidedGeneration能
 
 场景缓存集中在`SmartSceneAnalysisState`，与`SmartSubjectTracker`一样仅由`camera.smart-capture`串行队列读写。其`@unchecked Sendable`表示受此队列所有权约束，不是允许调用者在任意队列并发修改。UI/AI返回通过调度到该队列才应用，消除MainActor模型属性被后台直接读写的隔离警告。
 
-## 智拍早期收点与单次AF保持（2026-10-29）
-
-`SmartAutoFramingGate.alignmentConfirmed`在有效对齐达到0.18秒时供UI使用，真正的取景触发仍为0.75秒。模型`smartAlignmentLatched`保留1.6倍圈半径的手抖容差，取消、换主体、拍照交付和停止会清理；UI只给候选层opacity做100/60ms淡出，位置跟踪仍45ms短过渡。完成不再插入实心橙点，仅空心圈保留250ms并淡出；按钮不动，评分等待用原中心圈内进度。
-
-`SmartFeatureAnchor.seed`在框内至少保留模板半径+1像素和10%边距；`SmartFramingRecommendation.focusPoint(for:)`把实际AF采样点约束到框内12%，再做变焦与既有传感器坐标映射，显示纹理点不改。该框内规则是保守工程策略，不是完整前景分割。
-
-2026-11-02起取消未对齐首次候选的额外预览AF，以减少初始扫描造成的点位重建；沿用正常取景AF，稳定对齐完成后仍传`smartSingleShot=true`，用户锁时不抢控制。`CameraEngine`对该路径使用autoFocus，并在会话队列持有KVO观察：实际扫描开始后首个isAdjustingFocus=false事件才切locked；所有回调校验目标代次、设备身份及保持标志。没有固定时延后的反复AF或距离/切镜规则。
-
-`smartFocusHolding`是智拍内部保持，不复用用户AE/AF锁。参数恢复不把它重置为continuousAF，场景变化默认对焦回中也不覆盖；手动焦点、普通点焦、普通变焦、主动选镜头、A/M切换及退出清理观察并交还对应控制。stop仅清状态/观察，不额外启动一次对焦。普通focus默认参数和视频路径保持，曝光/WB未在本次控制中重写。不能以进入locked当作识别目标正确或所有光学呼吸已消除，实际取景边界见Validation。
-
-## 智拍推荐范围偏好（2026-10-29）
-
-`CameraReadings`增加单调采样时间、当前activePrimaryConstituent（物理设备则自身）的焦位与身份。推荐判断不用虚拟设备焦位冒充当前物理镜头距离。`SmartRecommendationRangePolicy`默认不放点，稳定焦位≤0.35抑制、≥0.50允许，中间保留状态；转换要求至少两个不同时间的新读数且跨度≥0.25秒，扫描中不确认，设备变化重新确认，系统微距立即抑制。这些阈值是工程代理，未按米校准；0近端/1远端及不可直接映射距离依据Apple当前lensPosition文档/SDK。
-
-范围变化清理候选、门限、AI与取景任务，推进trackingEpoch阻止异步旧点回写；近景抑制时仅归还智拍自身的AF保持，系统继续原有对焦，不增加距离驱动切镜或定时对焦。场景参数建议仍可分析，范围只约束构图点和自动取景。检测器在不允许时不提名/跟踪构图候选，恢复后新代次检测。DEBUG受控点测试可显式绕过范围判断，范围专项则关闭绕过。
-
 ## 编译隔离与焦段操作（2026-10-30）
 
-双拍小窗Coordinator明确MainActor所有权；录制创建、高分辨率暖机及智拍AF配置的外层闭包显式捕获self，保持原有异步操作存活与内层弱回调语义。双拍iOS27之前方向回退使用受支持的90°videoRotationAngle，iOS27继续原RotationCoordinator路径；诊断用视频帧提取改为异步image(at:)。原生测试探针以配置队列/采样队列和锁约束Sendable边界，前置预览及照片回调新增锁保护，不将AVCaptureDevice任意跨队列修改声明为安全。
+双拍小窗Coordinator明确MainActor所有权；录制创建、高分辨率暖机的外层闭包显式捕获self，保持原有异步操作存活与内层弱回调语义。双拍iOS27之前方向回退使用受支持的90°videoRotationAngle，iOS27继续原RotationCoordinator路径；诊断用视频帧提取改为异步image(at:)。原生测试探针以配置队列/采样队列和锁约束Sendable边界，前置预览及照片回调新增锁保护，不将AVCaptureDevice任意跨队列修改声明为安全。
 
 `afterPendingSessionTasks`由DEBUG诊断区移为正式内部接口：照片/视频切换与慢门启动本已调用该会话栅栏，Release也必须存在。它只表示已提交会话任务执行完毕，不承诺传感器曝光/WB已生效，参数回归另读取真实状态确认。
 
-焦段条不把前景按钮包含进交互glassEffect：独立Color.clear背景承载非交互PreviewSurface并关闭命中，原生按钮只负责文字/选中色和原touchUpInside/长按。48MP现在只显示0.5/1/4三个受支持原生镜头，切镜保留高像素；长按、捏合、连续变焦均禁用，智拍倍率范围锁定当前倍率。低分辨率条与交互规则保留。
+焦段条不把前景按钮包含进交互glassEffect：独立Color.clear背景承载非交互PreviewSurface并关闭命中，原生按钮只负责文字/选中色和原touchUpInside/长按。48MP现在只显示0.5/1/4三个受支持原生镜头，切镜保留高像素；长按、捏合、连续变焦均禁用，低分辨率条与交互规则保留。
 
 ## 视频镜头与规格兼容选择（2026-10-30）
 
@@ -1207,16 +1165,6 @@ iOS27的`SystemLanguageModel.default`在available、vision及guidedGeneration能
 
 顶部弹窗从完整可用宽度计算原有槽宽，再按可见按钮数量决定容器宽度；剩余按钮不被拉伸。焦段槽宽仍按完整目录计算。只对局部内容/容器变化做动画，沿用弹窗淡入淡出及减弱动态效果短动画，顶部浮层不推动固定控件或HUD。
 
-## 智拍显示身份稳定性（2026-11-02）
-
-`SmartSubjectTracker.Target`分别记录像素确认`lastConfirmed`与高置信连续对象观测`lastObserved`。对象框满足连续性、置信度≥0.8、当前对象具有可用结构时更新显示观测，局部复核失败不再直接驱逐已跟住的目标。显示/身份按最后有效观测与确认时间维护，自动动作仍由`trackingVerified`和原对齐门限约束。真正失去系统跟踪时使用有界宽限，越界/异常跳框拒绝，最后有效状态1.2秒后释放；批次冷却维持原0.8秒。
-
-`SmartSubjectAppearance`以12×12灰度结构补充原11×11固定局部模板，只有高置信连续对象框与整体相关性≥0.90时可作为独立确认。辅助整体参考仅在原固定局部模板连续两帧证实时低频刷新，不逐帧学习预测位置。`SmartCompositionGuideOverlay.smartVisiblePoints`统一组合/去重后用一个ForEach显示所有候选，主候选切换不再将白点移入另一分支。
-
-未对齐预AF获取状态及其额外请求已移除；对齐后的`finishAutomaticSmartFraming`、单次AF保持及取消恢复保留。候选提名/推荐范围未采用本轮尝试的结构质量门限；AI语义接口保持原实现，运行时仍需模型可用与vision能力检查。验证和局限见[专项记录](Test-Reports/2026-11-02-Smart-Point-Stability.md)。
-# 2026-11-06 A挡微距路由更新
-
-A挡预览沿用系统虚拟多摄，不再由macroActive预切物理输入，也不在快门中替换输入。可用时通过AVCapturePhotoSettings的virtualDeviceConstituentPhotoDeliveryEnabledDevices只请求超广角照片，并按sourceDeviceType接收；手选0.5×沿用原路线。近距两张输入保持与远景倍率往返已定向验证，连续近远自然退出及所有格式尚未完整验收。此前物理输入保持方案不代表当前A挡产品路径。
 ## 视频前置固定超广角与中心追踪（2026-11-08）
 
 - 视频前置只使用同一个前置超广角输入，固定 wide 取景；不再渲染标准/广角焦段按钮，`selectFocalLength`/`canSelectFocalLength` 对视频前置直接拒绝。照片前置的宽高比与标准/广角逻辑不受影响。
@@ -1235,11 +1183,6 @@ A挡预览沿用系统虚拟多摄，不再由macroActive预切物理输入，�
 - `LivePreviewCadence` 统一控制预览消费：普通视频低于60fps按实际帧率；60fps及以上最多60fps；慢动作捕获（`captureFrameRate != nil`，120/240fps）固定30fps预览，不跟随采集帧率。
 - `LivePreviewState` 分开保存 `videoFrameRate`（播放/普通采集）与 `videoCaptureFrameRate`（慢动作采集）；普通120fps只走60fps预览，慢动作120/240都走30fps。
 - 慢动作规格弹窗的采集帧率按低到高显示：120fps在240fps之前；实际默认采集率仍优先设备提供的最高档。
-## 智拍白点身份稳定与自适应采样（2026-11-09）
-
-- `SmartSubjectContinuity` 位于提示发布前：同一 subjectID 实时跟随；新 subjectID 必须连续稳定 0.60 秒且 `trackingVerified=true` 才允许替换。旧点短暂丢失最多保留 0.65 秒并标记未验证；首个点也必须已通过验证，避免在错误目标上先点亮。
-- `publishSmartComposition` 先过身份迟滞，再过 `SmartCompositionStabilizer` 的阶段/方向迟滞；只有身份真正切换才重置构图阶段和自动取景门控。未验证候选可以显示在其他候选列表中，但不能抢走当前白点。
-- `SmartCaptureCadence` 替代固定 66ms 轮询：有可见白点15Hz，无白点8Hz，弹窗/设置不可分析时4Hz，低电量或 thermal serious/critical 时10Hz/5Hz。分析 in-flight 门控保留，不并行叠加 Vision 请求。
 ## 低风险功耗优化（2026-11-09）
 
 - 中性预览：`state.hdr == false && !renderLook.requiresImageProcessing` 时跳过 `Imaging.filtered`，直接复用已做色彩归一化的源图；Log LUT、夜间辅助和HDR路径保持原样。

@@ -767,25 +767,6 @@ final class NightAdaptiveCapturePhysicalTests: XCTestCase {
         }
     }
 
-    @MainActor func testSmartCaptureSwitchesBetweenPresets() async throws {
-        try await withCamera { model in
-            model.toggleSmartCaptureMode()
-            XCTAssertTrue(model.smartCaptureEnabled)
-            model.togglePortraitMode()
-            for _ in 0..<200 { if !model.isPreparingSubmode { break }; try await Task.sleep(for: .milliseconds(20)) }
-            XCTAssertFalse(model.smartCaptureEnabled, "切到人像应自动退出智拍")
-            let portrait = model.portraitModeEnabled
-            model.toggleSmartCaptureMode()
-            for _ in 0..<200 { if !model.isPreparingSubmode { break }; try await Task.sleep(for: .milliseconds(20)) }
-            XCTAssertTrue(model.smartCaptureEnabled)
-            XCTAssertFalse(model.portraitModeEnabled, "开启智拍应关闭人像")
-            model.toggleNightMode()
-            for _ in 0..<200 { if !model.isPreparingSubmode { break }; try await Task.sleep(for: .milliseconds(20)) }
-            XCTAssertFalse(model.smartCaptureEnabled, "切到夜景应自动退出智拍")
-            XCTAssertEqual(model.portraitModeEnabled, false)
-            print("SMART-SWITCH portraitWas=\(portrait) finalSmart=\(model.smartCaptureEnabled) night=\(model.nightModeEnabled) portrait=\(model.portraitModeEnabled)")
-        }
-    }
 
     @MainActor func test48MPOnlyAvailableInManualAndFallsBackInAuto() async throws {
         try await withCamera { model in

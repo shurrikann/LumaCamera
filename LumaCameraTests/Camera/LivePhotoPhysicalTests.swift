@@ -89,25 +89,6 @@ final class LivePhotoPhysicalTests: XCTestCase {
         XCTAssertEqual(camera.pendingPhotoCount, 0)
     }
 
-    @MainActor func testSmartCaptureDisablesAndForbidsLivePhoto() async throws {
-        let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
-        defer { model.setCameraActive(false) }
-        model.setCameraActive(true)
-        for _ in 0..<300 { if camera.ready && camera.preview != nil { break }; try await Task.sleep(for: .milliseconds(20)) }
-        model.photoFormat = .jpeg; model.photoResolution = .standard; model.hdr = false; model.setMode(.auto)
-        if !model.livePhotoEnabled { model.toggleLivePhoto() }
-        XCTAssertTrue(model.livePhotoEnabled)
-        XCTAssertTrue(model.capturesLivePhoto)
-        if !model.smartCaptureEnabled { model.toggleSmartCaptureMode() }
-        XCTAssertTrue(model.smartCaptureEnabled)
-        XCTAssertFalse(model.livePhotoEnabled, "进入智拍必须关闭 Live")
-        XCTAssertFalse(model.capturesLivePhoto)
-        XCTAssertFalse(model.canToggleLivePhoto, "智拍期间 Live 开关必须禁用")
-        model.toggleLivePhoto()
-        XCTAssertFalse(model.livePhotoEnabled, "智拍期间不能重新打开 Live")
-        XCTAssertFalse(model.photoOptions.capturesLive)
-        print("SMART-LIVE forbidden=true smart=\(model.smartCaptureEnabled) live=\(model.livePhotoEnabled)")
-    }
 
     @MainActor func testRearLiveTogglePreserves24mmAnd35mmFraming() async throws {
         #if targetEnvironment(simulator)

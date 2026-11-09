@@ -73,8 +73,6 @@ final class ShootingModeButtonTests: XCTestCase {
             model.closePopups(); XCTAssertEqual(model.shootingModeButtonSymbol,symbol)
             toggle(); try await settle("camera.fill"); XCTAssertFalse(model.shootingSubmodeEnabled)
         }
-        model.toggleSmartCaptureMode(); XCTAssertEqual(model.shootingModeButtonSymbol,"sparkles")
-        model.toggleSmartCaptureMode(); XCTAssertEqual(model.shootingModeButtonSymbol,"camera.fill")
         model.setCaptureKind(.video); try await settle("video")
         let videos: [(String, () -> Void)] = [
             (VideoSubmode.timeLapse.symbol,{ model.toggleTimeLapseMode() }),

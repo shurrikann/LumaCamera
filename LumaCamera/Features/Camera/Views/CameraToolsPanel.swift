@@ -17,9 +17,7 @@ extension CameraView {
                 ShootingModeOption(title: "人像", icon: PhotoSubmode.portrait.symbol),
                 ShootingModeOption(title: "连拍", icon: PhotoSubmode.burst.symbol),
                 // 虚拟光圈仅模拟高亮星芒，真实镜头光圈与曝光不变。
-                ShootingModeOption(title: "虚拟光圈", icon: "camera.aperture"),
-                // 智拍入口可点击；场景识别和参数联动仍待实现。
-                ShootingModeOption(title: "智拍", icon: "sparkles")
+                ShootingModeOption(title: "虚拟光圈", icon: "camera.aperture")
             ]
             : [
                 ShootingModeOption(title: "延时", icon: VideoSubmode.timeLapse.symbol),
@@ -36,7 +34,6 @@ extension CameraView {
                 let isSlowShutter = option.title == "慢门" && model.captureKind == .photo
                 let isBurst = option.title == "连拍" && model.captureKind == .photo
                 let isPortrait = option.title == "人像" && model.captureKind == .photo
-                let isSmartCapture = option.title == "智拍" && model.captureKind == .photo
                 let isVirtualAperture = option.title == "虚拟光圈"
                 let isTimeLapse = option.title == "延时" && model.captureKind == .video
                 let isSlowMotion = option.title == "慢动作" && model.captureKind == .video
@@ -45,7 +42,6 @@ extension CameraView {
                 let selected = isSlowShutter ? model.slowShutterEnabled
                     : isBurst ? model.burstModeEnabled
                     : isPortrait ? model.portraitModeEnabled
-                    : isSmartCapture ? model.smartCaptureEnabled
                     : isTimeLapse ? model.timeLapseEnabled
                     : isSlowMotion ? model.slowMotionEnabled
                     : isCinematic ? model.cinematicVideoEnabled
@@ -134,16 +130,6 @@ extension CameraView {
                             ? "仅主摄和长焦、SDR或P3视频；不兼容规格自动适配。星芒写入成片，不改变实际曝光或景深。"
                             : "仅主摄和长焦，连续调整光源星芒；不改变实际曝光或景深。")
                         .accessibilityIdentifier("camera.shooting-mode.virtual-aperture")
-                    } else if isSmartCapture {
-                        Button { model.toggleSmartCaptureMode() } label: {
-                            shootingModeOption(option, selected: selected, enabled: enabled)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!enabled)
-                        .accessibilityLabel("智拍模式")
-                        .accessibilityValue(selected ? "已开启" : "关闭")
-                        .accessibilityHint("识别逆光、人像和文档，给出一条拍摄建议；A 挡可应用，M 挡只作参考。")
-                        .accessibilityIdentifier("camera.shooting-mode.smart-capture")
                     } else {
                         shootingModeOption(option, selected: false, enabled: false)
                             .accessibilityElement(children: .combine)
