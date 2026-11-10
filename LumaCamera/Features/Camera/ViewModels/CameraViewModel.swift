@@ -318,6 +318,12 @@ final class CameraViewModel: ObservableObject {
     private var captureKindSwitchToken = UUID()
     private var pendingCaptureKindRequest: CaptureKind?
     private var pendingCaptureKindTask: Task<Void, Never>?
+    // One user-initiated mode/submode transition at a time. Rapid taps keep only
+    // the latest intent; async graph preparations still run to completion first.
+    private var transitionBusy = false
+    private var transitionExecuting = false
+    private var pendingTransition: (() -> Void)?
+    private var transitionDrainTask: Task<Void, Never>?
     private var videoSubmodeRequest = UUID()
     private var selectedSlowMotionCaptureRate: VideoFrameRate?
     let externalVideoStorage = ExternalVideoStorage.shared
@@ -450,8 +456,53 @@ final class CameraViewModel: ObservableObject {
         return true
     }
 
+    private var isTransitionSettling: Bool {
+        transitionBusy || photoSubmodePreparing != nil || videoSubmodePreparing != nil
+            || captureKindSwitching || camera.videoConfiguring
+            || camera.dualCapturePreparing || camera.videoBusy
+    }
+
+    /// Returns false when the caller must enqueue rather than start immediately.
+    private func beginUserTransition(_ intent: @escaping () -> Void) -> Bool {
+        if transitionExecuting { return true }
+        if isTransitionSettling {
+            pendingTransition = intent
+            scheduleTransitionDrain()
+            return false
+        }
+        pendingTransition = nil
+        transitionBusy = true
+        return true
+    }
+
+    private func endUserTransition() {
+        transitionBusy = false
+        scheduleTransitionDrain()
+    }
+
+    private func scheduleTransitionDrain() {
+        transitionDrainTask?.cancel()
+        transitionDrainTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                if self.isTransitionSettling {
+                    try? await Task.sleep(for: .milliseconds(20))
+                    continue
+                }
+                guard let next = self.pendingTransition else { return }
+                self.pendingTransition = nil
+                self.transitionExecuting = true
+                next()
+                self.transitionExecuting = false
+                if !self.isTransitionSettling, self.pendingTransition == nil { return }
+            }
+        }
+    }
+
     /// 开启时先检查当前路线；只有当前路线无兼容规格才异步查询其他镜头。
     private func toggleVideoSubmode(_ requested: VideoSubmode) {
+        guard beginUserTransition({ [weak self] in self?.toggleVideoSubmode(requested) }) else { return }
+        defer { endUserTransition() }
         disableFrontVideoCenteringForManualChoice()
         if camera.dualCaptureEnabled {
             camera.setDualCaptureEnabled(false) { [weak self] success in
@@ -481,11 +532,19 @@ final class CameraViewModel: ObservableObject {
             camera.prepareCinematicInput { [weak self] success in
                 Task { @MainActor [weak self] in
                     guard let self, self.videoSubmodeRequest == request, self.captureKind == .video else { return }
-                    if success,
-                       self.applyVideoSubmodeSettings(.cinematic,
-                           candidates: self.currentVideoSubmodeCandidates(.cinematic)) != nil {
-                        self.videoSubmodePreparing = nil
-                        self.activateVideoSubmode(.cinematic)
+                    if success {
+                        // prepareCinematicInput has just replaced the physical
+                        // input and format. Query the refreshed cinematic routes
+                        // before using the old capability snapshot.
+                        self.camera.compatibleVideoSubmodeRoutes(for: .cinematic,
+                            position: self.currentPosition, openGateEnabled: false) { routes in
+                            Task { @MainActor [weak self] in
+                                guard let self, self.videoSubmodeRequest == request,
+                                      self.captureKind == .video, !self.camera.videoBusy else { return }
+                                self.finishVideoSubmodePreparation(request: request, mode: .cinematic,
+                                    routes: routes, preserveOpenGate: false)
+                            }
+                        }
                     } else {
                         self.videoSubmodePreparing = nil
                         self.setVideoSubmode(.cinematic, enabled: false)
@@ -582,7 +641,6 @@ final class CameraViewModel: ObservableObject {
             activateVideoSubmode(requested, finish: false)
             synchronizeVideoSettings(preferredLensID: targetLens.id)
             var routeReady = false
-            var cinematicConfiguredAt: TimeInterval?
             for _ in 0..<500 {
                 guard videoSubmodeRequest == request else { return }
                 if !camera.videoConfiguring && camera.ready {
@@ -602,11 +660,11 @@ final class CameraViewModel: ObservableObject {
                                 $0.resolution == self.videoResolution && $0.frameRate == self.videoFrameRate
                                     && $0.colorSpace == self.videoColorSpace
                             }
-                        if configured {
-                            let threshold = cinematicConfiguredAt ?? CACurrentMediaTime()
-                            cinematicConfiguredAt = threshold
-                            routeReady = camera.latestRecordingPreviewFrameTime > threshold
-                        } else { cinematicConfiguredAt = nil }
+                        // The system cinematic input being active and matching the
+                        // selected spec is the readiness contract. A preview-frame
+                        // timestamp is not guaranteed on every cinematic route and
+                        // must not make activation wait for the full timeout.
+                        if configured { routeReady = true }
                     case .timeLapse:
                         routeReady = camera.videoSettings.captureFrameRate == nil
                     }
@@ -836,8 +894,12 @@ final class CameraViewModel: ObservableObject {
     }
 
     func toggleDualCapture(frontWide: Bool? = nil) {
+        guard beginUserTransition({ [weak self] in self?.toggleDualCapture(frontWide: frontWide) }) else { return }
+        defer { endUserTransition() }
         guard captureKind == .video, !camera.videoBusy, !camera.dualCapturePreparing,
+              !isPreparingSubmode, videoSubmodePreparing == nil,
               camera.dualCaptureEnabled || dualCaptureAvailable else { return }
+        camera.message = nil
         cancelVideoEntryWatchdog()
         endZoomDial(); cancelFocus()
         cameraSelectionFeedback()
@@ -1981,6 +2043,8 @@ final class CameraViewModel: ObservableObject {
     }
 
     private func togglePhotoSubmode(_ requested: PhotoSubmode) {
+        guard beginUserTransition({ [weak self] in self?.togglePhotoSubmode(requested) }) else { return }
+        defer { endUserTransition() }
         camera.message = nil
         adaptiveHighDynamic = false
         if virtualApertureEnabled { virtualApertureEnabled = false; updateLook() }
@@ -2215,6 +2279,8 @@ final class CameraViewModel: ObservableObject {
         virtualAperture = VirtualApertureRenderer.defaultValue
     }
     func toggleVirtualAperture() {
+        guard beginUserTransition({ [weak self] in self?.toggleVirtualAperture() }) else { return }
+        defer { endUserTransition() }
         guard camera.ready, !camera.capturing, !camera.videoBusy, photoSubmodePreparing == nil,
               videoSubmodePreparing == nil, !camera.dualCapturePreparing else { return }
         if camera.dualCaptureEnabled {
@@ -4013,6 +4079,8 @@ final class CameraViewModel: ObservableObject {
 
     /// 模式按钮立即反馈；正在配置/收尾时排队，不能静默吞掉用户点击。
     func requestCaptureKind(_ kind: CaptureKind) {
+        guard beginUserTransition({ [weak self] in self?.requestCaptureKind(kind) }) else { return }
+        defer { endUserTransition() }
         guard kind != captureKind else {
             pendingCaptureKindRequest = nil
             pendingCaptureKindTask?.cancel()

@@ -900,7 +900,8 @@ final class CameraEngine: NSObject, ObservableObject {
                 cinematic = "cinematic=\(self.input?.isCinematicVideoCaptureSupported ?? false)/\(self.input?.isCinematicVideoCaptureEnabled ?? false) scene=\(device.cinematicVideoCaptureSceneMonitoringStatuses)"
             } else { cinematic = "cinematic=iOSUnsupported" }
             let outputs = self.session.outputs.map { String(describing: type(of: $0)) }.joined(separator: ",")
-            let state = "running=\(self.session.isRunning) runtimeErrors=\(self.runtimeErrorCountForTesting) outputs=\(outputs) input=\(device.deviceType.rawValue):\(device.uniqueID) active=\(dimensions.width)x\(dimensions.height) ranges=\(ranges) requested=\(self.requestedVideoSettings.resolution.title)/\(self.requestedVideoSettings.frameRate.rawValue)/capture\(self.requestedVideoSettings.captureFrameRate?.rawValue.description ?? "nil") cinematicRequested=\(self.requestedCinematicVideo) \(cinematic)"
+            let previewMode = "previewRecording=\(self.livePreviewState.snapshot().previewFromRecordingOutput) recInSession=\(self.session.outputs.contains(self.recordingOutput)) recConn=\(self.recordingOutput.connection(with: .video)?.isEnabled ?? false) videoInSession=\(self.session.outputs.contains(self.videoOutput))"
+            let state = "running=\(self.session.isRunning) runtimeErrors=\(self.runtimeErrorCountForTesting) outputs=\(outputs) \(previewMode) input=\(device.deviceType.rawValue):\(device.uniqueID) active=\(dimensions.width)x\(dimensions.height) ranges=\(ranges) requested=\(self.requestedVideoSettings.resolution.title)/\(self.requestedVideoSettings.frameRate.rawValue)/capture\(self.requestedVideoSettings.captureFrameRate?.rawValue.description ?? "nil") cinematicRequested=\(self.requestedCinematicVideo) \(cinematic)"
             DispatchQueue.main.async { completion(state) }
         }
     }
