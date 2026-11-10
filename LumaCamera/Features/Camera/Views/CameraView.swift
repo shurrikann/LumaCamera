@@ -165,6 +165,27 @@ struct CameraView: View {
             model.setCameraActive(scenePhase == .active && !model.review && !model.settings)
             model.updateFrontFramingForOrientation(isLandscape: controlsLandscape)
         }
+        #if DEBUG
+        .task {
+            // DEBUG-only energy harness: deterministic video standby/recording.
+            let args = ProcessInfo.processInfo.arguments
+            guard args.contains("--perf-video") else { return }
+            model.setCaptureKind(.video)
+            for _ in 0..<300 {
+                if model.videoShutterEnabled { break }
+                try? await Task.sleep(for: .milliseconds(100))
+                if Task.isCancelled { return }
+            }
+            guard args.contains(where: { $0.hasPrefix("--perf-record") }) else { return }
+            try? await Task.sleep(for: .seconds(2))
+            guard model.videoShutterEnabled, !camera.videoRecording else { return }
+            model.toggleVideoRecording()
+            guard let raw = args.first(where: { $0.hasPrefix("--perf-record=") })?
+                .dropFirst("--perf-record=".count), let seconds = Double(raw), seconds > 0 else { return }
+            try? await Task.sleep(for: .seconds(seconds))
+            if camera.videoRecording { model.toggleVideoRecording() }
+        }
+        #endif
         .task {
             if scenePhase == .active { gallery.refreshAfterForeground() }
             #if DEBUG && targetEnvironment(simulator)
