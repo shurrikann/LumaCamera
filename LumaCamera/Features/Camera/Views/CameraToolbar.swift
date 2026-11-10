@@ -163,14 +163,11 @@ extension CameraView {
                         .captureControlGeometry("toolbar.burstCount", model: model)
                     } else if model.proToneReplacesLiveButton {
                         Button { model.toggleToolbarPanel(.tone) } label: {
-                            VStack(spacing: 1) {
-                                ToneCurveSymbol().stroke(lineWidth: 1.4)
-                                    .frame(width: 17, height: 14)
-                                Text("PRO").font(.system(size: 6, weight: .semibold, design: .rounded))
-                            }
-                            .rotatingCaptureContent()
-                            .foregroundStyle(model.toolbarPanel == .tone || model.tone != .natural ? AppTheme.accent : .white)
-                            .frame(maxWidth: .infinity).frame(height: 32)
+                            ToneCurveSymbol().stroke(lineWidth: 1.4)
+                                .frame(width: 18, height: 15)
+                                .rotatingCaptureContent()
+                                .foregroundStyle(model.toolbarPanel == .tone || model.tone != .natural ? AppTheme.accent : .white)
+                                .frame(maxWidth: .infinity).frame(height: 32)
                         }
                         .buttonStyle(.plain)
                         .opacity(model.isPreparingSubmode ? AppTheme.disabledControlOpacity : 1)
