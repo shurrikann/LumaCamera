@@ -226,7 +226,7 @@ enum Library709 {
         .lut3d9aec28a2: .film,
         .lut32a8226ccc: .film,
         .lut5f95b51579: .film,
-        .lut3675b050d8: .mono,
+        .lut3675b050d8: .film,
         .lutabf0a1a1fc: .film,
         .lut74f0c757a6: .mono,
         .lut65f12b4421: .film,

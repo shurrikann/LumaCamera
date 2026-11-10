@@ -9,7 +9,8 @@ final class Library709Tests: XCTestCase {
         XCTAssertEqual(ImportedFilterCatalog.entries.count, 253)
         XCTAssertEqual(Set(FilmStyle.availableStyles).count, 256)
         XCTAssertEqual(FilmStyle.availableStyles.filter { $0.filterCategory == .street }.count, 74)
-        XCTAssertEqual(FilmStyle.availableStyles.filter { $0.filterCategory == .film }.count, 34)
+        XCTAssertEqual(FilmStyle.availableStyles.filter { $0.filterCategory == .film }.count, 35)
+        XCTAssertEqual(FilmStyle.availableStyles.filter { $0.filterCategory == .mono }.count, 5)
         XCTAssertEqual(FilmStyle.availableStyles.filter { $0.filterCategory == .cinema }.count, 74)
         for entry in Library709.entries {
             XCTAssertTrue((16...64).contains(entry.dimension), entry.title)
