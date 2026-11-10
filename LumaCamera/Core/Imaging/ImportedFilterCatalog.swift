@@ -60,7 +60,7 @@ enum ImportedFilterCatalog {
         .init(style: .lut836114786e, title: "青嫩", equipment: nil, buttonName: "青嫩", asset: "ImportedLUT-lut836114786e", dimension: 64, compact: true),
         .init(style: .lutf83466e34f, title: "马卡龙", equipment: nil, buttonName: "马卡龙", asset: "ImportedLUT-lutf83466e34f", dimension: 64, compact: true),
         .init(style: .food, title: "美食", equipment: nil, buttonName: "美食", asset: "ImportedLUT-food", dimension: 17, compact: false),
-    ]
+    ] + Library709.entries
     private static let definitions = Dictionary(uniqueKeysWithValues: entries.map { ($0.style, $0) })
     private static let cache: NSCache<NSString, NSData> = {
         let cache = NSCache<NSString, NSData>()

@@ -235,7 +235,7 @@ extension CameraView {
     private var filterCarousel: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 14) {
+                LazyHStack(alignment: .top, spacing: 14) {
                     ForEach(filters.styles) { film in
                         Button { withAnimation(.easeInOut(duration: 0.18)) { model.style = film } } label: {
                             VStack(spacing: 8) {

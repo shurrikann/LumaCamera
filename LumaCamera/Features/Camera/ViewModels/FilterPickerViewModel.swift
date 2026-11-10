@@ -54,7 +54,7 @@ final class FilterPickerViewModel: ObservableObject {
                 let context = CIContext(options: [.cacheIntermediates: false])
                 guard let photo = UIImage(named: "FilterLandscape"), let source = CIImage(image: photo) else { return [:] }
                 let square = FrameRatio.square.crop(source)
-                let scaled = square.transformed(by: CGAffineTransform(scaleX: 180 / square.extent.width, y: 180 / square.extent.height))
+                let scaled = square.transformed(by: CGAffineTransform(scaleX: 144 / square.extent.width, y: 144 / square.extent.height))
                 var images: [FilmStyle: UIImage] = [:]
                 for style in FilmStyle.availableStyles {
                     autoreleasepool {

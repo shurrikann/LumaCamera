@@ -25,7 +25,8 @@ final class FoodFilterTests: XCTestCase {
         XCTAssertEqual(table.data?.count, 17 * 17 * 17 * 4 * MemoryLayout<Float>.size)
         XCTAssertEqual(ImportedFilterCatalog.entries.filter { $0.style == .food }.count, 1)
         XCTAssertEqual(FilmStyle.availableStyles.filter { $0 == .food }.count, 1)
-        XCTAssertEqual(FilmStyle.availableStyles.last, .food, "Replacing the previous entry should preserve its picker position")
+        XCTAssertTrue(FilmStyle.availableStyles.contains(.food), "The imported food entry must remain available")
+        XCTAssertEqual(FilmStyle.food.filterCategory, .life)
         XCTAssertEqual(FilmStyle.food.title, "美食")
 
         let input = CIImage(color: CIColor(red: 0.82, green: 0.34, blue: 0.12))

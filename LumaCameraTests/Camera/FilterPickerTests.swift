@@ -10,7 +10,7 @@ final class FilterPickerTests: XCTestCase {
         XCTAssertEqual(model.style, .original)
         model.togglePanel(.film)
         model.swipeFilter(translation: CGSize(width: -100, height: 10))
-        XCTAssertEqual(model.style, .leicaM9)
+        XCTAssertEqual(model.style, .daylightNegative400)
         model.swipeFilter(translation: CGSize(width: 100, height: 0))
         XCTAssertEqual(model.style, .original)
         model.togglePanel(.film)

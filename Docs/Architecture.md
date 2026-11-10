@@ -508,7 +508,7 @@ FilterPickerViewModel 管理分类、持久化收藏、强度栏展开状态和�
 
 CameraViewModel 负责分类与当前滤镜的同步，以及预览横滑的选择逻辑。横滑仅在滤镜窗口打开时生效，超过 44 点且横向距离大于纵向距离的 1.25 倍才切换，分类内到达端点后不循环。预览交互层仅在滤镜打开时添加 DragGesture，对焦点按与控件自己的点击分别处理；滤镜列表的 ScrollView 不向预览层传递手势。
 
-滤镜面板停靠在相机页面底部，隐藏底部快门和参数区的点击，但保留它们的布局尺寸，因此打开选择器不会改变预览裁切。镜头、A/M 和九宫格控件随底部面板与强度栏上移。内置风格与导入 LUT 统一由 FilmStyle.availableStyles 提供，当前 46 款（包括原片）；分类按实际支持的风格展示。导入 CUBE LUT 作为 float32 RGBA 数据集放入 Assets.xcassets，通过 ImportedFilterCatalog 按滤镜懒加载，并由 FilmColorLUT/CIColorCubeWithColorSpace 共用于照片和 SDR/P3 视频。美食条目沿用稳定的 `food` 原始 ID，用户提供的 17³ LUT 替代旧手写配方，使已有选择、收藏与照片记录继续解析到新的外观。CUBE 没有显式色彩配置时按当前导入管线的 sRGB 输入约定处理；不要将这一假设描述为源 LUT 自带的色彩元数据。
+滤镜面板停靠在相机页面底部，隐藏底部快门和参数区的点击，但保留它们的布局尺寸，因此打开选择器不会改变预览裁切。镜头、A/M 和九宫格控件随底部面板与强度栏上移。内置风格与导入 LUT 统一由 FilmStyle.availableStyles 提供，当前 256 款（48 项目滤镜 + 208 去重 709 LUT）；一级分类为胶片/电影/人像/生活/风光/街拍/黑白。709 条目由 `Library709.generated.swift` 生成稳定 ID 与分类，资源以 8-bit RGBA 数据集放入 Assets.xcassets（约 42MB），通过 ImportedFilterCatalog 按滤镜懒加载，并由 FilmColorLUT/CIColorCubeWithColorSpace 共用于照片和 SDR/P3 视频。美食条目沿用稳定的 `food` 原始 ID，用户提供的 17³ LUT 替代旧手写配方，使已有选择、收藏与照片记录继续解析到新的外观。CUBE 没有显式色彩配置时按当前导入管线的 sRGB 输入约定处理；不要将这一假设描述为源 LUT 自带的色彩元数据。
 
 拍摄界面共享表面使用系统版本分支：iOS 26 及以上调用 SwiftUI `glassEffect`，焦段圆形控件和画幅导致的顶部工具栏/预览重叠带使用 UIKit [`UIGlassEffect`](https://developer.apple.com/documentation/uikit/uiglasseffect)；iOS 18–25 继续走原自定义材质。工具栏重叠带按 `CameraPreviewLayout` 计算出的可见高度绘制，未重叠时保持透明，且不参与命中测试；系统减少透明度时该区域回退为高不透明度实底。曝光控件与弹窗从共享的 `PreviewSurface`、`GlassSurface` 与 `PopupGlassBackground` 取得背景；固定焦段条不再有整组背景，只让当前选中项绘制圆形背景，未选中项保持透明。顶部工具栏按钮保持纯图标/文字样式，不单独绘制按钮背景；工具栏外层仍有透明触控拦截面，防止点按空白区域落入预览对焦手势。
 
@@ -725,7 +725,7 @@ LivePreviewState 在锁内传递运行状态、滤镜、修订号、旋转、直
 
 - `CaptureLook.requiresImageProcessing` 用于跳过原片且无调整的逐帧处理。`CameraViewModel.effectiveCaptureLook` 在照片和 SDR/P3 视频间提供一致配方；视频照片滤镜仅 SDR/P3 且非 RAW 时开放，沿用当前滤镜强度与持久化的 `FilterAdjustments`。Log/Log 2 走独立 `LogLUTCubeRepository`，不提供照片式参数编辑；默认选“原片”，关闭烧录时只在预览路径应用 LUT，开启烧录时 `MovieRecorder` 在写入同一段 HEVC 流之前将 LUT 渲染到编码缓冲区。Log/Log 2 的像素缓冲继续使用 10-bit 4:2:0，`AVAssetWriter` 在未烧录时沿用 `VideoColorSpace.encodingColorProperties`，成片报告 Apple Log/Log 2；烧录 LUT 后改为 Rec.709 原色/传递函数，避免播放器把已显示化画面重新按 Log 解释。Apple Log 与 Log 2 的 LUT 按预设声明的曲线分开显示，通用旧库归 Apple Log。录制期间冻结 LUT 选择及烧录状态。
 
-55 个 `.cube` 资源按原 33³/65³ 网格打包为半精度 `LCUB` 数据，默认输入域必须为 0–1；`LogLUTCube` 在主线程外载入并以 NSCache 限额，预览缩略图延迟生成。当前资源转换保留 LUT 表格值，不对不同来源 LUT 做自动 Log 曲线识别或创意外观校准；选择列表含“原片”。保存视频后，`VideoCaptureBadgeStore` 按 PhotoKit local identifier 记录 LOG/LOG2 与是否烧录 LUT，图库和详情将对应标识与摄像机图标并排展示。任意外部视频不推断这些标识。
+47 个 Log LUT 资源按原 33³/65³ 网格打包为半精度 `LCUB` 数据，默认输入域必须为 0–1；`LogLUTCube` 在主线程外载入并以 NSCache 限额，预览缩略图延迟生成。当前资源转换保留 LUT 表格值，不对不同来源 LUT 做自动 Log 曲线识别或创意外观校准；选择列表含“原片”。保存视频后，`VideoCaptureBadgeStore` 按 PhotoKit local identifier 记录 LOG/LOG2 与是否烧录 LUT，图库和详情将对应标识与摄像机图标并排展示。任意外部视频不推断这些标识。
 
 Log LUT 只在用户切换 LUT 时推进对应预览版本；普通照片滤镜参数更新只提交 `CaptureLook`，避免两种更新互相使对方过期。滤镜拖动回归用例覆盖连续更新后最新预览仍落定为当前配方。
 - 视频预览继续使用 `LivePreviewState` 的实时滤镜路径。录制帧由 `MovieRecorder` 在追加样本前调用 `VideoFrameFilterRenderer`：将源 `CVPixelBuffer` 转为 `CIImage`，复用 `Imaging.filtered` 与照片相同的 LUT/调整配方，再渲染到目标色彩空间的 BGRA 缓冲区并交给 `AVAssetWriterInputPixelBufferAdaptor`。原视频时间戳保留，最终文件只经历一次编码，没有录制后的二次转码。无滤镜或不支持滤镜的格式继续直接写源帧。
