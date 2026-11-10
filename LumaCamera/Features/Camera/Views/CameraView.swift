@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct CameraView: View {
     @ObservedObject var model: CameraViewModel
@@ -170,6 +171,14 @@ struct CameraView: View {
             // DEBUG-only energy harness: deterministic video standby/recording.
             let args = ProcessInfo.processInfo.arguments
             guard args.contains("--perf-video") else { return }
+            UIApplication.shared.isIdleTimerDisabled = true
+            let brightnessTask = Task { @MainActor in
+                while !Task.isCancelled {
+                    UIScreen.main.brightness = 0.8
+                    try? await Task.sleep(for: .seconds(1))
+                }
+            }
+            defer { brightnessTask.cancel(); UIApplication.shared.isIdleTimerDisabled = false }
             model.setCaptureKind(.video)
             for _ in 0..<300 {
                 if model.videoShutterEnabled { break }
