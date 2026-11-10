@@ -5253,3 +5253,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - `SystemPhotoLibraryService` 保存视频时写入同一 `originalFilename`，系统相册详情显示可读名称。
 - 视频详情追加：SDR 滤镜名称/浓度/调整摘要；Log 已烧录 LUT 名称与“已烧录到画面”。仅预览的 Log LUT 不显示，避免把未写入的 LUT 说成成片滤镜。
 - 测试：`VideoFileNamingTests`、`VideoFilterInfoTests` 通过；真机 `BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn` 通过（8.768s），断言实际录像文件名以 `LumaVideo_` 开头。
+
+# 2026-11-10 Pro 影调入口移至顶部工具栏
+
+- HEIF Pro 照片模式下，顶部 Live 槽位改为 Pro 影调入口；格式弹窗中的 Pro 影调按钮移除，其他按钮不变。
+- 槽位优先级：慢门 > 虚拟光圈 > 人像景深 > 连拍 > Pro 影调（HEIF Pro） > Live。慢门始终顶替 Live。
+- 新增 `CameraToolbarAccessory.resolve` 纯函数与 `CameraToolbarAccessoryTests`，覆盖慢门/Pro 影调/Live 优先级；通过。
+- 真机 `DepthToolbarPhysicalTests` 的布局用例因设备锁屏未能完成，需解锁后补跑；Release/Debug 构建均通过。

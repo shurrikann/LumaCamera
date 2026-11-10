@@ -161,6 +161,23 @@ extension CameraView {
                         .accessibilityLabel("连拍张数")
                         .accessibilityValue("\(model.burstCaptureCount)")
                         .captureControlGeometry("toolbar.burstCount", model: model)
+                    } else if model.proToneReplacesLiveButton {
+                        Button { model.toggleToolbarPanel(.tone) } label: {
+                            VStack(spacing: 1) {
+                                ToneCurveSymbol().stroke(lineWidth: 1.4)
+                                    .frame(width: 17, height: 14)
+                                Text("PRO").font(.system(size: 6, weight: .semibold, design: .rounded))
+                            }
+                            .rotatingCaptureContent()
+                            .foregroundStyle(model.toolbarPanel == .tone || model.tone != .natural ? AppTheme.accent : .white)
+                            .frame(maxWidth: .infinity).frame(height: 32)
+                        }
+                        .buttonStyle(.plain)
+                        .opacity(model.isPreparingSubmode ? AppTheme.disabledControlOpacity : 1)
+                        .disabled(model.isPreparingSubmode)
+                        .accessibilityLabel("Pro 影调")
+                        .accessibilityValue(model.tone.rawValue)
+                        .captureControlGeometry("toolbar.proTone", model: model)
                     } else {
                         toolbarIcon(model.livePhotoEnabled ? "livephoto" : "livephoto.slash", label: "Live 实况照片", active: model.capturesLivePhoto, feedback: false) { model.toggleLivePhoto() }
                             .accessibilityValue(model.livePhotoEnabled ? (model.capturesLivePhoto ? "已触发" : "已开启，当前不可用") : "已关闭")

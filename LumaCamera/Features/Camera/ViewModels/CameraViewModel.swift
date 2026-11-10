@@ -1375,6 +1375,16 @@ final class CameraViewModel: ObservableObject {
     var filterControlsEnabled: Bool {
         captureKind == .video ? (videoFiltersEnabled || logVideoLUTControlsEnabled) : filtersEnabled
     }
+    /// One top-toolbar slot: slow shutter/aperture/portrait/burst/Pro tone/Live.
+    /// Slow shutter has highest priority and always replaces Live.
+    var toolbarAccessory: CameraToolbarAccessory {
+        .resolve(slowShutter: slowShutterEnabled,
+                 virtualAperture: virtualApertureEnabled,
+                 portrait: portraitModeEnabled,
+                 burst: burstModeEnabled,
+                 heifPro: captureKind == .photo && photoFormat == .heifPro)
+    }
+    var proToneReplacesLiveButton: Bool { toolbarAccessory == .proTone }
     var selectedLogLUTPreset: LogLUTPreset? {
         guard let selectedLogLUTID else { return nil }
         if selectedLogLUTID == LogLUTPreset.originalID { return .original }
@@ -5492,4 +5502,18 @@ final class CameraViewModel: ObservableObject {
 
     func openSettings() { if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) } }
 
+}
+
+enum CameraToolbarAccessory: Equatable {
+    case slowShutter, virtualAperture, portraitDepth, burst, proTone, live
+
+    static func resolve(slowShutter: Bool, virtualAperture: Bool, portrait: Bool,
+                        burst: Bool, heifPro: Bool) -> Self {
+        if slowShutter { return .slowShutter }
+        if virtualAperture { return .virtualAperture }
+        if portrait { return .portraitDepth }
+        if burst { return .burst }
+        if heifPro { return .proTone }
+        return .live
+    }
 }

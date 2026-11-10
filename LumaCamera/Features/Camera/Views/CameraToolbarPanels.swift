@@ -90,13 +90,6 @@ extension CameraView {
                 .frame(width: formatColumnWidth)
                 .captureControlGeometry("format.heifPro", model: model)
                 if model.photoFormat == .heifPro {
-                    choicePill("Pro 影调", selected: false, enabled: !model.isPreparingSubmode) {
-                        // choicePill 已提供触感和淡入淡出；格式浮层已完成其他弹窗收起。
-                        model.toolbarPanel = .tone
-                    }
-                    .frame(width: formatColumnWidth)
-                    .accessibilityIdentifier("camera.format.proTone")
-                    .captureControlGeometry("format.proTone", model: model)
                     Button {
                         CameraHaptics.impact(.light)
                         let reduceMotion = UIAccessibility.isReduceMotionEnabled

@@ -214,15 +214,16 @@ import ImageIO
                 model.toggleToolbarPanel(.format)
                 try await Task.sleep(for:.milliseconds(250))
                 let heifPro = try XCTUnwrap(model.captureButtonFramesForTesting["format.heifPro"])
-                let tone = try XCTUnwrap(model.captureButtonFramesForTesting["format.proTone"])
                 let heif = try XCTUnwrap(model.captureButtonFramesForTesting["format.option.HEIF"])
-                XCTAssertEqual(heifPro.maxX+8,tone.minX,accuracy:1)
-                XCTAssertEqual(heifPro.width,tone.width,accuracy:1)
+                let tone = try XCTUnwrap(model.captureButtonFramesForTesting["toolbar.proTone"])
+                let formatButton = try XCTUnwrap(model.captureButtonFramesForTesting["toolbar.format"])
                 XCTAssertEqual(heifPro.width,heif.width,accuracy:1)
-                XCTAssertEqual(tone.height,heif.height,accuracy:1)
+                XCTAssertEqual(tone.width,formatButton.width,accuracy:1)
+                XCTAssertEqual(tone.height,formatButton.height,accuracy:1)
+                XCTAssertNil(model.captureButtonFramesForTesting["format.proTone"])
                 let shot = UIGraphicsImageRenderer(bounds:window.bounds).image { _ in window.drawHierarchy(in:window.bounds,afterScreenUpdates:true) }
                 if width == 320 {
-                    let a = XCTAttachment(image:shot); a.name = "ProTone-InFormatPopup-320"; a.lifetime = .keepAlways; add(a)
+                    let a = XCTAttachment(image:shot); a.name = "ProTone-InTopToolbar-320"; a.lifetime = .keepAlways; add(a)
                 }
                 model.toggleToolbarPanel(.tone); XCTAssertEqual(model.toolbarPanel,.tone)
                 model.closePopups(); XCTAssertNil(model.toolbarPanel)
