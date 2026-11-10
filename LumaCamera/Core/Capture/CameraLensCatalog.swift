@@ -49,7 +49,7 @@ enum CameraLensCatalog {
         var result: [CameraLens] = []
         for target in targets.sorted() {
             guard !result.contains(where: { abs($0.displayZoom - target) < 0.05 }),
-                  let choice = CameraZoomPolicy.select(target, from: cameras, nativeOnly: target == 8),
+                  let choice = CameraZoomPolicy.select(target, from: cameras, nativeOnly: false),
                   let device = devices.first(where: { $0.uniqueID == choice.id }) else { continue }
             let number = abs(target - target.rounded()) < 0.05 ? String(Int(target.rounded())) : String(format: "%.1f", Double(target))
             result.append(CameraLens(device: device, title: number + "×", zoomFactor: choice.factor, displayZoom: target, isNative: choice.native))

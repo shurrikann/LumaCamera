@@ -5291,3 +5291,11 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 双拍前置主画面的人物居中入口：能力表改从 `dualCaptureSource.front` 发布，不再被后置普通 input 置空。
 - `DualCaptureZoomPhysicalTests/testMainZoomDuringRecordingAndRepeatedSwap` 通过；新增前置居中入口真机用例本轮因设备未进入双拍而 skip，需补跑。
 - 电影系统预览层为真机视觉验证项，自动化只验证构建和会话能力，未把旧 `previewFrameTime` 断言当作系统预览层通过。
+
+# 2026-11-10 8× 数字焦段恢复
+
+- 回归原因：`CameraLensCatalog.rearLenses` 对 8× 使用 `nativeOnly: true`，当前视频格式没有原生 8× 时整个按钮被过滤。
+- 修复：8× 允许选择数字变焦，不再依赖原生 8×；真机截图确认后置焦段条恢复 0.5×/1×/2×/4×/8×。
+- 新增 `CameraLensCatalogTests/testDigital8xIsSelectableWithoutNative8x`，模拟器通过。
+- 临时探针 `DualCaptureVirtualRearProbeTests` 已删除，不进入产品测试集。
+- 本轮只保留已验证的 8× 修改；电影系统预览层、双拍前置居中、统一切换 gate 不再做额外代码改动，仅做真机验证。
