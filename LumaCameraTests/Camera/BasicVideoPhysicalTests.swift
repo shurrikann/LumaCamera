@@ -273,6 +273,10 @@ final class BasicVideoPhysicalTests: XCTestCase {
         XCTAssertTrue(camera.ready)
         XCTAssertNotNil(camera.preview)
         await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
+        if AVCaptureDevice.authorizationStatus(for: .audio) == .authorized {
+            XCTAssertTrue(AVAudioSession.sharedInstance().allowHapticsAndSystemSoundsDuringRecording,
+                          "Leaving video mode must not leave recording haptics disabled")
+        }
         camera.capture(flashMode: .off, options: PhotoOptions(format: .jpeg))
         for _ in 0..<300 { if photoCaptured { break }; try await Task.sleep(for: .milliseconds(20)) }
         XCTAssertTrue(photoCaptured, "Photo capture must still work after video mode exits")

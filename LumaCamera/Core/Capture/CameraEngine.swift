@@ -1794,11 +1794,17 @@ final class CameraEngine: NSObject, ObservableObject {
     }
 
     private func configureRecordingHaptics() {
-        guard liveAudioRequested || videoAudioRequested || dualCaptureSource?.includesAudio == true,
-              AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else { return }
         // Audio input suppresses haptics by default, including while the video
-        // viewfinder is idle. Keep AVCaptureSession's automatic audio routing.
+        // viewfinder is idle. Re-assert after every graph/audio-route commit,
+        // not only while an audio input is currently connected: leaving video
+        // mode can otherwise leave the permission reset to false.
         allowCameraHaptics()
+    }
+
+    /// Reassert after foreground/photo transitions, where AVFoundation may have
+    /// rebuilt the audio route outside an explicit video graph commit.
+    func prepareHaptics() {
+        queue.async { self.allowCameraHaptics() }
     }
 
     private func reconcileLiveAudio() {

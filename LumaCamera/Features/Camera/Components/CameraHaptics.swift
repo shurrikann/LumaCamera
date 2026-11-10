@@ -1,4 +1,5 @@
 import UIKit
+import AVFAudio
 
 /// 相机页共用触感发生器。避免每次点击临时创建后立刻释放，导致首次或高负载时丢反馈。
 @MainActor
@@ -13,7 +14,17 @@ enum CameraHaptics {
     private static let mediumGenerator = UIImpactFeedbackGenerator(style: .medium)
     private static let successGenerator = UINotificationFeedbackGenerator()
 
+    /// AVAudioSession can reset this permission when the audio route is rebuilt
+    /// (video entry/exit, mic route changes). Reassert lazily at the actual tap,
+    /// not only during capture-graph configuration.
+    private static func ensurePermission() {
+        let session = AVAudioSession.sharedInstance()
+        guard !session.allowHapticsAndSystemSoundsDuringRecording else { return }
+        try? session.setAllowHapticsAndSystemSoundsDuringRecording(true)
+    }
+
     static func prepare() {
+        ensurePermission()
         selectionGenerator.prepare()
         lightGenerator.prepare()
         mediumGenerator.prepare()
@@ -21,6 +32,7 @@ enum CameraHaptics {
     }
 
     static func selectionChanged() {
+        ensurePermission()
         #if DEBUG
         recorderForTesting?(.selection)
         #endif
@@ -29,6 +41,7 @@ enum CameraHaptics {
     }
 
     static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        ensurePermission()
         #if DEBUG
         recorderForTesting?(.impact(style))
         #endif
@@ -49,6 +62,7 @@ enum CameraHaptics {
     }
 
     static func success() {
+        ensurePermission()
         #if DEBUG
         recorderForTesting?(.success)
         #endif

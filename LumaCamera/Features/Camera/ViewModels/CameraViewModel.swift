@@ -3574,6 +3574,7 @@ final class CameraViewModel: ObservableObject {
         if !active && !review { closePopups() }
         cameraActiveRequested = active
         if active {
+            camera.prepareHaptics()
             CameraHaptics.prepare()
             zoomTickFeedback.prepare()
             zoomAnchorFeedback.prepare()

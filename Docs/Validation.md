@@ -5225,3 +5225,9 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 保留按需水平仪、Log2 LUT 预合成、低电量/热压力预览上限。
 - 移除 DEBUG 测试入口里的 80% 亮度锁定；测试入口 `--perf-video` 仍保留。
 - 真机 `BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn` 通过（9.812s）。
+
+# 2026-11-10 视频/照片切换触感丢失修复
+
+- 根因方向：视频音频图重建后，`AVAudioSession.allowHapticsAndSystemSoundsDuringRecording` 可能被系统重置；旧逻辑只在音频输入连接时重设，返回照片后不再恢复。
+- 修复：每次视频图提交后都重设许可；相机重新激活时调用 `prepareHaptics()`；`CameraHaptics` 在每次 prepare/selection/impact/success 前惰性重设一次。
+- 真机验证：`BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn` 通过（9.859s），并新增断言“退出视频后触感许可仍为 true”；`CameraHapticsTests` 通过。
