@@ -5283,3 +5283,11 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 预览节流识别 PTS 回退；新模式/子模块点击会清除旧错误。
 - 真机 `SubmodeSwitchingPhysicalTests` 全部通过：照片子模块12轮、40次18ms随机点击、60步照片/视频无序混合（8.218s）、9次视频子模块乱序（5.821s）、电影→双拍（15.274s）。
 - `VideoModeTransitionTests/testCinematicPreviewAndPhotoHDRRecoverOnVideoRoundTrip` 在低光环境仍会偶发预览低帧/停帧；系统 `scene` 状态与录制输出帧率相关，未用“自动退出电影”掩盖。需在正常光线下复测卡住感。
+
+# 2026-11-10 电影预览与双拍前置跟踪
+
+- 电影预览改按 Apple WWDC25「Capture cinematic video in your app」的取景器结构，使用 `AVCaptureVideoPreviewLayer` 消费会话画面；普通模式继续使用现有滤镜 `camera.preview` 管线。目的：不再把电影预览绑定在录制用 `AVCaptureVideoDataOutput` 的帧交付上。
+- 双拍后置主画面焦段 1×/2×/4×：双拍源后置设备为 `builtInWideAngleCamera`，硬件最小倍率为 1×，0.5× 不在可选范围。
+- 双拍前置主画面的人物居中入口：能力表改从 `dualCaptureSource.front` 发布，不再被后置普通 input 置空。
+- `DualCaptureZoomPhysicalTests/testMainZoomDuringRecordingAndRepeatedSwap` 通过；新增前置居中入口真机用例本轮因设备未进入双拍而 skip，需补跑。
+- 电影系统预览层为真机视觉验证项，自动化只验证构建和会话能力，未把旧 `previewFrameTime` 断言当作系统预览层通过。

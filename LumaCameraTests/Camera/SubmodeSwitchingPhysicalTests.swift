@@ -197,5 +197,34 @@ final class SubmodeSwitchingPhysicalTests: XCTestCase {
         XCTAssertNil(model.camera.message)
         model.setCameraActive(false)
     }
+
+    @MainActor func testDualFrontMainKeepsFrontVideoCenteringEntry() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        model.setCameraActive(true)
+        model.setCaptureKind(.video)
+        for _ in 0..<400 {
+            if model.camera.ready && !model.camera.videoConfiguring && !model.isPreparingSubmode { break }
+            try await Task.sleep(for: .milliseconds(25))
+        }
+        XCTAssertTrue(model.camera.ready)
+        guard model.dualCaptureAvailable else {
+            throw XCTSkip("当前设备不支持双拍")
+        }
+        model.toggleDualCapture()
+        for _ in 0..<600 {
+            if model.camera.dualCaptureEnabled && !model.camera.dualCapturePreparing { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertTrue(model.camera.dualCaptureEnabled)
+        if !model.camera.dualCaptureMainIsFront { model.swapDualCaptureCameras() }
+        for _ in 0..<600 {
+            if model.camera.dualCaptureMainIsFront && model.camera.frontVideoCenteringAvailable { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertTrue(model.camera.dualCaptureMainIsFront)
+        XCTAssertTrue(model.camera.frontVideoCenteringAvailable)
+        XCTAssertTrue(model.frontVideoCenteringVisible)
+        model.setCameraActive(false)
+    }
 }
 #endif

@@ -205,6 +205,7 @@ final class CameraEngine: NSObject, ObservableObject {
                     self.dualCaptureSource = source; self.dualMainIsFront = previousMain
                     DispatchQueue.main.async { self.dualCaptureMainIsFront = previousMain }
                     self.publishDualMainZoomRange()
+                    self.publishDualFrontVideoCenteringAvailability()
                     self.requestedVideoSettings = requested; self.requestedCinematicVideo = false; self.requestedVideoOpenGate = false
                     self.dualCaptureRatio = requestedRatio; self.dualFrontWideRequested = requestedWide
                     self.recordingQueue.sync {
@@ -428,6 +429,7 @@ final class CameraEngine: NSObject, ObservableObject {
             let frontIsMain = self.dualMainIsFront
             DispatchQueue.main.async { self.dualCaptureMainIsFront = frontIsMain }
             self.publishDualMainZoomRange()
+            self.publishDualFrontVideoCenteringAvailability()
             self.publishDualControlCapabilities(self.dualMainIsFront ? source.front : source.rear)
             self.recordingQueue.async {
                 source.swap()
@@ -436,6 +438,17 @@ final class CameraEngine: NSObject, ObservableObject {
                     if let transitionID { self.markUserPreviewSwitch(transitionID) }
                 }
             }
+        }
+    }
+
+    /// Dual capture owns its own front device. Publishing center-stage support
+    /// from the ordinary session input hides the tracking button when the rear
+    /// camera is main, so query the dual front device directly.
+    private func publishDualFrontVideoCenteringAvailability() {
+        guard let front = dualCaptureSource?.front else { return }
+        let available = front.formats.contains { $0.isCenterStageSupported }
+        DispatchQueue.main.async {
+            if self.frontVideoCenteringAvailable != available { self.frontVideoCenteringAvailable = available }
         }
     }
 
@@ -643,6 +656,9 @@ final class CameraEngine: NSObject, ObservableObject {
     #endif
 
     private let session = AVCaptureSession()
+    /// Used only by the system Cinematic preview layer; regular previews keep
+    /// using the filtered image pipeline.
+    var previewSession: AVCaptureSession { session }
     private let focusNavigatorQueue = DispatchQueue(label: "camera.focusNavigator", qos: .userInitiated)
     private var photoOutput = AVCapturePhotoOutput()
     private var replacePhotoOutputOnRecovery = false // session queue; 原生请求超时后废弃旧输出
