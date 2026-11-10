@@ -1,3 +1,7 @@
+## 2026-11-10 替换 Log LUT 库
+
+- 移除旧 46 支，导入 `Log_LUT` 110 支并新增分类（还原/胶片/电影/人像/生活/风光/街拍/创意）；LCUB 约79MB，Log 总数110。
+
 ## 2026-11-10 导入并统一 709 LUT
 
 - 218 支 709 LUT 去重为 208 支，与项目 48 支合并为 256 款；新增“街拍”一级分类，8-bit 资源约 42MB。当前横向轮播首屏约 4 秒，全屏 LUT 库待后续。
@@ -10,9 +14,9 @@
 
 - 视频待机停录制视频连接，开录恢复并重声明 haptics 许可；低电量/热压力预览上限30fps，不影响录制规格。
 
-## 2026-11-10 新增 AppleLog2 ARRI LUT
+## 2026-11-10 ARRI Log2 LUT 去重
 
-- 加入 `AppleLog2_ARRI`（ARRI Perceptual Daylight，33³），仅在 Apple Log2 下显示；Log LUT 总数47。
+- 用户提供的 `appleLog2_arri.cube` 与已有 `ARRI_AppleLog2` 完全相同，保留后者作为 Log2 专用项；Log LUT 总数46。
 
 ## 2026-11-10 功耗优化第一批
 

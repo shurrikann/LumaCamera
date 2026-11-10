@@ -1,0 +1,136 @@
+import Foundation
+
+enum LogLUTCategory: String, CaseIterable, Identifiable {
+    case all = "全部", favorites = "收藏"
+    case restore = "还原", film = "胶片", cinema = "电影", portrait = "人像"
+    case life = "生活", landscape = "风光", street = "街拍", creative = "创意"
+    var id: String { rawValue }
+    func includes(_ preset: LogLUTPreset) -> Bool {
+        switch self {
+        case .all: return true
+        case .favorites: return false
+        default: return preset.category == self
+        }
+    }
+}
+
+enum LogLibrary {
+    struct Meta {
+        let category: LogLUTCategory
+        let requiredColorSpace: VideoColorSpace?
+        let equipment: String?
+        let title: String
+    }
+    static let metadata: [String: Meta] = [
+        "AppleLog2_Rec709": Meta(category: .restore, requiredColorSpace: .appleLog2, equipment: "Log2", title: "Rec709"),
+        "AppleLog_Fuji 3513": Meta(category: .film, requiredColorSpace: .appleLog, equipment: nil, title: "AppleLog_Fuji 3513"),
+        "AppleLog_Kodak 2383": Meta(category: .film, requiredColorSpace: .appleLog, equipment: nil, title: "AppleLog_Kodak 2383"),
+        "AppleLog_Nature": Meta(category: .landscape, requiredColorSpace: .appleLog, equipment: nil, title: "AppleLog_Nature"),
+        "AppleLog_Rec709": Meta(category: .restore, requiredColorSpace: .appleLog, equipment: "Log", title: "Rec709"),
+        "AppleLog_WDR": Meta(category: .landscape, requiredColorSpace: .appleLog, equipment: nil, title: "AppleLog_WDR"),
+        "中性": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "中性"),
+        "乌托邦": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "乌托邦"),
+        "冰蓝色": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "冰蓝色"),
+        "富士 Eterna 8563变体": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "富士 Eterna 8563变体"),
+        "富士Super F 8552变体": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "富士Super F 8552变体"),
+        "柯达Visio 5274": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "柯达Visio 5274"),
+        "柯达Visio 5274变体": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "柯达Visio 5274变体"),
+        "柯达伊士曼 5274": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "柯达伊士曼 5274"),
+        "柯达伊士曼 5274变体": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "柯达伊士曼 5274变体"),
+        "牙买加": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "牙买加"),
+        "钨": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "钨"),
+        "Arri色调 V1": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V1"),
+        "Arri色调 V10": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V10"),
+        "Arri色调 V11": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V11"),
+        "Arri色调 V2": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V2"),
+        "Arri色调 V3": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V3"),
+        "Arri色调 V4": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V4"),
+        "Arri色调 V5": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V5"),
+        "Arri色调 V6": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V6"),
+        "Arri色调 V7": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V7"),
+        "Arri色调 V8": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V8"),
+        "Arri色调 V9": Meta(category: .cinema, requiredColorSpace: nil, equipment: nil, title: "Arri色调 V9"),
+        "INS V1": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "INS V1"),
+        "INS V2": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "INS V2"),
+        "INS V3": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "INS V3"),
+        "人像": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "人像"),
+        "冷白": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "冷白"),
+        "冷调": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "冷调"),
+        "徕卡": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "徕卡"),
+        "橙调": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "橙调"),
+        "电影 V1": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "电影 V1"),
+        "电影 V2": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "电影 V2"),
+        "电影 V3": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "电影 V3"),
+        "电影绿调": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "电影绿调"),
+        "绿调": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "绿调"),
+        "美白": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "美白"),
+        "自然光": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "自然光"),
+        "艺术": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "艺术"),
+        "质感": Meta(category: .portrait, requiredColorSpace: .appleLog, equipment: nil, title: "质感"),
+        "appleLog2_arri": Meta(category: .cinema, requiredColorSpace: .appleLog2, equipment: nil, title: "appleLog2_arri"),
+        "冷蓝夜景": Meta(category: .landscape, requiredColorSpace: .appleLog, equipment: nil, title: "冷蓝夜景"),
+        "回忆录": Meta(category: .film, requiredColorSpace: .appleLog, equipment: nil, title: "回忆录"),
+        "墨绿": Meta(category: .cinema, requiredColorSpace: .appleLog, equipment: nil, title: "墨绿"),
+        "宣传片 V1": Meta(category: .cinema, requiredColorSpace: .appleLog, equipment: nil, title: "宣传片 V1"),
+        "宣传片 V2": Meta(category: .cinema, requiredColorSpace: .appleLog, equipment: nil, title: "宣传片 V2"),
+        "摩卡Moch V1": Meta(category: .cinema, requiredColorSpace: .appleLog, equipment: nil, title: "摩卡Moch V1"),
+        "日系 XLH": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "日系 XLH"),
+        "日系清新": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "日系清新"),
+        "晴空绿丘": Meta(category: .landscape, requiredColorSpace: .appleLog, equipment: nil, title: "晴空绿丘"),
+        "海边": Meta(category: .landscape, requiredColorSpace: .appleLog, equipment: nil, title: "海边"),
+        "火鸟": Meta(category: .cinema, requiredColorSpace: .appleLog, equipment: nil, title: "火鸟"),
+        "甜粉": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "甜粉"),
+        "白亮透": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "白亮透"),
+        "秋季Fll": Meta(category: .landscape, requiredColorSpace: .appleLog, equipment: nil, title: "秋季Fll"),
+        "穆迪棕": Meta(category: .cinema, requiredColorSpace: .appleLog, equipment: nil, title: "穆迪棕"),
+        "穆迪灰": Meta(category: .cinema, requiredColorSpace: .appleLog, equipment: nil, title: "穆迪灰"),
+        "穆迪蓝": Meta(category: .cinema, requiredColorSpace: .appleLog, equipment: nil, title: "穆迪蓝"),
+        "纪录片 V1": Meta(category: .street, requiredColorSpace: .appleLog, equipment: nil, title: "纪录片 V1"),
+        "纪录片 V2": Meta(category: .street, requiredColorSpace: .appleLog, equipment: nil, title: "纪录片 V2"),
+        "纪录片 V3": Meta(category: .street, requiredColorSpace: .appleLog, equipment: nil, title: "纪录片 V3"),
+        "美食": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "美食"),
+        "胶片电影": Meta(category: .film, requiredColorSpace: .appleLog, equipment: nil, title: "胶片电影"),
+        "蓝调高反差": Meta(category: .cinema, requiredColorSpace: .appleLog, equipment: nil, title: "蓝调高反差"),
+        "韩风": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "韩风"),
+        "中性冷青": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "中性冷青"),
+        "人像富士8563": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "人像富士8563"),
+        "冰蓝调": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "冰蓝调"),
+        "动漫风": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "动漫风"),
+        "复古暖 ": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "复古暖 "),
+        "复古暖调": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "复古暖调"),
+        "复古柯达5274": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "复古柯达5274"),
+        "复古青绿": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "复古青绿"),
+        "强对比低饱和富士8552": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "强对比低饱和富士8552"),
+        "星光大道": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "星光大道"),
+        "浓郁柯达5274": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "浓郁柯达5274"),
+        "浓郁电影": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "浓郁电影"),
+        "淡绿": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "淡绿"),
+        "港岛暗青": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "港岛暗青"),
+        "琥珀": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "琥珀"),
+        "电影原生色彩": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "电影原生色彩"),
+        "电影墨绿": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "电影墨绿"),
+        "电影感": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "电影感"),
+        "电影暗青": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "电影暗青"),
+        "电影青绿": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "电影青绿"),
+        "维港蓝": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "维港蓝"),
+        "赐福影调 V1": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "赐福影调 V1"),
+        "赐福影调 V2": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "赐福影调 V2"),
+        "阳光微暖": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "阳光微暖"),
+        "阿勒泰仿色": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "阿勒泰仿色"),
+        "阿勒泰最终版": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "阿勒泰最终版"),
+        "青青风格化 V1": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "青青风格化 V1"),
+        "青青风格化 V2": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "青青风格化 V2"),
+        "青青风格化 V3": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "青青风格化 V3"),
+        "青青风格化 V4": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "青青风格化 V4"),
+        " 复古V1": Meta(category: .film, requiredColorSpace: .appleLog, equipment: nil, title: " 复古V1"),
+        " 复古V2": Meta(category: .film, requiredColorSpace: .appleLog, equipment: nil, title: " 复古V2"),
+        "古风V1": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "古风V1"),
+        "古风V2": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "古风V2"),
+        "波西米亚V1": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "波西米亚V1"),
+        "波西米亚V2": Meta(category: .creative, requiredColorSpace: .appleLog, equipment: nil, title: "波西米亚V2"),
+        "清新 V1": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "清新 V1"),
+        "清新 V2": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "清新 V2"),
+        "清新 V3": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "清新 V3"),
+        "清新 V4": Meta(category: .life, requiredColorSpace: .appleLog, equipment: nil, title: "清新 V4"),
+    ]
+}

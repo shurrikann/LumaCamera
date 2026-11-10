@@ -5,7 +5,7 @@ import XCTest
 final class LogLUTCubeTests: XCTestCase {
     func testBundledLUTsRetainTheirOriginal33Or65Grid() throws {
         let presets = LogLUTCubeRepository.presets()
-        XCTAssertEqual(presets.count, 47)
+        XCTAssertEqual(presets.count, 110)
         for preset in presets {
             let cube = try LogLUTCubeRepository.load(preset)
             XCTAssertTrue(cube.dimension == 33 || cube.dimension == 65)
@@ -18,36 +18,25 @@ final class LogLUTCubeTests: XCTestCase {
         let pickerOptions = [LogLUTPreset.original] + presets
         XCTAssertEqual(LogLUTPreset.original.title, "原片")
         XCTAssertEqual(LogLUTPreset.original.id, LogLUTPreset.originalID)
-        XCTAssertEqual(presets.count, 47)
+        XCTAssertEqual(presets.count, 110)
         XCTAssertEqual(pickerOptions.first?.id, LogLUTPreset.originalID)
         XCTAssertTrue(pickerOptions.contains { $0.id == "AppleLog_Rec709" })
         XCTAssertTrue(pickerOptions.contains { $0.id == "AppleLog2_Rec709" })
-        XCTAssertTrue(pickerOptions.contains { $0.id == "AppleLog2_ARRI" })
+        XCTAssertTrue(pickerOptions.contains { $0.id == "appleLog2_arri" })
     }
 
-    func testDisplayNamesAreSeparatedForRec709AndBohemianLUTs() {
+    func testDisplayNamesAreSeparatedForRec709() {
         let presets = LogLUTCubeRepository.presets()
         let appleLog = presets.first { $0.id == "AppleLog_Rec709" }
         let appleLog2 = presets.first { $0.id == "AppleLog2_Rec709" }
-        let bohemianV1 = presets.first { $0.id == "波西米亚_V1" }
-        let bohemianV2 = presets.first { $0.id == "波西米亚_V2" }
-
         XCTAssertEqual(appleLog?.equipment, "Log")
         XCTAssertEqual(appleLog?.title, "Rec709")
         XCTAssertEqual(appleLog?.displayName, "Log Rec709")
         XCTAssertEqual(appleLog2?.equipment, "Log2")
         XCTAssertEqual(appleLog2?.title, "Rec709")
         XCTAssertEqual(appleLog2?.displayName, "Log2 Rec709")
-        XCTAssertEqual(bohemianV1?.equipment, "波西米亚")
-        XCTAssertEqual(bohemianV1?.title, "V1")
-        XCTAssertEqual(bohemianV2?.equipment, "波西米亚")
-        XCTAssertEqual(bohemianV2?.title, "V2")
-        XCTAssertEqual(presets.first?.id, "AppleLog_Rec709")
+        XCTAssertTrue(presets.contains { $0.id == "AppleLog_Rec709" })
         XCTAssertTrue(presets.contains { $0.id == "AppleLog2_Rec709" })
-        let arri = presets.first { $0.id == "AppleLog2_ARRI" }
-        XCTAssertEqual(arri?.equipment, "Log2")
-        XCTAssertEqual(arri?.title, "ARRI")
-        XCTAssertEqual(arri?.displayName, "Log2 ARRI")
     }
 
     func testCubeCanBeAppliedToImage() throws {

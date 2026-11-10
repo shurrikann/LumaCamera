@@ -4,32 +4,33 @@ import UIKit
 
 struct LogLUTPreset: Identifiable, Hashable, Sendable {
     static let originalID = "__original__"
-    static let original = LogLUTPreset(id: originalID, equipment: nil, title: "原片")
+    static let original = LogLUTPreset(id: originalID, equipment: nil, title: "原片",
+                                       category: .all, requiredColorSpace: nil)
 
     let id: String
     let equipment: String?
     let title: String
+    let category: LogLUTCategory
+    /// nil means tested/available under both Apple Log curves; otherwise fixed.
+    let requiredColorSpace: VideoColorSpace?
     var displayName: String { [equipment, title].compactMap { $0 }.joined(separator: " ") }
 
-    /// Apple Log 2 uses the same transfer curve as Apple Log but Apple Wide Gamut
-    /// primaries instead of BT.2020. Their LUTs differ by gamut, not by a gray ramp.
-    var requiredColorSpace: VideoColorSpace? {
-        // Explicit conversion LUTs are curve-specific. Generic creative LUTs have
-        // no measurable white-paper preference between Log and Log2, so they are
-        // available under both curves; gamut remains user-selectable.
-        if id.contains("AppleLog2") { return .appleLog2 }
-        if id.contains("AppleLog") { return .appleLog }
-        return nil
-    }
-
-    init(id: String, equipment: String?, title: String) {
+    init(id: String, equipment: String?, title: String,
+         category: LogLUTCategory = .cinema, requiredColorSpace: VideoColorSpace? = nil) {
         self.id = id
         self.equipment = equipment
         self.title = title
+        self.category = category
+        self.requiredColorSpace = requiredColorSpace
     }
 
     init(filename: String) {
         let stem = (filename as NSString).deletingPathExtension
+        if let meta = LogLibrary.metadata[stem] {
+            self.init(id: stem, equipment: meta.equipment, title: meta.title,
+                      category: meta.category, requiredColorSpace: meta.requiredColorSpace)
+            return
+        }
         // Keep the camera family and LUT name separate so the capture control
         // can render them on two lines while retaining a complete display name.
         if stem == "AppleLog_Rec709" {

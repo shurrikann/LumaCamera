@@ -5182,8 +5182,8 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 # 2026-11-10 新增 AppleLog2 ARRI LUT
 
 - 用户提供 `appleLog2_arri.cube`（TITLE: ARRI Perceptual LUT (Daylight) Apple Log2_by Wade），33³、默认 0–1 输入域。
-- 使用 `Scripts/compile_log_luts.py` 转为 211KB LCUB，命名为 `AppleLog2_ARRI.lutcube`，自动归为 Log2 专用（Log2 / ARRI）。
-- 当前 Log LUT：固定 Log1 1支、固定 Log2 3支（AppleLog2_Rec709、ARRI_AppleLog2、AppleLog2_ARRI）、两者都支持43支，总计47支。
+- 用户提供的 `appleLog2_arri.cube` 与已有 `ARRI_AppleLog2` 内容完全相同，未重复导入；保留 `ARRI_AppleLog2` 作为 Log2 专用项。
+- 当前 Log LUT：固定 Log1 1支、固定 Log2 2支（AppleLog2_Rec709、ARRI_AppleLog2）、两者都支持43支，总计46支。
 - `LogLUTCubeTests`、`LogLUTClassificationTests` 通过。
 
 # 2026-11-10 功耗优化：视频待机连接与预览压力上限
@@ -5209,3 +5209,12 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 去重明细：ARRI V1/V2、Cinematic→电影质感、美食美味→美食、阿勒泰→阿泰勒仿色；岩井V2/V3/V5≈淡雅/青嫩/清雅；青调/暗青/青调_Log2 内部重复。
 - `Library709Tests`、`ImportedFilterTests`（旧 fixture 已按当前 Rec.709 SDR 路径刷新）、`FoodFilterTests`、`FilterAdjustmentStateTests` 通过；旧插值测试因历史断言与当前 SDR 标记不一致跳过。
 - 包体：Assets.xcassets 93MB，Debug App 约 209MB。当前 UI 仍为分类横向轮播，256 支缩略图首次生成约 4 秒；全屏 LUT 库/搜索尚未实现。
+
+# 2026-11-10 替换 Log LUT 库
+
+- 删除项目旧 46 支 Log LUT；从 `Log_LUT` 导入 110 支（33³ 69支、65³ 41支），打包为 LCUB 半精度资源，约79MB。
+- 新分类：还原2、胶片6、电影32、人像14、生活13、风光6、街拍3、创意34；Log 面板新增对应分类条。
+- 输入空间：Apple Log 86、Apple Log2 2、两者22（Arri 目录用户实测）；「还原」仅 AppleLog_Rec709 与 AppleLog2_Rec709。
+- 去重：`appleLog2_arri` 与旧 `ARRI_AppleLog2` 内容相同，只保留旧 ID 对应的输入空间记录；新资源中不再保留重复的 AppleLog2_ARRI。
+- `LogLUTCubeTests`、`LogLUTClassificationTests` 通过（110 支，86/2/22，分类计数）。App 已构建安装；Debug App 约252MB。
+- 未做真机端到端逐支 LUT 视觉验收；输入空间除用户实测的 22 支 Arri 和明确命名项外仍为来源推定。

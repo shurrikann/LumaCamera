@@ -175,26 +175,30 @@ extension CameraView {
     }
 
     private var logLUTCategories: some View {
-        HStack(spacing: 7) {
-            ForEach([FilterCategory.all, .favorites]) { category in
-                Button {
-                                        withAnimation(.easeInOut(duration: 0.18)) { model.selectLogLUTCategory(category) }
-                } label: {
-                    Group {
-                        if category == .all { Image(systemName: "line.3.horizontal.decrease").font(.system(size: 13)) }
-                        else { Image(systemName: "star.fill").font(.system(size: 13)) }
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 7) {
+                ForEach(LogLUTCategory.allCases) { category in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.18)) { model.selectLogLUTCategory(category) }
+                    } label: {
+                        Group {
+                            if category == .all { Image(systemName: "line.3.horizontal.decrease").font(.system(size: 13)) }
+                            else if category == .favorites { Image(systemName: "star.fill").font(.system(size: 13)) }
+                            else { Text(category.rawValue).rotatingCaptureContent().font(.system(size: 11, weight: .medium)) }
+                        }
+                        .foregroundStyle(model.logLUTCategory == category ? AppTheme.accentForeground : .white.opacity(0.9))
+                        .frame(minWidth: category == .all || category == .favorites ? 38 : 44)
+                        .frame(height: 28)
+                        .padding(.horizontal, category == .all || category == .favorites ? 0 : 4)
+                        .background(model.logLUTCategory == category ? AppTheme.accent : .white.opacity(0.08),
+                                    in: RoundedRectangle(cornerRadius: 10))
                     }
-                    .foregroundStyle(model.logLUTCategory == category ? AppTheme.accentForeground : .white.opacity(0.9))
-                    .frame(minWidth: 38).frame(height: 28)
-                    .background(model.logLUTCategory == category ? AppTheme.accent : .white.opacity(0.08),
-                                in: RoundedRectangle(cornerRadius: 10))
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(category.rawValue + " Log 滤镜")
+                    .accessibilityAddTraits(model.logLUTCategory == category ? .isSelected : [])
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(category.rawValue + " Log 滤镜")
-                .accessibilityAddTraits(model.logLUTCategory == category ? .isSelected : [])
-            }
-            Spacer(minLength: 0)
-        }.padding(.horizontal, 14)
+            }.padding(.horizontal, 14)
+        }
     }
 
     private var logLUTScrollTarget: String? {

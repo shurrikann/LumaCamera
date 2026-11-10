@@ -276,7 +276,7 @@ final class CameraViewModel: ObservableObject {
         }
     }
     @Published private(set) var logLUTPresets = LogLUTCubeRepository.presets()
-    @Published private(set) var logLUTCategory: FilterCategory = .all
+    @Published private(set) var logLUTCategory: LogLUTCategory = .all
     @Published private(set) var logLUTFavorites: Set<String> = Set(UserDefaults.standard.stringArray(forKey: "camera.favoriteLogLUTs") ?? [])
     @Published private(set) var logLUTThumbnails: [String: UIImage] = [:]
     @Published private(set) var logLUTThumbnailLoading: Set<String> = []
@@ -1383,7 +1383,7 @@ final class CameraViewModel: ObservableObject {
     var logLUTOptions: [LogLUTPreset] {
         let compatible = logLUTPresets.filter { $0.requiredColorSpace == nil || $0.requiredColorSpace == videoColorSpace }
         if logLUTCategory == .favorites { return compatible.filter { logLUTFavorites.contains($0.id) } }
-        return [.original] + compatible
+        return [.original] + compatible.filter { logLUTCategory.includes($0) }
     }
 
     private func reconcileLogLUTForColorSpace() {
@@ -1400,7 +1400,7 @@ final class CameraViewModel: ObservableObject {
         loadSelectedLogLUT()
     }
 
-    func selectLogLUTCategory(_ category: FilterCategory) {
+    func selectLogLUTCategory(_ category: LogLUTCategory) {
         logLUTCategory = category
     }
 
