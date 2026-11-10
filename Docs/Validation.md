@@ -5260,3 +5260,16 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 槽位优先级：慢门 > 虚拟光圈 > 人像景深 > 连拍 > Pro 影调（HEIF Pro） > Live。慢门始终顶替 Live。
 - 新增 `CameraToolbarAccessory.resolve` 纯函数与 `CameraToolbarAccessoryTests`，覆盖慢门/Pro 影调/Live 优先级；通过。
 - 真机 `DepthToolbarPhysicalTests` 的布局用例因设备锁屏未能完成，需解锁后补跑；Release/Debug 构建均通过。
+
+# 2026-11-10 照片/视频子模块无序切换回归
+
+- 新增真机压力用例 `SubmodeSwitchingPhysicalTests`：
+  - 1x HEIF 下虚拟光圈与慢门/连拍/人像反复切换 12 轮；
+  - 18ms 间隔随机点击 40 次；
+  - 照片/视频模式及子模块随机混合 60 步；
+  - 延时/慢动作/电影模式乱序 9 次。
+  全部通过，最终 `camera.ready` 且无残留 message。
+- 修复：子模块切换后新采集图的 PTS 可能从旧时间轴回退，原预览节流会持续丢帧；`LivePreviewCadence` 现在识别时间戳重置。
+- 修复：用户发起新的模式/子模块切换时清除上一条 `camera.message`，避免旧“当前镜头不支持”弹窗残留到后续成功操作。
+- 电影模式往返真机用例连续 3 次通过；单次曾出现预览停帧，PTS 修复后通过。
+- 未能用当前代码稳定复现用户描述的“1x HEIF 虚拟光圈→慢门/连拍/人像必现不支持”；若仍出现，需要录屏和具体点击顺序。

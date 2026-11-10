@@ -1024,4 +1024,10 @@ final class VideoSpecificationTests: XCTestCase {
         XCTAssertEqual(PreviewPowerPolicy.cappedRate(24, lowPower: true, thermal: .nominal), 24)
         XCTAssertEqual(PreviewPowerPolicy.cappedRate(nil, lowPower: false, thermal: .nominal), 30)
     }
+
+    func testPreviewCadenceAcceptsTimestampResetAfterSubmodeGraphChange() {
+        XCTAssertTrue(LivePreviewCadence.accepts(time: 0.2, lastFrameTime: 40, frameRate: 30))
+        XCTAssertFalse(LivePreviewCadence.accepts(time: 40.01, lastFrameTime: 40, frameRate: 30))
+        XCTAssertTrue(LivePreviewCadence.accepts(time: 40.04, lastFrameTime: 40, frameRate: 30))
+    }
 }

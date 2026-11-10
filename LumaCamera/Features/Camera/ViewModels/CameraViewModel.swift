@@ -462,6 +462,7 @@ final class CameraViewModel: ObservableObject {
             return
         }
         guard captureKind == .video, !camera.videoBusy, !camera.dualCapturePreparing, videoSubmodePreparing == nil else { return }
+        camera.message = nil
         if virtualApertureEnabled { virtualApertureEnabled = false; updateLook() }
         if videoSubmodeIsEnabled(requested) {
             videoSubmodeRequest = UUID()
@@ -1980,6 +1981,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     private func togglePhotoSubmode(_ requested: PhotoSubmode) {
+        camera.message = nil
         adaptiveHighDynamic = false
         if virtualApertureEnabled { virtualApertureEnabled = false; updateLook() }
         if activePhotoSubmode == requested {
@@ -4057,6 +4059,7 @@ final class CameraViewModel: ObservableObject {
         guard kind != captureKind,
               !camera.videoBusy, !library.videoSaving,
               kind == .photo || !isPreparingSubmode || cancellingCinematicPreparation else { closePopups(); return }
+        camera.message = nil
         if kind == .photo, camera.dualCaptureEnabled {
             camera.setDualCaptureEnabled(false) { [weak self] success in
                 guard let self, success else { return }

@@ -8282,6 +8282,9 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
             return
         }
         if output === recordingOutput {
+            #if DEBUG
+            receivedRecordingFramesForTesting += 1
+            #endif
             let state = livePreviewState.snapshot()
             let primary = state.device?.isVirtualDevice == true ? state.device?.activePrimaryConstituent : state.device
             let apertureAllowed = primary?.position == .back && (primary?.deviceType == .builtInWideAngleCamera || primary?.deviceType == .builtInTelephotoCamera)

@@ -129,6 +129,11 @@ enum LivePreviewCadence {
     }
 
     static func accepts(time: Double, lastFrameTime: Double, frameRate: Int?, captureFrameRate: Int? = nil) -> Bool {
-        time.isFinite && (time - lastFrameTime) >= minimumInterval(frameRate: frameRate, captureFrameRate: captureFrameRate) - 0.001
+        guard time.isFinite else { return false }
+        // Route/submode changes can restart the presentation clock. Without this
+        // reset check a new graph's frames stay below the old timestamp and the
+        // preview freezes until the old epoch catches up.
+        if lastFrameTime.isFinite, time < lastFrameTime - 0.25 { return true }
+        return (time - lastFrameTime) >= minimumInterval(frameRate: frameRate, captureFrameRate: captureFrameRate) - 0.001
     }
 }
