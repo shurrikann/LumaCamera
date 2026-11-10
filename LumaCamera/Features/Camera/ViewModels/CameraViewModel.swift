@@ -2677,12 +2677,12 @@ final class CameraViewModel: ObservableObject {
     private typealias ManualSettings = SavedManualCaptureState
     private var savedManualSettings: ManualSettings?
     private var automaticEV = 0.0
+    @Published var histogramFrame = CGRect.zero
     #if DEBUG
     var previewFrameForTesting = CGRect.zero
     var toolbarFrameForTesting = CGRect.zero
     var toolbarBackdropFrameForTesting = CGRect.zero
     var histogramFrameForTesting = CGRect.zero
-    @Published var histogramFrame = CGRect.zero
     var recordingHUDFrameForTesting = CGRect.zero
     var levelFrameForTesting = CGRect.zero
     var logLUTInfoFrameForTesting = CGRect.zero

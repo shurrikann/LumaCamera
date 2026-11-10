@@ -1288,9 +1288,9 @@ final class CameraEngine: NSObject, ObservableObject {
     private var globalMeteringRevision = UUID()
     private var lastFrameTime = 0.0
     private var lastReadingsTime = 0.0
+    private var grainFrameCounter: UInt64 = 0
     #if DEBUG
     private var lastNightPreviewTraceTime = -Double.infinity
-    private var grainFrameCounter: UInt64 = 0
     #endif
     private var lastReadingsRefreshRevision: UInt64 = 0 // preview queue only
     private var readingsGeneration: UInt64 = 0
