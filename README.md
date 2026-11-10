@@ -1,3 +1,7 @@
+## 2026-11-10 功耗优化第二批
+
+- 视频待机停录制/音频连接，开录恢复；低电量/热压力预览上限30fps，不影响录制规格。
+
 ## 2026-11-10 新增 AppleLog2 ARRI LUT
 
 - 加入 `AppleLog2_ARRI`（ARRI Perceptual Daylight，33³），仅在 Apple Log2 下显示；Log LUT 总数47。

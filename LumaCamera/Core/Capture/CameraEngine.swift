@@ -962,6 +962,8 @@ final class CameraEngine: NSObject, ObservableObject {
     private var videoModeRequested = false // session queue only
     private var videoModeDesired = false // main queue only
     private var videoAudioRequested = false // session queue only
+    private var videoAudioMeterRequested = false // session queue only
+    private var recordingConnectionsEpoch = 0
     @Published private(set) var videoRecordingZoomRange: ClosedRange<CGFloat>?
     private var recordingZoomDeviceID: String? // session queue; recorder input stays fixed
     @Published private(set) var videoRecording = false
@@ -2136,6 +2138,7 @@ final class CameraEngine: NSObject, ObservableObject {
                 }
             }
             self.session.commitConfiguration()
+            if enabled { self.applyVideoStandbyConnections() }
             if !enabled {
                 DispatchQueue.main.async {
                     guard self.videoModeRevision.matches(revision) else { return }
@@ -2780,6 +2783,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private func configurePreviewOutputGraph(useRecordingOutput: Bool) -> Bool {
         if useRecordingOutput {
             guard session.outputs.contains(recordingOutput) else { return false }
+            recordingOutput.connection(with: .video)?.isEnabled = true
             if session.outputs.contains(videoOutput) { session.removeOutput(videoOutput) }
         } else if !session.outputs.contains(videoOutput) {
             guard session.canAddOutput(videoOutput) else { return false }
@@ -2832,6 +2836,35 @@ final class CameraEngine: NSObject, ObservableObject {
         for identifier in restoredIdentifiers {
             photoDeviceConfigurationsBeforeVideo.removeValue(forKey: identifier)
             photoColorBeforeVideo.removeValue(forKey: identifier)
+        }
+    }
+
+    /// Video standby keeps the outputs in the graph (format negotiation depends on
+    /// them) but stops their connections from delivering frames/audio. Starting a
+    /// recording enables both immediately; a failed start falls back after a delay.
+    private func applyVideoStandbyConnections() {
+        guard videoModeRequested, configured else { return }
+        let keepForPreview = livePreviewState.snapshot().previewFromRecordingOutput
+        recordingOutput.connection(with: .video)?.isEnabled = recordingBusyOnQueue || keepForPreview
+        audioOutput.connection(with: .audio)?.isEnabled = recordingBusyOnQueue || videoAudioMeterRequested
+    }
+
+    private func enableRecordingConnectionsForStart() {
+        recordingConnectionsEpoch &+= 1
+        let epoch = recordingConnectionsEpoch
+        recordingOutput.connection(with: .video)?.isEnabled = true
+        audioOutput.connection(with: .audio)?.isEnabled = true
+        queue.asyncAfter(deadline: .now() + 3) { [weak self] in
+            guard let self, self.recordingConnectionsEpoch == epoch,
+                  !self.recordingBusyOnQueue, !self.livePreviewState.snapshot().previewFromRecordingOutput else { return }
+            self.applyVideoStandbyConnections()
+        }
+    }
+
+    func setVideoAudioMeterEnabled(_ enabled: Bool) {
+        queue.async {
+            self.videoAudioMeterRequested = enabled
+            self.applyVideoStandbyConnections()
         }
     }
 
@@ -2987,6 +3020,7 @@ final class CameraEngine: NSObject, ObservableObject {
                 DispatchQueue.main.async { self.videoBusy = false; self.report("视频暂时无法开始录制，请重试。") }
                 return
             }
+            self.enableRecordingConnectionsForStart()
             self.recordingZoomDeviceID = dual == nil ? device.uniqueID : nil
             let recordingRange = dual == nil ? self.recordingZoomRange(for: device) : nil
             DispatchQueue.main.async { self.videoRecordingZoomRange = recordingRange }
@@ -3151,7 +3185,10 @@ final class CameraEngine: NSObject, ObservableObject {
                 let counts = recorder.frameCountsForTesting
                 #endif
                 self.queue.async { self.restoreVideoWhiteBalance() }
-                self.recordingQueue.async { self.recordingFinishing = false }
+                self.recordingQueue.async {
+                    self.recordingFinishing = false
+                    self.queue.async { self.applyVideoStandbyConnections() }
+                }
                 DispatchQueue.main.async {
                     #if DEBUG
                     self.lastRecordingFrameCountsForTesting = counts
@@ -3231,6 +3268,7 @@ final class CameraEngine: NSObject, ObservableObject {
         if videoModeRequested { addRecordingOutputs() }
         input = newInput
         session.commitConfiguration()
+        if videoModeRequested { applyVideoStandbyConnections() }
         try applyZoom(initialLens)
         configureConnections(device: device)
         configurePhotoOutput(device,publish:false)

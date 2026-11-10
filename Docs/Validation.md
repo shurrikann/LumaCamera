@@ -5185,3 +5185,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 使用 `Scripts/compile_log_luts.py` 转为 211KB LCUB，命名为 `AppleLog2_ARRI.lutcube`，自动归为 Log2 专用（Log2 / ARRI）。
 - 当前 Log LUT：固定 Log1 1支、固定 Log2 3支（AppleLog2_Rec709、ARRI_AppleLog2、AppleLog2_ARRI）、两者都支持43支，总计47支。
 - `LogLUTCubeTests`、`LogLUTClassificationTests` 通过。
+
+# 2026-11-10 功耗优化：视频待机连接与预览压力上限
+
+- 视频待机时 `recordingOutput` 视频连接和 `audioOutput` 音频连接默认关闭送帧；开始录制前立即打开，录音结束/启动失败3秒后回到待机状态。使用录制输出做预览的路由（电影/部分前置/双拍）保持视频连接开启。
+- 声音电平开启时音频连接保持开启；录像期间始终开启；关闭声音电平且未录像时关闭。
+- 预览压力策略：低电量或 thermal `.serious`/`.critical` 时预览上限30fps；录制帧率、编码规格和成片不变。`PreviewPowerPolicy` 纯函数测试覆盖60/120/24/低电量/热状态。
+- 局限：设备锁屏，未完成真机录像音频、预览切换和 Energy Log 对比；构建与模拟器测试通过后才可安装验证。

@@ -1015,4 +1015,13 @@ final class VideoSpecificationTests: XCTestCase {
         XCTAssertGreaterThan(camera.previewFrameTimeForTesting,finalFrame)
     }
     #endif
+
+    func testPreviewPowerPolicyCapsOnlyPreviewUnderPressure() {
+        XCTAssertEqual(PreviewPowerPolicy.cappedRate(60, lowPower: false, thermal: .nominal), 60)
+        XCTAssertEqual(PreviewPowerPolicy.cappedRate(60, lowPower: true, thermal: .nominal), 30)
+        XCTAssertEqual(PreviewPowerPolicy.cappedRate(60, lowPower: false, thermal: .serious), 30)
+        XCTAssertEqual(PreviewPowerPolicy.cappedRate(120, lowPower: false, thermal: .critical), 30)
+        XCTAssertEqual(PreviewPowerPolicy.cappedRate(24, lowPower: true, thermal: .nominal), 24)
+        XCTAssertEqual(PreviewPowerPolicy.cappedRate(nil, lowPower: false, thermal: .nominal), 30)
+    }
 }

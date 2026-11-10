@@ -123,7 +123,8 @@ enum LivePreviewCadence {
         // 慢动作采集120/240fps只用于成片时间拉伸，取景仍按30fps播放节奏送显。
         if captureFrameRate != nil { return 1.0 / 30 }
         // 普通视频低于60fps保持实际节奏；60fps及以上统一限制到60fps预览。
-        let rate = min(60, max(1, frameRate ?? 30))
+        // 低电量/热压力下只降低预览，不改变录制规格。
+        let rate = PreviewPowerPolicy.cappedRate(frameRate)
         return 1.0 / Double(rate)
     }
 
