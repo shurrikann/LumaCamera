@@ -5178,3 +5178,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - Log2 通用 LUT：选中后一次性把 Log2→Log1 转换与目标 LUT 预合成为 33³ cube（从最高65³源采样），预览和烧录每帧只做一次 cube，不再叠加转换 kernel。预合成失败时保留运行时 kernel 回退。
 - 测试：`LogLUTCubeTests` 增加中性灰预合成对比，direct=[135,136,136] composed=[134,135,135]；合成测试约0.33s（模拟器，含加载），需在真机确认切换 LUT 的 loading 体验。
 - 未完成：真机 Energy Log/掉帧对比；视频待机录制/音频连接、低电量预览上限尚未实施。
+
+# 2026-11-10 新增 AppleLog2 ARRI LUT
+
+- 用户提供 `appleLog2_arri.cube`（TITLE: ARRI Perceptual LUT (Daylight) Apple Log2_by Wade），33³、默认 0–1 输入域。
+- 使用 `Scripts/compile_log_luts.py` 转为 211KB LCUB，命名为 `AppleLog2_ARRI.lutcube`，自动归为 Log2 专用（Log2 / ARRI）。
+- 当前 Log LUT：固定 Log1 1支、固定 Log2 3支（AppleLog2_Rec709、ARRI_AppleLog2、AppleLog2_ARRI）、两者都支持43支，总计47支。
+- `LogLUTCubeTests`、`LogLUTClassificationTests` 通过。

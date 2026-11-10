@@ -1,3 +1,7 @@
+## 2026-11-10 新增 AppleLog2 ARRI LUT
+
+- 加入 `AppleLog2_ARRI`（ARRI Perceptual Daylight，33³），仅在 Apple Log2 下显示；Log LUT 总数47。
+
 ## 2026-11-10 功耗优化第一批
 
 - 水平仪 CoreMotion 改为按需启停；Log2 通用 LUT 预合成为单次 33³ cube，去掉每帧转换 kernel。

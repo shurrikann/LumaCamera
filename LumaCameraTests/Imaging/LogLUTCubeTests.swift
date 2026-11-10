@@ -5,7 +5,7 @@ import XCTest
 final class LogLUTCubeTests: XCTestCase {
     func testBundledLUTsRetainTheirOriginal33Or65Grid() throws {
         let presets = LogLUTCubeRepository.presets()
-        XCTAssertEqual(presets.count, 46)
+        XCTAssertEqual(presets.count, 47)
         for preset in presets {
             let cube = try LogLUTCubeRepository.load(preset)
             XCTAssertTrue(cube.dimension == 33 || cube.dimension == 65)
@@ -18,10 +18,11 @@ final class LogLUTCubeTests: XCTestCase {
         let pickerOptions = [LogLUTPreset.original] + presets
         XCTAssertEqual(LogLUTPreset.original.title, "原片")
         XCTAssertEqual(LogLUTPreset.original.id, LogLUTPreset.originalID)
-        XCTAssertEqual(presets.count, 46)
-        XCTAssertEqual(Array(pickerOptions.prefix(3).map(\.id)), [
-            LogLUTPreset.originalID, "AppleLog_Rec709", "AppleLog2_Rec709"
-        ])
+        XCTAssertEqual(presets.count, 47)
+        XCTAssertEqual(pickerOptions.first?.id, LogLUTPreset.originalID)
+        XCTAssertTrue(pickerOptions.contains { $0.id == "AppleLog_Rec709" })
+        XCTAssertTrue(pickerOptions.contains { $0.id == "AppleLog2_Rec709" })
+        XCTAssertTrue(pickerOptions.contains { $0.id == "AppleLog2_ARRI" })
     }
 
     func testDisplayNamesAreSeparatedForRec709AndBohemianLUTs() {
@@ -41,7 +42,12 @@ final class LogLUTCubeTests: XCTestCase {
         XCTAssertEqual(bohemianV1?.title, "V1")
         XCTAssertEqual(bohemianV2?.equipment, "波西米亚")
         XCTAssertEqual(bohemianV2?.title, "V2")
-        XCTAssertEqual(Array(presets.prefix(2).map(\.id)), ["AppleLog_Rec709", "AppleLog2_Rec709"])
+        XCTAssertEqual(presets.first?.id, "AppleLog_Rec709")
+        XCTAssertTrue(presets.contains { $0.id == "AppleLog2_Rec709" })
+        let arri = presets.first { $0.id == "AppleLog2_ARRI" }
+        XCTAssertEqual(arri?.equipment, "Log2")
+        XCTAssertEqual(arri?.title, "ARRI")
+        XCTAssertEqual(arri?.displayName, "Log2 ARRI")
     }
 
     func testCubeCanBeAppliedToImage() throws {
