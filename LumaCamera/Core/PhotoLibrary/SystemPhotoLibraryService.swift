@@ -198,7 +198,9 @@ final class SystemPhotoLibraryService: NSObject, PhotoLibraryService, PhotoBrows
             var assetID: String?
             PHPhotoLibrary.shared().performChanges({
                 let request = PHAssetCreationRequest.forAsset()
-                request.addResource(with: .video, fileURL: url, options: nil)
+                let options = PHAssetResourceCreationOptions()
+                options.originalFilename = url.lastPathComponent
+                request.addResource(with: .video, fileURL: url, options: options)
                 assetID = request.placeholderForCreatedAsset?.localIdentifier
             }) { success, error in
                 DispatchQueue.main.async {

@@ -262,6 +262,8 @@ final class BasicVideoPhysicalTests: XCTestCase {
         model.toggleVideoRecording()
         for _ in 0..<250 { if result != nil { break }; try await Task.sleep(for: .milliseconds(20)) }
         let frontURL = try XCTUnwrap(result?.get())
+        XCTAssertTrue(frontURL.lastPathComponent.hasPrefix("LumaVideo_"), frontURL.lastPathComponent)
+        XCTAssertFalse(frontURL.lastPathComponent.contains("UUID"), frontURL.lastPathComponent)
         defer { try? FileManager.default.removeItem(at: frontURL) }
         let frontTracks = try await AVURLAsset(url: frontURL).loadTracks(withMediaType: .video)
         XCTAssertFalse(frontTracks.isEmpty)

@@ -5246,3 +5246,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 删除 `709_LUT/电影/青调.cube`、`青调_Log2.cube`、`电影感.cube`，保留 `暗青.cube`；统一分类副本同步删除。
 - App 内删除 `电影感` 的 709 资源与元数据：外部 208→207，总滤镜 256→255；电影分类 74→73。
 - `Library709Tests` 通过（207/252/255）；照片实际拍照用例仍通过。
+
+# 2026-11-10 视频命名与详情滤镜信息
+
+- 新录像文件名：`LumaVideo_yyyyMMdd_HHmmss_<分辨率><帧率>_<编码>_<色彩空间>[_Timelapse][_Cinematic].mov`，同秒冲突追加 `_2`；不再使用 UUID 作为文件名。
+- `SystemPhotoLibraryService` 保存视频时写入同一 `originalFilename`，系统相册详情显示可读名称。
+- 视频详情追加：SDR 滤镜名称/浓度/调整摘要；Log 已烧录 LUT 名称与“已烧录到画面”。仅预览的 Log LUT 不显示，避免把未写入的 LUT 说成成片滤镜。
+- 测试：`VideoFileNamingTests`、`VideoFilterInfoTests` 通过；真机 `BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn` 通过（8.768s），断言实际录像文件名以 `LumaVideo_` 开头。

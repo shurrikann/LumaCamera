@@ -3096,7 +3096,9 @@ final class CameraEngine: NSObject, ObservableObject {
                 }
                 return
             }
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent("LumaVideo-\(UUID().uuidString).mov")
+            let url = VideoFileNaming.temporaryURL(for: settings,
+                                                   timeLapse: timeLapseEnabled,
+                                                   cinematic: cinematicVideo)
             if requiresWhiteBalanceLock {
                 if let dual {
                     let secondary = device === dual.front ? dual.rear : dual.front

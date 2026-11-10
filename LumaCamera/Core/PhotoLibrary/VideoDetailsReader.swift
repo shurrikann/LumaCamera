@@ -2,7 +2,8 @@ import AVFoundation
 
 /// Reads track metadata, never decodes video frames or loads the entire movie.
 enum VideoDetailsReader {
-    static func read(_ asset: AVAsset, filename: String?, date: Date?, location: PhotoLocation?) async throws -> PhotoDetails {
+    static func read(_ asset: AVAsset, filename: String?, date: Date?, location: PhotoLocation?,
+                     badges: VideoCaptureBadges? = nil) async throws -> PhotoDetails {
         let tracks = try await asset.loadTracks(withMediaType: .video)
         guard let track = tracks.first else { throw CocoaError(.fileReadCorruptFile) }
         async let naturalSize = track.load(.naturalSize)
@@ -66,8 +67,37 @@ enum VideoDetailsReader {
                 rows.append(.init(title: "音频", value: "\(codecName(stream.mFormatID)) · \(stream.mChannelsPerFrame) 声道 · \(Int(stream.mSampleRate)) Hz"))
             } else { rows.append(.init(title: "音频", value: "有音轨")) }
         } else { rows.append(.init(title: "音频", value: "无音轨")) }
+        for row in filterRows(for: badges) where !rows.contains(where: { $0.title == row.title }) {
+            rows.append(row)
+        }
         rows.append(contentsOf: snapshot)
         return PhotoDetails(rows: rows, location: location, capturedAt: capturedAt)
+    }
+
+
+    /// Adds human-readable filter/LUT information that is stored alongside the
+    /// Photos asset rather than in the movie container itself.
+    static func filterRows(for badges: VideoCaptureBadges?) -> [PhotoInfoRow] {
+        guard let badges else { return [] }
+        var rows: [PhotoInfoRow] = []
+        if let id = badges.filmStyleID, id != FilmStyle.original.rawValue,
+           let style = FilmStyle(rawValue: id) {
+            rows.append(.init(title: "滤镜", value: style.title))
+            if let intensity = badges.filterIntensity, intensity.isFinite {
+                rows.append(.init(title: "滤镜浓度", value: "\(Int((min(max(intensity, 0), 1) * 100).rounded()))%"))
+            }
+            if let adjustments = badges.filterAdjustments, !adjustments.summary.isEmpty {
+                rows.append(.init(title: "滤镜调整", value: adjustments.summary))
+            }
+        } else if badges.hasFilter {
+            rows.append(.init(title: "滤镜", value: "已应用"))
+        }
+        if let id = badges.logLUTID,
+           let preset = LogLUTCubeRepository.presets().first(where: { $0.id == id }) {
+            rows.append(.init(title: "Log LUT", value: preset.displayName))
+            rows.append(.init(title: "LUT 写入", value: "已烧录到画面"))
+        }
+        return rows
     }
 
     static func codecName(_ value: FourCharCode) -> String {

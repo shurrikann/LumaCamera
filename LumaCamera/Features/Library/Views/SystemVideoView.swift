@@ -444,7 +444,9 @@ struct SystemVideoView: View {
         detailsTask = Task { @MainActor in
             defer { detailsBusy = false }
             do {
-                let value = try await VideoDetailsReader.read(asset, filename: resource?.originalFilename, date: photo.date, location: photo.location)
+                let value = try await VideoDetailsReader.read(asset, filename: resource?.originalFilename, date: photo.date,
+                                                              location: photo.location,
+                                                              badges: VideoCaptureBadgeStore.shared.badges(assetID: photo.id))
                 guard !Task.isCancelled, active else { return }
                 details = value
                 withAnimation(AppTheme.popupAnimation) { detailsVisible = true }
