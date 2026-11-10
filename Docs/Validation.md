@@ -5193,3 +5193,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 真机 `BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn` 通过（13.284s，3轮录制/停止/照片返回）；`LiveAudioSavePhysicalTests/testAudioSurvivesFrontRearAndAMSwitchesWithoutBlockingPreview` 通过（13.870s）。
 - 预览压力策略：低电量或 thermal `.serious`/`.critical` 时预览上限30fps；录制帧率、编码规格和成片不变。`PreviewPowerPolicy` 纯函数测试覆盖60/120/24/低电量/热状态。
 - 局限：设备锁屏，未完成真机录像音频、预览切换和 Energy Log 对比；构建与模拟器测试通过后才可安装验证。
+
+# 2026-11-10 Energy A/B 初测
+
+- 使用 Power Profiler 对旧版 `f25db90` 与新版 `d834f1d` 做 10m 视频待机 + 5m 录像 A/B。原始数值、热状态和亮度见 `Docs/Test-Reports/2026-11-10-Energy-AB.md`。
+- 录像段 CPU 均值 2.527→2.387（−5.5%），GPU 0.045→0.062（+35%，量化粗）；待机段 CPU 2.219→2.255（+1.6%）。
+- 自动亮度/热状态未锁死：新版待机后半段 Fair、亮度 77.5%，旧版 Nominal、95.5%，Display Impact 对比无效。不能据此宣称整体功耗下降。
+- 待复测：固定亮度、Nominal 起始、ABBA 交替、至少两次。
