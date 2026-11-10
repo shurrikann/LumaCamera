@@ -5231,3 +5231,12 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 根因方向：视频音频图重建后，`AVAudioSession.allowHapticsAndSystemSoundsDuringRecording` 可能被系统重置；旧逻辑只在音频输入连接时重设，返回照片后不再恢复。
 - 修复：每次视频图提交后都重设许可；相机重新激活时调用 `prepareHaptics()`；`CameraHaptics` 在每次 prepare/selection/impact/success 前惰性重设一次。
 - 真机验证：`BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn` 通过（9.859s），并新增断言“退出视频后触感许可仍为 true”；`CameraHapticsTests` 通过。
+
+# 2026-11-10 Log/照片 LUT 真机回归
+
+- Log 烧录：`testAppleLogLUTBurnWritesRec709TagsAndTenBitPixels` 通过（3.606s）；实际文件去掉 Log 标签，写 Rec.709 原色/传递函数，10-bit。
+- Log1/Log2 像素：`testLogAndLog2PreviewOnlyAndBurnHaveDifferentEncodedPixels` 通过（6.145s）；未烧录保留 `com.apple.rec2020.apple-log` / `com.apple.apple-wide-gamut.apple-log`，烧录后 Log 标签为 nil，洋红像素比例 0→1。
+- 修正该用例旧断言：烧录后不能继续期待 Log transfer tag；现按 burn 分支分别断言。
+- 照片：`FilterLandscapeTests` 真机 0.367s；256 支缩略图/分类通过。`Library709Tests/testImported709PhotoCaptureKeepsSelectedRecipe` 真机通过（3.224s），使用 `lib709_c2bb6a9a85d8` 实际拍照，保留 filterID 与调整配方。
+- 触感：`CameraHapticsTests` 与视频/照片切换录像用例通过。
+- 局限：没有逐支检查 110 支 Log/256 支照片滤镜的视觉结果；本轮验证的是资源、分类、实际烧录/照片路径代表样本。

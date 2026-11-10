@@ -371,7 +371,16 @@ final class VideoColorPhysicalTests: XCTestCase {
                 let description = try XCTUnwrap(descriptions.first)
                 let tags = CMFormatDescriptionGetExtensions(description) as? [String: Any] ?? [:]
                 let expected = color == .appleLog ? kCVImageBufferLogTransferFunction_AppleLog as String : kCVImageBufferLogTransferFunction_AppleLog2 as String
-                XCTAssertEqual(tags[kCMFormatDescriptionExtension_LogTransferFunction as String] as? String, expected)
+                let actualLogTag = tags[kCMFormatDescriptionExtension_LogTransferFunction as String] as? String
+                if burn {
+                    XCTAssertNil(actualLogTag, "烧录后不能保留 Log 传递函数")
+                    XCTAssertEqual(tags[kCMFormatDescriptionExtension_TransferFunction as String] as? String,
+                                   kCVImageBufferTransferFunction_ITU_R_709_2 as String)
+                    XCTAssertEqual(tags[kCMFormatDescriptionExtension_ColorPrimaries as String] as? String,
+                                   kCVImageBufferColorPrimaries_ITU_R_709_2 as String)
+                } else {
+                    XCTAssertEqual(actualLogTag, expected)
+                }
                 XCTAssertEqual((tags[kCMFormatDescriptionExtension_BitsPerComponent as String] as? NSNumber)?.intValue, 10)
                 let reader = try AVAssetReader(asset: asset)
                 let output = AVAssetReaderTrackOutput(track: track, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String:kCVPixelFormatType_32BGRA])
@@ -398,7 +407,7 @@ final class VideoColorPhysicalTests: XCTestCase {
                 let fraction = Double(magenta)/Double(max(1,samples))
                 if burn { XCTAssertGreaterThan(fraction,0.95,"烧录必须改变实际编码像素") }
                 else { XCTAssertLessThan(fraction,0.5,"仅预览不可把诊断 LUT 写入成片；测试场景应非纯洋红") }
-                print("LOG-LUT-PIXELS color=\(color.rawValue) burn=\(burn) frames=\(frames) magentaFraction=\(fraction) bits=10 logTag=\(expected)")
+                print("LOG-LUT-PIXELS color=\(color.rawValue) burn=\(burn) frames=\(frames) magentaFraction=\(fraction) bits=10 logTag=\(actualLogTag ?? "nil")")
                 try? FileManager.default.removeItem(at:url); result = nil
             }
             camera.updateVideoLogLUT(nil)

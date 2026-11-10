@@ -29,4 +29,40 @@ final class Library709Tests: XCTestCase {
         XCTAssertNotEqual(before, after, entry.title)
         XCTAssertEqual(after[3], 255)
     }
+
+    #if !targetEnvironment(simulator)
+    @MainActor func testImported709PhotoCaptureKeepsSelectedRecipe() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        let camera = model.camera
+        let entry = try XCTUnwrap(Library709.entries.first)
+        let oldStyle = model.style, oldIntensity = model.intensity, oldAdjustments = model.filterAdjustments
+        let oldCallback = camera.onCaptureCompleted
+        let idle = UIApplication.shared.isIdleTimerDisabled
+        var shots: [CapturedPhoto] = []
+        UIApplication.shared.isIdleTimerDisabled = true
+        camera.onCaptureCompleted = { if let photo = $0 { shots.append(photo) } }
+        defer {
+            camera.onCaptureCompleted = oldCallback
+            model.style = oldStyle; model.intensity = oldIntensity; model.filterAdjustments = oldAdjustments
+            model.flushFilterSettings()
+            camera.stop()
+            UIApplication.shared.isIdleTimerDisabled = idle
+        }
+        model.setCameraActive(true)
+        camera.start()
+        for _ in 0..<300 { if camera.ready && camera.preview != nil { break }; try await Task.sleep(for: .milliseconds(30)) }
+        XCTAssertTrue(camera.ready)
+        model.style = entry.style
+        model.intensity = 0.8
+        var recipe = FilterAdjustments(); recipe[.temperature] = 14; recipe[.vignette] = 30
+        model.filterAdjustments = recipe
+        await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
+        camera.capture(flashMode: .off, options: model.photoOptions)
+        for _ in 0..<600 { if camera.pendingPhotoCount == 0 && !shots.isEmpty { break }; try await Task.sleep(for: .milliseconds(40)) }
+        XCTAssertEqual(shots.count, 1, camera.message ?? "Imported 709 photo capture failed")
+        XCTAssertEqual(shots.first?.diagnostics?.parameters?.filterID, entry.style.rawValue)
+        XCTAssertEqual(shots.first?.diagnostics?.parameters?.filterAdjustments, recipe)
+        print("LIBRARY-709-CAPTURE style=\(entry.style.rawValue) shots=\(shots.count)")
+    }
+    #endif
 }
