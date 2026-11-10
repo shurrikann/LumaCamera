@@ -1,3 +1,7 @@
+## 2026-11-10 清理709高相似组
+
+- 删除青调/青调_Log2/电影感，保留暗青；App 内同步移除电影感资源，当前照片滤镜255、709外部207。
+
 ## 2026-11-10 Release 包体评估
 
 - Release `.app` 193MB，未签名 IPA 约95MB；Assets 93MB、LogLUTs 79MB。无设备 asset variant，预计无显著 thinning；建议后续评估 65³→33³ 或按需导入。

@@ -4,14 +4,14 @@ import CoreImage
 
 final class Library709Tests: XCTestCase {
     func testImportedLibraryIsDeduplicatedAndClassified() throws {
-        XCTAssertEqual(Library709.entries.count, 208)
-        XCTAssertEqual(Set(Library709.entries.map(\.style)).count, 208)
-        XCTAssertEqual(ImportedFilterCatalog.entries.count, 253)
-        XCTAssertEqual(Set(FilmStyle.availableStyles).count, 256)
+        XCTAssertEqual(Library709.entries.count, 207)
+        XCTAssertEqual(Set(Library709.entries.map(\.style)).count, 207)
+        XCTAssertEqual(ImportedFilterCatalog.entries.count, 252)
+        XCTAssertEqual(Set(FilmStyle.availableStyles).count, 255)
         XCTAssertEqual(FilmStyle.availableStyles.filter { $0.filterCategory == .street }.count, 74)
         XCTAssertEqual(FilmStyle.availableStyles.filter { $0.filterCategory == .film }.count, 35)
         XCTAssertEqual(FilmStyle.availableStyles.filter { $0.filterCategory == .mono }.count, 5)
-        XCTAssertEqual(FilmStyle.availableStyles.filter { $0.filterCategory == .cinema }.count, 74)
+        XCTAssertEqual(FilmStyle.availableStyles.filter { $0.filterCategory == .cinema }.count, 73)
         for entry in Library709.entries {
             XCTAssertTrue((16...64).contains(entry.dimension), entry.title)
             XCTAssertTrue(entry.compact, entry.title)

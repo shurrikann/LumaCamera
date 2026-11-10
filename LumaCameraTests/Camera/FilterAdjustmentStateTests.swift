@@ -48,7 +48,7 @@ final class FilterAdjustmentStateTests: XCTestCase {
     @MainActor func testVisibleCatalogTabsAndShootingEntriesMatchRequestedScope() {
         let model = AppDependencies.makeCameraModel(automaticallySave: false)
         XCTAssertEqual(model.filters.styles, FilmStyle.availableStyles)
-        XCTAssertEqual(model.filters.styles.count, 256)
+        XCTAssertEqual(model.filters.styles.count, 255)
         XCTAssertEqual(FilterEditorTab.allCases.map(\.rawValue), ["色彩", "明暗", "质感"])
         // 原版明暗页恢复亮度，所有现有参数都有编辑入口。
         XCTAssertEqual(Set(FilterEditorTab.allCases.flatMap(\.parameters)),
