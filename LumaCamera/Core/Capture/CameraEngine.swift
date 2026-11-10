@@ -2389,12 +2389,19 @@ final class CameraEngine: NSObject, ObservableObject {
                                                            requiringCinematicVideo: true) else {
                 DispatchQueue.main.async { completion(false) }; return
             }
+            // Apple's Cinematic sample builds the session around the cinematic
+            // input instead of swapping the input on a live graph. A running
+            // session can keep serving the old preview after this swap, so stop
+            // and restart only for the cinematic entry path.
+            let wasRunning = self.session.isRunning
+            if wasRunning { self.session.stopRunning() }
             self.session.beginConfiguration()
             do {
                 let replacement = try self.reusableInput(for: target)
                 self.session.removeInput(current)
                 guard self.session.canAddInput(replacement) else {
                     self.session.addInput(current); self.session.commitConfiguration()
+                    if wasRunning { self.session.startRunning() }
                     DispatchQueue.main.async { completion(false) }; return
                 }
                 self.session.addInput(replacement)
@@ -2408,10 +2415,12 @@ final class CameraEngine: NSObject, ObservableObject {
                 target.unlockForConfiguration()
                 self.configureConnections(device: target)
                 self.session.commitConfiguration()
+                if wasRunning { self.session.startRunning() }
                 DispatchQueue.main.async { completion(true) }
             } catch {
                 self.session.addInput(current)
                 self.session.commitConfiguration()
+                if wasRunning { self.session.startRunning() }
                 self.report("切换电影设备失败：\(error.localizedDescription)")
                 DispatchQueue.main.async { completion(false) }
             }

@@ -5299,3 +5299,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 新增 `CameraLensCatalogTests/testDigital8xIsSelectableWithoutNative8x`，模拟器通过。
 - 临时探针 `DualCaptureVirtualRearProbeTests` 已删除，不进入产品测试集。
 - 本轮只保留已验证的 8× 修改；电影系统预览层、双拍前置居中、统一切换 gate 不再做额外代码改动，仅做真机验证。
+
+# 2026-11-10 电影输入切换重建会话
+
+- 真机确认此前电影预览冻结时，系统预览层同样没有新帧，问题在电影输入切换而非预览数据输出。
+- 修改 `prepareCinematicInput`：进入电影模式换 DualWide/TrueDepth 输入时，先停止会话，完成输入/格式/连接提交后再启动会话；仅电影入口，普通视频/照片/双拍不变。
+- 真机 `VideoModeTransitionTests/testCinematicPreviewAndPhotoHDRRecoverOnVideoRoundTrip` 连续 4 次通过（19.313s、19.289s、18.953s、18.922s），包含电影预览持续更新与照片 HDR 往返。
+- 仍需用户实际取景确认“卡住”消失；自动化只覆盖测试预览管线。
