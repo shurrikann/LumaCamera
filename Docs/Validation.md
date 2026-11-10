@@ -5218,3 +5218,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 去重：`appleLog2_arri` 与旧 `ARRI_AppleLog2` 内容相同，只保留旧 ID 对应的输入空间记录；新资源中不再保留重复的 AppleLog2_ARRI。
 - `LogLUTCubeTests`、`LogLUTClassificationTests` 通过（110 支，86/2/22，分类计数）。App 已构建安装；Debug App 约252MB。
 - 未做真机端到端逐支 LUT 视觉验收；输入空间除用户实测的 22 支 Arri 和明确命名项外仍为来源推定。
+
+# 2026-11-10 回退待机视频连接开关
+
+- 受控 A/B 显示录像实际 CPU/GPU/Display 持平，待机 CPU 无收益；回退 `recordingOutput` 待机连接切换、冷启动补丁、失败延迟恢复与 haptics 重声明逻辑。
+- 保留按需水平仪、Log2 LUT 预合成、低电量/热压力预览上限。
+- 移除 DEBUG 测试入口里的 80% 亮度锁定；测试入口 `--perf-video` 仍保留。
+- 真机 `BasicVideoPhysicalTests/testRepeatedVideoRecordingsAndPhotoModeReturn` 通过（9.812s）。
