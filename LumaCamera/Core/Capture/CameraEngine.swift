@@ -1515,6 +1515,7 @@ final class CameraEngine: NSObject, ObservableObject {
                     if !self.session.isRunning {
                         self.session.startRunning()
                     }
+                    if self.videoModeRequested { self.applyVideoStandbyConnections() }
                     if let device = self.input?.device {
                         self.applyFrontVideoWideFramingOnQueue(device)
                     }
@@ -2791,6 +2792,7 @@ final class CameraEngine: NSObject, ObservableObject {
             session.addOutput(videoOutput)
         }
         livePreviewState.update { $0.previewFromRecordingOutput = useRecordingOutput }
+        if !useRecordingOutput { applyVideoStandbyConnections() }
         return true
     }
 
