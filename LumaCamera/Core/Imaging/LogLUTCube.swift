@@ -150,3 +150,54 @@ enum LogLUTCubeRepository {
         return UIImage(cgImage: cgImage)
     }
 }
+extension LogLUTCube {
+    /// One-time CPU composition: sampled LUT(Log1(Log2(input))). This removes
+    /// the per-frame Metal conversion pass for Log2 generic/Log1 LUTs.
+    func convertingAppleLog2ToAppleLog() -> LogLUTCube? {
+        let sourceDimension = dimension
+        // 33³ is the standard LUT grid and keeps the one-time composition cheap;
+        // still sample the full 65³ source for the transform.
+        let d = min(sourceDimension, 33)
+        let sourceCount = sourceDimension * sourceDimension * sourceDimension * 4
+        let count = d * d * d * 4
+        let source: [Float] = rgbaData.withUnsafeBytes { raw in
+            guard let base = raw.baseAddress else { return [] }
+            return Array(UnsafeBufferPointer(start: base.assumingMemoryBound(to: Float.self), count: sourceCount))
+        }
+        guard source.count == sourceCount else { return nil }
+        func sample(_ rgb: (Float, Float, Float)) -> (Float, Float, Float) {
+            let sd = sourceDimension
+            let c = (rgb.0 * Float(sd - 1), rgb.1 * Float(sd - 1), rgb.2 * Float(sd - 1))
+            let lo = (Int(floor(c.0)), Int(floor(c.1)), Int(floor(c.2)))
+            let hi = (min(lo.0 + 1, sd - 1), min(lo.1 + 1, sd - 1), min(lo.2 + 1, sd - 1))
+            let f = (c.0 - Float(lo.0), c.1 - Float(lo.1), c.2 - Float(lo.2))
+            var out: (Float, Float, Float) = (0, 0, 0)
+            for z in 0...1 { for y in 0...1 { for x in 0...1 {
+                let ix = z == 0 ? lo.2 : hi.2, iy = y == 0 ? lo.1 : hi.1, ixr = x == 0 ? lo.0 : hi.0
+                let index = ((ix * sourceDimension + iy) * sourceDimension + ixr) * 4
+                let weight = (z == 0 ? 1 - f.2 : f.2) * (y == 0 ? 1 - f.1 : f.1) * (x == 0 ? 1 - f.0 : f.0)
+                out.0 += source[index] * weight
+                out.1 += source[index + 1] * weight
+                out.2 += source[index + 2] * weight
+            }}}
+            return out
+        }
+        var output = [Float](repeating: 1, count: count)
+        var index = 0
+        for blue in 0..<d {
+            for green in 0..<d {
+                for red in 0..<d {
+                    let input = (Float(red) / Float(d - 1), Float(green) / Float(d - 1), Float(blue) / Float(d - 1))
+                    let converted = AppleLogLUTInput.log2CodeToLog1(input)
+                    let value = sample(converted)
+                    output[index] = min(max(value.0, 0), 1)
+                    output[index + 1] = min(max(value.1, 0), 1)
+                    output[index + 2] = min(max(value.2, 0), 1)
+                    index += 4
+                }
+            }
+        }
+        let data = output.withUnsafeBytes { Data($0) }
+        return LogLUTCube(dimension: d, rgbaData: data)
+    }
+}

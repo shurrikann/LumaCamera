@@ -943,6 +943,8 @@ final class CameraEngine: NSObject, ObservableObject {
     private let processingQueue = DispatchQueue(label: "camera.photo", qos: .userInitiated)
     private let context = CIContext(options: [.cacheIntermediates: false])
     private let levelMonitor = DeviceLevelMonitor()
+    /// 水平仪是可选辅助；未开启时不启动 10Hz CoreMotion，节省常驻功耗。
+    private var levelMonitoringRequested = false
     private var input: AVCaptureDeviceInput?
     private var frontAutoCenteringRequested = false // session queue
     private var frontPhotoLandscapeRequested = false // session queue; remains a photo preference during video capture
@@ -1463,7 +1465,9 @@ final class CameraEngine: NSObject, ObservableObject {
         let requestedZoom = currentZoom, requestedAnchor = selectedLens
         if recoveryFailed { message = nil }
         recoveryFailed = false; recoveringSession = false; ready = false
-        levelMonitor.start { [weak self] in self?.roll = $0 }
+        if levelMonitoringRequested {
+            levelMonitor.start { [weak self] in self?.roll = $0 }
+        }
         #if targetEnvironment(simulator)
         demo = true
         queue.async {
@@ -5467,6 +5471,15 @@ final class CameraEngine: NSObject, ObservableObject {
     }
 
     func setFilterParameterEditing(_ active: Bool) { previewRevision.setInteractive(active) }
+
+    func setLevelMonitoringEnabled(_ enabled: Bool) {
+        levelMonitoringRequested = enabled
+        if enabled, runRequested, ready {
+            levelMonitor.start { [weak self] in self?.roll = $0 }
+        } else {
+            levelMonitor.stop()
+        }
+    }
 
     func updateVideoLogLUT(_ cube: LogLUTCube?, convertLog2ToLog1: Bool = false) {
         let revision = previewRevision.advance(resetInteractiveFloor: true)

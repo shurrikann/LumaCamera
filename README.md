@@ -1,3 +1,7 @@
+## 2026-11-10 功耗优化第一批
+
+- 水平仪 CoreMotion 改为按需启停；Log2 通用 LUT 预合成为单次 33³ cube，去掉每帧转换 kernel。
+
 ## 2026-11-09 Log2→Apple Log LUT 输入统一
 
 - 通用/Log1 LUT 在 Log2 下先转换为 Apple Log 输入；显式 Log2 LUT 保持原生。预览、烧录同链路，18% 灰内核测试通过。

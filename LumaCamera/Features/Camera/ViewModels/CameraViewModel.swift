@@ -1315,7 +1315,12 @@ final class CameraViewModel: ObservableObject {
             persistAuxiliaryPreferences()
         }
     }
-    @Published var level = false { didSet { persistAuxiliaryPreferences() } }
+    @Published var level = false {
+        didSet {
+            camera.setLevelMonitoringEnabled(level)
+            persistAuxiliaryPreferences()
+        }
+    }
     @Published var border = false {
         didSet {
             if border { adaptiveHighDynamic = false }
@@ -1442,9 +1447,16 @@ final class CameraViewModel: ObservableObject {
                 switch result {
                 case .success(let cube):
                     let convert = self.videoColorSpace == .appleLog2 && preset.requiredColorSpace != .appleLog2
-                    self.selectedLogLUTCube = cube
-                    self.logLUTConvertsLog2ToLog1 = convert
-                    self.camera.updateVideoLogLUT(cube, convertLog2ToLog1: convert)
+                    if convert, let composed = cube.convertingAppleLog2ToAppleLog() {
+                        // 预合成后运行时只做一次 cube，不再每帧跑转换 kernel。
+                        self.selectedLogLUTCube = composed
+                        self.logLUTConvertsLog2ToLog1 = false
+                        self.camera.updateVideoLogLUT(composed)
+                    } else {
+                        self.selectedLogLUTCube = cube
+                        self.logLUTConvertsLog2ToLog1 = convert
+                        self.camera.updateVideoLogLUT(cube, convertLog2ToLog1: convert)
+                    }
                 case .failure(let error):
                     self.selectedLogLUTCube = nil
                     self.logLUTConvertsLog2ToLog1 = false

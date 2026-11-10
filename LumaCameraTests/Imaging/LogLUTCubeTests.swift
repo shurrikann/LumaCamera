@@ -125,4 +125,26 @@ final class LogLUTCubeTests: XCTestCase {
         XCTAssertEqual(Int(pixels[1]), expected, accuracy: 2)
         XCTAssertEqual(Int(pixels[2]), expected, accuracy: 2)
     }
+
+    func testPrecomposedLog2CubeMatchesDirectCubeOnNeutralGray() throws {
+        let preset = try XCTUnwrap(LogLUTCubeRepository.presets().first { $0.id == "AppleLog_Rec709" })
+        let cube = try LogLUTCubeRepository.load(preset)
+        let composed = try XCTUnwrap(cube.convertingAppleLog2ToAppleLog())
+        XCTAssertEqual(composed.dimension, min(cube.dimension, 33))
+        let context = CIContext()
+        func pixel(_ cube: LogLUTCube) -> [UInt8] {
+            let gray: Float = 0.48827245852686763
+            let image = CIImage(color: CIColor(red: CGFloat(gray), green: CGFloat(gray), blue: CGFloat(gray)))
+                .cropped(to: CGRect(x: 0, y: 0, width: 2, height: 2))
+            let output = cube.apply(to: image)
+            var pixels = [UInt8](repeating: 0, count: 4)
+            context.render(output, toBitmap: &pixels, rowBytes: 4,
+                           bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                           format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())
+            return pixels
+        }
+        let direct = pixel(cube), precomposed = pixel(composed)
+        print("LOG-PRECOMPOSE direct=\(direct) composed=\(precomposed)")
+        for i in 0..<3 { XCTAssertEqual(Int(precomposed[i]), Int(direct[i]), accuracy: 3) }
+    }
 }
