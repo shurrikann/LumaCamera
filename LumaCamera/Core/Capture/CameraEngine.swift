@@ -962,7 +962,6 @@ final class CameraEngine: NSObject, ObservableObject {
     private var videoModeRequested = false // session queue only
     private var videoModeDesired = false // main queue only
     private var videoAudioRequested = false // session queue only
-    private var videoAudioMeterRequested = false // session queue only
     private var recordingConnectionsEpoch = 0
     @Published private(set) var videoRecordingZoomRange: ClosedRange<CGFloat>?
     private var recordingZoomDeviceID: String? // session queue; recorder input stays fixed
@@ -2848,24 +2847,18 @@ final class CameraEngine: NSObject, ObservableObject {
         guard videoModeRequested, configured else { return }
         let keepForPreview = livePreviewState.snapshot().previewFromRecordingOutput
         recordingOutput.connection(with: .video)?.isEnabled = recordingBusyOnQueue || keepForPreview
-        audioOutput.connection(with: .audio)?.isEnabled = recordingBusyOnQueue || videoAudioMeterRequested
     }
 
     private func enableRecordingConnectionsForStart() {
         recordingConnectionsEpoch &+= 1
         let epoch = recordingConnectionsEpoch
         recordingOutput.connection(with: .video)?.isEnabled = true
-        audioOutput.connection(with: .audio)?.isEnabled = true
+        // Re-enabling the recording connection can renegotiate the audio route;
+        // re-assert the haptics permission before the recorder starts.
+        allowCameraHaptics()
         queue.asyncAfter(deadline: .now() + 3) { [weak self] in
             guard let self, self.recordingConnectionsEpoch == epoch,
                   !self.recordingBusyOnQueue, !self.livePreviewState.snapshot().previewFromRecordingOutput else { return }
-            self.applyVideoStandbyConnections()
-        }
-    }
-
-    func setVideoAudioMeterEnabled(_ enabled: Bool) {
-        queue.async {
-            self.videoAudioMeterRequested = enabled
             self.applyVideoStandbyConnections()
         }
     }

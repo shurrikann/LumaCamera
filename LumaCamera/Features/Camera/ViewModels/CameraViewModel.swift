@@ -252,10 +252,7 @@ final class CameraViewModel: ObservableObject {
         didSet { persistAuxiliaryPreferences() }
     }
     @Published var showsAudioMeter = false {
-        didSet {
-            camera.setVideoAudioMeterEnabled(showsAudioMeter)
-            persistAuxiliaryPreferences()
-        }
+        didSet { persistAuxiliaryPreferences() }
     }
     /// Match the current recording pipeline's 30 fps default in the picker.
     @Published var videoFrameRate = VideoFrameRate.fps30 { didSet { if videoFrameRate != oldValue { synchronizeVideoSettings() } } }
