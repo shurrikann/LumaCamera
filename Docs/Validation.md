@@ -5371,3 +5371,9 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
   - 返回照片后 activeFormat 恢复为 4032×3024，首次 2× 从 3.03s 降到 1.93s。
 - 未解决：首次 2× 仍需约 1.9s（connections 约 1.05s、input 0.39s、photoOutput 0.46s）；第二次起 0.29s。变焦轮在首次重建后能跟随，首次进入时仍会停顿。
 - 新增真机 `SlowMotionPhotoReturnZoomTests`，保留首次/后续焦段耗时与变焦轮采样；当前未把 1.9s 首次延迟写成已解决。
+
+# 2026-11-11 移除设置内电影模式诊断入口
+
+- 用户要求移除设置中的“电影模式诊断”入口；同时删除 `CinematicLabView.swift` 与依赖它的 `CinematicLabPhysicalTests.swift`。
+- 保留主相机电影 Depth/Matte 修复、系统预览方向修复和 `CinematicMainFrameDeliveryTests`；其他界面不变。
+- 构建通过，准备安装。
