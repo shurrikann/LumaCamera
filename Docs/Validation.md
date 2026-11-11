@@ -5407,3 +5407,6 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
   - 高帧率（>60 fps）不再写设备 min/max，由输入 override 承担。
 - 真机 `SubmodeSwitchingPhysicalTests` 完整 5/5 通过，无 `Unsupported frame duration` 异常；`testVideoSubmodesCanSwitchRandomly` 单次重复运行仍有一次 timeLapse 未启用，属于下一层功能问题，不是帧周期闪退。
 - 撤回此前清除慢动作 `captureFrameRate` 的改动：它会破坏视频退后台再回来的慢动作状态。
+
+- P0 补充：双拍/对焦导航配置与释放均校验恢复格式的帧周期范围；双拍释放后 1 秒内主引擎不写帧周期；主图配置在 multicam 活动期间不提交。
+- 最终 `SubmodeSwitchingPhysicalTests` 6/6 通过，包括无序照片/视频/子模块和电影→双拍，无 `Unsupported frame duration`。
