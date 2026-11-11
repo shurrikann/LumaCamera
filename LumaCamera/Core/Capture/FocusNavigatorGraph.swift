@@ -125,9 +125,13 @@ final class FocusNavigatorGraph: NSObject, AVCaptureVideoDataOutputSampleBufferD
         }.sorted { ($0.videoSupportedFrameRateRanges.map(\.maxFrameRate).max() ?? 0) < ($1.videoSupportedFrameRateRanges.map(\.maxFrameRate).max() ?? 0) }.first
     }
     private static func apply(_ device: AVCaptureDevice, format: AVCaptureDevice.Format, fps: Int, color: AVCaptureColorSpace, zoom: CGFloat) throws {
+        let duration = CMTime(value: 1, timescale: Int32(fps))
+        guard format.videoSupportedFrameRateRanges.contains(where: {
+            CMTimeCompare(duration, $0.minFrameDuration) >= 0 && CMTimeCompare(duration, $0.maxFrameDuration) <= 0
+        }) else { throw Failure.unsupported }
         try device.lockForConfiguration(); defer { device.unlockForConfiguration() }
         device.activeFormat = format
-        device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: Int32(fps)); device.activeVideoMaxFrameDuration = device.activeVideoMinFrameDuration
+        device.activeVideoMinFrameDuration = duration; device.activeVideoMaxFrameDuration = duration
         device.activeColorSpace = color
         device.videoZoomFactor = min(max(zoom, device.minAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor)
     }
@@ -150,7 +154,14 @@ final class FocusNavigatorGraph: NSObject, AVCaptureVideoDataOutputSampleBufferD
         for original in originals {
             if (try? original.device.lockForConfiguration()) != nil {
                 original.device.activeFormat = original.format
-                original.device.activeVideoMinFrameDuration = original.minimum; original.device.activeVideoMaxFrameDuration = original.maximum
+                let supported = original.format.videoSupportedFrameRateRanges.contains {
+                    CMTimeCompare(original.minimum, $0.minFrameDuration) >= 0 && CMTimeCompare(original.minimum, $0.maxFrameDuration) <= 0
+                }
+                if supported {
+                    original.device.activeVideoMinFrameDuration = original.minimum; original.device.activeVideoMaxFrameDuration = original.maximum
+                } else {
+                    original.device.activeVideoMinFrameDuration = .invalid; original.device.activeVideoMaxFrameDuration = .invalid
+                }
                 if original.format.supportedColorSpaces.contains(original.color) { original.device.activeColorSpace = original.color }
                 original.device.videoZoomFactor = min(max(original.zoom, original.device.minAvailableVideoZoomFactor), original.device.maxAvailableVideoZoomFactor)
                 original.device.unlockForConfiguration()

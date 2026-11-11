@@ -5396,3 +5396,14 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 详见 `Docs/Test-Reports/2026-11-11-Full-Device-Regression.md`；人像/电影只做功能性验收，未评价成片质量。
 - 高优先级：随机子模块切换触发 `setActiveVideoMinFrameDuration` 不支持帧周期异常；电影变焦入口未进入；慢动作后台恢复后帧周期/录制失败。
 - 全量真机未覆盖外接 RAW 端到端及逐张成片人工视觉验收。
+
+# 2026-11-11 P0 帧周期异常修复
+
+- 根因：双拍/对焦导航与主相机会话争用同一物理设备；双拍释放时把保存的 240 fps 帧周期写回只支持 1–30 的恢复格式，触发 `NSInvalidArgumentException`。
+- 修复：
+  - 主引擎帧周期写入前检查当前格式支持范围，并清理当前输入过期的 `videoMinFrameDurationOverride` / `activeLockedVideoFrameDuration`。
+  - 双拍/对焦导航配置与释放恢复都检查目标格式范围，不支持则归还默认帧周期。
+  - 双拍/对焦活动或释放冷却期间，主引擎不再写帧周期。
+  - 高帧率（>60 fps）不再写设备 min/max，由输入 override 承担。
+- 真机 `SubmodeSwitchingPhysicalTests` 完整 5/5 通过，无 `Unsupported frame duration` 异常；`testVideoSubmodesCanSwitchRandomly` 单次重复运行仍有一次 timeLapse 未启用，属于下一层功能问题，不是帧周期闪退。
+- 撤回此前清除慢动作 `captureFrameRate` 的改动：它会破坏视频退后台再回来的慢动作状态。

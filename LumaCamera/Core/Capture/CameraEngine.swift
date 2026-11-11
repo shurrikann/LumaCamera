@@ -375,6 +375,7 @@ final class CameraEngine: NSObject, ObservableObject {
         dualInsetThrottle.cancel()
         dualZoomThrottle.cancel()
         dualCaptureSource?.release(); dualCaptureSource = nil; dualMainIsFront = false
+        multicamTeardownNotBefore = CACurrentMediaTime() + 1.0
         DispatchQueue.main.async { self.dualCaptureMainIsFront = false; self.dualCaptureMainZoomRange = nil }
         // 恢复单摄的格式/连接和用户参数，不能沿用双拍临时的1080p格式。
         // configureConnections 在视频路由内部会自己管理 begin/commit；这里再包一层
@@ -606,6 +607,7 @@ final class CameraEngine: NSObject, ObservableObject {
         let lockedFocus = graph.main.focusMode == .locked
         let lensPosition = graph.main.lensPosition
         graph.restore()
+        multicamTeardownNotBefore = CACurrentMediaTime() + 1.0
         readingsGeneration &+= 1
         // 静态请求必须使用原照片路由的真实手动曝光，不能仅保留UI数字。
         let restored = graph.originalInput.device
@@ -673,6 +675,9 @@ final class CameraEngine: NSObject, ObservableObject {
     private var movieRecorder: MovieRecorder? // recordingQueue only, including audio and finish
     private var recordingFinishing = false // recordingQueue only
     private var lastRecordingPreviewEnqueueTime = -Double.infinity // recordingQueue only
+    /// Multicam teardown restores formats asynchronously. Do not write the main
+    /// session cadence during that hand-back window.
+    private var multicamTeardownNotBefore: TimeInterval = 0
     #if DEBUG
     private var receivedRecordingFramesForTesting = 0 // recordingQueue only
     func recordingFrameCountForTesting(_ completion: @escaping (Int) -> Void) {
@@ -2360,8 +2365,7 @@ final class CameraEngine: NSObject, ObservableObject {
                 try device.lockForConfiguration(); defer { device.unlockForConfiguration() }
                 device.activeFormat = format
                 let duration = CMTime(value: 1, timescale: 30)
-                device.activeVideoMinFrameDuration = duration
-                device.activeVideoMaxFrameDuration = duration
+                _ = self.applySupportedFrameDuration(duration, to: device)
             } catch {
                 report("初始化视频格式失败：\(error.localizedDescription)")
                 return
@@ -2412,8 +2416,10 @@ final class CameraEngine: NSObject, ObservableObject {
                 try target.lockForConfiguration()
                 target.activeFormat = format
                 let duration = CMTime(value: 1, timescale: 30)
-                target.activeVideoMinFrameDuration = duration
-                target.activeVideoMaxFrameDuration = duration
+                guard self.applySupportedFrameDuration(duration, to: target) else {
+                    target.unlockForConfiguration()
+                    throw MovieRecorder.RecorderError.cannotStart("当前电影格式不支持 30 fps 帧周期。")
+                }
                 target.unlockForConfiguration()
                 self.configureConnections(device: target)
                 self.session.commitConfiguration()
@@ -2444,7 +2450,53 @@ final class CameraEngine: NSObject, ObservableObject {
         } catch { report("前置视频广角取景失败：\(error.localizedDescription)") }
     }
 
+    /// AVFoundation raises NSInvalidArgumentException when a frame duration is
+    /// outside the active format's advertised ranges. Guard every direct write.
+    @discardableResult
+    private func applySupportedFrameDuration(_ duration: CMTime, to device: AVCaptureDevice) -> Bool {
+        // Dual capture and the focus navigator own the same physical sensors in
+        // their own sessions. Writing the main session's cadence concurrently
+        // can race a format change and raise an AVFoundation exception.
+        guard dualCaptureSource == nil, focusNavigatorGraph == nil,
+              CACurrentMediaTime() >= multicamTeardownNotBefore else { return false }
+        guard let input, input.device.uniqueID == device.uniqueID else { return false }
+        guard duration.isValid, CMTimeGetSeconds(duration).isFinite, CMTimeGetSeconds(duration) > 0 else { return false }
+        let supported = device.activeFormat.videoSupportedFrameRateRanges.contains {
+            CMTimeCompare(duration, $0.minFrameDuration) >= 0 && CMTimeCompare(duration, $0.maxFrameDuration) <= 0
+        }
+        guard supported else { return false }
+        if input.videoMinFrameDurationOverride.isValid,
+           CMTimeCompare(input.videoMinFrameDurationOverride, duration) != 0 {
+            // A stale slow-motion override (e.g. 1/240) makes AVFoundation
+            // validate the write against 240 fps even when the new format only
+            // supports 30 fps.
+            input.videoMinFrameDurationOverride = .invalid
+        }
+        if #available(iOS 26.0, *), input.activeLockedVideoFrameDuration.isValid {
+            // AVFoundation forbids writing min/max frame durations while a
+            // locked frame duration is active on the input.
+            input.activeLockedVideoFrameDuration = .invalid
+        }
+        // High-rate slow motion is carried by the input override. Writing the
+        // device cadence at 120/240 fps races AVFoundation's own format hand-back
+        // and can throw even after the range check above.
+        if 1 / CMTimeGetSeconds(duration) > 60 {
+            input.videoMinFrameDurationOverride = duration
+            return true
+        }
+        if CMTimeCompare(device.activeVideoMinFrameDuration, duration) != 0 {
+            device.activeVideoMinFrameDuration = duration
+        }
+        if CMTimeCompare(device.activeVideoMaxFrameDuration, duration) != 0 {
+            device.activeVideoMaxFrameDuration = duration
+        }
+        return true
+    }
+
     private func configureVideoFormat(_ device: AVCaptureDevice) {
+        // A MultiCam transition owns the same physical sensors. Do not submit a
+        // main-session video format transaction while it is preparing or active.
+        guard dualCaptureSource == nil, !dualCapturePreparing, focusNavigatorGraph == nil else { return }
         let openGateRequested = requestedVideoOpenGate
         let cinematicRequested = requestedCinematicVideo && !openGateRequested
         let centerStageRequested = frontVideoCenteringRequested && device.position == .front && !openGateRequested && !cinematicRequested
@@ -2617,8 +2669,9 @@ final class CameraEngine: NSObject, ObservableObject {
                 input.videoMinFrameDurationOverride = duration
             }
             // 先解除上一档输入上限，再写设备帧周期；反过来会被旧 override 钳制一档。
-            if device.activeVideoMinFrameDuration != duration { device.activeVideoMinFrameDuration = duration }
-            if device.activeVideoMaxFrameDuration != duration { device.activeVideoMaxFrameDuration = duration }
+            if !self.applySupportedFrameDuration(duration, to: device) {
+                self.report("当前格式不支持所选帧率，已保持原帧周期。")
+            }
             if #available(iOS 26.0, *), !cinematicRequested, let input, input.isLockedVideoFrameDurationSupported {
                 let minimum = device.minSupportedLockedVideoFrameDuration
                 if minimum.isValid, CMTimeCompare(duration, minimum) >= 0,
@@ -2857,11 +2910,9 @@ final class CameraEngine: NSObject, ObservableObject {
                 if state.format.supportedColorSpaces.contains(state.colorSpace), device.activeColorSpace != state.colorSpace {
                     device.activeColorSpace = state.colorSpace
                 }
-                if CMTimeCompare(device.activeVideoMinFrameDuration, state.minFrameDuration) != 0 {
-                    device.activeVideoMinFrameDuration = state.minFrameDuration
-                }
-                if CMTimeCompare(device.activeVideoMaxFrameDuration, state.maxFrameDuration) != 0 {
-                    device.activeVideoMaxFrameDuration = state.maxFrameDuration
+                if !self.applySupportedFrameDuration(state.minFrameDuration, to: device) {
+                    device.activeVideoMinFrameDuration = .invalid
+                    device.activeVideoMaxFrameDuration = .invalid
                 }
                 let requestedZoom = identifier == activeID ? preservingActiveZoom ?? state.zoomFactor : state.zoomFactor
                 let zoom = min(max(requestedZoom, device.minAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor)
