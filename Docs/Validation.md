@@ -5306,3 +5306,21 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 修改 `prepareCinematicInput`：进入电影模式换 DualWide/TrueDepth 输入时，先停止会话，完成输入/格式/连接提交后再启动会话；仅电影入口，普通视频/照片/双拍不变。
 - 真机 `VideoModeTransitionTests/testCinematicPreviewAndPhotoHDRRecoverOnVideoRoundTrip` 连续 4 次通过（19.313s、19.289s、18.953s、18.922s），包含电影预览持续更新与照片 HDR 往返。
 - 仍需用户实际取景确认“卡住”消失；自动化只覆盖测试预览管线。
+
+# 2026-11-11 电影出帧 A/B 与最小会话探针
+
+- 当前问题：iPhone 17 Pro，后置 A 挡，1080p30；进入电影后采集回调约 2 帧/2.4 秒，预览层无新帧。
+- A/B：
+  - A：现行顺序，普通会话启动后再启用电影效果并重建输出。3 次均为 `2/1/0` 帧（每 2.4 秒）。
+  - B：`startRunning` 前完成电影输入、格式、metadata/recording/preview 输出配置。3 次同样为 `2/1/0` 帧。
+  - 进入时均确认 `cinematic=true`、`running=true`、`runtimeErrors=0`。
+  - 设备 `activeVideoMin/MaxFrameDuration=0.0333`，`videoMinFrameDurationOverride=0.0333`，`activeLockedVideoFrameDuration=nan`。
+  - 结论：A/B 顺序不是该出帧问题的根因；两种顺序都失败。
+- 最小 Apple 风格电影会话（DualWide + cinematic format + 单个 videoDataOutput + metadata，未接入 App 图）：
+  - 7.2 秒只收到 4 帧，窗口 `2/3/3`，`scene=[]`，session running。
+  - 结论：同一台设备上，App 外的电影采集也出现低出帧，问题不限于 LumaCamera 的输出图。
+- 已移除电影预览看门狗（`cinematicPreviewStalled`）及“电影预览启动超时自动回退”，不再用自动退出掩盖停帧。
+- Apple 官方文档：
+  - `isCinematicVideoCaptureEnabled` 明确说明启用电影效果需要较长渲染管线重配，建议在 `startRunning` 前或运行中的 `beginConfiguration/commitConfiguration` 内设置；未承诺帧率。
+  - `cinematicVideoCaptureSceneMonitoringStatuses` 明确用于提示场景过暗；未说明低光帧率下限。
+- 待确认：原生相机同场景电影是否连续；以及用 `AVCaptureVideoPreviewLayer` 的完整官方示例复测。当前数据不足以把问题归因于暗光或 App 配置。

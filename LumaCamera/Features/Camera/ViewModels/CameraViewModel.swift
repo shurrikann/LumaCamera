@@ -4300,18 +4300,6 @@ final class CameraViewModel: ObservableObject {
                 self.scheduleVideoEntryWatchdog()
                 return
             }
-            let cinematicPreviewStalled = self.cinematicVideoEnabled && !self.camera.videoBusy
-                && CACurrentMediaTime() - self.camera.latestRecordingPreviewFrameTime > 1
-            if self.videoSubmodePreparing == .cinematic || cinematicPreviewStalled {
-                self.videoSubmodePreparing = nil
-                self.videoSubmodeRequest = UUID()
-                self.setVideoSubmode(.cinematic, enabled: false)
-                self.compatibleSubmodeLensIDs = nil
-                self.synchronizeVideoSettings()
-                self.camera.message = "电影预览启动超时，正在恢复普通视频。"
-                self.scheduleVideoEntryWatchdog()
-                return
-            }
             // ready 只有在目标输出图真正交付新帧后才发布；它才是“视频入口成功”的唯一权威信号。
             if self.camera.ready {
                 self.cancelVideoEntryWatchdog()
