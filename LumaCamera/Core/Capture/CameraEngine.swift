@@ -2477,13 +2477,6 @@ final class CameraEngine: NSObject, ObservableObject {
             // locked frame duration is active on the input.
             input.activeLockedVideoFrameDuration = .invalid
         }
-        // High-rate slow motion is carried by the input override. Writing the
-        // device cadence at 120/240 fps races AVFoundation's own format hand-back
-        // and can throw even after the range check above.
-        if 1 / CMTimeGetSeconds(duration) > 60 {
-            input.videoMinFrameDurationOverride = duration
-            return true
-        }
         if CMTimeCompare(device.activeVideoMinFrameDuration, duration) != 0 {
             device.activeVideoMinFrameDuration = duration
         }

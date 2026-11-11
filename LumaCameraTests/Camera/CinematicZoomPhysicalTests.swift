@@ -24,7 +24,11 @@ import XCTest
         model.setCameraActive(true); try await wait("启动") { camera.ready }
         model.setCaptureKind(.video); model.videoResolution = .hd1080; model.videoFrameRate = .fps30
         model.videoCodec = .hevc; model.videoColorSpace = .sdr; try await settle()
-        model.toggleCinematicVideoMode(); try await settle()
+        model.toggleCinematicVideoMode()
+        try await wait("电影就绪") {
+            model.cinematicVideoEnabled && camera.cinematicVideoCaptureActive && !model.isPreparingSubmode
+        }
+        try await Task.sleep(for: .milliseconds(300))
         XCTAssertTrue(model.cinematicVideoEnabled); XCTAssertTrue(camera.cinematicVideoCaptureActive)
         XCTAssertEqual(model.displayedFocalLenses.map(\.displayZoom),[1,2])
         let routeID = camera.activeCaptureDeviceID

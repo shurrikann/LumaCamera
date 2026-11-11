@@ -5410,3 +5410,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 
 - P0 补充：双拍/对焦导航配置与释放均校验恢复格式的帧周期范围；双拍释放后 1 秒内主引擎不写帧周期；主图配置在 multicam 活动期间不提交。
 - 最终 `SubmodeSwitchingPhysicalTests` 6/6 通过，包括无序照片/视频/子模块和电影→双拍，无 `Unsupported frame duration`。
+
+# 2026-11-11 优先级修复进度
+
+- P0 帧周期异常：已修复并通过完整 `SubmodeSwitchingPhysicalTests`；双拍/对焦恢复、主图互斥、当前输入校验和高帧率写入均已覆盖。
+- P1 电影变焦：入口是异步完成，原测试在完成前断言。测试改为等待 `cinematicVideoEnabled && cinematicVideoCaptureActive && !isPreparingSubmode` 后再取路由；`CinematicZoomPhysicalTests` 真机通过（121.6s）。
+- P2 慢动作：240 fps 当前设备会回落到 120 fps；实际帧周期为 1/120，但测试仍要求 1/240。不能把 120 fps 实际结果写成 240 fps；下一步核对硬件能力和测试预期。
+- 重新允许高帧率设备周期写入后，随机切换套件不再出现 `Unsupported frame duration`，但 `testVideoSubmodesCanSwitchRandomly` 有一次 timeLapse 未启用，属于功能层问题，未标记为通过。
