@@ -89,8 +89,12 @@ final class BasicVideoPhysicalTests: XCTestCase {
 
         if model.timeLapseEnabled { model.toggleTimeLapseMode() }
         model.toggleTimeLapseMode()
-        model.selectTimeLapsePreset(.people)
+        for _ in 0..<500 {
+            if model.timeLapseEnabled && !model.isPreparingSubmode && !camera.videoConfiguring { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
         XCTAssertTrue(model.timeLapseEnabled)
+        model.selectTimeLapsePreset(.people)
         XCTAssertEqual(model.selectedTimeLapsePreset, .people)
 
         await withCheckedContinuation { continuation in camera.afterPendingSessionTasks { continuation.resume() } }

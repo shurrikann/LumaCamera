@@ -5417,3 +5417,6 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - P1 电影变焦：入口是异步完成，原测试在完成前断言。测试改为等待 `cinematicVideoEnabled && cinematicVideoCaptureActive && !isPreparingSubmode` 后再取路由；`CinematicZoomPhysicalTests` 真机通过（121.6s）。
 - P2 慢动作：240 fps 当前设备会回落到 120 fps；实际帧周期为 1/120，但测试仍要求 1/240。不能把 120 fps 实际结果写成 240 fps；下一步核对硬件能力和测试预期。
 - 重新允许高帧率设备周期写入后，随机切换套件不再出现 `Unsupported frame duration`，但 `testVideoSubmodesCanSwitchRandomly` 有一次 timeLapse 未启用，属于功能层问题，未标记为通过。
+
+- P3 延时摄影：入口切换尚未落定时快门此前已可点，测试立即选预设被 guard 丢弃。快门/视频控制现在把待执行切换视为未就绪；测试等待 `timeLapseEnabled` 后再选预设。`testTimeLapseRecordingCreatesSparseSilentMovie` 真机通过（4.1s）。
+- P2 慢动作仍有一致性问题：先设 120 再切焦段后实际回到 240，`camera.videoSettings.captureFrameRate` 与设备帧周期不匹配；未标记修复。

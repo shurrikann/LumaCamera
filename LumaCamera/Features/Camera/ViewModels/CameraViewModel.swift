@@ -4433,9 +4433,11 @@ final class CameraViewModel: ObservableObject {
 
     /// 等系统实际激活后再允许开拍，不能把用户开关意图当作已生效的录像状态。
     private var frontVideoCenteringStarting: Bool { camera.frontVideoCenteringPreparing || (frontVideoCenteringRequested && !camera.frontVideoCenteringActive) }
-    var videoShutterBusy: Bool { camera.videoConfiguring || videoSubmodePreparing == .cinematic || frontVideoCenteringStarting || (camera.videoBusy && !camera.videoRecording) || library.videoSaving || (logVideoLUTControlsEnabled && burnLogLUT && logLUTLoading) }
+    private var hasPendingUserTransition: Bool { transitionBusy || pendingTransition != nil }
+    var videoShutterBusy: Bool { camera.videoConfiguring || videoSubmodePreparing == .cinematic || frontVideoCenteringStarting || hasPendingUserTransition || (camera.videoBusy && !camera.videoRecording) || library.videoSaving || (logVideoLUTControlsEnabled && burnLogLUT && logLUTLoading) }
     var videoShutterEnabled: Bool {
         camera.videoRecording || (camera.ready && !camera.videoBusy && !camera.videoConfiguring && !frontVideoCenteringStarting && !library.videoSaving && !captureKindSwitching
+            && !hasPendingUserTransition
             && videoSubmodePreparing != .cinematic
             && !camera.capturing && camera.pendingPhotoCount == 0
             && !(logVideoLUTControlsEnabled && burnLogLUT && (logLUTLoading || selectedLogLUTCube == nil)))
