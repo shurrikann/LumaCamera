@@ -226,5 +226,50 @@ final class SubmodeSwitchingPhysicalTests: XCTestCase {
         XCTAssertTrue(model.frontVideoCenteringVisible)
         model.setCameraActive(false)
     }
+
+    @MainActor func testDualCaptureToCinematicDoesNotCrash() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        model.setCameraActive(true)
+        for _ in 0..<400 { if model.camera.ready && !model.camera.videoConfiguring { break }; try await Task.sleep(for: .milliseconds(25)) }
+        model.setCaptureKind(.video)
+        for _ in 0..<500 { if model.camera.ready && !model.camera.videoConfiguring && !model.captureKindSwitching { break }; try await Task.sleep(for: .milliseconds(20)) }
+        guard model.dualCaptureAvailable else { throw XCTSkip("dual unavailable") }
+        model.toggleDualCapture()
+        for _ in 0..<700 { if model.camera.dualCaptureEnabled && !model.camera.dualCapturePreparing { break }; try await Task.sleep(for: .milliseconds(20)) }
+        XCTAssertTrue(model.camera.dualCaptureEnabled, model.camera.message ?? "")
+        model.toggleCinematicVideoMode()
+        for _ in 0..<900 { if model.cinematicVideoEnabled && model.camera.cinematicVideoCaptureActive && !model.isPreparingSubmode { break }; try await Task.sleep(for: .milliseconds(20)) }
+        XCTAssertTrue(model.cinematicVideoEnabled, model.camera.message ?? "")
+        XCTAssertTrue(model.camera.cinematicVideoCaptureActive, model.camera.message ?? "")
+        model.setCameraActive(false)
+    }
+
+    @MainActor func testRepeatedDualCinematicSwitchKeepsCinematic() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        model.setCameraActive(true)
+        for _ in 0..<400 { if model.camera.ready && !model.camera.videoConfiguring { break }; try await Task.sleep(for: .milliseconds(25)) }
+        model.setCaptureKind(.video)
+        for _ in 0..<500 { if model.camera.ready && !model.camera.videoConfiguring && !model.isPreparingSubmode { break }; try await Task.sleep(for: .milliseconds(20)) }
+        guard model.dualCaptureAvailable else { throw XCTSkip("dual unavailable") }
+        for cycle in 0..<4 {
+            if !model.camera.dualCaptureEnabled {
+                model.toggleDualCapture()
+                for _ in 0..<700 { if model.camera.dualCaptureEnabled && !model.camera.dualCapturePreparing { break }; try await Task.sleep(for: .milliseconds(20)) }
+                XCTAssertTrue(model.camera.dualCaptureEnabled, "cycle=\(cycle) dual on: \(model.camera.message ?? "")")
+            }
+            model.toggleCinematicVideoMode()
+            for _ in 0..<800 {
+                if model.cinematicVideoEnabled && model.camera.cinematicVideoCaptureActive && !model.isPreparingSubmode { break }
+                if model.camera.message != nil && !model.cinematicVideoEnabled { break }
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            XCTAssertTrue(model.cinematicVideoEnabled && model.camera.cinematicVideoCaptureActive,
+                          "cycle=\(cycle) cinematic not active: \(model.camera.message ?? "nil")")
+            model.toggleCinematicVideoMode()
+            for _ in 0..<500 { if !model.cinematicVideoEnabled && !model.isPreparingSubmode { break }; try await Task.sleep(for: .milliseconds(20)) }
+            XCTAssertFalse(model.cinematicVideoEnabled, "cycle=\(cycle) cinematic did not turn off")
+        }
+        model.setCameraActive(false)
+    }
 }
 #endif

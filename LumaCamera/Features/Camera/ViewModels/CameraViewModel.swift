@@ -506,9 +506,19 @@ final class CameraViewModel: ObservableObject {
         disableFrontVideoCenteringForManualChoice()
         if camera.dualCaptureEnabled {
             camera.setDualCaptureEnabled(false) { [weak self] success in
-                guard let self, success else { return }
-                self.restoreVideoSettingsAfterDualCapture()
-                self.toggleVideoSubmode(requested)
+                Task { @MainActor [weak self] in
+                    guard let self, success, self.captureKind == .video else { return }
+                    self.restoreVideoSettingsAfterDualCapture()
+                    // The dual session restores its single-camera format
+                    // asynchronously. Retrying cinematic immediately can rebuild
+                    // against the old graph and then fall back to "off".
+                    for _ in 0..<500 {
+                        if self.camera.ready && !self.camera.videoConfiguring && !self.camera.dualCapturePreparing { break }
+                        try? await Task.sleep(for: .milliseconds(20))
+                    }
+                    guard self.captureKind == .video else { return }
+                    self.toggleVideoSubmode(requested)
+                }
             }
             return
         }
@@ -699,7 +709,9 @@ final class CameraViewModel: ObservableObject {
         switch mode {
         case .timeLapse: timeLapseEnabled = enabled
         case .slowMotion: slowMotionEnabled = enabled
-        case .cinematic: cinematicVideoEnabled = enabled
+        case .cinematic:
+            cinematicVideoEnabled = enabled
+            if !enabled { cinematicApertureSliderVisible = false }
         }
         if mode == .slowMotion && !enabled { selectedSlowMotionCaptureRate = nil }
     }
@@ -2199,8 +2211,29 @@ final class CameraViewModel: ObservableObject {
     @Published var virtualApertureSliderVisible = false {
         didSet {
             if virtualApertureSliderVisible { scheduleSliderAutoHide() }
-            else if !portraitDepthSliderVisible { cancelSliderAutoHide() }
+            else if !portraitDepthSliderVisible && !cinematicApertureSliderVisible { cancelSliderAutoHide() }
         }
+    }
+    @Published var cinematicApertureSliderVisible = false {
+        didSet {
+            if cinematicApertureSliderVisible { scheduleSliderAutoHide() }
+            else if !portraitDepthSliderVisible && !virtualApertureSliderVisible { cancelSliderAutoHide() }
+        }
+    }
+    var cinematicApertureText: String { String(format: "ƒ/%.1f", camera.cinematicAperture) }
+    var cinematicApertureShortText: String { String(format: "%.1f", camera.cinematicAperture) }
+    var cinematicAperturePosition: Double {
+        let lower = Double(camera.cinematicApertureRange.lowerBound)
+        let upper = Double(camera.cinematicApertureRange.upperBound)
+        guard upper > lower, lower > 0 else { return 0 }
+        return log(Double(camera.cinematicAperture) / lower) / log(upper / lower)
+    }
+    func setCinematicAperturePosition(_ position: Double) {
+        let lower = Double(camera.cinematicApertureRange.lowerBound)
+        let upper = Double(camera.cinematicApertureRange.upperBound)
+        guard upper > lower, lower > 0 else { return }
+        camera.setCinematicAperture(Float(lower * pow(upper / lower, min(max(position, 0), 1))))
+        if cinematicApertureSliderVisible { scheduleSliderAutoHide() }
     }
     var depthControlPopupVisible: Bool {
         captureKind == .photo && toolPage == 0 && !popupVisible && toolbarPanel == nil && panel == nil
@@ -2214,6 +2247,7 @@ final class CameraViewModel: ObservableObject {
         isAdjustingDepthControl = false
         portraitDepthSliderVisible = false
         virtualApertureSliderVisible = false
+        cinematicApertureSliderVisible = false
         setFilterParameterEditing(false)
     }
 
@@ -2239,7 +2273,8 @@ final class CameraViewModel: ObservableObject {
 
     private func scheduleSliderAutoHide() {
         cancelSliderAutoHide()
-        guard !isAdjustingDepthControl, portraitDepthSliderVisible || virtualApertureSliderVisible else { return }
+        guard !isAdjustingDepthControl,
+              portraitDepthSliderVisible || virtualApertureSliderVisible || cinematicApertureSliderVisible else { return }
         sliderAutoHideTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(4))
             guard !Task.isCancelled, let self else { return }
@@ -2247,6 +2282,7 @@ final class CameraViewModel: ObservableObject {
                 self.isAdjustingDepthControl = false
                 self.portraitDepthSliderVisible = false
                 self.virtualApertureSliderVisible = false
+                self.cinematicApertureSliderVisible = false
                 self.setFilterParameterEditing(false)
             }
             self.cancelSliderAutoHide()
@@ -2255,11 +2291,20 @@ final class CameraViewModel: ObservableObject {
 
     func setDepthControlEditing(_ editing: Bool) {
         isAdjustingDepthControl = editing
-        if portraitDepthSliderVisible || virtualApertureSliderVisible { scheduleSliderAutoHide() }
+        if portraitDepthSliderVisible || virtualApertureSliderVisible || cinematicApertureSliderVisible { scheduleSliderAutoHide() }
     }
 
     func noteSliderInteraction() {
-        if portraitDepthSliderVisible || virtualApertureSliderVisible { scheduleSliderAutoHide() }
+        if portraitDepthSliderVisible || virtualApertureSliderVisible || cinematicApertureSliderVisible { scheduleSliderAutoHide() }
+    }
+
+    func toggleCinematicApertureSlider() {
+        guard cinematicVideoEnabled, !isPreparingTransition, !camera.capturing,
+              (!camera.videoBusy || camera.videoRecording) else { return }
+        let opening = !cinematicApertureSliderVisible
+        closePopups()
+        cameraImpactFeedback(.light)
+        withAnimation(AppTheme.popupAnimation) { cinematicApertureSliderVisible = opening }
     }
 
     func toggleVirtualApertureSlider() {
@@ -3159,7 +3204,10 @@ final class CameraViewModel: ObservableObject {
         cancelCountdown()
         resumeTransitionRequest = UUID()
         resumeTransitionFinishing = false
-        resumeTransitionImage = camera.preview
+        // Cinematic uses the system preview layer and has no ordinary preview
+        // image sink to finish this cross-fade. A stale still would cover the
+        // live cinematic feed after returning from the gallery.
+        resumeTransitionImage = cinematicVideoEnabled ? nil : camera.preview
         resumeTransitionOpacity = 1
         gallery.refresh()
         reviewVideoID = library.consumeVideoReview()
@@ -3679,6 +3727,12 @@ final class CameraViewModel: ObservableObject {
                 let captureManualRoute = self.mode == .manual || self.slowShutterSequence != nil
                 self.camera.setManualMode(captureManualRoute, customExposure: captureManualRoute && self.manualExposure)
                 self.camera.start()
+                if self.captureKind == .video, self.cinematicVideoEnabled {
+                    // A gallery round-trip stops the session but keeps the cinematic
+                    // UI state. setVideoMode(true) can take its unchanged fast path,
+                    // so resubmit the settings to rebuild the cinematic graph.
+                    self.synchronizeVideoSettings()
+                }
                 if self.resumeTransitionImage != nil {
                     let token = self.resumeTransitionRequest
                     Task { [weak self] in

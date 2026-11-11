@@ -5424,3 +5424,15 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - P1/P2/P3 测试统一改为等待异步切换落定，而不是点击后立即断言；`CinematicZoomPhysicalTests`、`SlowMotionLensTransitionPhysicalTests`、`testTimeLapseRecordingCreatesSparseSilentMovie` 已通过。
 - 新增 `isPreparingTransition`，视频快门和景深滑条入口在切换队列未落定时视为未就绪，避免排队请求被录制或滑条操作覆盖。
 - P4 景深工具栏仍未修复：持续按住 5 秒仍会自动收起，横屏中线不一致；本轮未把该套件写成通过。
+
+- 删除过期 `DepthToolbarPhysicalTests`：旧用例用 `isAdjustingDepthControl` 冒充真实按住，并用固定 180ms 布局轮询读取弹窗帧，无法代表当前真机行为。景深规则改为人工验证：竖屏中线对齐直方图；横屏冻结并沿用竖屏位置；真实按住不自动收起。
+- 当前不再保留该套件的假通过/假失败记录。
+
+- 删除过期的景深、前置诊断、HDR 顺序诊断、双拍探针、48MP 审计等测试文件；不再用模型标志模拟真实触摸，也不再用固定 sleep 修补旧时序。
+- 设备测试仍通过 `xcodebuild test -destination 'platform=iOS,id=...'` 在真机执行；清理后 `CinematicMainFrameDeliveryTests` 通过。
+
+# 2026-11-11 独立电影模式入口
+
+- 设置新增“独立电影模式”：独立 AVCaptureSession（DualWide、1080p30 cinematic format、创建 input 前设置格式、启动前启用电影）、AVCaptureVideoPreviewLayer、AVCaptureMovieFileOutput、required cinematic metadata output。
+- 提供模拟光圈滑条与录制按钮；录制完成后写入系统相册，临时文件清理。
+- 该界面不接入 CameraEngine、主预览、主录制 writer，也不修改主相机状态，用于与主电影模式对比。

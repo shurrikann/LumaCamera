@@ -107,7 +107,7 @@ struct CameraView: View {
                     .zIndex(40)
                     .accessibilityHidden(true)
                 }
-                if model.captureKind == .video, model.virtualApertureEnabled {
+                if model.captureKind == .video, model.virtualApertureEnabled || model.cinematicVideoEnabled {
                     videoApertureOverlay(diameter: 40)
                         .padding(.trailing, CameraControlLayout.buttonRowSideInset)
                         .padding(.bottom, CameraControlLayout.compositionBottom + 44 + 40 + 2 * CameraControlLayout.upperButtonGap)
@@ -243,17 +243,29 @@ struct CameraView: View {
             if panel != .videoRatio { dismissOpenGateInformation() }
         }
         .onChange(of: scenePhase) { _, phase in
-            model.setCameraActive(cameraVisible && phase == .active && !model.review && !model.settings)
+            // Overlay covers (gallery/settings) keep the session alive; only a
+            // real background transition stops it.
+            model.setCameraActive(cameraVisible && phase == .active)
             if phase != .active { dismissOpenGateInformation() }
             if phase == .active { gallery.refreshAfterForeground() }
         }
-        .onChange(of: model.review) { _, _ in
-            model.setCameraActive(cameraVisible && scenePhase == .active && !model.review && !model.settings)
-            if model.review { dismissOpenGateInformation() }
-            if !model.review { gallery.refreshThumbnail() }
+        .onChange(of: model.review) { _, isPresented in
+            // Keep the capture session alive while the gallery cover is up.
+            // Tearing it down here made closing the gallery restart the whole
+            // session and jump the preview for about a second.
+            camera.setReviewPreviewPaused(isPresented)
+            if !isPresented {
+                model.setCameraActive(cameraVisible && scenePhase == .active && !model.settings)
+                gallery.refreshThumbnail()
+            } else {
+                dismissOpenGateInformation()
+            }
         }
         .onChange(of: model.settings) { _, isPresented in
-            model.setCameraActive(cameraVisible && scenePhase == .active && !model.review && !model.settings)
+            camera.setReviewPreviewPaused(isPresented || model.review)
+            if !isPresented, !model.review {
+                model.setCameraActive(cameraVisible && scenePhase == .active)
+            }
             if isPresented { dismissOpenGateInformation() }
         }
         .onChange(of: controlsLandscape) { _, isLandscape in

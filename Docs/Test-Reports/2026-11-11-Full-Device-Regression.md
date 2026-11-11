@@ -196,3 +196,31 @@ CameraViewModelTests / CaptureStatePersistenceTests / CompactFilterDialTests：
 ```
 
 没有修复上述功能问题；报告仅记录。
+
+## 2026-11-11 测试清理
+
+用户手动确认：真实手指按住景深滑条时不会提前消失。此前 P4 的“按住被关闭”来自旧测试用 `isAdjustingDepthControl` 冒充触摸，不是产品行为。
+
+已删除的过期/诊断测试：
+
+```text
+DepthToolbarPhysicalTests（整套：假按住、固定180ms布局轮询）
+FrontAspectFOVDiagnosticTests
+FrontNativeFramingDiagnosticTests
+FrontOpenGateProbeTests
+DualCaptureCenterStageProbeTests
+HDRCaptureDiagnosticsTests
+HDRSequentialDiagnosticsTests
+NativeExposureReturnDiagnosticTests
+Lens48MPAuditTests
+```
+
+删除原则：
+
+```text
+不再使用的诊断/探针直接删除
+旧同步时序假设不再通过加 sleep 修补
+功能已由真机手动确认、自动化只保留能真实复现当前行为的测试
+```
+
+清理后 `CinematicMainFrameDeliveryTests` 仍通过（6.344s），测试目标可正常编译运行。剩余全量失败项仍需逐类判断：过期基线、测试前置假设、或真实产品问题。

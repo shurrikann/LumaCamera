@@ -266,59 +266,85 @@ extension CameraView {
     }
 
     /// 视频滑块固定在入口正上方；拖动时暂停自动收起，松手后重新计时。
-    private var videoVirtualApertureVerticalControl: some View {
-        Slider(value: Binding(get: { model.virtualAperturePosition },
-                              set: { model.virtualAperturePosition = $0 }),
-               in: 0...1,
-               onEditingChanged: {
-                   model.setDepthControlEditing($0)
-                   model.setFilterParameterEditing($0)
-               })
-            .tint(AppTheme.accent)
-            .frame(width: 120, height: 28)
-            .rotationEffect(.degrees(-90))
-            .frame(width: 22, height: 120)
-            .accessibilityLabel("虚拟光圈")
-            .accessibilityValue(model.virtualApertureText)
-            .accessibilityIdentifier("camera.video.virtualAperture.slider")
-            .captureControlGeometry("videoVirtualApertureSlider", model: model)
-            .onDisappear { model.setDepthControlEditing(false); model.setFilterParameterEditing(false) }
+    @ViewBuilder
+    private var videoApertureVerticalControl: some View {
+        if model.cinematicVideoEnabled {
+            Slider(value: Binding(get: { model.cinematicAperturePosition },
+                                  set: { model.setCinematicAperturePosition($0) }),
+                   in: 0...1,
+                   onEditingChanged: {
+                       model.setDepthControlEditing($0)
+                       model.setFilterParameterEditing($0)
+                   })
+                .tint(AppTheme.accent)
+                .frame(width: 120, height: 28)
+                .rotationEffect(.degrees(-90))
+                .frame(width: 22, height: 120)
+                .accessibilityLabel("电影光圈")
+                .accessibilityValue(model.cinematicApertureText)
+                .accessibilityIdentifier("camera.video.cinematicAperture.slider")
+                .captureControlGeometry("videoCinematicApertureSlider", model: model)
+                .onDisappear { model.setDepthControlEditing(false); model.setFilterParameterEditing(false) }
+        } else {
+            Slider(value: Binding(get: { model.virtualAperturePosition },
+                                  set: { model.virtualAperturePosition = $0 }),
+                   in: 0...1,
+                   onEditingChanged: {
+                       model.setDepthControlEditing($0)
+                       model.setFilterParameterEditing($0)
+                   })
+                .tint(AppTheme.accent)
+                .frame(width: 120, height: 28)
+                .rotationEffect(.degrees(-90))
+                .frame(width: 22, height: 120)
+                .accessibilityLabel("虚拟光圈")
+                .accessibilityValue(model.virtualApertureText)
+                .accessibilityIdentifier("camera.video.virtualAperture.slider")
+                .captureControlGeometry("videoVirtualApertureSlider", model: model)
+                .onDisappear { model.setDepthControlEditing(false); model.setFilterParameterEditing(false) }
+        }
     }
 
     func videoApertureOverlay(diameter: CGFloat) -> some View {
-        let button = Button { model.toggleVirtualApertureSlider() } label: {
+        let cinematic = model.cinematicVideoEnabled
+        let visible = cinematic ? model.cinematicApertureSliderVisible : model.virtualApertureSliderVisible
+        let text = cinematic ? model.cinematicApertureText : model.virtualApertureText
+        let shortText = cinematic ? model.cinematicApertureShortText
+            : model.virtualApertureText.replacingOccurrences(of: "ƒ/", with: "")
+        let button = Button {
+            if cinematic { model.toggleCinematicApertureSlider() }
+            else { model.toggleVirtualApertureSlider() }
+        } label: {
             HStack(spacing: 1) {
                 Text("ƒ")
                     .font(.system(size: 15, weight: .medium, design: .serif))
-                Text(model.virtualApertureText.replacingOccurrences(of: "ƒ/", with: ""))
+                Text(shortText)
                     .font(.system(size: 8, weight: .medium, design: .rounded))
                     .monospacedDigit()
             }
             .rotatingCaptureContent()
-            .foregroundStyle(model.virtualApertureSliderVisible ? AppTheme.accent : .white)
+            .foregroundStyle(visible ? AppTheme.accent : .white)
             .frame(width: diameter, height: diameter)
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("虚拟光圈调节")
-        .accessibilityValue(model.virtualApertureText)
-        .accessibilityIdentifier("camera.video.virtualAperture.control")
-        .captureControlGeometry("videoVirtualApertureButton", model: model)
+        .accessibilityLabel(cinematic ? "电影光圈调节" : "虚拟光圈调节")
+        .accessibilityValue(text)
+        .accessibilityIdentifier(cinematic ? "camera.video.cinematicAperture.control" : "camera.video.virtualAperture.control")
+        .captureControlGeometry(cinematic ? "videoCinematicApertureButton" : "videoVirtualApertureButton", model: model)
 
         return ZStack(alignment: .bottom) {
-            if model.virtualApertureSliderVisible {
+            if visible {
                 Color.clear
                     .frame(width: 40, height: 120 + 16 + diameter + CameraControlLayout.upperButtonGap / 4)
                     .modifier(PreviewSurface(radius: 20, opacity: 0.16, curve: .circular, interactive: false))
-                videoVirtualApertureVerticalControl
+                videoApertureVerticalControl
                     .padding(.bottom, diameter + CameraControlLayout.upperButtonGap / 4)
             }
             button
         }
         .frame(width: 40,
-               height: model.virtualApertureSliderVisible
-                   ? 120 + 16 + diameter + CameraControlLayout.upperButtonGap / 4
-                   : 40,
+               height: visible ? 120 + 16 + diameter + CameraControlLayout.upperButtonGap / 4 : 40,
                alignment: .bottom)
     }
 

@@ -35,20 +35,7 @@ extension CameraView {
             let showsMeteringReadout = model.effectiveMetering == .global
             ZStack {
                 Color.black
-                if model.cinematicVideoEnabled {
-                    // Cinematic preview comes from the session's preview layer,
-                    // matching Apple's sample and avoiding dependence on the
-                    // recording data output.
-                    // The ordinary preview image is rotated in Core Image while its
-                    // connection stays at 0°. AVCaptureVideoPreviewLayer uses the
-                    // sensor-landscape coordinate system, so portrait needs 90°.
-                    SystemCameraPreview(session: camera.previewSession,
-                                        rotationAngle: CGFloat(90 - controlAngle),
-                                        mirrored: model.currentPosition == .front)
-                        .frame(width: width, height: height)
-                        .clipped()
-                        .allowsHitTesting(false)
-                } else if let image = camera.preview {
+                if let image = camera.preview {
                     Image(uiImage: image).resizable().allowedDynamicRange(.high).scaledToFill()
                         .transaction { $0.animation = nil }
                         .frame(width: width, height: height).clipped()

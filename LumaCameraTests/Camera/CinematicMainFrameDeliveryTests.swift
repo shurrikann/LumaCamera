@@ -24,7 +24,10 @@ final class CinematicMainFrameDeliveryTests: XCTestCase {
         }
         XCTAssertTrue(model.cinematicVideoEnabled, model.camera.message ?? "")
         XCTAssertTrue(model.camera.cinematicVideoCaptureActive, model.camera.message ?? "")
-        try await Task.sleep(for: .milliseconds(500))
+        model.camera.setCinematicAperture(5.6)
+        try await Task.sleep(for: .milliseconds(400))
+        let state = await withCheckedContinuation { c in model.camera.videoSubmodeStateForTesting { c.resume(returning: $0) } }
+        XCTAssertTrue(state.contains("aperture=5.6"), state)
         let start = await frames(model.camera)
         try await Task.sleep(for: .milliseconds(2400))
         let end = await frames(model.camera)

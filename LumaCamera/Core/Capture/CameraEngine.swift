@@ -195,6 +195,18 @@ final class CameraEngine: NSObject, ObservableObject {
                     self.stopFrontSmartFraming()
                     let preserveFrontVideoCentering = self.frontVideoCenteringRequested
                     self.stopFrontVideoCentering(clearRequest: false)
+                    // Cinematic owns a reconfigurable render pipeline on the main
+                    // input. Tear it down before the separate dual-capture session
+                    // starts using the same physical devices.
+                    if #available(iOS 26.0, *), let input = self.input,
+                       input.isCinematicVideoCaptureEnabled {
+                        self.session.beginConfiguration()
+                        input.isCinematicVideoCaptureEnabled = false
+                        _ = self.configureCinematicVideoOutputGraph(enabled: false,
+                                                                    reuseRecordingOutputForPreview: false)
+                        self.session.commitConfiguration()
+                        self.requestedCinematicVideo = false
+                    }
                     if self.session.isRunning { self.session.stopRunning() }
                     guard let configuration = DualCapturePolicy.configuration(for: requested, frontWide: requestedWide) else {
                         throw DualCaptureSource.Failure.unsupported
@@ -375,7 +387,6 @@ final class CameraEngine: NSObject, ObservableObject {
         dualInsetThrottle.cancel()
         dualZoomThrottle.cancel()
         dualCaptureSource?.release(); dualCaptureSource = nil; dualMainIsFront = false
-        multicamTeardownNotBefore = CACurrentMediaTime() + 1.0
         DispatchQueue.main.async { self.dualCaptureMainIsFront = false; self.dualCaptureMainZoomRange = nil }
         // 恢复单摄的格式/连接和用户参数，不能沿用双拍临时的1080p格式。
         // configureConnections 在视频路由内部会自己管理 begin/commit；这里再包一层
@@ -607,7 +618,6 @@ final class CameraEngine: NSObject, ObservableObject {
         let lockedFocus = graph.main.focusMode == .locked
         let lensPosition = graph.main.lensPosition
         graph.restore()
-        multicamTeardownNotBefore = CACurrentMediaTime() + 1.0
         readingsGeneration &+= 1
         // 静态请求必须使用原照片路由的真实手动曝光，不能仅保留UI数字。
         let restored = graph.originalInput.device
@@ -675,9 +685,6 @@ final class CameraEngine: NSObject, ObservableObject {
     private var movieRecorder: MovieRecorder? // recordingQueue only, including audio and finish
     private var recordingFinishing = false // recordingQueue only
     private var lastRecordingPreviewEnqueueTime = -Double.infinity // recordingQueue only
-    /// Multicam teardown restores formats asynchronously. Do not write the main
-    /// session cadence during that hand-back window.
-    private var multicamTeardownNotBefore: TimeInterval = 0
     #if DEBUG
     private var receivedRecordingFramesForTesting = 0 // recordingQueue only
     func recordingFrameCountForTesting(_ completion: @escaping (Int) -> Void) {
@@ -889,6 +896,25 @@ final class CameraEngine: NSObject, ObservableObject {
             DispatchQueue.main.async { completion(state.0, state.1) }
         }
     }
+    /// Adjust the system Cinematic simulated aperture. This is the real
+    /// depth-of-field control, not the software starburst "virtual aperture".
+    func setCinematicAperture(_ value: Float) {
+        queue.async {
+            guard #available(iOS 26.0, *), let input = self.input,
+                  input.isCinematicVideoCaptureEnabled else { return }
+            let format = input.device.activeFormat
+            guard format.minSimulatedAperture > 0,
+                  format.maxSimulatedAperture >= format.minSimulatedAperture else { return }
+            let clamped = min(max(value, format.minSimulatedAperture), format.maxSimulatedAperture)
+            input.simulatedAperture = clamped
+            self.requestedCinematicAperture = clamped
+            DispatchQueue.main.async {
+                self.cinematicAperture = clamped
+                self.cinematicApertureRange = format.minSimulatedAperture...format.maxSimulatedAperture
+            }
+        }
+    }
+
     /// 仅用于真实景深效果对照；录制中不改光圈，遵守系统Cinematic限制。
     func cinematicApertureForTesting(_ requested: Float?, observer: AVCaptureMetadataOutputObjectsDelegate?,
                                      completion: @escaping ((minimum: Float, maximum: Float, current: Float)?) -> Void) {
@@ -921,8 +947,12 @@ final class CameraEngine: NSObject, ObservableObject {
                 cinematic = "cinematic=\(self.input?.isCinematicVideoCaptureSupported ?? false)/\(self.input?.isCinematicVideoCaptureEnabled ?? false) scene=\(device.cinematicVideoCaptureSceneMonitoringStatuses)"
             } else { cinematic = "cinematic=iOSUnsupported" }
             let outputs = self.session.outputs.map { String(describing: type(of: $0)) }.joined(separator: ",")
+            let cinematicDetail: String
+            if #available(iOS 26.0, *), let current = self.input {
+                cinematicDetail = " formatCinematic=\(current.device.activeFormat.isCinematicVideoCaptureSupported) aperture=\(current.simulatedAperture) range=\(current.device.activeFormat.minSimulatedAperture)...\(current.device.activeFormat.maxSimulatedAperture) inputs=\(self.session.inputs.count) macro=\(self.macroActive)"
+            } else { cinematicDetail = "" }
             let previewMode = "previewRecording=\(self.livePreviewState.snapshot().previewFromRecordingOutput) recInSession=\(self.session.outputs.contains(self.recordingOutput)) recConn=\(self.recordingOutput.connection(with: .video)?.isEnabled ?? false) videoInSession=\(self.session.outputs.contains(self.videoOutput))"
-            let state = "running=\(self.session.isRunning) runtimeErrors=\(self.runtimeErrorCountForTesting) outputs=\(outputs) \(previewMode) input=\(device.deviceType.rawValue):\(device.uniqueID) active=\(dimensions.width)x\(dimensions.height) ranges=\(ranges) requested=\(self.requestedVideoSettings.resolution.title)/\(self.requestedVideoSettings.frameRate.rawValue)/capture\(self.requestedVideoSettings.captureFrameRate?.rawValue.description ?? "nil") cinematicRequested=\(self.requestedCinematicVideo) \(cinematic)"
+            let state = "running=\(self.session.isRunning) runtimeErrors=\(self.runtimeErrorCountForTesting) outputs=\(outputs) \(cinematicDetail) \(previewMode) input=\(device.deviceType.rawValue):\(device.uniqueID) active=\(dimensions.width)x\(dimensions.height) ranges=\(ranges) requested=\(self.requestedVideoSettings.resolution.title)/\(self.requestedVideoSettings.frameRate.rawValue)/capture\(self.requestedVideoSettings.captureFrameRate?.rawValue.description ?? "nil") cinematicRequested=\(self.requestedCinematicVideo) \(cinematic)"
             DispatchQueue.main.async { completion(state) }
         }
     }
@@ -999,6 +1029,9 @@ final class CameraEngine: NSObject, ObservableObject {
     @Published private(set) var slowMotionCaptureFormats: [VideoCaptureSettings] = []
     @Published private(set) var cinematicVideoSettings: [VideoCaptureSettings] = []
     @Published private(set) var cinematicVideoCaptureActive = false
+    @Published private(set) var cinematicAperture: Float = 2.8
+    @Published private(set) var cinematicApertureRange: ClosedRange<Float> = 2...16
+    private var requestedCinematicAperture: Float?
     @Published private(set) var openGateVideoSettings: [VideoCaptureSettings] = []
 #if DEBUG
     /// 注入设备能力以验证子模式规格回退，不启动采集会话或触发硬件相机。
@@ -1217,6 +1250,8 @@ final class CameraEngine: NSObject, ObservableObject {
     private var lensCatalog: [CameraLens] = []
     private var configured = false
     private var wantsRunning = false
+    private let reviewPreviewPauseLock = NSLock()
+    private var reviewPreviewPausedStorage = false
     private let previewRevision = PreviewRevision()
     private let lookUpdateRevision = PreviewRevision()
     private var lookRevision: UInt64 = 0
@@ -1844,7 +1879,7 @@ final class CameraEngine: NSObject, ObservableObject {
                 guard let microphone = AVCaptureDevice.default(for: .audio) else { return }
                 let audio = try AVCaptureDeviceInput(device: microphone)
                 guard session.canAddInput(audio) else { report("麦克风暂不可用，本次 Live 将以无声方式拍摄。"); return }
-                session.addInput(audio)
+                addInputReplacingExisting(audio)
                 liveAudioInput = audio
             } catch { report("麦克风暂不可用，Live 将以无声方式拍摄：\(error.localizedDescription)") }
         } else if let audio = liveAudioInput {
@@ -1992,6 +2027,20 @@ final class CameraEngine: NSObject, ObservableObject {
         }
     }
 
+    /// Keep the capture session (and cinematic graph) alive while the gallery
+    /// covers the camera, but stop consuming/rendering preview frames.
+    func setReviewPreviewPaused(_ paused: Bool) {
+        reviewPreviewPauseLock.lock()
+        reviewPreviewPausedStorage = paused
+        reviewPreviewPauseLock.unlock()
+        if !paused { livePreviewState.update { $0.acceptsFrames = true } }
+    }
+
+    private var isReviewPreviewPaused: Bool {
+        reviewPreviewPauseLock.lock(); defer { reviewPreviewPauseLock.unlock() }
+        return reviewPreviewPausedStorage
+    }
+
     func setVideoMode(_ enabled: Bool) {
         videoModeDesired = enabled
         if enabled { videoRouteFailureReported = false }
@@ -2083,11 +2132,11 @@ final class CameraEngine: NSObject, ObservableObject {
                             let restored = try self.reusableInput(for: photoDevice)
                             self.session.removeInput(previous)
                             if self.session.canAddInput(restored) {
-                                self.session.addInput(restored)
+                                self.addInputReplacingExisting(restored)
                                 self.input = restored
                                 changedPhotoInput = true
                             } else {
-                                self.session.addInput(previous)
+                                self.addInputReplacingExisting(previous)
                                 throw CameraError.unavailable
                             }
                         } catch {
@@ -2107,11 +2156,11 @@ final class CameraEngine: NSObject, ObservableObject {
                     let replacement = try self.reusableInput(for: rear)
                     self.session.removeInput(current)
                     if self.session.canAddInput(replacement) {
-                        self.session.addInput(replacement)
+                        self.addInputReplacingExisting(replacement)
                         self.input = replacement
                         changedPhotoInput = true
                     } else {
-                        self.session.addInput(current)
+                        self.addInputReplacingExisting(current)
                     }
                 } catch {
                     self.report("恢复普通后置输入失败：\(error.localizedDescription)")
@@ -2222,10 +2271,16 @@ final class CameraEngine: NSObject, ObservableObject {
             }
             // 规格提交必须只有一个事务：configureConnections 默认会再开一层，
             // 前置4:3/16:9切换时嵌套事务会让 activeFormat 回退并触发 -11819。
+            // Cinematic reconfigures the render pipeline on the input; start it
+            // from a stopped session as Apple's sample does, otherwise the
+            // effect can report active while the tracking pipeline never engages.
+            let restartForCinematic = self.requestedCinematicVideo && self.session.isRunning
+            if restartForCinematic { self.session.stopRunning() }
             self.session.beginConfiguration()
             self.configureVideoFormat(device)
             self.configureConnections(device: device, configuresVideoFormat: false)
             self.session.commitConfiguration()
+            if restartForCinematic { self.session.startRunning() }
             self.publishCapabilities(device, lensID: self.selectedLens)
         }
     }
@@ -2383,7 +2438,9 @@ final class CameraEngine: NSObject, ObservableObject {
                   let target = self.cinematicCaptureDevice(for: current.device.position) else {
                 DispatchQueue.main.async { completion(false) }; return
             }
-            if current.device.uniqueID == target.uniqueID {
+            if current.device.uniqueID == target.uniqueID,
+               current.isCinematicVideoCaptureEnabled,
+               current.device.activeFormat.isCinematicVideoCaptureSupported {
                 DispatchQueue.main.async { completion(true) }; return
             }
             let supported = VideoCaptureSettings.cinematicVideoSupported(by: target)
@@ -2403,30 +2460,34 @@ final class CameraEngine: NSObject, ObservableObject {
             if wasRunning { self.session.stopRunning() }
             self.session.beginConfiguration()
             do {
-                let replacement = try self.reusableInput(for: target)
-                self.session.removeInput(current)
+                // Apply the cinematic format before creating the input. A cached
+                // input created against the ordinary format can accept the
+                // property but never engage the cinematic tracking pipeline.
+                try target.lockForConfiguration()
+                target.activeFormat = format
+                target.unlockForConfiguration()
+                let replacement = try AVCaptureDeviceInput(device: target)
+                for existing in self.session.inputs {
+                    self.session.removeInput(existing)
+                }
                 guard self.session.canAddInput(replacement) else {
-                    self.session.addInput(current); self.session.commitConfiguration()
+                    self.addInputReplacingExisting(current); self.session.commitConfiguration()
                     if wasRunning { self.session.startRunning() }
                     DispatchQueue.main.async { completion(false) }; return
                 }
-                self.session.addInput(replacement)
+                self.addInputReplacingExisting(replacement)
                 self.input = replacement
                 try self.prepareAutomaticRoute(target, factor: 1)
-                try target.lockForConfiguration()
-                target.activeFormat = format
                 let duration = CMTime(value: 1, timescale: 30)
                 guard self.applySupportedFrameDuration(duration, to: target) else {
-                    target.unlockForConfiguration()
                     throw MovieRecorder.RecorderError.cannotStart("当前电影格式不支持 30 fps 帧周期。")
                 }
-                target.unlockForConfiguration()
                 self.configureConnections(device: target)
                 self.session.commitConfiguration()
                 if wasRunning { self.session.startRunning() }
                 DispatchQueue.main.async { completion(true) }
             } catch {
-                self.session.addInput(current)
+                self.addInputReplacingExisting(current)
                 self.session.commitConfiguration()
                 if wasRunning { self.session.startRunning() }
                 self.report("切换电影设备失败：\(error.localizedDescription)")
@@ -2457,8 +2518,7 @@ final class CameraEngine: NSObject, ObservableObject {
         // Dual capture and the focus navigator own the same physical sensors in
         // their own sessions. Writing the main session's cadence concurrently
         // can race a format change and raise an AVFoundation exception.
-        guard dualCaptureSource == nil, focusNavigatorGraph == nil,
-              CACurrentMediaTime() >= multicamTeardownNotBefore else { return false }
+        guard dualCaptureSource == nil, focusNavigatorGraph == nil else { return false }
         guard let input, input.device.uniqueID == device.uniqueID else { return false }
         guard duration.isValid, CMTimeGetSeconds(duration).isFinite, CMTimeGetSeconds(duration) > 0 else { return false }
         let supported = device.activeFormat.videoSupportedFrameRateRanges.contains {
@@ -2486,12 +2546,35 @@ final class CameraEngine: NSObject, ObservableObject {
         return true
     }
 
+    /// Replace an input of the same media type instead of letting AVFoundation
+    /// throw for duplicate video/audio inputs during a mode hand-back.
+    private func addInputReplacingExisting(_ newInput: AVCaptureInput) {
+        let isVideo = (newInput as? AVCaptureDeviceInput)?.device.hasMediaType(.video) ?? false
+        for existing in session.inputs {
+            guard let deviceInput = existing as? AVCaptureDeviceInput,
+                  deviceInput.device.hasMediaType(.video) == isVideo else { continue }
+            session.removeInput(existing)
+        }
+        guard session.canAddInput(newInput) else {
+            report("无法加入相机输入（同类型输入已清理）。")
+            return
+        }
+        session.addInput(newInput)
+    }
+
     private func configureVideoFormat(_ device: AVCaptureDevice) {
         // A MultiCam transition owns the same physical sensors. Do not submit a
         // main-session video format transaction while it is preparing or active.
         guard dualCaptureSource == nil, !dualCapturePreparing, focusNavigatorGraph == nil else { return }
         let openGateRequested = requestedVideoOpenGate
         let cinematicRequested = requestedCinematicVideo && !openGateRequested
+        if cinematicRequested {
+            // .inputPriority keeps the virtual camera's automatic constituent
+            // switching (including macro) alive, which can take over the
+            // cinematic render pipeline. The standalone Apple-style screen uses
+            // the default preset and shows the expected effect.
+            if session.canSetSessionPreset(.high) { session.sessionPreset = .high }
+        }
         let centerStageRequested = frontVideoCenteringRequested && device.position == .front && !openGateRequested && !cinematicRequested
         // Do not record a video/slow-motion activeFormat as the photo baseline.
         // A new video lens has no photo state yet; the .photo session preset
@@ -2726,7 +2809,14 @@ final class CameraEngine: NSObject, ObservableObject {
                     reuseRecordingOutputForPreview: reuseRecordingOutputForPreview)
                 let enableCinematic = formatSupportsCinematic && graphSupportsCinematic
                 if enableCinematic {
-                    input.simulatedAperture = format.defaultSimulatedAperture
+                    let aperture = self.requestedCinematicAperture ?? format.defaultSimulatedAperture
+                    input.simulatedAperture = min(max(aperture, format.minSimulatedAperture), format.maxSimulatedAperture)
+                    let applied = input.simulatedAperture
+                    let range = format.minSimulatedAperture...format.maxSimulatedAperture
+                    DispatchQueue.main.async {
+                        self.cinematicAperture = applied
+                        self.cinematicApertureRange = range
+                    }
                 } else if cinematicRequested {
                     report("当前相机输出组合无法启用电影模式。")
                 }
@@ -2776,7 +2866,7 @@ final class CameraEngine: NSObject, ObservableObject {
             if photoOutput.isPortraitEffectsMatteDeliveryEnabled { photoOutput.isPortraitEffectsMatteDeliveryEnabled = false }
             let graphIsReady = input.isCinematicVideoCaptureEnabled
                 && session.outputs.contains(cinematicMetadataOutput)
-                && session.outputs.contains(photoOutput)
+                && !session.outputs.contains(photoOutput)
                 && session.outputs.contains(recordingOutput)
                 && !session.outputs.contains(videoOutput)
             if !graphIsReady {
@@ -2793,7 +2883,15 @@ final class CameraEngine: NSObject, ObservableObject {
                 }
                 cinematicMetadataOutput.metadataObjectTypes = []
                 input.isCinematicVideoCaptureEnabled = true
-                input.simulatedAperture = input.device.activeFormat.defaultSimulatedAperture
+                let format = input.device.activeFormat
+                input.simulatedAperture = min(max(self.requestedCinematicAperture ?? format.defaultSimulatedAperture,
+                                                  format.minSimulatedAperture), format.maxSimulatedAperture)
+                let applied = input.simulatedAperture
+                let range = format.minSimulatedAperture...format.maxSimulatedAperture
+                DispatchQueue.main.async {
+                    self.cinematicAperture = applied
+                    self.cinematicApertureRange = range
+                }
 
                 guard session.canAddOutput(cinematicMetadataOutput) else {
                     restoreStandardVideoOutputGraph(reuseRecordingOutputForPreview: false)
@@ -2809,11 +2907,12 @@ final class CameraEngine: NSObject, ObservableObject {
                     return false
                 }
                 cinematicMetadataOutput.metadataObjectTypes = requiredTypes
-                guard session.canAddOutput(photoOutput), session.canAddOutput(recordingOutput) else {
+                // Keep the cinematic graph still-image free, matching the working
+                // standalone sample. PhotoOutput is restored with the normal graph.
+                guard session.canAddOutput(recordingOutput) else {
                     restoreStandardVideoOutputGraph(reuseRecordingOutputForPreview: false)
                     return false
                 }
-                session.addOutput(photoOutput)
                 addRecordingOutputs()
                 // 电影管线首帧后编码可能变慢；默认丢迟到帧会让录制输出只剩一帧。
                 recordingOutput.alwaysDiscardsLateVideoFrames = false
@@ -3301,7 +3400,7 @@ final class CameraEngine: NSObject, ObservableObject {
             session.commitConfiguration()
             throw CameraError.unavailable
         }
-        session.addInput(newInput)
+        addInputReplacingExisting(newInput)
         session.addOutput(photoOutput)
         // Apple documents that the output must prepare its highest requested quality before
         // the session starts. Ordinary captures still request balanced/speed per shot; A-mode
@@ -3336,6 +3435,10 @@ final class CameraEngine: NSObject, ObservableObject {
     }
 
     private func configurePhotoOutput(_ device: AVCaptureDevice, publish: Bool = true) {
+        var cinematicInput = false
+        if #available(iOS 26.0, *) { cinematicInput = input?.isCinematicVideoCaptureEnabled == true }
+        guard !requestedCinematicVideo, !cinematicInput,
+              session.outputs.contains(photoOutput) else { return }
         guard !videoModeRequested else { return }
         guard !nativePhotoInFlight else { deferredPhotoGraphConfiguration = true; return }
         // Batch output changes so max dimensions, ProRAW and responsiveness do not
@@ -3545,6 +3648,13 @@ final class CameraEngine: NSObject, ObservableObject {
         do {
             try device.lockForConfiguration(); defer { device.unlockForConfiguration() }
             automaticConfiguredDevice = device
+            if requestedCinematicVideo {
+                if device.primaryConstituentDeviceSwitchingBehavior != .locked ||
+                   !device.primaryConstituentDeviceRestrictedSwitchingBehaviorConditions.isEmpty {
+                    device.setPrimaryConstituentDeviceSwitchingBehavior(.locked, restrictedSwitchingBehaviorConditions: [])
+                }
+                return
+            }
             // 系统格式切换期间的当前 fallback 可能是临时子集；不能把它缓存为默认。
             // 恢复官方声明支持的完整集合，由系统继续按场景挑选物理镜头。
             let fallbacks = device.supportedFallbackPrimaryConstituentDevices
@@ -4783,12 +4893,12 @@ final class CameraEngine: NSObject, ObservableObject {
                     self.session.removeInput(old)
                 }
                 guard self.session.canAddInput(newInput) else {
-                    if let old = self.input { self.session.addInput(old) }
+                    if let old = self.input { self.addInputReplacingExisting(old) }
                     self.session.commitConfiguration()
                     replacementTransactionOpen = false
                     throw CameraError.unavailable
                 }
-                self.session.addInput(newInput)
+                self.addInputReplacingExisting(newInput)
                 self.input = newInput
                 if self.heifHDRPipelineRequested, self.session.canSetSessionPreset(.photo) { self.session.sessionPreset = .photo }
                 // The batched path already writes target zoom before its only
@@ -5095,12 +5205,12 @@ final class CameraEngine: NSObject, ObservableObject {
                     session.removeInput(old)
                 }
                 guard session.canAddInput(newInput) else {
-                    if let old { session.addInput(old) }
+                    if let old { addInputReplacingExisting(old) }
                     session.commitConfiguration()
                     replacementTransactionOpen = false
                     throw CameraError.unavailable
                 }
-                session.addInput(newInput); input = newInput
+                addInputReplacingExisting(newInput); input = newInput
                 if heifHDRPipelineRequested, session.canSetSessionPreset(.photo) { session.sessionPreset = .photo }
                 try prepareAutomaticRoute(device, factor:factor)
                 // 普通视频同样必须等目标格式和输出准备好再提交；否则 A/M
@@ -6234,7 +6344,7 @@ final class CameraEngine: NSObject, ObservableObject {
     }
 
     private func armMacroPhysicalPreview() {
-        guard macroPreviewRoute == nil, captureContexts.isEmpty, !manualMode,
+        guard !requestedCinematicVideo, macroPreviewRoute == nil, captureContexts.isEmpty, !manualMode,
               let original = input, original.device.isVirtualDevice else { return }
         let virtual = original.device
         let displayZoom = virtual.videoZoomFactor * CameraLensCatalog.displayMultiplier(virtual)
@@ -6248,9 +6358,9 @@ final class CameraEngine: NSObject, ObservableObject {
         session.beginConfiguration()
         session.removeInput(original)
         guard session.canAddInput(replacement) else {
-            session.addInput(original); session.commitConfiguration(); return
+            addInputReplacingExisting(original); session.commitConfiguration(); return
         }
-        session.addInput(replacement); input = replacement
+        addInputReplacingExisting(replacement); input = replacement
         session.commitConfiguration()
         macroPreviewRoute = (original, physical.uniqueID)
         try? physical.lockForConfiguration()
@@ -6279,8 +6389,8 @@ final class CameraEngine: NSObject, ObservableObject {
         session.beginConfiguration()
         session.removeInput(current)
         if session.canAddInput(saved.original) {
-            session.addInput(saved.original); input = saved.original
-        } else { session.addInput(current) }
+            addInputReplacingExisting(saved.original); input = saved.original
+        } else { addInputReplacingExisting(current) }
         session.commitConfiguration()
         if let device = input?.device, device.isVirtualDevice {
             configureConnections(device: device)
@@ -6756,8 +6866,8 @@ final class CameraEngine: NSObject, ObservableObject {
         guard input?.device.uniqueID == saved.physicalID, let current = input else { return }
         session.beginConfiguration()
         session.removeInput(current)
-        if session.canAddInput(saved.original) { session.addInput(saved.original); input = saved.original }
-        else { session.addInput(current) }
+        if session.canAddInput(saved.original) { addInputReplacingExisting(saved.original); input = saved.original }
+        else { addInputReplacingExisting(current) }
         session.commitConfiguration()
         if let device = input?.device, device.isVirtualDevice {
             configureConnections(device: device)
@@ -6771,7 +6881,8 @@ final class CameraEngine: NSObject, ObservableObject {
     /// 自动微距预览可能使用虚拟多摄的超广角 constituent，但照片请求会重新选主摄。
     /// 快门时临时切到当前超广角物理输入，拍完恢复虚拟输入。
     private func prepareMacroAutomaticRoute(_ capture: CaptureContext) throws {
-        guard let original = input, original.device.isVirtualDevice else { return }
+        guard !requestedCinematicVideo,
+              let original = input, original.device.isVirtualDevice else { return }
         let virtual = original.device
         let displayZoom = virtual.videoZoomFactor * CameraLensCatalog.displayMultiplier(virtual)
         let policyMacro = CameraMacroPolicy.isActive(manual: manualMode, virtual: true, rear: true,
@@ -6794,9 +6905,9 @@ final class CameraEngine: NSObject, ObservableObject {
         session.beginConfiguration()
         session.removeInput(original)
         guard session.canAddInput(replacement) else {
-            session.addInput(original); session.commitConfiguration(); throw CameraError.unavailable
+            addInputReplacingExisting(original); session.commitConfiguration(); throw CameraError.unavailable
         }
-        session.addInput(replacement); input = replacement
+        addInputReplacingExisting(replacement); input = replacement
         session.commitConfiguration()
         macroAutomaticRoutes[capture.token] = (original, physical.uniqueID)
         macroPhysicalHoldUntil = CACurrentMediaTime() + 5.0
@@ -6847,9 +6958,9 @@ final class CameraEngine: NSObject, ObservableObject {
         session.beginConfiguration()
         session.removeInput(current)
         if session.canAddInput(saved.original) {
-            session.addInput(saved.original); input = saved.original
+            addInputReplacingExisting(saved.original); input = saved.original
         } else {
-            session.addInput(current)
+            addInputReplacingExisting(current)
         }
         session.commitConfiguration()
         if let device = input?.device, device.isVirtualDevice {
@@ -6880,9 +6991,9 @@ final class CameraEngine: NSObject, ObservableObject {
         session.beginConfiguration()
         session.removeInput(original)
         guard session.canAddInput(replacement) else {
-            session.addInput(original); session.commitConfiguration(); throw CameraError.unavailable
+            addInputReplacingExisting(original); session.commitConfiguration(); throw CameraError.unavailable
         }
-        session.addInput(replacement); input = replacement
+        addInputReplacingExisting(replacement); input = replacement
         session.commitConfiguration()
         nightAutomaticRoutes[capture.token] = (original, physical.uniqueID)
         try physical.lockForConfiguration()
@@ -6913,9 +7024,9 @@ final class CameraEngine: NSObject, ObservableObject {
         session.beginConfiguration()
         session.removeInput(current)
         if session.canAddInput(saved.original) {
-            session.addInput(saved.original); input = saved.original
+            addInputReplacingExisting(saved.original); input = saved.original
         } else {
-            session.addInput(current)
+            addInputReplacingExisting(current)
             report("夜景拍摄已结束，但自动镜头路线恢复失败，请重新连接相机。")
         }
         session.commitConfiguration()
@@ -7665,7 +7776,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private func reattachMainSessionAfterIndependentNight(_ detached: DetachedMainSession) {
         session.beginConfiguration()
         if let input = detached.input, !session.inputs.contains(input), session.canAddInput(input) {
-            session.addInput(input)
+            addInputReplacingExisting(input)
         }
         for output in detached.outputs where !session.outputs.contains(output) {
             if session.canAddOutput(output) { session.addOutput(output) }
@@ -8365,6 +8476,10 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
             #if DEBUG
             receivedRecordingFramesForTesting += 1
             #endif
+            if isReviewPreviewPaused {
+                movieRecorder?.appendVideo(sampleBuffer, virtualApertureAllowed: false)
+                return
+            }
             let state = livePreviewState.snapshot()
             let primary = state.device?.isVirtualDevice == true ? state.device?.activePrimaryConstituent : state.device
             let apertureAllowed = primary?.position == .back && (primary?.deviceType == .builtInWideAngleCamera || primary?.deviceType == .builtInTelephotoCamera)
@@ -8383,6 +8498,7 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
             }
             return
         }
+        guard !isReviewPreviewPaused else { return }
         renderPreviewFrame(sampleBuffer, samplesIndependentNightMetering: output === videoOutput)
     }
 
@@ -8479,7 +8595,8 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
                 customExposure:device.exposureMode == .custom,exposureTargetOffsetEV:Double(device.exposureTargetOffset),
                 sampleHostTime:time,recommendationFocusPosition:primary.flatMap { $0.isFocusModeSupported(.autoFocus) ? Double($0.lensPosition) : nil },
                 recommendationFocusDeviceID:primary?.uniqueID)
-            let macro = CACurrentMediaTime() >= state.macroNotBefore && !state.macroRouteChangePending
+            let macro = !self.requestedCinematicVideo
+                && CACurrentMediaTime() >= state.macroNotBefore && !state.macroRouteChangePending
                 && (state.temporaryMacroPhysicalInput || CameraMacroPolicy.isActive(manual: state.manualMode, virtual: device.isVirtualDevice,
                     rear: device.position == .back, ultraWide: primary?.deviceType == .builtInUltraWideCamera,
                     displayZoom: device.isVirtualDevice ? device.videoZoomFactor * CameraLensCatalog.displayMultiplier(device) : 0,
