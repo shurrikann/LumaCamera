@@ -15,7 +15,7 @@ import ImageIO
         var times = [Double]()
         for portrait in [true, false] {
             if portrait { model.togglePortraitMode() } else { model.toggleVirtualAperture() }
-            try await PresetToolbarChecks.wait("模式就绪") { camera.ready && !model.isPreparingSubmode }
+            try await PresetToolbarChecks.wait("模式就绪") { camera.ready && !model.isPreparingSubmode && !model.isPreparingTransition }
             func toggle() { if portrait { model.togglePortraitDepthSlider() } else { model.toggleVirtualApertureSlider() } }
             toggle(); model.setDepthControlEditing(true)
             try await Task.sleep(for: .milliseconds(3200))
@@ -58,7 +58,7 @@ import ImageIO
         try await Task.sleep(for: .milliseconds(300))
         for portrait in [true, false] {
             if portrait { model.togglePortraitMode() } else { model.toggleVirtualAperture() }
-            try await PresetToolbarChecks.wait("模式就绪") { camera.ready && !model.isPreparingSubmode }
+            try await PresetToolbarChecks.wait("模式就绪") { camera.ready && !model.isPreparingSubmode && !model.isPreparingTransition }
             if portrait { model.togglePortraitDepthSlider() } else { model.toggleVirtualApertureSlider() }
             XCTAssertTrue(model.depthControlPopupVisible)
             model.showHistogram = true
@@ -97,7 +97,7 @@ import ImageIO
         }
         func settle() async throws {
             await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
-            try await wait("ready") { camera.ready && !model.isPreparingSubmode && !camera.shutterBusy && !camera.highResolutionPhotoConfiguring }
+            try await wait("ready") { camera.ready && !model.isPreparingSubmode && !model.isPreparingTransition && !camera.shutterBusy && !camera.highResolutionPhotoConfiguring }
         }
         model.setCameraActive(true); try await wait("start") { camera.ready }
         XCTAssertTrue(model.canSelectPhotoFormat(.heifPro)); model.photoFormat = .heifPro

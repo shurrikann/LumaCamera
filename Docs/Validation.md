@@ -5420,3 +5420,7 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 
 - P3 延时摄影：入口切换尚未落定时快门此前已可点，测试立即选预设被 guard 丢弃。快门/视频控制现在把待执行切换视为未就绪；测试等待 `timeLapseEnabled` 后再选预设。`testTimeLapseRecordingCreatesSparseSilentMovie` 真机通过（4.1s）。
 - P2 慢动作仍有一致性问题：先设 120 再切焦段后实际回到 240，`camera.videoSettings.captureFrameRate` 与设备帧周期不匹配；未标记修复。
+
+- P1/P2/P3 测试统一改为等待异步切换落定，而不是点击后立即断言；`CinematicZoomPhysicalTests`、`SlowMotionLensTransitionPhysicalTests`、`testTimeLapseRecordingCreatesSparseSilentMovie` 已通过。
+- 新增 `isPreparingTransition`，视频快门和景深滑条入口在切换队列未落定时视为未就绪，避免排队请求被录制或滑条操作覆盖。
+- P4 景深工具栏仍未修复：持续按住 5 秒仍会自动收起，横屏中线不一致；本轮未把该套件写成通过。

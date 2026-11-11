@@ -65,10 +65,18 @@ final class SlowMotionLensTransitionPhysicalTests: XCTestCase {
         await settle()
         if model.cinematicVideoEnabled { model.toggleCinematicVideoMode(); await settle() }
         if model.timeLapseEnabled { model.toggleTimeLapseMode(); await settle() }
-        if !model.slowMotionEnabled { model.toggleSlowMotionMode(); await settle() }
+        if !model.slowMotionEnabled { model.toggleSlowMotionMode() }
+        for _ in 0..<700 {
+            if model.slowMotionEnabled && !model.isPreparingSubmode && !camera.videoConfiguring { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
         XCTAssertTrue(model.slowMotionEnabled, camera.message ?? "Slow motion did not become ready")
         model.selectVideoResolution(.hd1080)
         model.selectVideoFrameRate(.fps120)
+        for _ in 0..<500 {
+            if camera.videoSettings.captureFrameRate == .fps120 && !camera.videoConfiguring { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
         await settle()
         XCTAssertEqual(camera.videoSettings.captureFrameRate, .fps120)
         await withCheckedContinuation { c in camera.resetRuntimeErrorCountForTesting { c.resume() } }

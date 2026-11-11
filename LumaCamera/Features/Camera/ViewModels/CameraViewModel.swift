@@ -2461,6 +2461,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     func togglePortraitDepthSlider() {
+        guard !isPreparingTransition else { return }
         // 微距期间也允许打开滑杆；预览分割仍由 synchronizePortraitPreview 暂停。
         guard portraitModeEnabled, captureKind == .photo, !camera.capturing else { return }
         let opening = !portraitDepthSliderVisible
@@ -4433,11 +4434,11 @@ final class CameraViewModel: ObservableObject {
 
     /// 等系统实际激活后再允许开拍，不能把用户开关意图当作已生效的录像状态。
     private var frontVideoCenteringStarting: Bool { camera.frontVideoCenteringPreparing || (frontVideoCenteringRequested && !camera.frontVideoCenteringActive) }
-    private var hasPendingUserTransition: Bool { transitionBusy || pendingTransition != nil }
-    var videoShutterBusy: Bool { camera.videoConfiguring || videoSubmodePreparing == .cinematic || frontVideoCenteringStarting || hasPendingUserTransition || (camera.videoBusy && !camera.videoRecording) || library.videoSaving || (logVideoLUTControlsEnabled && burnLogLUT && logLUTLoading) }
+    var isPreparingTransition: Bool { transitionBusy || pendingTransition != nil || isTransitionSettling }
+    var videoShutterBusy: Bool { camera.videoConfiguring || videoSubmodePreparing == .cinematic || frontVideoCenteringStarting || isPreparingTransition || (camera.videoBusy && !camera.videoRecording) || library.videoSaving || (logVideoLUTControlsEnabled && burnLogLUT && logLUTLoading) }
     var videoShutterEnabled: Bool {
         camera.videoRecording || (camera.ready && !camera.videoBusy && !camera.videoConfiguring && !frontVideoCenteringStarting && !library.videoSaving && !captureKindSwitching
-            && !hasPendingUserTransition
+            && !isPreparingTransition
             && videoSubmodePreparing != .cinematic
             && !camera.capturing && camera.pendingPhotoCount == 0
             && !(logVideoLUTControlsEnabled && burnLogLUT && (logLUTLoading || selectedLogLUTCube == nil)))
