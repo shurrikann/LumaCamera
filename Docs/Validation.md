@@ -5388,3 +5388,11 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
   - 4 次 2×/1× 往返均无 `done` 超时。
 - 同轮 `CinematicMainFrameDeliveryTests` 仍为 2.4 秒 72 帧，说明电影出帧修复未回退。
 - 变焦轮在预热后的采样为 1.00/1.23/1.52/1.87，预览跟随；首次路由重建问题已消除。
+
+# 2026-11-11 全量回归记录
+
+- 真机全量套件在 `VideoSpecificationTests` 被运行器提前终止：768 passed / 51 failed，未自然完成。
+- 模拟器全量：698 tests，50 skipped，423 assertion failures（30 unexpected）。
+- 详见 `Docs/Test-Reports/2026-11-11-Full-Device-Regression.md`；人像/电影只做功能性验收，未评价成片质量。
+- 高优先级：随机子模块切换触发 `setActiveVideoMinFrameDuration` 不支持帧周期异常；电影变焦入口未进入；慢动作后台恢复后帧周期/录制失败。
+- 全量真机未覆盖外接 RAW 端到端及逐张成片人工视觉验收。

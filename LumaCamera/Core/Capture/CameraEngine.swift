@@ -2030,10 +2030,6 @@ final class CameraEngine: NSObject, ObservableObject {
                 && self.session.outputs.contains(self.audioOutput) == audioWanted
                 && (enabled || !wasCinematic)
             self.videoModeRequested = enabled
-            // Slow motion's capture rate is a temporary video-only request. Leaving
-            // video must clear it so the photo route does not carry a 120/240 fps
-            // capture cadence into its first lens/format transition.
-            if !enabled { self.requestedVideoSettings.captureFrameRate = nil }
             self.videoAudioRequested = enabled
             guard self.configured else { return }
             if enabled { self.publishVideoSelectionCapabilities() }
