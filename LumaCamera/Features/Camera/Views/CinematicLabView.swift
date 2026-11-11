@@ -12,6 +12,12 @@ struct CinematicLabView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("按 Apple Cinematic Video 文档单独建立会话，不接入主相机输出图。用于对比官方顺序是否连续出帧。")
                     .font(.footnote).foregroundStyle(.secondary)
+                Picker("对照配置", selection: $lab.configuration) {
+                    ForEach(CinematicLabModel.Configuration.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .disabled(lab.running || lab.starting)
+                .onChange(of: lab.configuration) { _, _ in lab.stop() }
                 CinematicLabPreview(session: lab.session)
                     .aspectRatio(16 / 9, contentMode: .fit)
                     .background(.black)
@@ -75,6 +81,12 @@ private struct CinematicLabPreview: UIViewRepresentable {
 
 @MainActor
 final class CinematicLabModel: NSObject, ObservableObject {
+    enum Configuration: String, CaseIterable, Identifiable {
+        case official, appLike
+        var id: String { rawValue }
+        var title: String { self == .official ? "官方顺序" : "App 参数" }
+    }
+    @Published var configuration = Configuration.official
     let session = AVCaptureSession()
     @Published private(set) var running = false
     @Published private(set) var starting = false
@@ -90,6 +102,9 @@ final class CinematicLabModel: NSObject, ObservableObject {
     private let videoQueue = DispatchQueue(label: "cinematic.lab.video")
     private let output = AVCaptureVideoDataOutput()
     private let metadata = AVCaptureMetadataOutput()
+    private let photo = AVCapturePhotoOutput()
+    private let audioOutput = AVCaptureAudioDataOutput()
+    private var audioInput: AVCaptureDeviceInput?
     private var input: AVCaptureDeviceInput?
     private var device: AVCaptureDevice?
     private let counter = CinematicFrameCounter()
@@ -102,7 +117,7 @@ final class CinematicLabModel: NSObject, ObservableObject {
         queue.async { [weak self] in
             guard let self else { return }
             do {
-                try self.configureOnQueue()
+                try self.configureOnQueue(configuration: self.configuration)
                 self.session.startRunning()
                 let configured: Bool
                 if #available(iOS 26.0, *) {
@@ -142,7 +157,7 @@ final class CinematicLabModel: NSObject, ObservableObject {
         }
     }
 
-    private func configureOnQueue() throws {
+    private func configureOnQueue(configuration: Configuration) throws {
         teardownOnQueue()
         guard #available(iOS 26.0, *) else { throw LabError.unavailable("需要 iOS 26") }
         guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
@@ -165,18 +180,39 @@ final class CinematicLabModel: NSObject, ObservableObject {
         device.unlockForConfiguration()
         self.device = device
 
+        if configuration == .appLike, session.canSetSessionPreset(.inputPriority) {
+            session.sessionPreset = .inputPriority
+        }
         let input = try AVCaptureDeviceInput(device: device)
         guard input.isCinematicVideoCaptureSupported else { throw LabError.unavailable("输入不支持电影") }
+        if configuration == .appLike, let microphone = AVCaptureDevice.default(for: .audio) {
+            audioInput = try? AVCaptureDeviceInput(device: microphone)
+        }
         session.beginConfiguration()
         guard session.canAddInput(input) else { throw LabError.unavailable("无法加入电影输入") }
         session.addInput(input)
         self.input = input
+        if configuration == .appLike, let audioInput, session.canAddInput(audioInput) {
+            session.addInput(audioInput)
+            if session.canAddOutput(audioOutput) { session.addOutput(audioOutput) }
+        }
 
         // Apple: set cinematic enabled before startRunning, then add outputs.
         input.isCinematicVideoCaptureEnabled = true
 
-        output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange]
-        output.alwaysDiscardsLateVideoFrames = true
+        var outputSettings: [String: Any] = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange]
+        if configuration == .appLike {
+            outputSettings[kCVPixelBufferWidthKey as String] = 1920
+            outputSettings[kCVPixelBufferHeightKey as String] = 1080
+            outputSettings[AVVideoAllowWideColorKey] = false
+        }
+        output.videoSettings = outputSettings
+        output.alwaysDiscardsLateVideoFrames = configuration == .official
+        if configuration == .appLike {
+            output.automaticallyConfiguresOutputBufferDimensions = false
+            output.deliversPreviewSizedOutputBuffers = false
+            input.videoMinFrameDurationOverride = CMTime(value: 1, timescale: 30)
+        }
         output.setSampleBufferDelegate(self, queue: videoQueue)
         guard session.canAddOutput(output) else { throw LabError.unavailable("无法加入视频输出") }
         session.addOutput(output)
@@ -189,6 +225,10 @@ final class CinematicLabModel: NSObject, ObservableObject {
             throw LabError.unavailable("电影 metadata 类型不可用")
         }
         metadata.metadataObjectTypes = required
+        if configuration == .appLike {
+            guard session.canAddOutput(photo) else { throw LabError.unavailable("无法加入 PhotoOutput") }
+            session.addOutput(photo)
+        }
         session.commitConfiguration()
 
         runtimeObserver = NotificationCenter.default.addObserver(forName: AVCaptureSession.runtimeErrorNotification,
@@ -225,11 +265,15 @@ final class CinematicLabModel: NSObject, ObservableObject {
     private func teardownOnQueue() {
         if session.isRunning { session.stopRunning() }
         if session.inputs.contains(where: { $0 === input }) { session.removeInput(input!) }
+        if let audioInput, session.inputs.contains(where: { $0 === audioInput }) { session.removeInput(audioInput) }
         if session.outputs.contains(output) { session.removeOutput(output) }
         if session.outputs.contains(metadata) { session.removeOutput(metadata) }
+        if session.outputs.contains(photo) { session.removeOutput(photo) }
+        if session.outputs.contains(audioOutput) { session.removeOutput(audioOutput) }
         output.setSampleBufferDelegate(nil, queue: nil)
         metadata.setMetadataObjectsDelegate(nil, queue: nil)
         input = nil
+        audioInput = nil
         device = nil
         counter.reset()
     }

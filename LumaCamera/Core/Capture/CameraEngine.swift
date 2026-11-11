@@ -2718,6 +2718,12 @@ final class CameraEngine: NSObject, ObservableObject {
                 #endif
                 return false
             }
+            // Cinematic Video cannot coexist with the depth-data pipeline.
+            // The photo output keeps portrait depth/matte enabled for stills;
+            // turn that pipeline off before enabling the cinematic graph, then
+            // restore it when the normal photo graph is configured.
+            if photoOutput.isDepthDataDeliveryEnabled { photoOutput.isDepthDataDeliveryEnabled = false }
+            if photoOutput.isPortraitEffectsMatteDeliveryEnabled { photoOutput.isPortraitEffectsMatteDeliveryEnabled = false }
             let graphIsReady = input.isCinematicVideoCaptureEnabled
                 && session.outputs.contains(cinematicMetadataOutput)
                 && session.outputs.contains(photoOutput)

@@ -5331,3 +5331,13 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 页面显示运行状态、电影输入、采集总帧、最近 1 秒帧数、场景状态、帧周期与错误，用于和主相机图直接对比。
 - 主相机逻辑未接入该诊断会话；进入设置时主相机已停止。
 - `CinematicLabPhysicalTests` 已加入，用于真机测独立会话出帧；本轮构建通过，但设备 `00008150-001934280220401C` 处于 unavailable，真机测试与安装未完成，不能写成通过。
+
+# 2026-11-11 电影模式低出帧根因：照片 Depth/Matte 管线
+
+- 独立诊断页（设置 → 偏好设置 → 电影模式诊断）按 Apple 文档单独建立 1080p30 电影会话：官方配置 81–82 帧/3 秒（约 30 fps）；把 App 的 inputPriority、显式尺寸、alwaysDiscardsLate=false、PhotoOutput、音频、input override 带入后仍为 53–54 帧/3 秒（约 30 fps）。因此差异不在这些参数。
+- 根因：主相机 `AVCapturePhotoOutput` 长期启用 `isDepthDataDeliveryEnabled` 与 `isPortraitEffectsMatteDeliveryEnabled`。Apple 注明电影模式不能与深度数据输出同跑；主相机进入电影图时未关闭它们，导致采集回调约 2/1/0 帧每 2.4 秒。
+- 修复：`configureCinematicVideoOutputGraph(enabled: true)` 在提交电影图前关闭照片 Depth/Matte；返回普通照片/视频图时由 `configurePhotoOutput` 恢复。
+- 真机 `CinematicMainFrameDeliveryTests` 连续 3 次：2.4 秒 72、72、71 帧；修复前同路径为 2、1、0。
+- `VideoModeTransitionTests/testCinematicPreviewAndPhotoHDRRecoverOnVideoRoundTrip` 通过（14.227s），确认返回照片后 HDR 恢复。
+- 用户观察：App 电影卡住时原生相机电影也卡住。该现象可能与系统相机服务共享状态有关，但尚未做重启/强制退出对照，不能据此断言 App 造成底层损坏；修复后需再验证原生相机。
+- 已移除电影预览看门狗，不再自动退出掩盖停帧。
