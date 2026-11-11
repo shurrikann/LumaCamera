@@ -5324,3 +5324,10 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
   - `isCinematicVideoCaptureEnabled` 明确说明启用电影效果需要较长渲染管线重配，建议在 `startRunning` 前或运行中的 `beginConfiguration/commitConfiguration` 内设置；未承诺帧率。
   - `cinematicVideoCaptureSceneMonitoringStatuses` 明确用于提示场景过暗；未说明低光帧率下限。
 - 待确认：原生相机同场景电影是否连续；以及用 `AVCaptureVideoPreviewLayer` 的完整官方示例复测。当前数据不足以把问题归因于暗光或 App 配置。
+
+# 2026-11-11 设置内电影模式独立诊断
+
+- 应用设置新增“电影模式诊断”入口，独立建立 Apple 文档顺序的电影会话：DualWide 1080p30、启动前启用电影输入、videoDataOutput、required cinematic metadata output、AVCaptureVideoPreviewLayer。
+- 页面显示运行状态、电影输入、采集总帧、最近 1 秒帧数、场景状态、帧周期与错误，用于和主相机图直接对比。
+- 主相机逻辑未接入该诊断会话；进入设置时主相机已停止。
+- `CinematicLabPhysicalTests` 已加入，用于真机测独立会话出帧；本轮构建通过，但设备 `00008150-001934280220401C` 处于 unavailable，真机测试与安装未完成，不能写成通过。

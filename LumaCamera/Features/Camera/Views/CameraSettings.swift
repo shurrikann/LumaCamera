@@ -109,6 +109,8 @@ private struct CameraSettingsPanel: View {
                     }
                     .accessibilityIdentifier("settings.silentShutter")
                     Button("打开系统权限设置") { model.openSettings() }
+                    NavigationLink("电影模式诊断") { CinematicLabView() }
+                        .accessibilityIdentifier("settings.cinematicLab")
                     NavigationLink("关于光屿") {
                         ScrollView {
                             VStack(alignment: .leading, spacing: 18) {
