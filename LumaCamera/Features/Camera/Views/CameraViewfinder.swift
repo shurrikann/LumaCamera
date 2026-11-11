@@ -39,8 +39,11 @@ extension CameraView {
                     // Cinematic preview comes from the session's preview layer,
                     // matching Apple's sample and avoiding dependence on the
                     // recording data output.
+                    // The ordinary preview image is rotated in Core Image while its
+                    // connection stays at 0°. AVCaptureVideoPreviewLayer uses the
+                    // sensor-landscape coordinate system, so portrait needs 90°.
                     SystemCameraPreview(session: camera.previewSession,
-                                        rotationAngle: CGFloat(controlAngle),
+                                        rotationAngle: CGFloat(90 - controlAngle),
                                         mirrored: model.currentPosition == .front)
                         .frame(width: width, height: height)
                         .clipped()
