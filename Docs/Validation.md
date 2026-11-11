@@ -5377,3 +5377,14 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 用户要求移除设置中的“电影模式诊断”入口；同时删除 `CinematicLabView.swift` 与依赖它的 `CinematicLabPhysicalTests.swift`。
 - 保留主相机电影 Depth/Matte 修复、系统预览方向修复和 `CinematicMainFrameDeliveryTests`；其他界面不变。
 - 构建通过，准备安装。
+
+# 2026-11-11 慢动作返回照片后的首次焦段卡顿修复
+
+- 根因：慢动作使用物理 WideAngle 输入；返回照片时原恢复条件只处理 DualWide，未把物理 WideAngle 换回虚拟后置，导致照片停在 `builtInWideAngleCamera:0`。第一次点 2× 才切换到 `builtInTripleCamera:7` 并重建连接，耗时约 1.9 秒。
+- 修复：离开视频进入自动照片路线时，物理 WideAngle 与 DualWide 一样恢复为 `rearVirtualDevice`（虚拟三摄）。
+- 真机 `SlowMotionPhotoReturnZoomTests`：
+  - 修复前：返回后输入 `video:0`；首次 2× 1.90s，第二次起 0.29s。
+  - 修复后：返回后输入 `video:7`；首次 2× 0.31s，后续 0.28–0.34s。
+  - 4 次 2×/1× 往返均无 `done` 超时。
+- 同轮 `CinematicMainFrameDeliveryTests` 仍为 2.4 秒 72 帧，说明电影出帧修复未回退。
+- 变焦轮在预热后的采样为 1.00/1.23/1.52/1.87，预览跟随；首次路由重建问题已消除。

@@ -37,6 +37,7 @@ final class SlowMotionPhotoReturnZoomTests: XCTestCase {
         for attempt in 0..<4 {
             let lens = try XCTUnwrap(camera.lenses.first { $0.device.position == .back && abs($0.displayZoom - (attempt.isMultiple(of: 2) ? 2 : 1)) < 0.01 })
             let startFrame = camera.previewFrameTimeForTesting
+            let beforeDevice = camera.activeCaptureDeviceID
             let tapStart = CACurrentMediaTime()
             model.selectFocalLength(lens)
             var selectedAt: Double?, doneAt: Double?
@@ -46,7 +47,7 @@ final class SlowMotionPhotoReturnZoomTests: XCTestCase {
                 if selectedAt != nil, model.focalTransitionImage == nil, !camera.videoConfiguring, camera.ready { doneAt = now; break }
                 try await Task.sleep(for: .milliseconds(5))
             }
-            print("SLOWMOTION-RETURN tap\(attempt) zoom=\(lens.displayZoom) select=\(selectedAt.map { $0 - tapStart } ?? -1) done=\(doneAt.map { $0 - tapStart } ?? -1) frameDelta=\(camera.previewFrameTimeForTesting - startFrame)")
+            print("SLOWMOTION-RETURN tap\(attempt) zoom=\(lens.displayZoom) device=\(beforeDevice)->\(camera.activeCaptureDeviceID) lens=\(lens.id) select=\(selectedAt.map { $0 - tapStart } ?? -1) done=\(doneAt.map { $0 - tapStart } ?? -1) frameDelta=\(camera.previewFrameTimeForTesting - startFrame)")
         }
 
         // Zoom wheel drag

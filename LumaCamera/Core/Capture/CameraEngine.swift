@@ -2097,7 +2097,9 @@ final class CameraEngine: NSObject, ObservableObject {
             }
             if !enabled, self.session.canSetSessionPreset(.photo) { self.session.sessionPreset = .photo }
             if #available(iOS 26.0, *), !enabled, !self.manualMode, !self.highResolutionPhotoRequested,
-               let current = self.input, current.device.deviceType == .builtInDualWideCamera,
+               let current = self.input,
+               (current.device.deviceType == .builtInDualWideCamera
+                    || current.device.deviceType == .builtInWideAngleCamera),
                let rear = self.rearVirtualDevice, rear.uniqueID != current.device.uniqueID {
                 // 电影使用 DualWide；返回照片的非手动/非高像素路线必须回到普通虚拟多摄。
                 do {
