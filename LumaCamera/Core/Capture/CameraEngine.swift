@@ -2030,6 +2030,10 @@ final class CameraEngine: NSObject, ObservableObject {
                 && self.session.outputs.contains(self.audioOutput) == audioWanted
                 && (enabled || !wasCinematic)
             self.videoModeRequested = enabled
+            // Slow motion's capture rate is a temporary video-only request. Leaving
+            // video must clear it so the photo route does not carry a 120/240 fps
+            // capture cadence into its first lens/format transition.
+            if !enabled { self.requestedVideoSettings.captureFrameRate = nil }
             self.videoAudioRequested = enabled
             guard self.configured else { return }
             if enabled { self.publishVideoSelectionCapabilities() }
@@ -2446,7 +2450,9 @@ final class CameraEngine: NSObject, ObservableObject {
         let openGateRequested = requestedVideoOpenGate
         let cinematicRequested = requestedCinematicVideo && !openGateRequested
         let centerStageRequested = frontVideoCenteringRequested && device.position == .front && !openGateRequested && !cinematicRequested
-        rememberPhotoDeviceConfiguration(device)
+        // Do not record a video/slow-motion activeFormat as the photo baseline.
+        // A new video lens has no photo state yet; the .photo session preset
+        // reconstructs it when returning from video.
         if videoFormatCatalog[device.uniqueID] == nil {
             var catalog: [VideoCaptureSettings: AVCaptureDevice.Format] = [:]
             var openGateCatalog: [VideoCaptureSettings: AVCaptureDevice.Format] = [:]

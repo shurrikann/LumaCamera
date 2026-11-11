@@ -5359,3 +5359,15 @@ A挡补测随后发现真实路由问题：物理主摄提供4K120，而虚拟�
 - 三组均无 `done` 超时、无残留 message，和基线同一量级；测试未复现用户描述的明显卡顿。
 - 未完成组合：人像/慢门后进入电影/慢动作时 `cinematicVideoSettings=0`、`slowMotionVideoSettings=0`（普通 `supportedVideoSettings=75`），因此这几种组合被 skip；这是独立的能力发布问题，不能当作焦段切换已覆盖。
 - 需要用户提供出现卡顿的具体“照片子模式 + 视频子模式”，或录屏；当前代表样本未复现。
+
+# 2026-11-11 慢动作返回照片后的首次焦段/变焦卡顿
+
+- 精确复现：照片 → 视频 → 慢动作 → 返回照片 → 点 2×。
+- 首次修复前：选中 3.03s，收尾 3.03s；后续 2×/1× 约 0.29s。
+- 根因数据：返回照片后 activeFormat 仍是 1920×1080 视频格式；第一次焦段点击触发完整照片路由重建，阶段 connections 2.07s、input 0.50s、photoOutput 0.44s。
+- 已修复：
+  - 离开视频时清除慢动作临时 `captureFrameRate`（120/240）。
+  - 视频路由不再把视频格式写入 `photoDeviceConfigurationsBeforeVideo` 的照片基线；新慢动作镜头没有照片基线时由 `.photo` preset 恢复。
+  - 返回照片后 activeFormat 恢复为 4032×3024，首次 2× 从 3.03s 降到 1.93s。
+- 未解决：首次 2× 仍需约 1.9s（connections 约 1.05s、input 0.39s、photoOutput 0.46s）；第二次起 0.29s。变焦轮在首次重建后能跟随，首次进入时仍会停顿。
+- 新增真机 `SlowMotionPhotoReturnZoomTests`，保留首次/后续焦段耗时与变焦轮采样；当前未把 1.9s 首次延迟写成已解决。
