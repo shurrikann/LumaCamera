@@ -3239,6 +3239,7 @@ final class CameraViewModel: ObservableObject {
     @Published var settings = false
     @Published var focusPoint: CGPoint?
     private var focusTask: Task<Void, Never>?
+    private var hiddenLockedFocusPoint: CGPoint?
 
 
     init(camera: CameraEngine, library: PhotoLibraryViewModel, gallery: GalleryViewModel, filterSettings: FilterSettingsStore? = nil, preferencesStore: CapturePreferencesStore? = nil) {
@@ -3711,6 +3712,7 @@ final class CameraViewModel: ObservableObject {
         if !active && !review { dismissDepthControls() }
         if !active && camera.videoBusy { camera.stopVideoRecording() }
         if !active && !review { closePopups() }
+        if !active { endSubjectTracking() }
         cameraActiveRequested = active
         if active {
             camera.prepareHaptics()
@@ -3845,52 +3847,289 @@ final class CameraViewModel: ObservableObject {
     #endif
 
     @Published var focusLockPickerVisible = false
-    var focusLockMode: FocusLockMode {
-        preferences.focusLockMode.locksFocus && !camera.demo && !camera.supportsTargetFocusLock ? .exposure : preferences.focusLockMode
+    @Published private(set) var subjectTrackingBox: CGRect?
+    @Published private(set) var subjectTrackingLost = false
+    @Published private(set) var subjectTrackingActive = false
+    private var subjectFocusTracker: VisionSubjectTracker?
+    private var subjectTrackingCancellable: AnyCancellable?
+    private var subjectTrackingViewportSize: CGSize = .zero
+    private var lastSubjectTrackingTime: TimeInterval = 0
+    private var lastSubjectFocusPoint: CGPoint?
+    private var lastSubjectFocusUpdate: TimeInterval = 0
+    private var subjectTrackingLostAt: TimeInterval?
+    var canTrackPanningSubject: Bool {
+        captureKind == .photo && slowShutterEnabled && selectedSlowShutterPreset == .panning
+    }
+    var supportsSubjectTracking: Bool {
+        guard currentPosition == .back else { return false }
+        switch captureKind {
+        case .photo:
+            return true
+        case .video:
+            return !cinematicVideoEnabled && !camera.dualCaptureEnabled && !slowMotionEnabled && !timeLapseEnabled
+        }
+    }
+    var effectiveFocusTrackingState: FocusTrackingState {
+        if preferences.focusTrackingState == .continuous && !supportsSubjectTracking { return .locked }
+        return preferences.focusTrackingState
+    }
+    var canTrackSubject: Bool {
+        supportsSubjectTracking && camera.ready && !camera.capturing && !camera.cinematicVideoCaptureActive
+            && (captureKind == .photo || captureKind == .video)
+    }
+    var shouldTrackSubjectOnLongPress: Bool {
+        canTrackSubject && effectiveFocusTrackingState == .continuous
+    }
+    var exposureLockEnabled: Bool { preferences.exposureLockEnabled }
+    var focusTrackingState: FocusTrackingState { effectiveFocusTrackingState }
+    var focusLockSummary: String {
+        var parts: [String] = []
+        if exposureLockEnabled { parts.append("AE") }
+        if let af = focusTrackingState.label { parts.append(af) }
+        return parts.isEmpty ? "AE/AF" : parts.joined(separator: " ")
     }
     func toggleFocusLockPicker() {
-        guard focusPoint != nil, camera.targetLockActive else { return }
+        guard focusPoint != nil else { return }
         let opening = !focusLockPickerVisible
         closePopups()
         withAnimation(AppTheme.popupAnimation) { focusLockPickerVisible = opening }
     }
+    func toggleExposureLockPreference() {
+        preferences.exposureLockEnabled.toggle()
+        applyFocusLockPreferences()
+    }
+    func cycleFocusTrackingPreference() {
+        if supportsSubjectTracking {
+            preferences.focusTrackingState = effectiveFocusTrackingState.next
+        } else {
+            preferences.focusTrackingState = effectiveFocusTrackingState == .off ? .locked : .off
+        }
+        applyFocusLockPreferences()
+    }
+    private func applyFocusLockPreferences() {
+        let tracking = effectiveFocusTrackingState
+        if tracking != .continuous { endSubjectTracking(keepFocus: true) }
+        guard let point = focusPoint, camera.ready, !camera.capturing else { return }
+        camera.unlockTargetExposure()
+        if tracking == .continuous {
+            beginSubjectTracking(at: point, size: focusViewportSize)
+        } else {
+            camera.focus(at: CGPoint(x: point.x / focusViewportSize.width,
+                                     y: point.y / focusViewportSize.height),
+                         lockExposure: preferences.exposureLockEnabled,
+                         lockFocus: tracking == .locked)
+        }
+    }
+    /// Legacy entry point used by older tests and callers; maps the old enum
+    /// onto the independent AE/AF preference pair.
     func selectFocusLockMode(_ mode: FocusLockMode) {
-        guard camera.ready, !camera.capturing, !mode.locksFocus || camera.demo || camera.supportsTargetFocusLock else { return }
-        preferences.focusLockMode = mode
+        switch mode {
+        case .exposure: preferences.exposureLockEnabled = true; preferences.focusTrackingState = .off
+        case .focus: preferences.exposureLockEnabled = false; preferences.focusTrackingState = .locked
+        case .exposureAndFocus: preferences.exposureLockEnabled = true; preferences.focusTrackingState = .locked
+        case .tracking: preferences.exposureLockEnabled = false; preferences.focusTrackingState = .continuous
+        }
         withAnimation(AppTheme.popupAnimation) { focusLockPickerVisible = false }
-        lockFocusExposure()
+        applyFocusLockPreferences()
     }
 
     private var focusViewportSize = CGSize.zero
+    /// Long-press on a panning subject starts a Vision-tracked AF box.
+    func beginSubjectTracking(at point: CGPoint, size: CGSize) {
+        guard canTrackSubject, shouldTrackSubjectOnLongPress,
+              size.width > 0, size.height > 0 else { return }
+        endSubjectTracking(keepFocus: true)
+        manualFocus = false
+        focusViewportSize = size
+        subjectTrackingViewportSize = size
+        focusPoint = point
+        // The press point is rarely exactly on the object center. Use a wider
+        // scan region for instance selection; the drawn focus box stays fixed,
+        // and the foreground mask prevents the extra area becoming the template.
+        let side = min(size.width, size.height) * 0.35
+        let box = CGRect(x: min(max(point.x - side/2, 0), size.width - side),
+                         y: min(max(point.y - side/2, 0), size.height - side),
+                         width: side, height: side)
+        let normalized = CGRect(x: box.minX / size.width, y: box.minY / size.height,
+                                width: box.width / size.width, height: box.height / size.height)
+        subjectTrackingBox = normalized
+        // Do not claim a lock before the tracker has actually produced one
+        // matched observation. The first drawn state is "not locked yet".
+        subjectTrackingLost = true
+        subjectTrackingActive = true
+        hiddenLockedFocusPoint = nil
+        subjectTrackingLostAt = nil
+        lastSubjectTrackingTime = 0
+        lastSubjectFocusPoint = nil
+        lastSubjectFocusUpdate = 0
+        camera.focus(at: CGPoint(x: point.x / size.width, y: point.y / size.height),
+                     lockExposure: exposureLockEnabled, lockFocus: false)
+        camera.setSubjectFocus(displayPoint: CGPoint(x: point.x / size.width, y: point.y / size.height))
+        let tracker = VisionSubjectTracker()
+        tracker.start(box: normalized)
+        subjectFocusTracker = tracker
+        CameraHaptics.impact(.light)
+        subjectTrackingCancellable = camera.$preview
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] image in
+                guard let self, let image else { return }
+                self.processSubjectTracking(image)
+            }
+        if let image = camera.preview { processSubjectTracking(image) }
+    }
+
+    func endSubjectTracking(keepFocus: Bool = false) {
+        subjectTrackingCancellable?.cancel(); subjectTrackingCancellable = nil
+        subjectFocusTracker?.stop()
+        subjectFocusTracker = nil
+        if subjectTrackingActive || subjectTrackingBox != nil {
+            withAnimation(AppTheme.popupAnimation) {
+                subjectTrackingActive = false
+                subjectTrackingBox = nil
+                subjectTrackingLost = false
+            }
+            subjectTrackingLostAt = nil
+            if !keepFocus {
+                focusPoint = nil
+                camera.unlockTargetExposure()
+                camera.setFocus(position: nil)
+            }
+        }
+    }
+
+    /// UIImage.cgImage ignores imageOrientation. Redraw upright and downscale so
+    /// Vision coordinates match the view and tracking stays cheap at ~10 Hz.
+    private static func trackingProbe(_ image: UIImage) -> CGImage? {
+        let maxSide: CGFloat = 320
+        let source = image.size
+        guard source.width > 0, source.height > 0 else { return nil }
+        let scale = min(1, maxSide / max(source.width, source.height))
+        let target = CGSize(width: max(1, source.width * scale), height: max(1, source.height * scale))
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        return UIGraphicsImageRenderer(size: target, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: target))
+        }.cgImage
+    }
+
+    private func processSubjectTracking(_ image: UIImage) {
+        guard subjectTrackingActive, let tracker = subjectFocusTracker else { return }
+        let now = CACurrentMediaTime()
+        // Follow the actual preview cadence. If Vision is still busy, the
+        // tracker drops that older frame instead of imposing a guessed Hz.
+        guard let cgImage = Self.trackingProbe(image) else { return }
+        lastSubjectTrackingTime = now
+        tracker.process(cgImage) { [weak self] box, phase, _ in
+            guard let self, self.subjectTrackingActive else { return }
+            let size = self.subjectTrackingViewportSize
+            guard size.width > 0, size.height > 0 else { return }
+            if phase == .tracking, let box {
+                self.subjectTrackingBox = box
+                self.subjectTrackingLost = false
+                self.subjectTrackingLostAt = nil
+                let center = CGPoint(x: box.midX * size.width, y: box.midY * size.height)
+                self.focusPoint = center
+                // Changing focusPointOfInterest restarts continuous AF. Update
+                // it only after meaningful movement and at most ~10 Hz; the
+                // drawn box can still follow every tracked frame.
+                let now = CACurrentMediaTime()
+                let moved = self.lastSubjectFocusPoint.map {
+                    hypot(center.x - $0.x, center.y - $0.y) > max(2.5, min(size.width, size.height) * 0.02)
+                } ?? true
+                if moved, now - self.lastSubjectFocusUpdate >= 0.10 {
+                    self.lastSubjectFocusPoint = center
+                    self.lastSubjectFocusUpdate = now
+                    self.camera.setSubjectFocus(displayPoint: CGPoint(x: box.midX, y: box.midY))
+                }
+            } else {
+                if self.subjectTrackingLostAt == nil { self.subjectTrackingLostAt = now }
+                if !self.subjectTrackingLost {
+                    // Lost subject: do not leave AF at the stale location. Fall
+                    // back to center continuous AF until the user locks again.
+                    self.subjectTrackingLost = true
+                    self.focusPoint = CGPoint(x: size.width / 2, y: size.height / 2)
+                    self.lastSubjectFocusPoint = self.focusPoint
+                    self.lastSubjectFocusUpdate = now
+                    self.camera.setSubjectFocus(displayPoint: CGPoint(x: 0.5, y: 0.5))
+                }
+            }
+        }
+    }
+
     func focusPreview(at point: CGPoint, size: CGSize, lockExposure: Bool = false) {
         guard camera.ready, !camera.capturing,
               point.x.isFinite, point.y.isFinite, size.width.isFinite, size.height.isFinite,
               size.width > 0, size.height > 0 else { return }
+        // A locked AE/AF box hides after 3s. A light tap only restores that box;
+        // it must not move focus, release locks or refocus the scene.
+        if !lockExposure, camera.targetLockActive, effectiveFocusTrackingState != .continuous,
+           let hidden = hiddenLockedFocusPoint {
+            hiddenLockedFocusPoint = nil
+            focusPoint = hidden
+            scheduleFocusDismissal()
+            return
+        }
         // A single tap must not disturb an active or pending AE lock.
         guard lockExposure || !camera.targetLockActive else { return }
+        if effectiveFocusTrackingState != .continuous {
+            // Every fresh focus starts from the default AE-only lock instead of
+            // remembering the previous AF/AE combination.
+            preferences.exposureLockEnabled = true
+            preferences.focusTrackingState = .off
+        }
+        if lockExposure, shouldTrackSubjectOnLongPress {
+            beginSubjectTracking(at: point, size: size)
+            return
+        }
+        // A previous session can leave both independent switches off. A long
+        // press must still establish a lock target; default back to AE so the
+        // AE/AF panel remains reachable.
+        if lockExposure, !exposureLockEnabled, focusTrackingState == .off {
+            preferences.exposureLockEnabled = true
+        }
         camera.unlockTargetExposure()
         manualFocus = false
         let target = CGPoint(x: min(max(point.x, 25), max(25, size.width - 25)),
                              y: min(max(point.y, 25), max(25, size.height - 25)))
         focusViewportSize = size
-        camera.focus(at: CGPoint(x: target.x / size.width, y: target.y / size.height), lockExposure: lockExposure && focusLockMode.locksExposure, lockFocus: lockExposure && focusLockMode.locksFocus)
+        camera.focus(at: CGPoint(x: target.x / size.width, y: target.y / size.height),
+                     lockExposure: lockExposure && exposureLockEnabled,
+                     lockFocus: lockExposure && effectiveFocusTrackingState == .locked)
         focusPoint = target
         if lockExposure {
-            focusTask?.cancel(); focusTask = nil
             cameraImpactFeedback(.light)
+            if effectiveFocusTrackingState != .continuous { scheduleFocusDismissal() }
         } else { scheduleFocusDismissal() }
     }
 
     func lockFocusExposure() {
         guard let point = focusPoint, camera.ready, !camera.capturing,
               focusViewportSize.width > 0, focusViewportSize.height > 0 else { return }
+        if effectiveFocusTrackingState == .continuous {
+            beginSubjectTracking(at: point, size: focusViewportSize)
+            return
+        }
+        preferences.exposureLockEnabled = true
+        preferences.focusTrackingState = .off
         focusTask?.cancel(); focusTask = nil
-        camera.focus(at: CGPoint(x: point.x / focusViewportSize.width, y: point.y / focusViewportSize.height), lockExposure: focusLockMode.locksExposure, lockFocus: focusLockMode.locksFocus)
+        camera.focus(at: CGPoint(x: point.x / focusViewportSize.width, y: point.y / focusViewportSize.height),
+                     lockExposure: exposureLockEnabled,
+                     lockFocus: effectiveFocusTrackingState == .locked)
         cameraImpactFeedback(.light)
+        scheduleFocusDismissal()
     }
 
     func unlockFocusExposure() {
         withAnimation(AppTheme.popupAnimation) { focusLockPickerVisible = false }
+        hiddenLockedFocusPoint = nil
+        if effectiveFocusTrackingState != .continuous {
+            // After cancelling a normal AE/AF lock, the next state is the default
+            // AE-only lock. AF* keeps its mode so the user can re-lock a subject.
+            preferences.exposureLockEnabled = true
+            preferences.focusTrackingState = .off
+        }
         camera.unlockTargetExposure()
         scheduleFocusDismissal()
     }
@@ -3907,10 +4146,11 @@ final class CameraViewModel: ObservableObject {
 
     private func scheduleFocusDismissal() {
         focusTask?.cancel(); focusTask = nil
-        guard focusPoint != nil, !camera.targetLockActive else { return }
+        guard focusPoint != nil, !subjectTrackingActive else { return }
         focusTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(4))
-            guard !Task.isCancelled, let self, !self.camera.targetLockActive else { return }
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled, let self, !self.subjectTrackingActive else { return }
+            self.hiddenLockedFocusPoint = self.camera.targetLockActive ? self.focusPoint : nil
             self.focusPoint = nil
         }
     }
@@ -4662,7 +4902,7 @@ final class CameraViewModel: ObservableObject {
         }
     }
 
-    func cancelFocus() { focusLockPickerVisible = false; focusTask?.cancel(); focusTask = nil; focusPoint = nil; camera.unlockTargetExposure() }
+    func cancelFocus() { focusLockPickerVisible = false; focusTask?.cancel(); focusTask = nil; hiddenLockedFocusPoint = nil; focusPoint = nil; camera.unlockTargetExposure() }
 
     func cancelCountdown() {
         countdownID = UUID()
@@ -4725,9 +4965,17 @@ final class CameraViewModel: ObservableObject {
         shutter = shutterTarget
         manualExposure = true
         if !manualWB { wb = readings.kelvin; whiteBalanceTint = readings.tint ?? 0 }
-        if !manualFocus { focus = readings.focus }
+        // Panning follows a moving subject; locking the lens at the first
+        // distance makes an approaching subject go soft during the sequence.
+        // Keep exposure locked, but leave focus continuous for this preset.
+        let tracksSubjectFocus = exposurePreset == .panning
+        if !tracksSubjectFocus {
+            if !manualFocus { focus = readings.focus }
+            manualFocus = true
+        } else {
+            manualFocus = false
+        }
         manualWB = true
-        manualFocus = true
         // A 挡虚拟多摄不能保证支持 custom 曝光；序列暂借 M 挡的物理输入路线，
         // 界面仍保留 A 挡。结束/取消统一按 restoreSlowShutterSequence 恢复自动路线。
         camera.setManualMode(true, customExposure: true)
@@ -4738,7 +4986,12 @@ final class CameraViewModel: ObservableObject {
         camera.setAutomaticExposureDurationLimit(nil)
         applyExposure()
         applyWhiteBalance()
-        camera.setFocus(position: focus)
+        if tracksSubjectFocus {
+            // An earlier long-press AF lock must not survive into a panning
+            // sequence that is supposed to follow the moving subject.
+            camera.unlockTargetExposure()
+        }
+        camera.setFocus(position: tracksSubjectFocus ? nil : focus)
         selectedSlowShutterPreset = preset
         let presetTitle = preset?.title.replacingOccurrences(of: "\n", with: "") ?? "慢门"
         slowShutterSequence = SlowShutterSequenceState(token: UUID(), preset: exposurePreset,
@@ -5057,6 +5310,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     private func restoreSlowShutterSequence(_ restore: SlowShutterSequenceRestore) {
+        endSubjectTracking()
         // 先释放原物理输入的序列帧时长，再恢复 A/M 路线，避免长曝光时长带入切镜事务。
         camera.clearSlowShutterSequenceCaptureExposure()
         // 普通慢门辅助先接管，再释放序列辅助，避免恢复 M 挡的瞬间提交一次

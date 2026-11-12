@@ -2,6 +2,8 @@ import Foundation
 
 struct CapturePreferences: Codable, Equatable {
     var focusLockMode = FocusLockMode.exposure
+    var exposureLockEnabled = true
+    var focusTrackingState = FocusTrackingState.off
     var silentShutter = false
     var recordLocation = false
     var copyright = ""
@@ -27,7 +29,7 @@ struct CapturePreferences: Codable, Equatable {
 
     init() {}
     private enum CodingKeys: String, CodingKey {
-        case focusLockMode, silentShutter, recordLocation, copyright, focusAssist, saveUnfilteredOriginal, saveCaptureSettings, lockVideoWhiteBalance, videoBitratePreset, videoStabilization
+        case focusLockMode, exposureLockEnabled, focusTrackingState, silentShutter, recordLocation, copyright, focusAssist, saveUnfilteredOriginal, saveCaptureSettings, lockVideoWhiteBalance, videoBitratePreset, videoStabilization
         case auxiliaryWatermark, auxiliaryTimerSeconds, auxiliaryGrid, auxiliaryHistogram, auxiliaryFocusPeaking, auxiliarySmoothPreview
         case auxiliaryLevel, auxiliaryPreviewQuarterTurns, auxiliaryRecordingCapacity, auxiliaryAudioMeter
         case dockKitTrackingEnabled
@@ -36,6 +38,20 @@ struct CapturePreferences: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         focusLockMode = try values.decodeIfPresent(FocusLockMode.self, forKey: .focusLockMode) ?? .exposure
+        if let ae = try values.decodeIfPresent(Bool.self, forKey: .exposureLockEnabled) {
+            exposureLockEnabled = ae
+        } else {
+            exposureLockEnabled = focusLockMode.locksExposure
+        }
+        if let tracking = try values.decodeIfPresent(FocusTrackingState.self, forKey: .focusTrackingState) {
+            focusTrackingState = tracking
+        } else {
+            switch focusLockMode {
+            case .exposure: focusTrackingState = .off
+            case .focus, .exposureAndFocus: focusTrackingState = .locked
+            case .tracking: focusTrackingState = .continuous
+            }
+        }
         silentShutter = try values.decodeIfPresent(Bool.self, forKey: .silentShutter) ?? false
         recordLocation = try values.decodeIfPresent(Bool.self, forKey: .recordLocation) ?? false
         copyright = try values.decodeIfPresent(String.self, forKey: .copyright) ?? ""

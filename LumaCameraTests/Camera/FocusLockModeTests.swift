@@ -39,7 +39,15 @@ final class FocusLockModeTests: XCTestCase {
             model.selectRatio(ratio)
             for mode in FocusLockMode.allCases {
                 model.preferences.focusLockMode = mode
+                model.preferences.exposureLockEnabled = mode.locksExposure
+                model.preferences.focusTrackingState = mode == .tracking ? .continuous : (mode.locksFocus ? .locked : .off)
                 model.focusPreview(at: point, size: size, lockExposure: true)
+                if mode == .tracking {
+                    XCTAssertTrue(model.subjectTrackingActive)
+                    XCTAssertFalse(camera.targetLockActive)
+                    model.endSubjectTracking()
+                    continue
+                }
                 XCTAssertEqual(camera.targetExposureLockActive, mode.locksExposure)
                 XCTAssertEqual(camera.targetFocusLockActive, mode.locksFocus)
                 XCTAssertTrue(camera.targetLocked)
@@ -54,6 +62,8 @@ final class FocusLockModeTests: XCTestCase {
             }
         }
         model.preferences.focusLockMode = .focus
+        model.preferences.exposureLockEnabled = false
+        model.preferences.focusTrackingState = .locked
         model.focusPreview(at: point, size: size, lockExposure: true)
         model.selectFocusLockMode(.exposureAndFocus)
         XCTAssertTrue(camera.targetExposureLockActive); XCTAssertTrue(camera.targetFocusLockActive)
@@ -68,6 +78,8 @@ final class FocusLockModeTests: XCTestCase {
         let library = PhotoLibraryViewModel(service: service), defaults = UserDefaults(suiteName: UUID().uuidString)!
         let model = CameraViewModel(camera: camera, library: library, gallery: GalleryViewModel(browser: service, library: library), preferencesStore: CapturePreferencesStore(defaults: defaults))
         model.preferences.focusLockMode = .exposureAndFocus
+        model.preferences.exposureLockEnabled = true
+        model.preferences.focusTrackingState = .locked
         defer { model.setCameraActive(false) }
         model.setCameraActive(true)
         for _ in 0..<100 { if camera.ready { break }; try await Task.sleep(for: .milliseconds(20)) }
@@ -81,11 +93,15 @@ final class FocusLockModeTests: XCTestCase {
     #else
     @MainActor func testPhysicalAEAFAndCombinedLockWithEVAndManualExposureWithoutPhotos() async throws {
         let model = try XCTUnwrap(AppDependencies.runningAppCameraModel), camera = model.camera
-        let mode = model.mode, preference = model.preferences.focusLockMode, ev = model.ev
+        let mode = model.mode, preference = model.preferences.focusLockMode
+        let aePreference = model.preferences.exposureLockEnabled
+        let trackingPreference = model.preferences.focusTrackingState, ev = model.ev
         let manual = model.manualExposure, iso = model.iso, shutter = model.shutter
         let idle = UIApplication.shared.isIdleTimerDisabled; UIApplication.shared.isIdleTimerDisabled = true
         defer {
             model.cancelFocus(); model.preferences.focusLockMode = preference
+            model.preferences.exposureLockEnabled = aePreference
+            model.preferences.focusTrackingState = trackingPreference
             model.setMode(mode); model.ev = ev; model.iso = iso; model.shutter = shutter; model.manualExposure = manual; model.applyExposure()
             model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle
         }
@@ -100,8 +116,18 @@ final class FocusLockModeTests: XCTestCase {
         let tapped = await state(camera)
         XCTAssertEqual(tapped?.focusMode, .continuousAutoFocus)
         for mode in FocusLockMode.allCases {
-            model.cancelFocus(); model.preferences.focusLockMode = mode
+            model.cancelFocus()
+            // A new focus always starts as the default AE-only lock; switch to
+            // the target mode through the same path as the AF picker.
             model.focusPreview(at: CGPoint(x: 150, y: 200), size: CGSize(width: 300, height: 400), lockExposure: true)
+            for _ in 0..<120 { if camera.targetLocked { break }; try await Task.sleep(for: .milliseconds(30)) }
+            model.selectFocusLockMode(mode)
+            if mode == .tracking {
+                XCTAssertTrue(model.subjectTrackingActive)
+                XCTAssertFalse(camera.targetLockActive)
+                model.endSubjectTracking()
+                continue
+            }
             for _ in 0..<120 { if camera.targetLocked { break }; try await Task.sleep(for: .milliseconds(30)) }
             XCTAssertTrue(camera.targetLocked, mode.rawValue)
             let snapshot = await state(camera)
@@ -122,8 +148,9 @@ final class FocusLockModeTests: XCTestCase {
         try await Task.sleep(for: .seconds(2))
         model.manualExposure = true; model.iso = 400; model.shutter = log2(1.0 / 125); model.applyExposure()
         try await Task.sleep(for: .milliseconds(500))
-        model.preferences.focusLockMode = .exposureAndFocus
         model.focusPreview(at: CGPoint(x: 150, y: 200), size: CGSize(width: 300, height: 400), lockExposure: true)
+        for _ in 0..<120 { if camera.targetLocked { break }; try await Task.sleep(for: .milliseconds(30)) }
+        model.selectFocusLockMode(.exposureAndFocus)
         // Editing exposure before the settling callback must not orphan the pending AF lock.
         model.iso = 800; model.shutter = log2(1.0 / 250); model.applyExposure()
         for _ in 0..<120 { if camera.targetLocked { break }; try await Task.sleep(for: .milliseconds(30)) }

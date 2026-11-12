@@ -6013,6 +6013,35 @@ final class CameraEngine: NSObject, ObservableObject {
         }
     }
 
+    /// Move the continuous-AF point without touching exposure or target locks.
+    /// Used by the panning subject tracker.
+    func setSubjectFocus(displayPoint: CGPoint) {
+        guard displayPoint.x.isFinite, displayPoint.y.isFinite else { return }
+        configureDevice { device in
+            guard let sensorPoint = self.sensorPoint(forDisplayPoint: displayPoint) else { return }
+            if device.isFocusPointOfInterestSupported {
+                device.focusPointOfInterest = sensorPoint
+            }
+            if device.isFocusModeSupported(.continuousAutoFocus) {
+                device.focusMode = .continuousAutoFocus
+            }
+        }
+    }
+
+    private func sensorPoint(forDisplayPoint point: CGPoint) -> CGPoint? {
+        let state = livePreviewState.snapshot()
+        let sourceExtent = state.extent
+        guard sourceExtent.width.isFinite, sourceExtent.height.isFinite,
+              sourceExtent.width > 0, sourceExtent.height > 0 else { return nil }
+        let displayExtent = PreviewRotation.image(CIImage(color: .black).cropped(to: sourceExtent), quarterTurns: previewQuarterTurns).extent
+        let crop = look.ratio.crop(CIImage(color: .black).cropped(to: displayExtent), landscape: look.landscape).extent
+        let displayPoint = CGPoint(x: (crop.minX - displayExtent.minX + point.x * crop.width) / displayExtent.width,
+                                   y: (crop.minY - displayExtent.minY + point.y * crop.height) / displayExtent.height)
+        let original = PreviewRotation.sourcePoint(displayPoint, quarterTurns: previewQuarterTurns)
+        return CGPoint(x: min(max(original.y, 0), 1),
+                       y: min(max(input?.device.position == .front ? original.x : 1 - original.x, 0), 1))
+    }
+
     func focus(at point: CGPoint, lockExposure: Bool = false, lockFocus: Bool = false) {
         guard ready, !capturing, point.x.isFinite, point.y.isFinite else { return }
         let revision = targetExposureRevision.advance()

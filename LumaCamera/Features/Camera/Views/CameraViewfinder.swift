@@ -242,7 +242,18 @@ extension CameraView {
                     .zIndex(5)
                     .animation(reducingMotion ? nil : .easeInOut(duration: 0.22), value: controlLandscape)
                 }
-                if let point = model.focusPoint {
+                if let trackingBox = model.subjectTrackingBox, model.subjectTrackingActive {
+                    SubjectTrackingOverlay(box: trackingBox, lost: model.subjectTrackingLost)
+                        .frame(width: width, height: height)
+                        .zIndex(6)
+                    if let point = model.focusPoint {
+                        CameraFocusControls(model: model, camera: camera, point: point,
+                                            size: CGSize(width: width, height: height), topInset: hudTop,
+                                            bottomInset: max(0, previewTop + height - (geometry.size.height - CameraControlLayout.compositionBottom - 32)),
+                                            showsTargetBox: false, showsEV: false)
+                            .zIndex(7)
+                    }
+                } else if let point = model.focusPoint {
                     CameraFocusControls(model: model, camera: camera, point: point, size: CGSize(width: width, height: height), topInset: hudTop, bottomInset: max(0, previewTop + height - (geometry.size.height - CameraControlLayout.compositionBottom - 32)))
                         .zIndex(4)
                 }
@@ -374,7 +385,11 @@ extension CameraView {
                             guard let point = previewPressLocation else { return }
                             guard !model.zoomDialVisible, !model.focusLockPickerVisible, model.toolbarPanel == nil, model.panel == nil,
                                   !model.functions, !model.tools, !model.shootingModes else { model.closePopups(); return }
-                            model.focusPreview(at: point, size: size, lockExposure: true)
+                            if model.shouldTrackSubjectOnLongPress {
+                                model.beginSubjectTracking(at: point, size: size)
+                            } else {
+                                model.focusPreview(at: point, size: size, lockExposure: true)
+                            }
                         }
                         .exclusively(before: SpatialTapGesture().onEnded { tap in
                             if model.focusLockPickerVisible || model.zoomDialVisible || model.toolbarPanel != nil || model.panel != nil || model.functions || model.tools || model.shootingModes { model.closePopups(); return }
@@ -384,6 +399,13 @@ extension CameraView {
             }
         }
         // Track the initial contact without waiting for movement, while tap/hold arbitrate exclusively.
+        .simultaneousGesture(TapGesture(count: 2).onEnded {
+            if model.subjectTrackingActive {
+                model.endSubjectTracking()
+            } else {
+                model.unlockFocusExposure()
+            }
+        })
         .simultaneousGesture(DragGesture(minimumDistance: 0)
             .updating($previewPressLocation) { drag, location, _ in location = drag.startLocation })
         .simultaneousGesture(MagnificationGesture()

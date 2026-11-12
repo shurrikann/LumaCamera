@@ -290,16 +290,12 @@ final class SubmodeSwitchingPhysicalTests: XCTestCase {
             ("slow", { model.toggleSlowMotionMode() }, { model.slowMotionEnabled }),
         ]
         for (index, entry) in modes.enumerated() {
-            let start = CACurrentMediaTime()
             entry.1()
             for _ in 0..<800 {
                 if entry.2() && !model.isPreparingSubmode && !model.camera.videoConfiguring { break }
                 if model.camera.message != nil && !entry.2() { break }
                 try await Task.sleep(for: .milliseconds(20))
             }
-            let elapsed = CACurrentMediaTime() - start
-            print(String(format: "CROSS-SWITCH %d %@ %.3f enabled=%d msg=%@", index, entry.0, elapsed,
-                         entry.2() ? 1 : 0, model.camera.message ?? "nil"))
             XCTAssertTrue(entry.2(), "index=\(index) mode=\(entry.0) msg=\(model.camera.message ?? "nil")")
         }
         model.setCameraActive(false)
