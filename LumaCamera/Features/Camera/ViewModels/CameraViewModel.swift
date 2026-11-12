@@ -500,24 +500,31 @@ final class CameraViewModel: ObservableObject {
     }
 
     /// 开启时先检查当前路线；只有当前路线无兼容规格才异步查询其他镜头。
-    private func toggleVideoSubmode(_ requested: VideoSubmode) {
-        guard beginUserTransition({ [weak self] in self?.toggleVideoSubmode(requested) }) else { return }
+    private func toggleVideoSubmode(_ requested: VideoSubmode, startIfStopped: Bool = false) {
+        guard beginUserTransition({ [weak self] in self?.toggleVideoSubmode(requested, startIfStopped: startIfStopped) }) else { return }
         defer { endUserTransition() }
         disableFrontVideoCenteringForManualChoice()
         if camera.dualCaptureEnabled {
-            camera.setDualCaptureEnabled(false) { [weak self] success in
+            let directCinematic = requested == .cinematic
+            camera.setDualCaptureEnabled(false, keepMainSessionStopped: directCinematic) { [weak self] success in
                 Task { @MainActor [weak self] in
                     guard let self, success, self.captureKind == .video else { return }
-                    self.restoreVideoSettingsAfterDualCapture()
-                    // The dual session restores its single-camera format
-                    // asynchronously. Retrying cinematic immediately can rebuild
-                    // against the old graph and then fall back to "off".
-                    for _ in 0..<500 {
-                        if self.camera.ready && !self.camera.videoConfiguring && !self.camera.dualCapturePreparing { break }
-                        try? await Task.sleep(for: .milliseconds(20))
+                    // The next submode will submit its own camera settings. Avoid
+                    // a full ordinary-video reconfigure in between.
+                    self.restoreVideoSettingsAfterDualCapture(synchronize: false)
+                    if directCinematic {
+                        // Keep the main single-camera session stopped and let the
+                        // cinematic input/graph start it once, instead of starting
+                        // an ordinary video session just to stop it again.
+                        self.toggleVideoSubmode(requested, startIfStopped: true)
+                    } else {
+                        for _ in 0..<500 {
+                            if self.camera.ready && !self.camera.videoConfiguring && !self.camera.dualCapturePreparing { break }
+                            try? await Task.sleep(for: .milliseconds(20))
+                        }
+                        guard self.captureKind == .video else { return }
+                        self.toggleVideoSubmode(requested)
                     }
-                    guard self.captureKind == .video else { return }
-                    self.toggleVideoSubmode(requested)
                 }
             }
             return
@@ -539,7 +546,7 @@ final class CameraViewModel: ObservableObject {
         videoSubmodeRequest = request
         if requested == .cinematic, !camera.cinematicVideoCaptureActive {
             videoSubmodePreparing = .cinematic
-            camera.prepareCinematicInput { [weak self] success in
+            camera.prepareCinematicInput(startIfStopped: startIfStopped) { [weak self] success in
                 Task { @MainActor [weak self] in
                     guard let self, self.videoSubmodeRequest == request, self.captureKind == .video else { return }
                     if success {
@@ -559,6 +566,7 @@ final class CameraViewModel: ObservableObject {
                         self.videoSubmodePreparing = nil
                         self.setVideoSubmode(.cinematic, enabled: false)
                         self.camera.message = "当前镜头无法启用电影效果"
+                        self.synchronizeVideoSettings()
                     }
                 }
             }
@@ -915,6 +923,7 @@ final class CameraViewModel: ObservableObject {
         cancelVideoEntryWatchdog()
         endZoomDial(); cancelFocus()
         cameraSelectionFeedback()
+        withAnimation(AppTheme.popupAnimation) { shootingModes = false }
         startFocalTransition(fadeDuration: 0.14)
         if camera.dualCaptureEnabled {
             if frontVideoCenteringRequested || camera.frontVideoCenteringEnabled {
@@ -956,14 +965,17 @@ final class CameraViewModel: ObservableObject {
             }
         }
     }
-    private func restoreVideoSettingsAfterDualCapture() {
+    private func restoreVideoSettingsAfterDualCapture(synchronize: Bool = true) {
         guard let saved = videoSettingsBeforeDualCapture else { return }
         videoSettingsBeforeDualCapture = nil
         restoringVideoSettings = true
         videoResolution = saved.0; videoFrameRate = saved.1; videoColorSpace = saved.2
         videoCodec = saved.3; videoRatio = saved.4; videoOpenGateEnabled = saved.5; proResSpecification = saved.6
         restoringVideoSettings = false
-        if captureKind == .video { ratio = videoRatio.frameRatio; synchronizeVideoSettings() }
+        if captureKind == .video {
+            ratio = videoRatio.frameRatio
+            if synchronize { synchronizeVideoSettings() }
+        }
         applyExposure(); applyWhiteBalance(); camera.setFocus(position: manualFocus ? focus : nil)
         camera.completeUserPreviewSwitch(focalTransitionID)
     }

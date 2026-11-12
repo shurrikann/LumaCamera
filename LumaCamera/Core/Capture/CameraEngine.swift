@@ -173,7 +173,8 @@ final class CameraEngine: NSObject, ObservableObject {
 
     /// 双拍使用独立图；先停止单摄，失败则拆除双摄并恢复原图，绝不同时占用两套相机会话。
     func setDualCaptureEnabled(_ enabled: Bool, settings: VideoCaptureSettings? = nil, ratio: FrameRatio? = nil,
-                               frontWide: Bool? = nil, completion: @escaping (Bool) -> Void = { _ in }) {
+                               frontWide: Bool? = nil, keepMainSessionStopped: Bool = false,
+                               completion: @escaping (Bool) -> Void = { _ in }) {
         guard !videoBusy, !capturing, !dualCapturePreparing else { completion(false); return }
         dualCapturePreparing = true
         ready = false
@@ -270,7 +271,7 @@ final class CameraEngine: NSObject, ObservableObject {
                     }
                 } else {
                     self.releaseDualCaptureOnQueue()
-                    if self.wantsRunning { self.session.startRunning() }
+                    if self.wantsRunning && !keepMainSessionStopped { self.session.startRunning() }
                     self.syncPreviewState()
                 }
                 let supported = enabled ? DualCapturePolicy.supportedSettings() : []
@@ -287,7 +288,9 @@ final class CameraEngine: NSObject, ObservableObject {
                     completion(true)
                 }
                 // 就绪仍由新帧验证，不能仅凭startRunning返回便允许录制。
-                self.verifyRecoveredFrames(token: self.recoveryRevision.current, attempt: 0, startedAt: CACurrentMediaTime())
+                if enabled || !keepMainSessionStopped {
+                    self.verifyRecoveredFrames(token: self.recoveryRevision.current, attempt: 0, startedAt: CACurrentMediaTime())
+                }
             } catch {
                 // 规格替换失败先恢复上一套已运行组合，不能把失败规格留在界面或丢失双拍意图。
                 if let previousSettings, enabled {
@@ -2431,7 +2434,7 @@ final class CameraEngine: NSObject, ObservableObject {
 
     /// WWDC25 Cinematic 要求先使用 DualWide/TrueDepth 设备及其电影格式，再启用电影输入。
     /// 视频普通格式往往在 TripleCamera 上；这里在开启电影子模式前直接换到电影设备。
-    func prepareCinematicInput(completion: @escaping (Bool) -> Void) {
+    func prepareCinematicInput(startIfStopped: Bool = false, completion: @escaping (Bool) -> Void) {
         queue.async {
             guard #available(iOS 26.0, *), self.videoModeRequested,
                   let current = self.input,
@@ -2457,6 +2460,7 @@ final class CameraEngine: NSObject, ObservableObject {
             // session can keep serving the old preview after this swap, so stop
             // and restart only for the cinematic entry path.
             let wasRunning = self.session.isRunning
+            let shouldRun = wasRunning || startIfStopped
             if wasRunning { self.session.stopRunning() }
             self.session.beginConfiguration()
             do {
@@ -2472,7 +2476,7 @@ final class CameraEngine: NSObject, ObservableObject {
                 }
                 guard self.session.canAddInput(replacement) else {
                     self.addInputReplacingExisting(current); self.session.commitConfiguration()
-                    if wasRunning { self.session.startRunning() }
+                    if shouldRun { self.session.startRunning() }
                     DispatchQueue.main.async { completion(false) }; return
                 }
                 self.addInputReplacingExisting(replacement)
@@ -2484,12 +2488,16 @@ final class CameraEngine: NSObject, ObservableObject {
                 }
                 self.configureConnections(device: target)
                 self.session.commitConfiguration()
-                if wasRunning { self.session.startRunning() }
+                if shouldRun { self.session.startRunning() }
+                if shouldRun && !wasRunning {
+                    self.verifyRecoveredFrames(token: self.recoveryRevision.current, attempt: 0,
+                                               startedAt: CACurrentMediaTime())
+                }
                 DispatchQueue.main.async { completion(true) }
             } catch {
                 self.addInputReplacingExisting(current)
                 self.session.commitConfiguration()
-                if wasRunning { self.session.startRunning() }
+                if shouldRun { self.session.startRunning() }
                 self.report("切换电影设备失败：\(error.localizedDescription)")
                 DispatchQueue.main.async { completion(false) }
             }
