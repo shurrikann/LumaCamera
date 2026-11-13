@@ -109,7 +109,7 @@ extension CameraView {
                     } else if model.virtualApertureEnabled {
                         Button { model.toggleVirtualApertureSlider() } label: {
                             VStack(spacing: 0) {
-                                Image(systemName: "camera.aperture")
+                                Image(systemName: "sparkles")
                                     .font(.system(size: 15, weight: .regular))
                                 Text(model.virtualApertureText.replacingOccurrences(of: "ƒ/", with: ""))
                                     .font(.system(size: 7, weight: .medium, design: .rounded))
@@ -121,7 +121,7 @@ extension CameraView {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("虚拟光圈调节")
+                        .accessibilityLabel("星芒调节")
                         .accessibilityValue(model.virtualApertureText)
                         .accessibilityIdentifier("camera.toolbar.virtualAperture")
                         .captureControlGeometry("toolbar.depthControl", model: model)
@@ -315,7 +315,7 @@ extension CameraView {
                    })
                 .tint(AppTheme.accent)
                 .frame(height: 22)
-                .accessibilityLabel("虚拟光圈")
+                .accessibilityLabel("星芒")
                 .accessibilityValue(model.virtualApertureText)
                 .accessibilityIdentifier("camera.virtualAperture.slider")
             Button {
@@ -329,7 +329,7 @@ extension CameraView {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("恢复默认虚拟光圈")
+            .accessibilityLabel("恢复默认星芒")
             .accessibilityValue(model.virtualApertureText)
         }
         .foregroundStyle(.white)

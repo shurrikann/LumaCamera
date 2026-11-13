@@ -83,7 +83,7 @@ struct AFTrackingLabView: View {
                     .padding().background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 10))
             }
         }
-        .navigationTitle("AF追踪")
+        .navigationTitle("长曝光测试")
         .navigationBarTitleDisplayMode(.inline)
         .task { lab.start() }
         .onDisappear { lab.stop() }

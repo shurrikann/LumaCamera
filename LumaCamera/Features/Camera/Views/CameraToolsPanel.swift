@@ -16,25 +16,25 @@ extension CameraView {
                 ShootingModeOption(title: "慢门", icon: PhotoSubmode.slowShutter.symbol),
                 ShootingModeOption(title: "人像", icon: PhotoSubmode.portrait.symbol),
                 ShootingModeOption(title: "连拍", icon: PhotoSubmode.burst.symbol),
-                // 虚拟光圈仅模拟高亮星芒，真实镜头光圈与曝光不变。
-                ShootingModeOption(title: "虚拟光圈", icon: "camera.aperture")
+                // 星芒仅模拟高亮星芒，真实镜头光圈与曝光不变。
+                ShootingModeOption(title: "星芒", icon: "sparkles")
             ]
             : [
                 ShootingModeOption(title: "延时", icon: VideoSubmode.timeLapse.symbol),
                 ShootingModeOption(title: "慢动作", icon: VideoSubmode.slowMotion.symbol),
                 ShootingModeOption(title: "电影", icon: VideoSubmode.cinematic.symbol),
                 ShootingModeOption(title: "同步双拍", icon: "rectangle.on.rectangle"),
-                ShootingModeOption(title: "虚拟光圈", icon: "camera.aperture")
+                ShootingModeOption(title: "星芒", icon: "sparkles")
             ]
         let visibleOptions = options.filter {
-            !($0.title == "虚拟光圈" && model.currentPosition == .front)
+            !($0.title == "星芒" && model.currentPosition == .front)
         }
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 3), spacing: 10) {
             ForEach(visibleOptions) { option in
                 let isSlowShutter = option.title == "慢门" && model.captureKind == .photo
                 let isBurst = option.title == "连拍" && model.captureKind == .photo
                 let isPortrait = option.title == "人像" && model.captureKind == .photo
-                let isVirtualAperture = option.title == "虚拟光圈"
+                let isVirtualAperture = option.title == "星芒"
                 let isTimeLapse = option.title == "延时" && model.captureKind == .video
                 let isSlowMotion = option.title == "慢动作" && model.captureKind == .video
                 let isCinematic = option.title == "电影" && model.captureKind == .video
@@ -124,7 +124,7 @@ extension CameraView {
                         }
                         .buttonStyle(.plain)
                         .disabled(!enabled)
-                        .accessibilityLabel("虚拟光圈")
+                        .accessibilityLabel("星芒")
                         .accessibilityValue(model.virtualApertureEnabled ? model.virtualApertureText : "关闭")
                         .accessibilityHint(model.captureKind == .video
                             ? "仅主摄和长焦、SDR或P3视频；不兼容规格自动适配。星芒写入成片，不改变实际曝光或景深。"

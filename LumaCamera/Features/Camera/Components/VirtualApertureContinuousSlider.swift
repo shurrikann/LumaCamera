@@ -25,7 +25,7 @@ struct VirtualApertureContinuousSlider: UIViewRepresentable {
             control.setThumbImage(thumb, for: state)
         }
         control.accessibilityIdentifier = "camera.virtualAperture.slider"
-        control.accessibilityLabel = "虚拟光圈"
+        control.accessibilityLabel = "星芒"
         context.coordinator.attach(control)
         return control
     }

@@ -758,7 +758,12 @@ final class CameraEngine: NSObject, ObservableObject {
                 "proRAWSupported": String(self.photoOutput.isAppleProRAWSupported),
                 "rawTypes": "\(self.photoOutput.availableRawPhotoPixelFormatTypes.count)",
                 "preset": self.session.sessionPreset.rawValue,
-                "outputs": self.session.outputs.map { String(describing: type(of: $0)) }.joined(separator: ",")
+                "outputs": self.session.outputs.map { String(describing: type(of: $0)) }.joined(separator: ","),
+                "liveSupported": String(self.photoOutput.isLivePhotoCaptureSupported),
+                "liveEnabled": String(self.photoOutput.isLivePhotoCaptureEnabled),
+                "liveSuspended": String(self.photoOutput.isLivePhotoCaptureSuspended),
+                "liveRequested": String(self.livePreviewRequested),
+                "photoActive": String(self.photoOutput.connection(with: .video)?.isActive ?? false)
             ]
             DispatchQueue.main.async { completion(state) }
         }
@@ -6589,7 +6594,7 @@ final class CameraEngine: NSObject, ObservableObject {
             let physical = self.input?.device.isVirtualDevice == true ? self.input?.device.activePrimaryConstituent : self.input?.device
             if physical?.position != .back || ![AVCaptureDevice.DeviceType.builtInWideAngleCamera, .builtInTelephotoCamera].contains(physical?.deviceType ?? .builtInUltraWideCamera) {
                 captureLook.virtualAperture = nil
-                if options.shootingType == "虚拟光圈" { options.shootingType = "普通" }
+                if options.shootingType == "星芒" { options.shootingType = "普通" }
             }
             captureLook.grainPhase = self.livePreviewState.snapshot().grainPhase
             let context = CaptureContext(sequence: sequence, token: token, look: captureLook, options: options,

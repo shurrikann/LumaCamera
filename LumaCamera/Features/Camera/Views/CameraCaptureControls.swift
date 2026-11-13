@@ -99,9 +99,8 @@ extension CameraView {
                             model.openParameter(item)
                         } label: {
                             Image(systemName: model.parameterIcon(item)).rotatingCaptureContent().font(.system(size: 17, weight: .regular))
-                                .foregroundStyle(model.parameterIsManual(item) ? Color(red: 0.24, green: 0.12, blue: 0.04) : .white)
+                                .foregroundStyle(model.parameterIsManual(item) ? AppTheme.manualParameterColor : .white)
                                 .frame(width: 42, height: 42)
-                                .background(model.parameterIsManual(item) ? AppTheme.manualParameterColor.opacity(0.78) : .clear, in: Circle())
                                 .modifier(GlassSurface(radius: 21, previewOverlay: true))
                                 .frame(maxWidth: model.cinematicAutomaticControls ? 62 : .infinity)
                         }.captureControlGeometry("parameter." + item.rawValue, model: model).accessibilityLabel(model.parameterTitle(item))
@@ -260,7 +259,7 @@ extension CameraView {
                 .contentShape(Rectangle().inset(by: -CameraControlLayout.buttonHitExpansion))
         }
         .accessibilityLabel("拍摄模式选项")
-        .accessibilityValue(model.captureKind == .video ? (camera.dualCaptureEnabled ? "同步双拍已开启" : model.timeLapseEnabled ? "延时摄影已开启" : model.slowMotionEnabled ? "慢动作已开启" : model.cinematicVideoEnabled ? "电影模式已开启" : model.virtualApertureEnabled ? "虚拟光圈已开启" : "视频模式") : model.portraitModeEnabled ? "人像已开启" : model.burstModeEnabled ? "连拍已开启" : model.slowShutterEnabled ? "慢门已开启" : "照片模式")
+        .accessibilityValue(model.captureKind == .video ? (camera.dualCaptureEnabled ? "同步双拍已开启" : model.timeLapseEnabled ? "延时摄影已开启" : model.slowMotionEnabled ? "慢动作已开启" : model.cinematicVideoEnabled ? "电影模式已开启" : model.virtualApertureEnabled ? "星芒已开启" : "视频模式") : model.portraitModeEnabled ? "人像已开启" : model.burstModeEnabled ? "连拍已开启" : model.slowShutterEnabled ? "慢门已开启" : "照片模式")
         .disabled(camera.videoBusy)
         .recordingHidden(model.captureKind == .video && camera.videoRecording)
     }
@@ -297,7 +296,7 @@ extension CameraView {
                 .frame(width: 120, height: 28)
                 .rotationEffect(.degrees(-90))
                 .frame(width: 22, height: 120)
-                .accessibilityLabel("虚拟光圈")
+                .accessibilityLabel("星芒")
                 .accessibilityValue(model.virtualApertureText)
                 .accessibilityIdentifier("camera.video.virtualAperture.slider")
                 .captureControlGeometry("videoVirtualApertureSlider", model: model)
@@ -328,7 +327,7 @@ extension CameraView {
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(cinematic ? "电影光圈调节" : "虚拟光圈调节")
+        .accessibilityLabel(cinematic ? "电影光圈调节" : "星芒调节")
         .accessibilityValue(text)
         .accessibilityIdentifier(cinematic ? "camera.video.cinematicAperture.control" : "camera.video.virtualAperture.control")
         .captureControlGeometry(cinematic ? "videoCinematicApertureButton" : "videoVirtualApertureButton", model: model)
@@ -380,7 +379,6 @@ extension CameraView {
         return HStack(spacing: 0) {
             Button { CameraHaptics.impact(.light); model.openLibrary() } label: {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.06))
                     // Only media rotates; the circular hit target and progress stay fixed.
                     Group {
                         if let image = gallery.albumButtonImage {
@@ -407,16 +405,19 @@ extension CameraView {
                             .offset(x: 4, y: -4).allowsHitTesting(false)
                     }
                 }
-            }.captureControlGeometry("album", model: model).disabled(camera.capturing || camera.pendingPhotoCount > 0 || camera.videoBusy || library.videoSaving)
+            }.buttonStyle(.plain)
+                .captureControlGeometry("album", model: model).disabled(camera.capturing || camera.pendingPhotoCount > 0 || camera.videoBusy || library.videoSaving)
                 .accessibilityLabel(library.captureAwaitingReview ? "查看刚拍摄的照片" : "打开系统相册")
                 .accessibilityValue("\(albumPendingCount) 张照片正在处理或保存")
                 .recordingHidden(recording)
             Spacer(minLength: 0)
             bottomButton(model.captureKind == .video ? "video.fill" : "camera.fill",
                          label: model.captureKind == .video ? "切换到照片模式" : "切换到视频模式",
-                         size: size, iconSize: 20) {
+                         size: size, iconSize: 20, iconOffset: modeContentOffset) {
                 model.requestCaptureKind(model.captureKind == .video ? .photo : .video)
-            }.captureControlGeometry("functions", model: model)
+            }.buttonStyle(.plain)
+                .captureControlGeometry("functions", model: model)
+                .simultaneousGesture(modeContentSwipeGesture)
                 // 配置/子模式准备/快速切换期间点击也要立即反馈，必要时由模型排队执行。
                 .disabled(camera.capturing || library.videoSaving)
                 .recordingHidden(recording)
@@ -458,7 +459,8 @@ extension CameraView {
                         : showsStyle ? model.style.filterButtonEquipment : nil,
                     active: isLog ? model.selectedLogLUTPreset != nil : model.effectiveCaptureLook.style != .original,
                     size: size, dimmed: !model.filterControlsEnabled)
-            }.captureControlGeometry("filter", model: model).disabled(!model.filterControlsEnabled || camera.videoBusy)
+            }.buttonStyle(.plain)
+                .captureControlGeometry("filter", model: model).disabled(!model.filterControlsEnabled || camera.videoBusy)
                 .accessibilityLabel(model.logVideoLUTControlsEnabled ? "选择 Log 视频 LUT" : "选择滤镜")
                 .accessibilityValue(model.logVideoLUTControlsEnabled ? (model.selectedLogLUTPreset?.displayName ?? "未选择 Log 滤镜")
                     : showsStyle ? model.style.title : model.captureKind == .video ? "当前视频色彩空间不支持滤镜" : "RAW，滤镜已禁用")
@@ -485,13 +487,45 @@ extension CameraView {
                     .frame(width: size, height: size)
                     .modifier(GlassSurface(radius: size / 2))
                     .contentShape(Circle())
-            }.captureControlGeometry("flip", model: model)
+            }.buttonStyle(.plain)
+                .captureControlGeometry("flip", model: model)
                 .disabled(!camera.ready || camera.capturing || camera.videoBusy || model.virtualApertureEnabled || model.oppositeLens == nil)
                 .accessibilityLabel(model.currentPosition == .front ? "切换到后置镜头" : "切换到前置镜头")
                 .recordingHidden(recording)
         }
         .padding(.horizontal, 20).padding(.top, 2)
         .animation(AppTheme.popupAnimation, value: recording)
+    }
+
+    private var modeContentSwipeGesture: some Gesture {
+        DragGesture(minimumDistance: 14)
+            .onChanged { value in
+                guard modeContentSwipeEnabled,
+                      abs(value.translation.width) > abs(value.translation.height) else { return }
+                modeContentOffset = max(-18, min(18, value.translation.width * 0.16))
+            }
+            .onEnded { value in
+                guard modeContentSwipeEnabled else {
+                    withAnimation(.easeOut(duration: 0.16)) { modeContentOffset = 0 }
+                    return
+                }
+                let horizontal = abs(value.translation.width) > abs(value.translation.height)
+                guard horizontal, abs(value.translation.width) > 42 else {
+                    withAnimation(.easeOut(duration: 0.16)) { modeContentOffset = 0 }
+                    return
+                }
+                let direction: CGFloat = value.translation.width < 0 ? -1 : 1
+                withAnimation(.easeOut(duration: 0.10)) { modeContentOffset = 22 * direction }
+                let next: CameraViewModel.CaptureKind = model.captureKind == .video ? .photo : .video
+                model.requestCaptureKind(next)
+                withAnimation(.easeOut(duration: 0.22)) { modeContentOffset = 0 }
+            }
+    }
+
+    private var modeContentSwipeEnabled: Bool {
+        camera.ready && !camera.capturing && !camera.videoBusy
+            && !model.captureKindSwitching && !model.isPreparingSubmode
+            && !(model.captureKind == .video && camera.videoRecording)
     }
 
     private var captureShutterFace: some View {
@@ -540,7 +574,7 @@ extension CameraView {
         .animation(.easeInOut(duration: 0.15), value: model.burstCaptureActive)
     }
 
-    func bottomButton(_ icon: String, label: String, active: Bool = false, size: CGFloat = 52, dimmed: Bool = false, iconSize: CGFloat? = nil, action: @escaping () -> Void) -> some View {
+    func bottomButton(_ icon: String, label: String, active: Bool = false, size: CGFloat = 52, dimmed: Bool = false, iconSize: CGFloat? = nil, iconOffset: CGFloat = 0, action: @escaping () -> Void) -> some View {
         Button {
             CameraHaptics.impact(.light)
             action()
@@ -548,9 +582,11 @@ extension CameraView {
             Image(systemName: icon).rotatingCaptureContent().font(.system(size: iconSize ?? (size >= 50 ? 23 : 21)))
                 .foregroundStyle(active ? AppTheme.accent : .white)
                 .opacity(dimmed ? AppTheme.disabledControlOpacity : 1)
+                .offset(x: iconOffset)
                 .frame(width: size, height: size).modifier(GlassSurface(radius: size / 2))
                 .contentShape(Circle())
-        }.accessibilityLabel(label)
+        }.buttonStyle(.plain)
+            .accessibilityLabel(label)
     }
 }
 

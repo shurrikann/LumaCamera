@@ -13,6 +13,7 @@ struct CameraView: View {
     @State var openGateInfoVisible = false
     @State var parameterPopupHeight: CGFloat = 0
     @State var flipButtonRotation = 0.0
+    @State var modeContentOffset: CGFloat = 0
     @State var previewEVOrigin: Double?
     @State var dockKitROIStart: CGPoint?
     @State var dockKitROIFrame: CGRect?

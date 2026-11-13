@@ -297,11 +297,11 @@ final class BasicVideoPhysicalTests: XCTestCase {
     @discardableResult static func waitForVideoShutter(_ model:CameraViewModel, label:String,
         timeout:TimeInterval = 8,file:StaticString = #filePath,line:UInt = #line) async throws -> TimeInterval {
         let started=CACurrentMediaTime()
-        let initial="switch=\(model.captureKindSwitching) ready=\(model.camera.ready) configuring=\(model.camera.videoConfiguring) enabled=\(model.videoShutterEnabled)"
-        while !model.videoShutterEnabled,CACurrentMediaTime()-started<timeout {
+        let initial="kind=\(model.captureKind) switch=\(model.captureKindSwitching) ready=\(model.camera.ready) configuring=\(model.camera.videoConfiguring) enabled=\(model.videoShutterEnabled)"
+        while (model.captureKind != .video || !model.videoShutterEnabled),CACurrentMediaTime()-started<timeout {
             try await Task.sleep(for:.milliseconds(20))
         }
-        guard model.videoShutterEnabled else {
+        guard model.captureKind == .video, model.videoShutterEnabled else {
             XCTFail("\(label)快门未就绪：\(initial)；当前switch=\(model.captureKindSwitching) ready=\(model.camera.ready) configuring=\(model.camera.videoConfiguring) busy=\(model.camera.videoBusy) pendingPhotos=\(model.camera.pendingPhotoCount) message=\(model.camera.message ?? "nil")",file:file,line:line)
             throw CancellationError()
         }

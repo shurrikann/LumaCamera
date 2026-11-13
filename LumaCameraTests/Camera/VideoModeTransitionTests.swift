@@ -324,7 +324,7 @@ final class VideoModeTransitionTests: XCTestCase {
             result = nil
             try await snapshotControls(name: "VideoControls-Stopped-" + variant)
             let returningAt = CACurrentMediaTime()
-            model.setCaptureKind(.photo)
+            model.requestCaptureKind(.photo)
             await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
             let finished = CACurrentMediaTime()
             for _ in 0..<300 { if camera.previewFrameTimeForTesting > finished { break }; try await Task.sleep(for: .milliseconds(20)) }
@@ -366,9 +366,20 @@ final class VideoModeTransitionTests: XCTestCase {
             }
             returnTimes.append(CACurrentMediaTime() - returningAt)
             // 必须实际拍回该种照片，不能仅检查开关文字或预览状态。
+            // 首帧早于照片状态恢复完成；按真实快门的启用条件等切换落定。
+            for _ in 0..<1000 {
+                if model.captureKind == .photo && !model.isPreparingTransition
+                    && !model.photoStateRestorePendingForTesting && camera.ready
+                    && !camera.highResolutionPhotoConfiguring && !camera.shutterBusy
+                    && camera.hasCaptureCapacity(for: model.photoOptions) && model.library.canAcceptNewCapture { break }
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            XCTAssertEqual(model.captureKind, .photo)
+            XCTAssertFalse(model.isPreparingTransition)
+            XCTAssertFalse(model.photoStateRestorePendingForTesting)
             restoredPhoto = nil
             let captureStarted = CACurrentMediaTime()
-            camera.capture(flashMode:.off,options:model.photoOptions)
+            model.takePhoto()
             for _ in 0..<1500 { if restoredPhoto != nil || camera.message != nil { break }; try await Task.sleep(for:.milliseconds(20)) }
             let savedPhoto = try XCTUnwrap(restoredPhoto,camera.message ?? "视频返回后照片未完成")
             captureTimes.append(CACurrentMediaTime() - captureStarted)
@@ -387,6 +398,26 @@ final class VideoModeTransitionTests: XCTestCase {
             if variant == "live" {
                 XCTAssertEqual(savedPhoto.resources.count,2)
                 XCTAssertEqual(savedPhoto.resources.filter(\.pairedVideo).count,1)
+                // 不能仅凭资源数量通过；真实 MOV 必须有可解码视频和 Live 时间标记。
+                let movie = try XCTUnwrap(savedPhoto.resources.first(where: \.pairedVideo))
+                let temporary = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
+                defer { try? FileManager.default.removeItem(at: temporary) }
+                try movie.data.write(to: temporary)
+                let liveAsset = AVURLAsset(url: temporary)
+                let liveTracks = try await liveAsset.loadTracks(withMediaType: .video)
+                let liveTrack = try XCTUnwrap(liveTracks.first, "Live 动态资源缺少画面轨道")
+                let markers = try await liveAsset.loadTracks(withMediaType: .metadata)
+                XCTAssertFalse(markers.isEmpty, "Live 时间标记必须保留")
+                let reader = try AVAssetReader(asset: liveAsset)
+                let frames = AVAssetReaderTrackOutput(track: liveTrack,
+                    outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
+                reader.add(frames)
+                XCTAssertTrue(reader.startReading())
+                var decodedFrames = 0
+                while frames.copyNextSampleBuffer() != nil { decodedFrames += 1 }
+                XCTAssertEqual(reader.status, .completed, reader.error?.localizedDescription ?? "")
+                XCTAssertGreaterThan(decodedFrames, 0)
+                print("LIVE-ROUNDTRIP-DECODE frames=\(decodedFrames) bytes=\(movie.data.count)")
             } else { XCTAssertFalse(savedPhoto.resources.contains(where: \.pairedVideo)) }
             if variant == "hdr" {
                 HDRImageAssertions.assertHDR(source, "视频返回 HDR 照片")

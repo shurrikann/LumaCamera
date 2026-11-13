@@ -57,9 +57,12 @@ final class SubmodeSwitchingPhysicalTests: XCTestCase {
             try await Task.sleep(for: .milliseconds(25))
         }
         XCTAssertTrue(model.camera.ready)
+        // 视频按钮先改变模式文字，真实快门就绪还需要等待切换事务完成。
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "视频子模式无序切换基线")
         var failures: [String] = []
         let order = [0, 1, 2, 2, 0, 1, 0, 2, 1]
         for (cycle, pick) in order.enumerated() {
+            try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "视频子模式第\(cycle)次切换前")
             model.camera.message = nil
             switch pick {
             case 0: model.toggleTimeLapseMode()
@@ -68,7 +71,7 @@ final class SubmodeSwitchingPhysicalTests: XCTestCase {
             }
             let targetEnabled: () -> Bool = { pick == 0 ? model.timeLapseEnabled : pick == 1 ? model.slowMotionEnabled : model.cinematicVideoEnabled }
             for _ in 0..<600 {
-                if targetEnabled() || model.camera.message != nil { break }
+                if (targetEnabled() && !model.isPreparingTransition) || model.camera.message != nil { break }
                 try await Task.sleep(for: .milliseconds(20))
             }
             let enabled = targetEnabled()
@@ -78,7 +81,7 @@ final class SubmodeSwitchingPhysicalTests: XCTestCase {
             if model.timeLapseEnabled { model.toggleTimeLapseMode() }
             if model.slowMotionEnabled { model.toggleSlowMotionMode() }
             if model.cinematicVideoEnabled { model.toggleCinematicVideoMode() }
-            try await Task.sleep(for: .milliseconds(120))
+            try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "视频子模式第\(cycle)次关闭后")
         }
         XCTAssertTrue(failures.isEmpty, failures.joined(separator: "\n"))
         model.setCameraActive(false)
@@ -207,6 +210,7 @@ final class SubmodeSwitchingPhysicalTests: XCTestCase {
             try await Task.sleep(for: .milliseconds(25))
         }
         XCTAssertTrue(model.camera.ready)
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "双拍前置入口基线")
         guard model.dualCaptureAvailable else {
             throw XCTSkip("当前设备不支持双拍")
         }
@@ -237,10 +241,14 @@ final class SubmodeSwitchingPhysicalTests: XCTestCase {
         model.toggleDualCapture()
         for _ in 0..<700 { if model.camera.dualCaptureEnabled && !model.camera.dualCapturePreparing { break }; try await Task.sleep(for: .milliseconds(20)) }
         XCTAssertTrue(model.camera.dualCaptureEnabled, model.camera.message ?? "")
+        // 双拍标志先于首帧发布，真实界面等 camera.ready 才允许点电影。
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "双拍切电影前")
         model.toggleCinematicVideoMode()
         for _ in 0..<900 { if model.cinematicVideoEnabled && model.camera.cinematicVideoCaptureActive && !model.isPreparingSubmode { break }; try await Task.sleep(for: .milliseconds(20)) }
         XCTAssertTrue(model.cinematicVideoEnabled, model.camera.message ?? "")
         XCTAssertTrue(model.camera.cinematicVideoCaptureActive, model.camera.message ?? "")
+        let state = await withCheckedContinuation { c in model.camera.videoSubmodeStateForTesting { c.resume(returning: $0) } }
+        print("DUAL-CINEMATIC-READY \(state)")
         model.setCameraActive(false)
     }
 

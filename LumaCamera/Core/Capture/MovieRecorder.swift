@@ -184,7 +184,7 @@ final class MovieRecorder {
         default: nil
         }
         guard look.virtualAperture == nil || (!settings.isRAW && colorSpace != nil) else {
-            throw RecorderError.cannotStart("虚拟光圈仅支持可处理的SDR或P3视频。")
+            throw RecorderError.cannotStart("星芒仅支持可处理的SDR或P3视频。")
         }
         let appliesFilter = !settings.isRAW && colorSpace != nil && look.requiresImageProcessing
         filterLook = appliesFilter ? look : nil

@@ -109,8 +109,12 @@ private struct CameraSettingsPanel: View {
                     }
                     .accessibilityIdentifier("settings.silentShutter")
                     Button("打开系统权限设置") { model.openSettings() }
-                    NavigationLink("AF追踪") { AFTrackingLabView() }
-                        .accessibilityIdentifier("settings.afTrackingLab")
+                    NavigationLink("长曝光测试") { LongExposureLabView() }
+                    .accessibilityIdentifier("settings.longExposureLab")
+                NavigationLink("星空延时测试") { AstroTimeLapseLabView() }
+                    .accessibilityIdentifier("settings.astroTimelapseLab")
+                NavigationLink("星空照片测试") { StarPhotoLabView() }
+                    .accessibilityIdentifier("settings.starPhotoLab")
                     NavigationLink("关于光屿") {
                         ScrollView {
                             VStack(alignment: .leading, spacing: 18) {

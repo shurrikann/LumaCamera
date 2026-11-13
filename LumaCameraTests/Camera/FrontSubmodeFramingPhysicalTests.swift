@@ -3,11 +3,12 @@ import UIKit
 import XCTest
 @testable import LumaCamera
 
-/// 经过子模块和前后镜头切换后，前置按钮权限与实际传感器倍率必须一致。
+/// 照片保留前置宽窄取景，视频按当前功能规则固定超广角。
 final class FrontSubmodeFramingPhysicalTests: XCTestCase {
     #if !targetEnvironment(simulator)
     @MainActor func testFrontPhotoAndVideoFramingAfterSubmodes() async throws {
-        let model = try XCTUnwrap(AppDependencies.runningAppCameraModel), camera = model.camera
+        let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
+        let audit = SessionRuntimeErrorAudit()
         let oldKind = model.captureKind, oldMode = model.mode
         let oldFormat = model.photoFormat, oldHDR = model.hdr, oldLive = model.livePhotoEnabled
         let oldVideo = camera.videoSettings, idle = UIApplication.shared.isIdleTimerDisabled
@@ -28,12 +29,13 @@ final class FrontSubmodeFramingPhysicalTests: XCTestCase {
             model.proResSpecification = oldVideo.proRes
             model.setMode(oldMode); model.setCaptureKind(oldKind); model.setCameraActive(false)
             UIApplication.shared.isIdleTimerDisabled = idle
+            audit.finish()
         }
         func settle() async {
             await Task.yield()
             await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
             for _ in 0..<700 {
-                if camera.ready && camera.preview != nil && !camera.videoConfiguring && !model.isPreparingSubmode { break }
+                if camera.ready && camera.preview != nil && !model.isPreparingTransition { break }
                 try? await Task.sleep(for: .milliseconds(10))
             }
             // 能力发布在主队列，随后按朝向刷新子模块镜头集合。
@@ -57,18 +59,20 @@ final class FrontSubmodeFramingPhysicalTests: XCTestCase {
             let front = camera.lenses.filter { $0.device.position == .front }
             let standard = try XCTUnwrap(front.first { $0.frontFraming == .standard })
             let wide = try XCTUnwrap(front.first { $0.frontFraming == .wide })
+            if model.captureKind == .video {
+                let previous = camera.selectedLens
+                for lens in [standard, wide] {
+                    XCTAssertFalse(model.canSelectFocalLength(lens), "\(label) 视频前置应固定宽取景")
+                    model.selectFocalLength(lens)
+                }
+                await settle()
+                XCTAssertEqual(camera.selectedLens, previous, label)
+                let state = await withCheckedContinuation { c in camera.exposureColorState { c.resume(returning: $0) } }
+                XCTAssertEqual(try XCTUnwrap(state).physicalZoomFactor, wide.zoomFactor, accuracy: 0.03, label)
+                XCTAssertNotNil(camera.preview)
+                return
+            }
             for lens in [wide, standard, wide, standard] {
-                if label == "video-cinematic-active" {
-                    let state = await withCheckedContinuation { c in camera.cinematicCaptureStateForTesting { c.resume(returning: ($0, $1)) } }
-                    XCTAssertTrue(state.0 && state.1, "前置电影必须真实启用系统电影输入")
-                }
-                if label == "video-cinematic-active", !model.canSelectFocalLength(lens) {
-                    XCTAssertEqual(lens.frontFraming, .standard, "本机电影前置仅支持原生宽取景")
-                    let previous = camera.selectedLens
-                    model.selectFocalLength(lens); await settle()
-                    XCTAssertEqual(camera.selectedLens, previous, "不支持的倍率点击不应改变取景状态")
-                    continue
-                }
                 XCTAssertTrue(model.canSelectFocalLength(lens), "\(label): current=\(camera.selectedLens) blocked=\(lens.id) allowed=\(String(describing: model.compatibleSubmodeLensIDs)) preparing=\(model.isPreparingSubmode)")
                 let start = CACurrentMediaTime()
                 model.selectFocalLength(lens)
@@ -123,7 +127,7 @@ final class FrontSubmodeFramingPhysicalTests: XCTestCase {
             clearVideoSubmode(); await settle()
             try await checkFront("video-\(child)-off")
         }
-        // 快速重复点按与切后台取消后，普通前置仍须可以恢复两种取景。
+        // 视频快速点击保留固定宽取景，返回照片后恢复两种取景。
         model.setMode(.manual); await settle()
         try await checkFront("video-manual")
         let front = camera.lenses.filter { $0.device.position == .front }

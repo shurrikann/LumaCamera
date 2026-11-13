@@ -12,7 +12,6 @@ struct GlassSurface: ViewModifier {
             let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
             content
                 .glassEffect(.regular.interactive(), in: shape)
-                .overlay(shape.stroke(.white.opacity(0.24), lineWidth: 0.65).allowsHitTesting(false))
         } else {
             let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
             content.background {

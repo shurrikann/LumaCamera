@@ -42,8 +42,8 @@ enum VideoFileMetadata {
         }
         if centerStage { rows.append(.init(title: "人物居中", value: "系统Center Stage已开启")) }
         if let virtualAperture {
-            rows.append(.init(title: "拍摄类型", value: "虚拟光圈（星芒已合成）"))
-            rows.append(.init(title: "虚拟光圈", value: VirtualApertureRenderer.label(virtualAperture)))
+            rows.append(.init(title: "拍摄类型", value: "星芒（已合成）"))
+            rows.append(.init(title: "星芒", value: VirtualApertureRenderer.label(virtualAperture)))
         }
         if cinematicVideo { rows.append(.init(title: "拍摄类型", value: "电影模式（景深已合成）")) }
         if colorSpace.isLog, let bakedLogFilterName { rows.append(.init(title: "滤镜", value: bakedLogFilterName)) }

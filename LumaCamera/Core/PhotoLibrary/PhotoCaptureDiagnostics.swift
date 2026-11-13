@@ -70,7 +70,7 @@ struct PhotoCaptureParameters: Codable, Equatable {
         var result = [PhotoInfoRow(title: "拍摄时间", value: capturedAt.formatted(date: .numeric, time: .standard))]
         if let shootingType, !shootingType.isEmpty { result.append(.init(title: "拍摄类型", value: shootingType)) }
         if let mode { result.append(.init(title: "拍摄模式", value: mode)) }
-        if let virtualAperture { result.append(.init(title: "虚拟光圈", value: VirtualApertureRenderer.label(virtualAperture))) }
+        if let virtualAperture { result.append(.init(title: "星芒", value: VirtualApertureRenderer.label(virtualAperture))) }
         if let adaptiveHighDynamic { result.append(.init(title:"高动态显影",value:adaptiveHighDynamic ? "开启" : "关闭")) }
         if let ev = exifExposureBiasEV { result.append(.init(title: "成片曝光补偿", value: String(format: "%+.1f EV", ev))) }
         if let ev = globalMeteringBiasEV { result.append(.init(title: "全局测光补偿", value: String(format: "%+.1f EV", ev))) }
@@ -154,7 +154,7 @@ struct PhotoCaptureDiagnostics: Codable, Equatable {
         let exif = properties[kCGImagePropertyExifDictionary] as? [CFString: Any] ?? [:]
         let tiff = properties[kCGImagePropertyTIFFDictionary] as? [CFString: Any] ?? [:]
         var rows: [PhotoInfoRow] = []
-        if let aperture = VirtualApertureRenderer.recordedValue(properties) { rows.append(.init(title: "虚拟光圈", value: VirtualApertureRenderer.label(aperture))) }
+        if let aperture = VirtualApertureRenderer.recordedValue(properties) { rows.append(.init(title: "星芒", value: VirtualApertureRenderer.label(aperture))) }
         if let model = tiff[kCGImagePropertyTIFFModel] as? String { rows.append(.init(title: "相机", value: model)) }
         if let lens = exif[kCGImagePropertyExifLensModel] as? String { rows.append(.init(title: "镜头型号", value: lens)) }
         func positive(_ key: CFString) -> Double? {

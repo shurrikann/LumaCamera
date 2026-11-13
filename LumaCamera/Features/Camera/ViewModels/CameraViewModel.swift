@@ -121,6 +121,7 @@ final class CameraViewModel: ObservableObject {
             photoSubmodePreparing = nil
             videoSubmodeRequest = UUID()
             videoSubmodePreparing = nil
+            videoEffectPreparing = false
             virtualApertureEnabled = false // 照片/视频切换不带入临时子模块。
             virtualApertureSliderVisible = false
             frontVideoCenteringRequested = false
@@ -324,6 +325,7 @@ final class CameraViewModel: ObservableObject {
     private var transitionExecuting = false
     private var pendingTransition: (() -> Void)?
     private var transitionDrainTask: Task<Void, Never>?
+    @Published private var videoEffectPreparing = false
     private var videoSubmodeRequest = UUID()
     private var selectedSlowMotionCaptureRate: VideoFrameRate?
     let externalVideoStorage = ExternalVideoStorage.shared
@@ -391,7 +393,10 @@ final class CameraViewModel: ObservableObject {
         return slowMotionCaptureFrameRateOptions.first ?? SlowMotionCapturePolicy.fallbackCaptureRate
     }
 
-    var isPreparingSubmode: Bool { photoSubmodePreparing != nil || videoSubmodePreparing != nil || camera.dualCapturePreparing }
+    var isPreparingSubmode: Bool {
+        photoSubmodePreparing != nil || videoSubmodePreparing != nil
+            || videoEffectPreparing || camera.dualCapturePreparing
+    }
 
     private var selectedVideoSettings: VideoCaptureSettings {
         VideoCaptureSettings(resolution: videoResolution, frameRate: videoFrameRate,
@@ -457,7 +462,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     private var isTransitionSettling: Bool {
-        transitionBusy || photoSubmodePreparing != nil || videoSubmodePreparing != nil
+        transitionBusy || isPreparingSubmode
             || captureKindSwitching || camera.videoConfiguring
             || camera.dualCapturePreparing || camera.videoBusy
     }
@@ -482,6 +487,8 @@ final class CameraViewModel: ObservableObject {
 
     private func scheduleTransitionDrain() {
         transitionDrainTask?.cancel()
+        // 没有排队点按时无需轮询会话状态；新请求到来时再启动处理任务。
+        guard pendingTransition != nil else { transitionDrainTask = nil; return }
         transitionDrainTask = Task { @MainActor [weak self] in
             guard let self else { return }
             while !Task.isCancelled {
@@ -506,9 +513,16 @@ final class CameraViewModel: ObservableObject {
         disableFrontVideoCenteringForManualChoice()
         if camera.dualCaptureEnabled {
             let directCinematic = requested == .cinematic
+            // 双拍释放与单摄恢复跨越多个异步回调，期间保留准备状态，
+            // 防止新的切换抢先执行后，又被旧回调切回原子模式。
+            let request = UUID()
+            videoSubmodeRequest = request
+            videoSubmodePreparing = requested
             camera.setDualCaptureEnabled(false, keepMainSessionStopped: directCinematic) { [weak self] success in
                 Task { @MainActor [weak self] in
-                    guard let self, success, self.captureKind == .video else { return }
+                    guard let self, self.videoSubmodeRequest == request,
+                          self.captureKind == .video else { return }
+                    guard success else { self.videoSubmodePreparing = nil; return }
                     // The next submode will submit its own camera settings. Avoid
                     // a full ordinary-video reconfigure in between.
                     self.restoreVideoSettingsAfterDualCapture(synchronize: false)
@@ -516,13 +530,29 @@ final class CameraViewModel: ObservableObject {
                         // Keep the main single-camera session stopped and let the
                         // cinematic input/graph start it once, instead of starting
                         // an ordinary video session just to stop it again.
+                        self.videoSubmodePreparing = nil
+                        if self.pendingTransition != nil {
+                            // 释放期间已有更新的点按时，优先交给最新请求，避免递归入口清空它。
+                            self.synchronizeVideoSettings()
+                            self.camera.start()
+                            self.scheduleTransitionDrain()
+                            return
+                        }
                         self.toggleVideoSubmode(requested, startIfStopped: true)
                     } else {
                         for _ in 0..<500 {
+                            guard self.videoSubmodeRequest == request else { return }
                             if self.camera.ready && !self.camera.videoConfiguring && !self.camera.dualCapturePreparing { break }
                             try? await Task.sleep(for: .milliseconds(20))
                         }
-                        guard self.captureKind == .video else { return }
+                        guard self.videoSubmodeRequest == request, self.captureKind == .video else { return }
+                        self.videoSubmodePreparing = nil
+                        guard self.camera.ready, !self.camera.videoConfiguring,
+                              !self.camera.dualCapturePreparing else {
+                            self.camera.message = "视频切换未完成，请重试。"
+                            return
+                        }
+                        if self.pendingTransition != nil { self.scheduleTransitionDrain(); return }
                         self.toggleVideoSubmode(requested)
                     }
                 }
@@ -567,6 +597,7 @@ final class CameraViewModel: ObservableObject {
                         self.setVideoSubmode(.cinematic, enabled: false)
                         self.camera.message = "当前镜头无法启用电影效果"
                         self.synchronizeVideoSettings()
+                        if startIfStopped { self.camera.start() }
                     }
                 }
             }
@@ -1751,7 +1782,7 @@ final class CameraViewModel: ObservableObject {
         } else if portraitModeEnabled {
             shootingType = "人像"
         } else {
-            shootingType = virtualApertureEnabled ? "虚拟光圈" : "普通"
+            shootingType = virtualApertureEnabled ? "星芒" : "普通"
         }
         return PhotoOptions(format: photoFormat, resolution: photoResolution,
                      hdr: hdr && (photoFormat == .heifPro || photoFormat == .heif) && !border,
@@ -1877,11 +1908,11 @@ final class CameraViewModel: ObservableObject {
         // Photo entry is a camera by default, then follows the selected
         // submodule's semantic icon; the popup options keep those icons too.
         if captureKind == .photo {
-            if virtualApertureEnabled { return "camera.aperture" }
+            if virtualApertureEnabled { return "sparkles" }
             return activePhotoSubmode?.symbol ?? "camera.fill"
         }
         if camera.dualCaptureEnabled { return "rectangle.on.rectangle" }
-        if virtualApertureEnabled { return "camera.aperture" }
+        if virtualApertureEnabled { return "sparkles" }
         if timeLapseEnabled { return VideoSubmode.timeLapse.symbol }
         if slowMotionEnabled { return VideoSubmode.slowMotion.symbol }
         if cinematicVideoEnabled { return VideoSubmode.cinematic.symbol }
@@ -2341,9 +2372,35 @@ final class CameraViewModel: ObservableObject {
         guard camera.ready, !camera.capturing, !camera.videoBusy, photoSubmodePreparing == nil,
               videoSubmodePreparing == nil, !camera.dualCapturePreparing else { return }
         if camera.dualCaptureEnabled {
+            let request = UUID()
+            videoSubmodeRequest = request
+            videoEffectPreparing = true
             camera.setDualCaptureEnabled(false) { [weak self] success in
-                guard let self, success else { return }
-                self.restoreVideoSettingsAfterDualCapture(); self.toggleVirtualAperture()
+                Task { @MainActor [weak self] in
+                    guard let self, self.videoSubmodeRequest == request,
+                          self.cameraActiveRequested, self.captureKind == .video else { return }
+                    guard success else { self.videoEffectPreparing = false; return }
+                    self.restoreVideoSettingsAfterDualCapture(synchronize: false)
+                    // The single-camera video session is reconfigured after dual
+                    // teardown. Toggling immediately hits the readiness guards and
+                    // is silently dropped, leaving the user in plain video mode.
+                    for _ in 0..<500 {
+                        guard self.videoSubmodeRequest == request else { return }
+                        if self.camera.ready && !self.camera.videoBusy
+                            && !self.camera.videoConfiguring && !self.camera.dualCapturePreparing { break }
+                        try? await Task.sleep(for: .milliseconds(20))
+                    }
+                    guard self.videoSubmodeRequest == request, self.cameraActiveRequested,
+                          self.captureKind == .video else { return }
+                    self.videoEffectPreparing = false
+                    guard self.camera.ready, !self.camera.videoBusy,
+                          !self.camera.videoConfiguring else {
+                        self.camera.message = "视频切换未完成，请重试。"
+                        return
+                    }
+                    if self.pendingTransition != nil { self.scheduleTransitionDrain(); return }
+                    self.toggleVirtualAperture()
+                }
             }
             return
         }
@@ -3511,7 +3568,11 @@ final class CameraViewModel: ObservableObject {
             .filter { !$0.1 }.map { $0.0 }.removeDuplicates().dropFirst().sink { [weak self] enabled in
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.camera.dualCaptureEnabled == enabled, !self.camera.dualCapturePreparing else { return }
-                if !enabled { self.restoreVideoSettingsAfterDualCapture() }
+                // 子模式交接由对应完成回调恢复设置；通用观察者不能抢先
+                // 提交普通视频规格，否则会覆盖正在准备的电影或星芒路线。
+                if !enabled, self.videoSubmodePreparing == nil, !self.videoEffectPreparing {
+                    self.restoreVideoSettingsAfterDualCapture()
+                }
                 self.scheduleCaptureStateSave()
             }
         }.store(in: &subscriptions)
@@ -3706,6 +3767,19 @@ final class CameraViewModel: ObservableObject {
             cancelVideoEntryWatchdog()
             pendingVideoEntryAfterRecovery?.cancel()
             pendingVideoEntryAfterRecovery = nil
+            // 离开相机时作废未执行的点按与子模式完成回调，避免后台继续换路由。
+            pendingTransition = nil
+            transitionDrainTask?.cancel()
+            transitionDrainTask = nil
+            pendingCaptureKindRequest = nil
+            pendingCaptureKindTask?.cancel()
+            pendingCaptureKindTask = nil
+            photoSubmodeRequest = UUID()
+            photoSubmodePreparing = nil
+            videoSubmodeRequest = UUID()
+            videoSubmodePreparing = nil
+            videoEffectPreparing = false
+            pendingCinematicStart = false
         }
         if !active { cancelSlowShutterSequence() }
         if !active { stopBurstCapture() }
@@ -4386,6 +4460,20 @@ final class CameraViewModel: ObservableObject {
 
     /// 模式按钮立即反馈；正在配置/收尾时排队，不能静默吞掉用户点击。
     func requestCaptureKind(_ kind: CaptureKind) {
+        if kind == .photo {
+            pendingVideoEntryAfterRecovery?.cancel()
+            pendingVideoEntryAfterRecovery = nil
+            if captureKind == .video, (videoSubmodePreparing != nil || videoEffectPreparing),
+               !camera.videoBusy, !camera.dualCapturePreparing, !captureKindSwitching {
+                // 返回照片直接取消正在准备的子模式，减少无效的电影/慢动作建图等待。
+                pendingTransition = nil
+                transitionDrainTask?.cancel()
+                transitionDrainTask = nil
+                CameraHaptics.impact(.light)
+                setCaptureKind(.photo)
+                return
+            }
+        }
         guard beginUserTransition({ [weak self] in self?.requestCaptureKind(kind) }) else { return }
         defer { endUserTransition() }
         guard kind != captureKind else {
@@ -4700,12 +4788,17 @@ final class CameraViewModel: ObservableObject {
     /// 电影 UI 已开启但系统图尚未激活时，快门先完成设备/格式准备再自动开拍。
     private func startCinematicWhenReady() {
         guard !pendingCinematicStart, !camera.videoConfiguring else { return }
+        let request = UUID()
+        videoSubmodeRequest = request
         pendingCinematicStart = true
         videoSubmodePreparing = .cinematic
         camera.prepareCinematicInput { [weak self] success in
             Task { @MainActor [weak self] in
-                guard let self else { return }
-                defer { self.pendingCinematicStart = false }
+                guard let self, self.videoSubmodeRequest == request,
+                      self.cameraActiveRequested, self.captureKind == .video else { return }
+                defer {
+                    if self.videoSubmodeRequest == request { self.pendingCinematicStart = false }
+                }
                 self.videoSubmodePreparing = nil
                 guard success else {
                     self.camera.message = "当前镜头无法启用电影效果"
@@ -4713,6 +4806,8 @@ final class CameraViewModel: ObservableObject {
                 }
                 self.synchronizeVideoSettings()
                 for _ in 0..<250 {
+                    guard self.videoSubmodeRequest == request,
+                          self.cameraActiveRequested, self.captureKind == .video else { return }
                     if self.camera.cinematicVideoCaptureActive, !self.camera.videoConfiguring { break }
                     try? await Task.sleep(for: .milliseconds(20))
                 }
