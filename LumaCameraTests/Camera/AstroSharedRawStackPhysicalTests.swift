@@ -12,6 +12,19 @@ final class AstroSharedRawStackPhysicalTests: XCTestCase {
         model.setCameraActive(true)
         for _ in 0..<400 { if camera.ready { break }; try await Task.sleep(for: .milliseconds(20)) }
         XCTAssertTrue(camera.ready)
+        // Preceding lens tests can leave an ultra-wide route selected; RAW is
+        // only a valid astro baseline on the main wide camera.
+        if let wide = camera.lenses.first(where: {
+            $0.device.position == .back && $0.device.deviceType == .builtInWideAngleCamera
+                && abs($0.displayZoom - 1) < 0.01
+        }) {
+            model.selectFocalLength(wide)
+            for _ in 0..<300 {
+                if camera.selectedLens == wide.id && camera.ready { break }
+                try await Task.sleep(for: .milliseconds(20))
+            }
+        }
+        XCTAssertTrue(camera.ready)
         camera.enterAstroRoute()
         try await Task.sleep(for: .milliseconds(500))
         for (count, exposure) in [(10, 1.0), (30, 1.0 / 15.0), (60, 1.0 / 15.0)] {
@@ -40,6 +53,17 @@ final class AstroSharedRawStackPhysicalTests: XCTestCase {
         defer { model.setCameraActive(false) }
         model.setCameraActive(true)
         for _ in 0..<400 { if camera.ready { break }; try await Task.sleep(for: .milliseconds(20)) }
+        XCTAssertTrue(camera.ready)
+        if let wide = camera.lenses.first(where: {
+            $0.device.position == .back && $0.device.deviceType == .builtInWideAngleCamera
+                && abs($0.displayZoom - 1) < 0.01
+        }) {
+            model.selectFocalLength(wide)
+            for _ in 0..<300 {
+                if camera.selectedLens == wide.id && camera.ready { break }
+                try await Task.sleep(for: .milliseconds(20))
+            }
+        }
         XCTAssertTrue(camera.ready)
         camera.enterAstroRoute()
         try await Task.sleep(for: .milliseconds(500))
