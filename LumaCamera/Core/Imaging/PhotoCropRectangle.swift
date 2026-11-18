@@ -37,6 +37,6 @@ struct PhotoCropRectangle: Codable, Equatable {
 }
 
 enum PhotoEditorTool: String, CaseIterable, Identifiable {
-    case crop = "裁剪", filters = "滤镜", adjustments = "调整"
+    case crop = "裁剪", filters = "滤镜", adjustments = "调整", watermark = "水印"
     var id: String { rawValue }
 }

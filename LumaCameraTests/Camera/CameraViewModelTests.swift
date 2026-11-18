@@ -158,24 +158,6 @@ final class CameraViewModelTests: XCTestCase {
     }
 
     @MainActor
-    func testPagerUpdateDefersPublicationAndIgnoresObsoleteSelection() async {
-        let model = AppDependencies.makeCameraModel(automaticallySave: false)
-        model.updateToolPageFromPager(1)
-        XCTAssertEqual(model.toolPage, 0)
-        model.updateToolPageFromPager(0)
-        let flushed = expectation(description: "Pager queue drained")
-        DispatchQueue.main.async { flushed.fulfill() }
-        await fulfillment(of: [flushed], timeout: 5)
-        XCTAssertEqual(model.toolPage, 0)
-        let updated = expectation(description: "Pager selection changed")
-        let subscription = model.$toolPage.filter { $0 == 1 }.first().sink { _ in updated.fulfill() }
-        model.updateToolPageFromPager(1)
-        await fulfillment(of: [updated], timeout: 5)
-        XCTAssertEqual(model.toolPage, 1)
-        withExtendedLifetime(subscription) {}
-    }
-
-    @MainActor
     func testManualSettingsSurviveSwitchingPhysicalLensAndModeRoundTrip() {
         let model = AppDependencies.makeCameraModel(automaticallySave: false)
         model.mode = .manual

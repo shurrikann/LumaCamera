@@ -23,6 +23,7 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
             renderPreview(structural: oldValue.filterID != adjustments.filterID || oldValue.quarterTurns != adjustments.quarterTurns)
         }
     }
+    @Published var watermarkSettings = PhotoWatermarkSettings()
     @Published var tool = PhotoEditorTool.filters { didSet { dismissFilterNumericInput(); setParameterEditing(false); renderPreview(structural: true) } }
     @Published private(set) var editorControlsVisible = true
     @Published var preservesLive = true
@@ -72,6 +73,7 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         initial.exposure = 0; initial.contrast = 1; initial.saturation = 1
         if !FilmStyle.availableStyles.contains(where: { $0.rawValue == initial.filterID }) { initial.filterID = FilmStyle.original.rawValue }
         adjustments = initial
+        watermarkSettings = initial.watermark?.settings ?? CapturePreferencesStore().load().watermark
     }
     var style: FilmStyle { FilmStyle(rawValue: adjustments.filterID) ?? .original }
     func selectFilter(_ style: FilmStyle) {
@@ -162,7 +164,24 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
     }
     var editorControlsHeight: CGFloat {
         guard editorControlsVisible else { return 0 }
-        return tool == .filters ? 160 : 290
+        return tool == .filters ? 160 : tool == .watermark ? 174 : 290
+    }
+    func selectWatermarkStyle(_ style: PhotoWatermarkStyle) {
+        guard !saving, !cancelled else { return }
+        let selected = adjustments.watermark?.settings.style == style
+        watermarkSettings.style = style
+        if selected { adjustments.watermark = nil }
+        else {
+            var content = adjustments.watermark?.content ?? session.watermarkContent
+            if content.signature.isEmpty { content.signature = CapturePreferencesStore().load().copyright }
+            adjustments.watermark = PhotoEditWatermark(settings: watermarkSettings, content: content)
+        }
+    }
+    func setWatermarkInformation(location: Bool? = nil, parameters: Bool? = nil) {
+        guard !saving, !cancelled else { return }
+        if let location { watermarkSettings.showsLocation = location }
+        if let parameters { watermarkSettings.showsParameters = parameters }
+        if adjustments.watermark != nil { adjustments.watermark?.settings = watermarkSettings }
     }
     func enterCrop() {
         guard !saving, tool != .crop else { return }
@@ -208,7 +227,7 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         cancelled = false
         let revision = previewGate.advance(resetInteractiveFloor: structural)
         var rendered = adjustments
-        if tool == .crop { rendered.crop = .full }
+        if tool == .crop { rendered.crop = .full; rendered.watermark = nil }
         renderer.submit(Request(adjustments: rendered, revision: revision))
     }
     func presentSaveOptions() { guard !saving else { return }; dismissFilterNumericInput(); setParameterEditing(false); dismissReset(); saveOptionsVisible = true }

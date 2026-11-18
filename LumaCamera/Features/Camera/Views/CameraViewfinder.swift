@@ -39,9 +39,9 @@ extension CameraView {
                     Image(uiImage: image).resizable().allowedDynamicRange(.high).scaledToFill()
                         .transaction { $0.animation = nil }
                         .frame(width: width, height: height).clipped()
-                        .blur(radius: ratioTransitionActive ? 2.5 : 0)
-                        .opacity(ratioTransitionActive ? 0.86 : 1)
                 }
+                PreviewContentTransitionOverlay(transition: previewContentTransition)
+                    .frame(width: width, height: height)
                 ZStack {
                     if let accumulated = model.slowShutterAccumulationPreview {
                         SlowShutterAccumulationView(state:accumulated).id(accumulated.id).transition(.opacity)
@@ -72,9 +72,15 @@ extension CameraView {
                 if let image = model.focalTransitionImage {
                     Image(uiImage: image).resizable().allowedDynamicRange(.high).scaledToFill()
                         .frame(width: width, height: height).clipped()
+                        .scaleEffect(model.focalTransitionScale)
                         .blur(radius: model.focalTransitionBlur)
                         .opacity(model.focalTransitionOpacity)
                         .allowsHitTesting(false)
+                }
+                if let image = model.modeHandoffImage {
+                    Image(uiImage: image).resizable().allowedDynamicRange(.high).scaledToFill()
+                        .frame(width: width, height: height).clipped()
+                        .opacity(model.modeHandoffOpacity).allowsHitTesting(false)
                 }
                 Group {
                     VStack(spacing: 0) {
@@ -184,7 +190,7 @@ extension CameraView {
                         .background(.black.opacity(0.32), in: Capsule())
                         .overlay(Capsule().stroke(.white.opacity(0.12), lineWidth: 0.5))
                         .captureControlGeometry("recordingTimer", model: model)
-                        .padding(.top, 5)
+                        .padding(.top, CameraControlLayout.recordingTimerTopInset)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .transition(.opacity)
                         .allowsHitTesting(false)
@@ -612,4 +618,3 @@ struct CameraToolbarOverlapBackground: View {
             .accessibilityHidden(true)
     }
 }
-

@@ -5,8 +5,33 @@ import ImageIO
 import UIKit
 import simd
 
+enum AstroStackBlend { case average, lighten }
+
 final class CameraEngine: NSObject, ObservableObject {
+    enum CaptureRouteMode: Equatable { case photo, video, astro }
+    @Published private(set) var captureRouteMode: CaptureRouteMode = .photo
+    private var astroReturnRoute: CaptureRouteMode = .photo
+    private var astroSavedFormat: AVCaptureDevice.Format? // session queue
+    @Published private(set) var astroPhotoBusy = false
+    @Published private(set) var astroPhotoProgress = 0
+    @Published private(set) var astroPhotoResult: UIImage?
+    @Published private(set) var astroPhotoStatus = ""
+    private let astroQueue = DispatchQueue(label: "camera.astro.raw", qos: .userInitiated)
+    private let astroContext = CIContext(options: [
+        .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!,
+        .workingFormat: CIFormat.RGBAh,
+        .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
+    ])
+    private var astroRawCaptured = 0
+    private var astroRawTarget = 0
+    private var astroCancelled = false
+    private var astroRawDelegates: [UUID: AstroRawCaptureDelegate] = [:]
+    private var astroAccumulator: CIImage?
+    private var astroAccumulatorBuffer: CVPixelBuffer?
+    private var astroExtent: CGRect = .zero
+    private var astroStackBlend: AstroStackBlend = .average
     @Published private(set) var preview: UIImage?
+
     @Published private(set) var nightPreviewReveal: NightPreviewReveal?
     @Published private(set) var userSwitchFrameID: UUID?
     private var startPending = false // main queue; protects a queued start from stale recovery notifications
@@ -671,6 +696,7 @@ final class CameraEngine: NSObject, ObservableObject {
     #endif
 
     private let session = AVCaptureSession()
+    let astroSharedCaptureSession: AstroSharedCaptureSession
     /// Used only by the system Cinematic preview layer; regular previews keep
     /// using the filtered image pipeline.
     var previewSession: AVCaptureSession { session }
@@ -904,25 +930,6 @@ final class CameraEngine: NSObject, ObservableObject {
             DispatchQueue.main.async { completion(state.0, state.1) }
         }
     }
-    /// Adjust the system Cinematic simulated aperture. This is the real
-    /// depth-of-field control, not the software starburst "virtual aperture".
-    func setCinematicAperture(_ value: Float) {
-        queue.async {
-            guard #available(iOS 26.0, *), let input = self.input,
-                  input.isCinematicVideoCaptureEnabled else { return }
-            let format = input.device.activeFormat
-            guard format.minSimulatedAperture > 0,
-                  format.maxSimulatedAperture >= format.minSimulatedAperture else { return }
-            let clamped = min(max(value, format.minSimulatedAperture), format.maxSimulatedAperture)
-            input.simulatedAperture = clamped
-            self.requestedCinematicAperture = clamped
-            DispatchQueue.main.async {
-                self.cinematicAperture = clamped
-                self.cinematicApertureRange = format.minSimulatedAperture...format.maxSimulatedAperture
-            }
-        }
-    }
-
     /// 仅用于真实景深效果对照；录制中不改光圈，遵守系统Cinematic限制。
     func cinematicApertureForTesting(_ requested: Float?, observer: AVCaptureMetadataOutputObjectsDelegate?,
                                      completion: @escaping ((minimum: Float, maximum: Float, current: Float)?) -> Void) {
@@ -982,6 +989,25 @@ final class CameraEngine: NSObject, ObservableObject {
         }
     }
     #endif
+    /// Adjust the system Cinematic simulated aperture. This is the real
+    /// depth-of-field control, not the software starburst "virtual aperture".
+    func setCinematicAperture(_ value: Float) {
+        queue.async {
+            guard #available(iOS 26.0, *), let input = self.input,
+                  input.isCinematicVideoCaptureEnabled else { return }
+            let format = input.device.activeFormat
+            guard format.minSimulatedAperture > 0,
+                  format.maxSimulatedAperture >= format.minSimulatedAperture else { return }
+            let clamped = min(max(value, format.minSimulatedAperture), format.maxSimulatedAperture)
+            input.simulatedAperture = clamped
+            self.requestedCinematicAperture = clamped
+            DispatchQueue.main.async {
+                self.cinematicAperture = clamped
+                self.cinematicApertureRange = format.minSimulatedAperture...format.maxSimulatedAperture
+            }
+        }
+    }
+
     private let previewQueue: DispatchQueue
     private let livePreviewState = LivePreviewState()
     var latestPreviewFrameTime: TimeInterval { livePreviewState.snapshot().latestFrameHostTime }
@@ -1258,8 +1284,8 @@ final class CameraEngine: NSObject, ObservableObject {
     private var lensCatalog: [CameraLens] = []
     private var configured = false
     private var wantsRunning = false
-    private let reviewPreviewPauseLock = NSLock()
-    private var reviewPreviewPausedStorage = false
+    private let coveredPreviewPauseLock = NSLock()
+    private var coveredPreviewPausedStorage = false
     private let previewRevision = PreviewRevision()
     private let lookUpdateRevision = PreviewRevision()
     private var lookRevision: UInt64 = 0
@@ -1419,6 +1445,7 @@ final class CameraEngine: NSObject, ObservableObject {
     }
     init(previewQueue: DispatchQueue) {
         self.previewQueue = previewQueue
+        self.astroSharedCaptureSession = AstroSharedCaptureSession(session: session, queue: queue)
         super.init()
         _ = histogramThrottle // Initialise on the construction thread before either worker queue can use it.
         observers.append(NotificationCenter.default.addObserver(forName: AVCaptureSession.wasInterruptedNotification, object: session, queue: .main) { [weak self] note in
@@ -1504,7 +1531,245 @@ final class CameraEngine: NSObject, ObservableObject {
         resumeDiagnostics.record(active ? "active-request" : "inactive-request", context: context)
     }
 
+    /// Session-level route marker for the shared camera session. Capture
+    /// configuration for astro is intentionally layered on top without stopping
+    /// the session; this method only commits the route state.
+    func enterAstroRoute() {
+        guard ready, !capturing, !videoBusy, !videoRecording else { return }
+        astroReturnRoute = videoModeRequested ? .video : .photo
+        captureRouteMode = .astro
+        // Reuse the proven video→photo graph transition; it reconfigures the
+        // running session without stopping it.
+        if videoModeRequested { setVideoMode(false) }
+        queue.async { [weak self] in self?.configureAstroPhotoFormat() }
+    }
+
+    func exitAstroRoute() {
+        captureRouteMode = astroReturnRoute
+        if astroReturnRoute == .video, !videoModeRequested {
+            setVideoMode(true)
+        } else {
+            queue.async { [weak self] in self?.restoreAstroPhotoFormat() }
+        }
+    }
+
+    func beginAstroPhotoStack(frameCount: Int, exposureSeconds: Double, blend: AstroStackBlend = .average) {
+        guard captureRouteMode == .astro, !capturing, !videoBusy, !astroPhotoBusy else { return }
+        guard let rawType = photoOutput.availableRawPhotoPixelFormatTypes.first else {
+            astroPhotoStatus = "当前相机没有 RAW 格式"
+            return
+        }
+        astroPhotoBusy = true
+        astroPhotoProgress = 0
+        astroPhotoResult = nil
+        astroPhotoStatus = "正在拍摄星空照片 0/\(frameCount)"
+        astroRawCaptured = 0
+        astroRawTarget = frameCount
+        astroStackBlend = blend
+        astroCancelled = false
+        astroAccumulator = nil
+        astroAccumulatorBuffer = nil
+        astroExtent = .zero
+        queue.async { [weak self] in
+            guard let self, let virtualDevice = self.input?.device else { return }
+            let device = virtualDevice.isVirtualDevice ? (virtualDevice.activePrimaryConstituent ?? virtualDevice) : virtualDevice
+            guard device.isExposureModeSupported(.custom) else {
+                DispatchQueue.main.async {
+                    self.astroPhotoBusy = false
+                    self.astroPhotoStatus = "当前镜头不支持手动曝光"
+                }
+                return
+            }
+            do {
+                try device.lockForConfiguration()
+                device.setExposureModeCustom(duration: CMTime(seconds: exposureSeconds, preferredTimescale: 1_000_000),
+                                             iso: min(max(1600, device.activeFormat.minISO), device.activeFormat.maxISO))
+                if device.isFocusModeSupported(.locked) { device.setFocusModeLocked(lensPosition: 1.0) }
+                if device.isWhiteBalanceModeSupported(.locked) { device.whiteBalanceMode = .locked }
+                device.unlockForConfiguration()
+            } catch {
+                DispatchQueue.main.async {
+                    self.astroPhotoBusy = false
+                    self.astroPhotoStatus = error.localizedDescription
+                }
+                return
+            }
+            self.astroQueue.async { self.captureNextAstroRaw(rawType: rawType) }
+        }
+    }
+
+    func cancelAstroPhotoStack() {
+        astroCancelled = true
+        astroPhotoBusy = false
+        astroRawDelegates.removeAll()
+        astroAccumulator = nil
+        astroAccumulatorBuffer = nil
+        astroPhotoStatus = "已取消"
+        restoreAstroAutoExposure()
+    }
+
+    private func captureNextAstroRaw(rawType: OSType) {
+        guard astroPhotoBusy, !astroCancelled, astroRawCaptured < astroRawTarget else { return }
+        let settings = AVCapturePhotoSettings(rawPixelFormatType: rawType)
+        settings.flashMode = .off
+        settings.photoQualityPrioritization = .speed
+        let token = UUID()
+        let delegate = AstroRawCaptureDelegate { [weak self] result in
+            guard let self else { return }
+            self.astroQueue.async {
+                self.astroRawDelegates.removeValue(forKey: token)
+                guard !self.astroCancelled else { return }
+                switch result {
+                case .success(let data):
+                    guard let image = CIImage(data: data) else {
+                        self.failAstroStack("RAW 解码失败"); return
+                    }
+                    guard self.fuseAstro(image) else {
+                        self.failAstroStack("RAW 累积失败"); return
+                    }
+                    self.astroRawCaptured += 1
+                    DispatchQueue.main.async {
+                        self.astroPhotoProgress = self.astroRawCaptured
+                        self.astroPhotoStatus = "正在拍摄星空照片 \(self.astroRawCaptured)/\(self.astroRawTarget)"
+                    }
+                    if self.astroRawCaptured >= self.astroRawTarget {
+                        self.finishAstroStack()
+                    } else {
+                        self.astroQueue.asyncAfter(deadline: .now() + 0.06) {
+                            self.captureNextAstroRaw(rawType: rawType)
+                        }
+                    }
+                case .failure(let error):
+                    self.failAstroStack(error.localizedDescription)
+                }
+            }
+        }
+        astroRawDelegates[token] = delegate
+        photoOutput.capturePhoto(with: settings, delegate: delegate)
+    }
+
+    private func fuseAstro(_ frame: CIImage) -> Bool {
+        let extent = frame.extent.integral
+        if astroExtent == .zero { astroExtent = CGRect(origin: .zero, size: extent.size) }
+        let normalized = frame.cropped(to: extent)
+            .transformed(by: CGAffineTransform(translationX: -extent.minX, y: -extent.minY))
+            .cropped(to: astroExtent)
+        let count = astroRawCaptured + 1
+        let combined: CIImage
+        if astroStackBlend == .lighten, let astroAccumulator {
+            combined = normalized.applyingFilter("CILightenBlendMode", parameters: [
+                kCIInputBackgroundImageKey: astroAccumulator
+            ])
+        } else if let astroAccumulator {
+            let alpha = 1.0 / Double(count)
+            let current = normalized.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: alpha, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: alpha, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: alpha, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+            ])
+            let previous = astroAccumulator.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: 1 - alpha, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: 1 - alpha, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: 1 - alpha, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+            ])
+            combined = current.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: previous])
+        } else { combined = normalized }
+        let width = Int(astroExtent.width.rounded()), height = Int(astroExtent.height.rounded())
+        guard width > 0, height > 0 else { return false }
+        var buffer: CVPixelBuffer?
+        let attrs: [String: Any] = [kCVPixelBufferIOSurfacePropertiesKey as String: [:]]
+        guard CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_64RGBAHalf,
+                                  attrs as CFDictionary, &buffer) == kCVReturnSuccess, let buffer else { return false }
+        astroContext.render(combined, to: buffer, bounds: CGRect(x: 0, y: 0, width: width, height: height),
+                            colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!)
+        astroAccumulator = CIImage(cvPixelBuffer: buffer, options: [.colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!])
+        astroAccumulatorBuffer = buffer
+        return true
+    }
+
+    private func finishAstroStack() {
+        guard let astroAccumulator else { failAstroStack("没有采集到 RAW"); return }
+        guard let cg = astroContext.createCGImage(astroAccumulator, from: astroExtent) else {
+            failAstroStack("RAW 合成失败"); return
+        }
+        astroPhotoBusy = false
+        astroPhotoResult = UIImage(cgImage: cg)
+        astroPhotoStatus = "星空照片完成"
+        restoreAstroAutoExposure()
+    }
+
+    private func failAstroStack(_ message: String) {
+        astroPhotoBusy = false
+        astroPhotoStatus = message
+        restoreAstroAutoExposure()
+    }
+
+    private func restoreAstroAutoExposure() {
+        queue.async { [weak self] in
+            guard let self, let device = self.input?.device else { return }
+            do {
+                try device.lockForConfiguration()
+                if device.isExposureModeSupported(.continuousAutoExposure) { device.exposureMode = .continuousAutoExposure }
+                if device.isFocusModeSupported(.continuousAutoFocus) { device.focusMode = .continuousAutoFocus }
+                if device.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) { device.whiteBalanceMode = .continuousAutoWhiteBalance }
+                device.unlockForConfiguration()
+            } catch {}
+        }
+    }
+
+    private func configureAstroPhotoFormat() {
+        guard captureRouteMode == .astro, !videoModeRequested, let device = input?.device else { return }
+        if astroSavedFormat == nil { astroSavedFormat = device.activeFormat }
+        let candidates = device.formats.filter { format in
+            let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+            return dims.width == 4032 && dims.height == 3024
+                && CMTimeGetSeconds(format.maxExposureDuration) >= 0.999
+                && format.videoSupportedFrameRateRanges.contains {
+                    $0.minFrameRate <= 1.001 && $0.maxFrameRate >= 29.999
+                }
+        }
+        guard let format = candidates.first else { return }
+        do {
+            try device.lockForConfiguration()
+            device.activeFormat = format
+            device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
+            device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
+            device.unlockForConfiguration()
+            if let twelve = format.supportedMaxPhotoDimensions.first(where: { $0.width == 4032 && $0.height == 3024 }) {
+                photoOutput.maxPhotoDimensions = twelve
+            }
+        } catch {}
+    }
+
+    private func restoreAstroPhotoFormat() {
+        guard captureRouteMode != .astro, !videoModeRequested,
+              let format = astroSavedFormat, let device = input?.device else {
+            astroSavedFormat = nil
+            return
+        }
+        do {
+            try device.lockForConfiguration()
+            device.activeFormat = format
+            device.activeVideoMinFrameDuration = .invalid
+            device.activeVideoMaxFrameDuration = .invalid
+            device.unlockForConfiguration()
+        } catch {}
+        astroSavedFormat = nil
+    }
+
+    #if DEBUG
+    func astroActiveFormatForTesting(_ completion: @escaping (String) -> Void) {
+        queue.async {
+            let dims = self.input.map { CMVideoFormatDescriptionGetDimensions($0.device.activeFormat.formatDescription) } ?? .init(width: 0, height: 0)
+            DispatchQueue.main.async { completion("\(dims.width)x\(dims.height)") }
+        }
+    }
+    #endif
+
     func start() {
+        guard !isCoveredPreviewPaused else { return }
         resumeDiagnostics.start(context: resumeDiagnosticContext, probes: [
             "main": { [weak self] reply in DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -1616,7 +1881,7 @@ final class CameraEngine: NSObject, ObservableObject {
         #endif
     }
 
-    func stop() {
+    func stop(preservingCaptureRoute: Bool = false) {
         resumeDiagnostics.stop()
         nightPreviewReveal = nil
         cancelledNightCaptureTokens.formUnion(nightCaptureTokens)
@@ -1647,10 +1912,10 @@ final class CameraEngine: NSObject, ObservableObject {
             self.demoPreviewThrottle.cancel()
             self.histogramThrottle.cancel()
             self.dualCaptureSource?.stop()
-            if self.session.isRunning { self.session.stopRunning() }
+            if !self.astroSharedCaptureSession.isReserved, self.session.isRunning { self.session.stopRunning() }
             self.stopFrontSmartFraming()
             self.stopFrontVideoCentering(clearRequest: false)
-            self.refreshHDRPreviewConfiguration()
+            if !preservingCaptureRoute { self.refreshHDRPreviewConfiguration() }
         }
     }
 
@@ -1729,7 +1994,7 @@ final class CameraEngine: NSObject, ObservableObject {
 
     /// Temporary ownership changes are expected lifecycle events, not user-facing errors.
     private func requestSessionRecovery(waitForInterruptionEnd: Bool = false, resumeInterruption: Bool = false) {
-        guard runRequested, UIApplication.shared.applicationState == .active else { return }
+        guard runRequested, !isCoveredPreviewPaused, UIApplication.shared.applicationState == .active else { return }
         // start() already owns a fresh lifecycle but has not reached the session
         // queue yet. Advancing its token here would cancel that start while the
         // recovery task still sees wantsRunning=false from the previous stop.
@@ -2035,18 +2300,16 @@ final class CameraEngine: NSObject, ObservableObject {
         }
     }
 
-    /// Keep the capture session (and cinematic graph) alive while the gallery
-    /// covers the camera, but stop consuming/rendering preview frames.
-    func setReviewPreviewPaused(_ paused: Bool) {
-        reviewPreviewPauseLock.lock()
-        reviewPreviewPausedStorage = paused
-        reviewPreviewPauseLock.unlock()
-        if !paused { livePreviewState.update { $0.acceptsFrames = true } }
+    /// Keep the last rendered preview while a cover stops the capture session.
+    func setCoveredPreviewPaused(_ paused: Bool) {
+        coveredPreviewPauseLock.lock()
+        coveredPreviewPausedStorage = paused
+        coveredPreviewPauseLock.unlock()
     }
 
-    private var isReviewPreviewPaused: Bool {
-        reviewPreviewPauseLock.lock(); defer { reviewPreviewPauseLock.unlock() }
-        return reviewPreviewPausedStorage
+    private var isCoveredPreviewPaused: Bool {
+        coveredPreviewPauseLock.lock(); defer { coveredPreviewPauseLock.unlock() }
+        return coveredPreviewPausedStorage
     }
 
     func setVideoMode(_ enabled: Bool) {
@@ -3722,14 +3985,14 @@ final class CameraEngine: NSObject, ObservableObject {
             let zoomBeforeReconfiguration = device.videoZoomFactor
             self.configurePreviewOutput(device)
             self.configurePhotoOutput(device)
-            self.restoreZoomAfterLiveReconfiguration(zoomBeforeReconfiguration, on: device)
+            self.restoreZoomAfterPhotoReconfiguration(zoomBeforeReconfiguration, on: device)
         }
     }
 
     /// Changing the preview buffer path for Live can make AVFoundation reset the
     /// active device's crop. Preserve the user's selected framing across that graph
     /// transaction, including the 35 mm crop represented by the 1× focal control.
-    private func restoreZoomAfterLiveReconfiguration(_ zoom: CGFloat, on device: AVCaptureDevice) {
+    private func restoreZoomAfterPhotoReconfiguration(_ zoom: CGFloat, on device: AVCaptureDevice) {
         guard input?.device.uniqueID == device.uniqueID,
               zoom.isFinite, zoom > 0 else { return }
         let target = min(max(zoom, device.minAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor)
@@ -3739,7 +4002,7 @@ final class CameraEngine: NSObject, ObservableObject {
             device.videoZoomFactor = target
             device.unlockForConfiguration()
         } catch {
-            report("恢复 Live 取景倍率失败：\(error.localizedDescription)")
+            report("恢复取景倍率失败：\(error.localizedDescription)")
             return
         }
         publishCapabilities(device, lensID: selectedLens)
@@ -5076,7 +5339,10 @@ final class CameraEngine: NSObject, ObservableObject {
         let factor = min(max(target / base, device.minAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor)
         do {
             try device.lockForConfiguration()
-            if request.smooth { device.ramp(toVideoZoomFactor: factor, withRate: 4) }
+            if request.smooth {
+                if device.isRampingVideoZoom { device.cancelVideoZoomRamp() }
+                device.ramp(toVideoZoomFactor: factor, withRate: ContinuousZoomPolicy.animatedRampRate(current: device.videoZoomFactor, target: factor))
+            }
             else { if device.isRampingVideoZoom { device.cancelVideoZoomRamp() }; device.videoZoomFactor = factor }
             device.unlockForConfiguration()
             let anchors = lensCatalog.filter {
@@ -5243,7 +5509,10 @@ final class CameraEngine: NSObject, ObservableObject {
                 restoreDefaultAutoExposureLimit(device)
             }
             let boundedFactor = min(max(factor, device.minAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor)
-            if request.smooth { device.ramp(toVideoZoomFactor:boundedFactor,withRate:4) }
+            if request.smooth && !changedDevice {
+                if device.isRampingVideoZoom { device.cancelVideoZoomRamp() }
+                device.ramp(toVideoZoomFactor:boundedFactor,withRate:ContinuousZoomPolicy.animatedRampRate(current: device.videoZoomFactor, target: boundedFactor))
+            }
             else {
                 if device.isRampingVideoZoom { device.cancelVideoZoomRamp() }
                 device.videoZoomFactor = boundedFactor
@@ -5274,7 +5543,11 @@ final class CameraEngine: NSObject, ObservableObject {
                     // Restore the requested factor, not the pre-request device value.
                     configuredPreviewRoute = ""
                     configurePreviewOutput(device)
-                    restoreZoomAfterLiveReconfiguration(boundedFactor, on: device)
+                    restoreZoomAfterPhotoReconfiguration(boundedFactor, on: device)
+                } else if !request.smooth {
+                    // Output capabilities can reset sensor crop after returning
+                    // from Astro. Keep the explicit user's requested magnification.
+                    restoreZoomAfterPhotoReconfiguration(boundedFactor, on: device)
                 }
             } else if manualModeTransitionInFlight {
                 // 跳过高像素/标准照片的整次输出重建时，系统仍可能在换输入后关闭
@@ -7714,7 +7987,7 @@ final class CameraEngine: NSObject, ObservableObject {
                                                portraitMatte: orientedPortraitMatte, portraitMask: effectivePortraitMask,
                                                portraitHeadMask: semanticPortraitMask,
                                                systemHEIF: capture.nativePortraitFrontSensor ? nil : capture.processed,
-                                               captureDate: capture.capturedAt)
+                                               captureDate: capture.capturedAt, captureParameters:capture.diagnostics?.parameters)
             tracePhotoPhase("encode-end")
             if capture.options.portraitMode {
                 var diagnostics = capture.diagnostics ?? PhotoCaptureDiagnostics()
@@ -7737,7 +8010,12 @@ final class CameraEngine: NSObject, ObservableObject {
                 Task {
                     defer { try? FileManager.default.removeItem(at: movie) }
                     do {
-                        let paired = try await LivePhotoProcessor.process(still, original: original, movie: movie, look: capture.look)
+                        var liveLook = capture.look
+                        if liveLook.border {
+                            liveLook.watermarkContent = PhotoWatermarkContent.capture(source:image,look:liveLook,
+                                options:capture.options,parameters:capture.diagnostics?.parameters,date:capture.capturedAt)
+                        }
+                        let paired = try await LivePhotoProcessor.process(still, original: original, movie: movie, look:liveLook)
                         self.completeCapture(capture, photo: paired, message: nil)
                     } catch {
                         self.completeCapture(capture, photo: nil, message: "Live 处理失败：\(error.localizedDescription)")
@@ -8062,7 +8340,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private func publishPreview(_ image: UIImage, revision: UInt64, generation: UInt64? = nil, userSwitchID: UUID? = nil, frontLandscape: Bool? = nil) {
         DispatchQueue.main.async {
             let state = self.livePreviewState.snapshot()
-            guard state.running, state.acceptsFrames, !state.nightCapturePreviewHold,
+            guard !self.isCoveredPreviewPaused, state.running, state.acceptsFrames, !state.nightCapturePreviewHold,
                   generation == nil || generation == state.readingsGeneration,
                   userSwitchID == nil || userSwitchID == state.userSwitchID,
                   self.previewRevision.acceptsPublication(revision) else { return }
@@ -8518,7 +8796,7 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
             #if DEBUG
             receivedRecordingFramesForTesting += 1
             #endif
-            if isReviewPreviewPaused {
+            if isCoveredPreviewPaused {
                 movieRecorder?.appendVideo(sampleBuffer, virtualApertureAllowed: false)
                 return
             }
@@ -8540,7 +8818,7 @@ extension CameraEngine: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureA
             }
             return
         }
-        guard !isReviewPreviewPaused else { return }
+        guard !isCoveredPreviewPaused else { return }
         renderPreviewFrame(sampleBuffer, samplesIndependentNightMetering: output === videoOutput)
     }
 
@@ -9160,4 +9438,18 @@ extension CameraEngine: AVCapturePhotoCaptureDelegate {
 private enum CameraError: LocalizedError {
     case unavailable
     var errorDescription: String? { "无法打开摄像头，请确认设备有可用摄像头。" }
+}
+
+
+final class AstroRawCaptureDelegate: NSObject, AVCapturePhotoCaptureDelegate, @unchecked Sendable {
+    private let completion: (Result<Data, Error>) -> Void
+    init(completion: @escaping (Result<Data, Error>) -> Void) { self.completion = completion }
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        if let error { completion(.failure(error)); return }
+        guard let data = photo.fileDataRepresentation() else {
+            completion(.failure(NSError(domain: "AstroRAW", code: 1)))
+            return
+        }
+        completion(.success(data))
+    }
 }

@@ -262,6 +262,7 @@ struct PhotoOptions {
     var prefersManualExposureBracket = false
     var nightProfile: IndependentNightProfile = .balanced
     var nightHDRPhoto = false
+    var watermarkLocation: PhotoLocation?
     var usesHDRHEIF: Bool { format == .heif && hdr }
     /// 普通 HEIF+HDR 走系统处理源；只有 RAW/RAW+JPG/HEIF Pro 需要 RAW。
     var usesRAWCapture: Bool { format.needsRAW }

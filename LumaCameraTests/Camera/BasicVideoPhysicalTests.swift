@@ -328,6 +328,18 @@ final class BasicVideoPhysicalTests: XCTestCase {
 
     static func makeFreshModel() async throws -> CameraViewModel {
         let model = try XCTUnwrap(AppDependencies.runningAppCameraModel)
+        // A preceding visible-star test can leave an asynchronous return pending.
+        // Complete that real UI handoff before stopping/resetting the shared graph.
+        if model.topLevelMode == .astro || model.modeHandoffTarget != nil {
+            model.cancelModeHandoff()
+            model.selectTopLevelMode(.photo)
+            let limit = CACurrentMediaTime()+15
+            while (model.topLevelMode != .photo || model.modeHandoffTarget != nil || !model.camera.ready), CACurrentMediaTime()<limit {
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            XCTAssertEqual(model.topLevelMode, .photo)
+            XCTAssertNil(model.modeHandoffTarget)
+        }
         model.setCameraActive(false)
         if model.camera.videoBusy { model.camera.stopVideoRecording() }
         await Task.yield()

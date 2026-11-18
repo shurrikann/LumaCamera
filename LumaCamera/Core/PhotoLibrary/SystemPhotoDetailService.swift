@@ -95,7 +95,7 @@ extension SystemPhotoLibraryService: PhotoDetailService {
         // Resume our own recipes against the original source; other editors remain flattened.
         options.canHandleAdjustmentData = { data in
             data.formatIdentifier == "com.shurrikann.LumaCamera.photo-edit" &&
-            ["1", "2", "3", "4", "5", "6"].contains(data.formatVersion) && (try? JSONDecoder().decode(PhotoAdjustments.self, from: data.data)) != nil
+            ["1", "2", "3", "4", "5", "6", "7"].contains(data.formatVersion) && (try? JSONDecoder().decode(PhotoAdjustments.self, from: data.data)) != nil
         }
         let downloads = SharedPhotoDownloadCancellation()
         let requestID = asset.requestContentEditingInput(with: options) { input, info in
@@ -107,7 +107,7 @@ extension SystemPhotoLibraryService: PhotoDetailService {
             }
             let sourceMetadata = CGImageSourceCreateWithURL(url as CFURL, nil).flatMap { CGImageSourceCopyPropertiesAtIndex($0, 0, nil) as? [String: Any] } ?? [:]
             let initial = input.adjustmentData.flatMap { data -> PhotoAdjustments? in
-                guard data.formatIdentifier == "com.shurrikann.LumaCamera.photo-edit", ["1", "2", "3", "4", "5", "6"].contains(data.formatVersion) else { return nil }
+                guard data.formatIdentifier == "com.shurrikann.LumaCamera.photo-edit", ["1", "2", "3", "4", "5", "6", "7"].contains(data.formatVersion) else { return nil }
                 return try? JSONDecoder().decode(PhotoAdjustments.self, from: data.data)
             } ?? PhotoAdjustments()
             // A camera filter or a flattened copy is already baked into the editing source.
@@ -150,7 +150,7 @@ extension SystemPhotoLibraryService: PhotoDetailService {
                     } catch { DispatchQueue.main.async { callback(.failure(error)) } }
                 }
             } : nil
-            let session = PhotoEditSession(source: source, initialAdjustments: initial, liveCommit: liveCommit, copy: { adjustments, callback in
+            let session = PhotoEditSession(source: source, watermarkContent: PhotoEditWatermark.content(metadata: sourceMetadata, capturedAt: asset.creationDate, location: asset.location.flatMap { PhotoLocation.recorded($0) }, parameters: sourceRecord?.currentParameters), initialAdjustments: initial, liveCommit: liveCommit, copy: { adjustments, callback in
                 DispatchQueue.global(qos: .userInitiated).async {
                     do {
                         let rendered = try PhotoEditRenderer.render(source: source, adjustments: adjustments, metadata: sourceMetadata)
@@ -178,7 +178,7 @@ extension SystemPhotoLibraryService: PhotoDetailService {
                         let output = PHContentEditingOutput(contentEditingInput: input)
                         let result = try PhotoEditRenderer.render(source: source, adjustments: adjustments, metadata: sourceMetadata)
                         try result.resource.data.write(to: output.renderedContentURL, options: .atomic)
-                        output.adjustmentData = PHAdjustmentData(formatIdentifier: "com.shurrikann.LumaCamera.photo-edit", formatVersion: "4", data: try JSONEncoder().encode(adjustments))
+                        output.adjustmentData = PHAdjustmentData(formatIdentifier: "com.shurrikann.LumaCamera.photo-edit", formatVersion: "7", data: try JSONEncoder().encode(adjustments))
                         PHPhotoLibrary.shared().performChanges({ PHAssetChangeRequest(for: asset).contentEditingOutput = output }) { success, error in
                             DispatchQueue.main.async {
                                 if success { PhotoCaptureDiagnosticsStore.shared.copyRecord(from: id, to: id, adjustments: adjustments, sourceIsOriginal: sourceIsOriginal); PhotoCaptureDiagnosticsStore.shared.setFilterApplied(sourceHasFilter || adjustments.usesFilter, assetID: id); var saved = result; saved.filterApplied = sourceHasFilter || adjustments.usesFilter; callback(.success(saved)) }

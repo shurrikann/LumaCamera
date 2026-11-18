@@ -45,9 +45,8 @@ extension CameraView {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 22).padding(.top, 14).padding(.bottom, 42)
-        .modifier(PopupSurface(radius: 36, glass: true,
-                               materialOpacity: AppTheme.cameraPopupMaterialOpacity,
-                               bottomRadius: parameterBottomCornerRadius))
+        .modifier(PopupSurface(radius: parameterBottomCornerRadius, glass: true,
+                               materialOpacity: AppTheme.cameraPopupMaterialOpacity))
     }
 
     var whiteBalancePresets: some View {

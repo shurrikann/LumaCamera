@@ -140,7 +140,8 @@ extension CameraView {
         .frame(height: ShootingModePanelLayout.panelHeight(for: visibleOptions.count))
         .padding(.horizontal, 12)
         .padding(.vertical, 18)
-        .modifier(PopupSurface(radius: 32, glass: true, materialOpacity: AppTheme.cameraPopupMaterialOpacity))
+        .modifier(PopupSurface(radius: parameterBottomCornerRadius, glass: true,
+                               materialOpacity: AppTheme.cameraPopupMaterialOpacity))
         .accessibilityLabel(model.captureKind == .photo ? "照片拍摄模式选项" : "视频拍摄模式选项")
     }
 
@@ -184,14 +185,17 @@ extension CameraView {
                     }.disabled(!selectable || model.isPreparingSubmode)
                 }
             }
-        }.padding(16).modifier(PopupSurface(radius: 32, glass: true, materialOpacity: AppTheme.cameraPopupMaterialOpacity))
+        }
+        .padding(16)
+        .modifier(PopupSurface(radius: parameterBottomCornerRadius, glass: true,
+                               materialOpacity: AppTheme.cameraPopupMaterialOpacity))
     }
 
     var captureToolsPanel: some View {
         VStack(spacing: 0) {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 14) {
                 if model.captureKind == .photo {
-                    captureTool("水印", icon: "square.bottomthird.inset.filled", active: model.border) { model.border.toggle() }
+                    captureTool("水印", icon: "square.bottomthird.inset.filled", active: model.border) { model.openWatermarkPanel() }
                     captureTool(model.timerSeconds == 0 ? "倒计时" : "\(model.timerSeconds) 秒", icon: "timer", active: model.timerSeconds > 0,
                                 enabled: !model.burstModeEnabled && !model.nightModeEnabled, status: "当前子模块不可用") {
                         model.timerSeconds = model.timerSeconds == 0 ? 3 : model.timerSeconds == 3 ? 10 : 0
@@ -207,7 +211,53 @@ extension CameraView {
                     captureTool("声音电平", icon: "waveform", active: model.showsAudioMeter) { model.showsAudioMeter.toggle() }
                 }
             }
-        }.padding(16).modifier(PopupSurface(radius: 32, glass: true, materialOpacity: AppTheme.cameraPopupMaterialOpacity))
+        }
+        .padding(16)
+        .modifier(PopupSurface(radius: parameterBottomCornerRadius, glass: true,
+                               materialOpacity: AppTheme.cameraPopupMaterialOpacity))
+    }
+
+    var watermarkPanel: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("水印").font(.system(size: 15, weight: .semibold))
+                Spacer()
+                Button { model.closePopups() } label: {
+                    Image(systemName: "xmark").font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .frame(width: 30, height: 30)
+                        .background(.white.opacity(0.10), in: Circle())
+                }.accessibilityLabel("关闭水印面板")
+            }
+            HStack(spacing: 8) {
+                ForEach(PhotoWatermarkStyle.allCases) { style in
+                    Button { model.selectWatermarkStyle(style) } label: {
+                        WatermarkStyleThumbnail(style:style,selected:model.border && model.preferences.watermark.style == style)
+                    }.buttonStyle(.plain)
+                        .captureControlGeometry("watermark.style."+style.rawValue,model:model)
+                        .accessibilityLabel(style.title)
+                        .accessibilityAddTraits(model.border && model.preferences.watermark.style == style ? .isSelected : [])
+                }
+            }
+            HStack(spacing: 18) {
+                Toggle(isOn: Binding(
+                    get: { model.preferences.watermark.showsLocation },
+                    set: { model.preferences.watermark.showsLocation = $0 }
+                )) {
+                    Text("地理位置").font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+                }.tint(AppTheme.accent)
+                Toggle(isOn: Binding(
+                    get: { model.preferences.watermark.showsParameters },
+                    set: { model.preferences.watermark.showsParameters = $0 }
+                )) {
+                    Text("参数信息").font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+                }.tint(AppTheme.accent)
+            }
+        }
+        .padding(16)
+        .captureControlGeometry("watermark.panel", model: model)
+        .modifier(PopupSurface(radius: parameterBottomCornerRadius, glass: true,
+                               materialOpacity: AppTheme.cameraPopupMaterialOpacity))
     }
 
     func captureTool(_ title: String, icon: String, active: Bool = false, enabled: Bool = true, status: String = "暂不可用", action: @escaping () -> Void) -> some View {

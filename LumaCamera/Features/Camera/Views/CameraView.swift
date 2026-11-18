@@ -7,13 +7,11 @@ struct CameraView: View {
     @ObservedObject var library: PhotoLibraryViewModel
     @ObservedObject var filters: FilterPickerViewModel
     @ObservedObject var gallery: GalleryViewModel
-    @State var ratioTransitionActive = false
-    @State private var ratioTransitionRequest = UUID()
+    @StateObject var previewContentTransition = PreviewContentTransition()
     @State private var cameraVisible = false
     @State var openGateInfoVisible = false
     @State var parameterPopupHeight: CGFloat = 0
     @State var flipButtonRotation = 0.0
-    @State var modeContentOffset: CGFloat = 0
     @State var previewEVOrigin: Double?
     @State var dockKitROIStart: CGPoint?
     @State var dockKitROIFrame: CGRect?
@@ -36,12 +34,12 @@ struct CameraView: View {
 
     private var cameraMessagePresented: Binding<Bool> {
         Binding(
-            get: { camera.message != nil && !model.review },
+            get: { camera.message != nil && !model.review && !model.settings },
             set: { isPresented in
-                guard !isPresented, !model.review, let dismissedMessage = camera.message else { return }
+                guard !isPresented, !model.review, !model.settings, let dismissedMessage = camera.message else { return }
                 // SwiftUI 可能在 alert 更新视图树时写回 Binding；延后清空发布属性，避免在更新事务内发布变化。
                 DispatchQueue.main.async {
-                    guard !model.review, camera.message == dismissedMessage else { return }
+                    guard !model.review, !model.settings, camera.message == dismissedMessage else { return }
                     camera.message = nil
                 }
             }
@@ -52,16 +50,16 @@ struct CameraView: View {
         GeometryReader { geometry in
             ZStack {
                 glassBackground
-                viewfinder.animation(AppTheme.frameAnimation, value: model.ratio)
+                viewfinder
                 VStack {
                     Spacer(minLength: 0)
-                    shutterBar.padding(.bottom, CameraControlLayout.shutterBottom)
+                    shutterBar.padding(.bottom, max(0, CameraControlLayout.shutterBottom - 10))
                         .opacity(model.popupVisible || model.panel == .film ? 0 : 1)
                         .allowsHitTesting(!model.popupVisible && model.panel != .film)
                 }
                 fixedCameraControls(width: geometry.size.width)
                 VStack(spacing: 0) {
-                    toolStrip.padding(.top, 2)
+                    toolStrip.padding(.top, CameraControlLayout.toolbarTopInset)
                         .captureControlGeometry("topToolbar", model: model)
                         .opacity(model.captureKind == .video && camera.videoRecording ? 0 : 1)
                         .allowsHitTesting(!(model.captureKind == .video && camera.videoRecording))
@@ -164,7 +162,7 @@ struct CameraView: View {
         .tint(AppTheme.accent)
         .onAppear {
             cameraVisible = true
-            model.setCameraActive(scenePhase == .active && !model.review && !model.settings)
+            model.updateCameraPresentation(isVisible: true, phase: scenePhase)
             model.updateFrontFramingForOrientation(isLandscape: controlsLandscape)
         }
         #if DEBUG
@@ -218,56 +216,43 @@ struct CameraView: View {
             #endif
         }
         .onChange(of: model.ratio) { _, _ in
-            let token = UUID(); ratioTransitionRequest = token
-            guard !UIAccessibility.isReduceMotionEnabled else { return }
-            withAnimation(.easeOut(duration: 0.08)) { ratioTransitionActive = true }
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(100))
-                guard ratioTransitionRequest == token else { return }
-                withAnimation(.easeInOut(duration: 0.22)) { ratioTransitionActive = false }
-            }
+            guard model.focalTransitionImage == nil, model.modeHandoffImage == nil else { previewContentTransition.cancel(); return }
+            beginRatioPreviewTransition()
         }
-        .onChange(of: camera.frontPhotoLandscapeEnabled) { _, _ in
-            // 只淡化用户主动切换的取景内容，不插值画幅尺寸，也不移动按钮。
-            let token = UUID(); ratioTransitionRequest = token
-            ratioTransitionActive = true
-            Task { @MainActor in
-                await Task.yield()
-                guard ratioTransitionRequest == token else { return }
-                withAnimation(.easeOut(duration: UIAccessibility.isReduceMotionEnabled ? 0.08 : 0.18)) {
-                    ratioTransitionActive = false
-                }
-            }
+        .onChange(of: camera.frontPhotoLandscapeEnabled) { _, _ in beginRatioPreviewTransition() }
+        .onReceive(camera.$preview) { image in
+            previewContentTransition.receive(image, publishedAt: camera.demo ? nil : camera.latestPreviewFrameTime)
         }
-        .onDisappear { ratioTransitionRequest = UUID(); ratioTransitionActive = false; openGateInfoVisible = false; cameraVisible = false; model.setCameraActive(false) }
+        .onAppear {
+            #if DEBUG
+            model.previewContentTransitionForTesting = previewContentTransition
+            #endif
+        }
+        .onDisappear { previewContentTransition.cancel(); openGateInfoVisible = false; cameraVisible = false; model.setCameraActive(false) }
         .onChange(of: model.toolbarPanel) { _, panel in
             if panel != .videoRatio { dismissOpenGateInformation() }
         }
         .onChange(of: scenePhase) { _, phase in
-            // Overlay covers (gallery/settings) keep the session alive; only a
-            // real background transition stops it.
-            model.setCameraActive(cameraVisible && phase == .active)
+            model.updateCameraPresentation(isVisible: cameraVisible, phase: phase)
             if phase != .active { dismissOpenGateInformation() }
             if phase == .active { gallery.refreshAfterForeground() }
         }
         .onChange(of: model.review) { _, isPresented in
-            // Keep the capture session alive while the gallery cover is up.
-            // Tearing it down here made closing the gallery restart the whole
-            // session and jump the preview for about a second.
-            camera.setReviewPreviewPaused(isPresented)
+            model.updateCameraPresentation(isVisible: cameraVisible, phase: scenePhase)
             if !isPresented {
-                model.setCameraActive(cameraVisible && scenePhase == .active && !model.settings)
                 gallery.refreshThumbnail()
             } else {
                 dismissOpenGateInformation()
             }
         }
         .onChange(of: model.settings) { _, isPresented in
-            camera.setReviewPreviewPaused(isPresented || model.review)
-            if !isPresented, !model.review {
-                model.setCameraActive(cameraVisible && scenePhase == .active)
-            }
+            model.updateCameraPresentation(isVisible: cameraVisible, phase: scenePhase)
             if isPresented { dismissOpenGateInformation() }
+        }
+        .onChange(of: model.captureInProgressForPresentation) { _, busy in
+            if !busy, model.review || model.settings {
+                model.updateCameraPresentation(isVisible: cameraVisible, phase: scenePhase)
+            }
         }
         .onChange(of: controlsLandscape) { _, isLandscape in
             model.updateFrontFramingForOrientation(isLandscape: isLandscape)
@@ -320,7 +305,32 @@ struct CameraView: View {
             GalleryView(model: model.gallery, library: library, isDemo: camera.demo, openLatestCapture: model.reviewCapture,
                         openVideoID: model.reviewVideoID, onCamera: { model.review = false })
         }
+        .overlay {
+            if model.topLevelMode == .astro {
+                AstroModeView(onSelectMode: { target, preview in
+                    model.selectTopLevelMode(target, outgoingPreview: preview, feedback: false)
+                }, handoffImage: model.modeHandoffImage, handoffOpacity: model.modeHandoffOpacity,
+                   handoffBridgeFrame: model.modeHandoffCoverVisible ? model.modeHandoffCoverFrame : nil,
+                   onPreviewing: { model.finishModeHandoff(to: .astro) }, onOpenSettings: {
+                    model.presentSettings()
+                }, albumImage: gallery.albumButtonImage,
+                   albumPendingCount: camera.pendingPhotoCount + library.pendingSaveCount + (library.videoSaving ? 1 : 0),
+                   onOpenLibrary: { model.openLibrary() },
+                   externalCoverPresented: model.settings || model.review,
+                   inheritedRatio: model.ratio, sharedSession: camera.astroSharedCaptureSession,
+                   watermarkSettings: $model.preferences.watermark)
+                .transition(.identity)
+            }
+        }
+        .animation(nil, value: model.topLevelMode)
+        .onChange(of: model.topLevelMode) { _, target in model.modeDestinationDidAppear(target) }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { model.cancelModeHandoff(); previewContentTransition.cancel() }
+        }
+        .onChange(of: model.settings) { _, shown in if shown { model.cancelModeHandoff(); previewContentTransition.cancel() } }
+        .onChange(of: model.review) { _, shown in if shown { model.cancelModeHandoff(); previewContentTransition.cancel() } }
         .sheet(isPresented: $model.settings) { settingsView }
+
         .alert("光屿相机", isPresented: cameraMessagePresented) {
             if camera.recoveryFailed { Button("重试相机") { camera.retrySessionRecovery() } }
             if library.failedSaveCount > 0 || !library.failedVideos.isEmpty {
@@ -339,8 +349,9 @@ struct CameraView: View {
                     .transition(.opacity).zIndex(1)
                 shootingModesPanel
                     .environment(\.captureControlAngle, 0)
-                    .padding(.horizontal, 10).padding(.bottom, 8)
+                    .padding(.horizontal, 10).padding(.bottom, 10)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .ignoresSafeArea(edges: .bottom)
                     .transition(bottomPopupTransition).zIndex(2)
             } else if model.popupVisible {
                 Color.black.opacity(0.08)
@@ -350,29 +361,46 @@ struct CameraView: View {
             if model.panel == .film {
                 filmPanel
                     .environment(\.captureControlAngle, 0)
+                    .padding(.horizontal, 10).padding(.bottom, 10)
                     #if DEBUG
                     .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.popupFrameForTesting = $0 }
                     #endif
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .ignoresSafeArea(edges: .bottom)
                     .transition(bottomPopupTransition).zIndex(1)
             }
             if model.popupVisible {
-                if model.functions || model.tools {
-                    Group {
-                        if model.functions { shootingFunctionsPanel }
-                        else { captureToolsPanel }
-                    }
-                    .environment(\.captureControlAngle, 0)
-                    #if DEBUG
-                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.popupFrameForTesting = $0 }
-                    #endif
-                    .padding(.horizontal, 10).padding(.bottom, 8)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    .transition(bottomPopupTransition).zIndex(2)
+                if model.watermarkPanelVisible {
+                    Color.black.opacity(0.001).ignoresSafeArea()
+                        .contentShape(Rectangle())
+                        .onTapGesture { model.closePopups() }
+                        .zIndex(1)
+                    watermarkPanel
+                        .environment(\.captureControlAngle, 0)
+                        .padding(.horizontal, 10).padding(.bottom, 10)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .ignoresSafeArea(edges: .bottom)
+                        .transition(bottomPopupTransition).zIndex(2)
+                } else if model.functions {
+                    shootingFunctionsPanel
+                        .environment(\.captureControlAngle, 0)
+                        .padding(.horizontal, 10).padding(.bottom, 10)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .ignoresSafeArea(edges: .bottom)
+                        .transition(bottomPopupTransition).zIndex(2)
+                } else if model.tools {
+                    captureToolsPanel
+                        .environment(\.captureControlAngle, 0)
+                        .padding(.horizontal, 10)
+                        .padding(.bottom, 10)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .ignoresSafeArea(edges: .bottom)
+                        .transition(bottomPopupTransition).zIndex(2)
                 } else if !model.shootingModes {
                     // The parameter sheet keeps its portrait layout in every control
                     // orientation; only its close/title/automatic labels rotate.
                     manualPanel
+                        .padding(.horizontal, 10).padding(.bottom, 10)
                         #if DEBUG
                         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.popupFrameForTesting = $0 }
                         #endif
@@ -388,6 +416,7 @@ struct CameraView: View {
         .animation(AppTheme.popupAnimation, value: model.functions)
         .animation(AppTheme.popupAnimation, value: model.tools)
         .animation(AppTheme.popupAnimation, value: model.shootingModes)
+        .animation(AppTheme.popupAnimation, value: model.watermarkPanelVisible)
     }
 
     /// The 1×/2× buttons sit under a transparent center overlay in night/portrait/burst.
@@ -502,5 +531,81 @@ private struct PhotoSubmodeFocalHitControl: UIViewRepresentable {
                 break
             }
         }
+    }
+}
+
+extension CameraView {
+    private func beginRatioPreviewTransition() {
+        guard model.focalTransitionImage == nil, model.modeHandoffImage == nil else { previewContentTransition.cancel(); return }
+        // Preview buffers may keep the sensor aspect; the view owns the crop.
+        // The next fresh publication is gated by the engine's look revision.
+        previewContentTransition.begin(camera.preview, reducingMotion: reduceMotion)
+    }
+}
+
+/// One bounded, preview-only handoff. Camera controls never participate in its animation.
+@MainActor final class PreviewContentTransition: ObservableObject {
+    @Published private(set) var image: UIImage?
+    @Published private(set) var opacity = 1.0
+    @Published private(set) var blur: CGFloat = 0
+    private(set) var awaitingFrame = false
+    private(set) var didTimeOut = false
+    private var expectedAspect: CGFloat?
+    private var startedAt = 0.0
+    private var reducingMotion = false
+    private var revision = UUID()
+    private var timeout: Task<Void, Never>?
+    private var cleanup: Task<Void, Never>?
+
+    func begin(_ source: UIImage?, aspect: CGFloat? = nil, waitsForFrame: Bool = true, reducingMotion: Bool? = nil) {
+        guard let source = source ?? image else { cancel(); return }
+        timeout?.cancel(); cleanup?.cancel(); revision = UUID()
+        let token = revision
+        self.reducingMotion = reducingMotion ?? UIAccessibility.isReduceMotionEnabled
+        expectedAspect = aspect.flatMap { $0.isFinite && $0 > 0 ? $0 : nil }
+        startedAt = CACurrentMediaTime(); awaitingFrame = true; didTimeOut = false
+        var transaction = Transaction(); transaction.disablesAnimations = true
+        withTransaction(transaction) { image = source; opacity = 1; blur = 0 }
+        if !self.reducingMotion { withAnimation(.easeOut(duration: 0.08)) { blur = 3 } }
+        timeout = Task { @MainActor [weak self] in
+            do { try await Task.sleep(for: .seconds(waitsForFrame ? 1.5 : 0.06)) } catch { return }
+            guard let self, self.revision == token else { return }
+            if waitsForFrame { self.didTimeOut = true }
+            self.finish()
+        }
+    }
+    func receive(_ candidate: UIImage?, publishedAt: Double? = nil) {
+        guard awaitingFrame, let candidate, candidate !== image, candidate.size.height > 0,
+              publishedAt.map({ $0 >= startedAt }) ?? true else { return }
+        if let expectedAspect, abs(candidate.size.width/candidate.size.height-expectedAspect) > 0.02 { return }
+        finish()
+    }
+    func finish() {
+        guard awaitingFrame, image != nil else { return }
+        awaitingFrame = false; timeout?.cancel(); timeout = nil
+        let token = revision, duration = reducingMotion ? 0.08 : 0.18
+        withAnimation(.easeOut(duration: duration)) { opacity = 0 }
+        cleanup = Task { @MainActor [weak self] in
+            do { try await Task.sleep(for: .seconds(duration+0.02)) } catch { return }
+            guard let self, self.revision == token else { return }
+            self.image = nil; self.cleanup = nil
+        }
+    }
+    func cancel() {
+        revision = UUID(); timeout?.cancel(); cleanup?.cancel(); timeout = nil; cleanup = nil
+        awaitingFrame = false; didTimeOut = false; image = nil; opacity = 1; blur = 0
+    }
+}
+
+struct PreviewContentTransitionOverlay: View {
+    @ObservedObject var transition: PreviewContentTransition
+    var body: some View {
+        GeometryReader { geometry in
+            if let image = transition.image {
+                Image(uiImage: image).resizable().allowedDynamicRange(.high).scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height).clipped()
+                    .blur(radius: transition.blur).opacity(transition.opacity)
+            }
+        }.clipped().allowsHitTesting(false).accessibilityHidden(true)
     }
 }

@@ -174,7 +174,7 @@ final class FrontVideoCenteringPhysicalTests: XCTestCase {
         print("CENTER-CAPABILITIES \(camera.frontVideoCenteringSettings)")
         print("CENTER-BEFORE \(await state())")
         try await wait("前置官方居中能力") { camera.frontVideoCenteringAvailable }
-        let standard = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard })
+        _ = try XCTUnwrap(camera.lenses.first { $0.device.position == .front && $0.frontFraming == .standard })
         var latencies:[Double] = []
         for pass in 0..<3 {
             let start = CACurrentMediaTime(); model.toggleFrontVideoCentering()

@@ -378,15 +378,133 @@ final class PresetToolbarPhysicalTests:XCTestCase {
         XCTAssertTrue(model.zoomDialVisible);XCTAssertTrue(model.hidesFocalStripForZoomDial)
         let start=CACurrentMediaTime()
         try await Task.sleep(for:.milliseconds(2500));XCTAssertTrue(model.zoomDialVisible)
-        try await PresetToolbarChecks.wait("待机4秒收起"){!model.zoomDialVisible}
+        try await PresetToolbarChecks.wait("待机3秒收起"){!model.zoomDialVisible}
         let elapsed=CACurrentMediaTime()-start
-        XCTAssertGreaterThanOrEqual(elapsed,3.9);XCTAssertLessThan(elapsed,4.8)
+        XCTAssertGreaterThanOrEqual(elapsed,2.9);XCTAssertLessThan(elapsed,3.8)
         XCTAssertFalse(model.hidesFocalStripForZoomDial)
         XCTAssertEqual(try PresetToolbarChecks.frame("lenses",model),before)
         print("VIDEO_STANDBY_ZOOM hideSeconds=\(elapsed) rapidPairs=10 defaultFocals=true")
     }
 
-    @MainActor func testRecordingZoomButtonsWheelAndFourSecondIdleHide() async throws {
+    @MainActor func testVideoFocalStripShowsOnlyTheTappedTargetDuringZoom() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        let camera = model.camera
+        model.setCameraActive(true)
+        defer { model.setCameraActive(false) }
+        try await PresetToolbarChecks.wait("相机") { camera.ready }
+        model.setCaptureKind(.video)
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model,label:"视频焦段",timeout:20)
+        let wide = try XCTUnwrap(model.displayedFocalLenses.first { abs($0.displayZoom-1) < 0.01 })
+        let tele = try XCTUnwrap(model.displayedFocalLenses.first { abs($0.displayZoom-8) < 0.01 })
+        var samples = 0
+        for target in [tele, wide, tele, wide] {
+            model.selectFocalLength(target)
+            repeat {
+                let lenses = model.displayedFocalLenses
+                XCTAssertEqual(lenses.filter { model.isFocalSelected($0) }.map(\.id), [target.id])
+                for lens in lenses {
+                    let title = lens.id == wide.id && target.id == wide.id ? "24mm" : lens.title
+                    XCTAssertEqual(model.focalButtonTitle(for:lens), title)
+                }
+                samples += 1
+                if !model.focalZoomAnimation.isRunning { break }
+                try await Task.sleep(for:.milliseconds(25))
+            } while true
+        }
+        model.selectFocalLength(tele)
+        model.selectFocalLength(wide)
+        XCTAssertTrue(model.isFocalSelected(wide))
+        model.openZoomDial()
+        XCTAssertFalse(model.focalZoomAnimation.isRunning)
+        model.endZoomDial()
+        print("VIDEO_FOCAL_SELECTION samples=\(samples) routes=4 rapidRetarget=true wheelTakeover=true PhotosWrites=0")
+    }
+
+    @MainActor func testManualVideoStandbyFocalButtonsFollowWheelOnCurrentInput() async throws {
+        try await manualFocalButtonsFollowWheelOnCurrentInput(.video)
+    }
+
+    @MainActor func testManualPhotoFocalButtonsFollowWheelOnCurrentInput() async throws {
+        try await manualFocalButtonsFollowWheelOnCurrentInput(.photo)
+    }
+
+    @MainActor private func manualFocalButtonsFollowWheelOnCurrentInput(_ kind: CameraViewModel.CaptureKind) async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        let camera = model.camera
+        model.setCameraActive(true)
+        defer { model.setCameraActive(false) }
+        try await PresetToolbarChecks.wait("相机") { camera.ready }
+        if kind == .video {
+            model.setCaptureKind(.video)
+            model.videoResolution = .hd1080
+            model.videoFrameRate = .fps30
+            try await FullDeviceRegressionFixture.waitForVideoShutter(model,label:"待机变焦",timeout:20)
+        }
+        model.setMode(.manual)
+        try await PresetToolbarChecks.wait("M 挡") { model.mode == .manual && camera.ready && !camera.videoConfiguring }
+        let wide = try XCTUnwrap(model.displayedFocalLenses.first { abs($0.displayZoom-1) < 0.01 })
+        camera.selectLens(wide)
+        try await PresetToolbarChecks.wait("主摄") { camera.ready && camera.activeCaptureDeviceID == wide.device.uniqueID }
+        let two = try XCTUnwrap(model.displayedFocalLenses.first {
+            abs($0.displayZoom-2) < 0.01 && $0.device.uniqueID == wide.device.uniqueID
+        })
+        let half = try XCTUnwrap(model.displayedFocalLenses.first {
+            abs($0.displayZoom-0.5) < 0.05
+        })
+        let route = camera.activeCaptureDeviceID, settings = camera.videoSettings
+        var timings = [Double]()
+        for _ in 0..<3 {
+            camera.setContinuousZoom(1)
+            try await PresetToolbarChecks.wait("回到 1×") { abs(camera.currentZoom-1) < 0.01 }
+            let start = CACurrentMediaTime()
+            model.selectFocalLength(two)
+            if !UIAccessibility.isReduceMotionEnabled { XCTAssertTrue(model.focalZoomAnimation.isRunning) }
+            XCTAssertNil(model.focalTransitionImage)
+            try await PresetToolbarChecks.wait("完成按钮变焦") { !model.focalZoomAnimation.isRunning }
+            timings.append(CACurrentMediaTime()-start)
+            let actual = await withCheckedContinuation { c in camera.zoomStateForTesting { zoom,_,_ in c.resume(returning:zoom) } }
+            XCTAssertEqual(actual,2,accuracy:0.05)
+            XCTAssertEqual(camera.activeCaptureDeviceID,route)
+            XCTAssertEqual(camera.videoSettings,settings)
+        }
+        model.selectFocalLength(wide)
+        model.openZoomDial()
+        XCTAssertFalse(model.focalZoomAnimation.isRunning)
+        let pinnedRange = model.zoomRange
+        XCTAssertEqual(pinnedRange.lowerBound,1,accuracy:0.05)
+        XCTAssertLessThan(pinnedRange.upperBound,8)
+        var wheelTimes = [Double]()
+        for (translation, expected) in [(-1000.0,pinnedRange.upperBound),(1000.0,pinnedRange.lowerBound),(-1000.0,pinnedRange.upperBound),(1000.0,pinnedRange.lowerBound)] {
+            let start = CACurrentMediaTime()
+            model.dragZoomDial(translation:translation,width:360)
+            await withCheckedContinuation { c in camera.flushRestoredZoom { c.resume() } }
+            let actual = await withCheckedContinuation { c in camera.zoomStateForTesting { z,_,_ in c.resume(returning:z) } }
+            XCTAssertEqual(actual,expected,accuracy:0.05)
+            XCTAssertEqual(camera.activeCaptureDeviceID,route)
+            XCTAssertEqual(camera.videoSettings,settings)
+            wheelTimes.append(CACurrentMediaTime()-start)
+        }
+        model.endZoomDial()
+        let tele = try XCTUnwrap(model.displayedFocalLenses.first {
+            abs($0.displayZoom-8) < 0.01 && $0.device.uniqueID != wide.device.uniqueID
+        })
+        var handoffs = [Double]()
+        for lens in [tele, wide, half] {
+            let start = CACurrentMediaTime()
+            model.selectFocalLength(lens)
+            XCTAssertTrue(model.isFocalSelected(lens))
+            XCTAssertEqual(model.focalTransitionScale,1)
+            try await PresetToolbarChecks.wait("新镜头画面") {
+                camera.ready && camera.activeCaptureDeviceID == lens.device.uniqueID && model.focalTransitionImage == nil
+            }
+            XCTAssertTrue(model.isFocalSelected(lens))
+            XCTAssertEqual(camera.videoSettings,settings)
+            handoffs.append(CACurrentMediaTime()-start)
+        }
+        print("MANUAL_FOCAL kind=\(kind) standbySeconds=\(timings) handoffSeconds=\(handoffs) wheelSeconds=\(wheelTimes) pinnedRange=\(pinnedRange) PhotosWrites=0")
+    }
+
+    @MainActor func testRecordingZoomButtonsWheelAndThreeSecondIdleHide() async throws {
         try await recordingZoom(mode:.auto,front:false,checkTimer:true)
     }
     @MainActor func testManualRecordingZoomChangesHardwareAndKeepsRoute() async throws {
@@ -509,10 +627,10 @@ final class PresetToolbarPhysicalTests:XCTestCase {
             model.finishZoomDrag();try await Task.sleep(for:.seconds(2))
             model.beginZoomDial(at:camera.currentZoom);model.dragZoomDial(translation:20,width:window.bounds.width);model.finishZoomDrag()
             let ended=CACurrentMediaTime()
-            try await Task.sleep(for:.milliseconds(2500));XCTAssertTrue(model.zoomDialVisible,"重新操作后重置4秒")
-            try await PresetToolbarChecks.wait("4秒自动收起"){!model.zoomDialVisible}
+            try await Task.sleep(for:.milliseconds(2500));XCTAssertTrue(model.zoomDialVisible,"重新操作后重置3秒")
+            try await PresetToolbarChecks.wait("3秒自动收起"){!model.zoomDialVisible}
             hideSeconds=CACurrentMediaTime()-ended
-            XCTAssertGreaterThanOrEqual(hideSeconds ?? 0,3.9);XCTAssertLessThan(hideSeconds ?? 99,4.8)
+            XCTAssertGreaterThanOrEqual(hideSeconds ?? 0,2.9);XCTAssertLessThan(hideSeconds ?? 99,3.8)
         }else{model.finishZoomDrag();try await Task.sleep(for:.milliseconds(500));model.endZoomDial()}
         if mode == .manual && !front {
             camera.setContinuousZoom(min(range.upperBound,4.5));try await Task.sleep(for:.milliseconds(160))

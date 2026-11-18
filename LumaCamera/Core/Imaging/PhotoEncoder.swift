@@ -10,12 +10,17 @@ enum PhotoEncodingError: LocalizedError {
 enum PhotoEncoder {
     static func encode(source: CIImage, raw: Data?, look: CaptureLook, options: PhotoOptions, context: CIContext, location: PhotoLocation? = nil,
                        portraitMatte: AVPortraitEffectsMatte? = nil, portraitMask: CIImage? = nil, portraitHeadMask: CIImage? = nil,
-                       systemHEIF: Data? = nil, captureDate: Date? = nil) throws -> CapturedPhoto {
+                       systemHEIF: Data? = nil, captureDate: Date? = nil, captureParameters: PhotoCaptureParameters? = nil) throws -> CapturedPhoto {
         defer { context.clearCaches() }
         guard source.extent.width.isFinite, source.extent.height.isFinite,
               source.extent.width > 0, source.extent.height > 0 else { throw PhotoEncodingError.encoding }
-        let look = look.forOutput(options.format)
-        let prefix = captureFilenamePrefix(date: captureDate ?? sourceCaptureDate(source) ?? Date())
+        var look = look.forOutput(options.format)
+        let capturedAt = captureDate ?? sourceCaptureDate(source) ?? Date()
+        if look.border {
+            look.watermarkContent = PhotoWatermarkContent.capture(source:source,look:look,options:options,
+                parameters:captureParameters,date:capturedAt)
+        }
+        let prefix = captureFilenamePrefix(date: capturedAt)
         // 普通HEIF HDR优先保留同次系统资源的SDR/HDR配对与显示适配信息。
         // RAW显影、Pro影调、夜景合成和人像等仍使用各自原有处理路径。
         let preservesSystemHDR = options.format == .heif && options.hdr
@@ -77,7 +82,14 @@ enum PhotoEncoder {
             sdrForEncoding = nil
             guard let fullPreview = Imaging.renderProcessed(processed, look: look, context: context),
                   let bordered = CIImage(image: fullPreview) else { throw PhotoEncodingError.encoding }
-            image = bordered
+            var properties = source.properties
+            properties[kCGImagePropertyPixelWidth as String] = Int(bordered.extent.width)
+            properties[kCGImagePropertyPixelHeight as String] = Int(bordered.extent.height)
+            var exif = properties[kCGImagePropertyExifDictionary as String] as? [String: Any] ?? [:]
+            exif[kCGImagePropertyExifPixelXDimension as String] = Int(bordered.extent.width)
+            exif[kCGImagePropertyExifPixelYDimension as String] = Int(bordered.extent.height)
+            properties[kCGImagePropertyExifDictionary as String] = exif
+            image = bordered.settingProperties(properties)
         }
         // 解码及处理后方向已体现在像素中，清除继承的 EXIF/TIFF 旋转，
         // 避免系统相册再次旋转，导致成片与相册按钮的 UIImage 预览方向不同。

@@ -4,6 +4,8 @@ struct GlassSurface: ViewModifier {
     var radius: CGFloat
     var previewOverlay = false
 
+    static var parameterBar: Self { Self(radius: 29, previewOverlay: true) }
+
     @ViewBuilder
     func body(content: Content) -> some View {
         if previewOverlay {

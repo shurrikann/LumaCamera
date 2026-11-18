@@ -44,11 +44,9 @@ extension CameraView {
                         .contentShape(Rectangle())
                         .disabled(camera.videoBusy)
                 }.frame(height: 32)
-                // Photo mode reserves the page-indicator row below the toolbar.
-                // Keep the same total height so video uses the identical layout.
+                // Preserve the established tool-strip height.
                 Color.clear.frame(height: 7)
             } else {
-            TabView(selection: Binding(get: { model.toolPage }, set: { model.updateToolPageFromPager($0) })) {
                 HStack(spacing: 0) {
                     Button { model.toggleToolbarPanel(.format) } label: {
                         VStack(spacing: 1) {
@@ -67,20 +65,20 @@ extension CameraView {
                                     .minimumScaleFactor(0.75)
                             }
                             if model.photoFormat != .heifPro {
-                                Text("\(model.photoResolution.rawValue)MP").font(.system(size: 8, weight: .medium)).opacity(0.7)
+                                Text("\(model.photoResolution.rawValue)MP").font(.system(size: 8, weight: .medium))
                             }
                         }.foregroundStyle(model.toolbarPanel == .format ? AppTheme.accent : .white)
                             .rotatingCaptureContent().frame(maxWidth: .infinity).frame(height: 32)
-                    }.buttonStyle(.plain).accessibilityLabel(model.photoFormat == .heifPro ? "图片格式，HEIF Pro" : "图片格式与像素")
+                    }.buttonStyle(CameraToolbarButtonStyle()).accessibilityLabel(model.photoFormat == .heifPro ? "图片格式，HEIF Pro" : "图片格式与像素")
                         .accessibilityIdentifier("camera.toolbar.photoFormat")
                         .captureControlGeometry("toolbar.format", model: model)
                     Button { model.toggleToolbarPanel(.ratio) } label: {
                         Text(model.ratio.rawValue).rotatingCaptureContent().font(.system(size: 10, weight: .semibold)).frame(maxWidth: .infinity).frame(height: 32)
                             .foregroundStyle(model.toolbarPanel == .ratio ? AppTheme.accent : .white)
-                    }.buttonStyle(.plain).accessibilityLabel("画面比例").accessibilityValue(model.ratio.rawValue)
+                    }.buttonStyle(CameraToolbarButtonStyle()).accessibilityLabel("画面比例").accessibilityValue(model.ratio.rawValue)
                         .captureControlGeometry("toolbar.ratio", model: model)
                     toolbarIcon(model.flashMode.icon, label: "闪光灯，\(model.flashMode.rawValue)", active: model.flashMode != .off) { model.flashMode = model.flashMode.next }
-                        .opacity(camera.supportsFlash || camera.demo ? 1 : AppTheme.disabledControlOpacity)
+                        .disabled(!(camera.supportsFlash || camera.demo))
                         .captureControlGeometry("toolbar.flash", model: model)
                     if model.slowShutterEnabled {
                         Button {
@@ -99,7 +97,7 @@ extension CameraView {
                             .frame(maxWidth: .infinity)
                             .frame(height: 32)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(CameraToolbarButtonStyle())
                         // 拍摄中只阻断点击，不进入系统禁用态，避免文字被压暗。
                         .allowsHitTesting(model.canEditSlowShutterDuration)
                         .accessibilityHint(model.canEditSlowShutterDuration ? "打开慢门预设与时长选择" : "拍摄中不可修改")
@@ -120,7 +118,7 @@ extension CameraView {
                             .frame(maxWidth: .infinity).frame(height: 32)
                             .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(CameraToolbarButtonStyle())
                         .accessibilityLabel("星芒调节")
                         .accessibilityValue(model.virtualApertureText)
                         .accessibilityIdentifier("camera.toolbar.virtualAperture")
@@ -140,7 +138,7 @@ extension CameraView {
                             .frame(maxWidth: .infinity).frame(height: 32)
                             .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(CameraToolbarButtonStyle())
                         .accessibilityLabel("景深调节")
                         .accessibilityValue(model.portraitDepthSliderVisible ? "已显示" : "已收起")
                         .accessibilityIdentifier("camera.toolbar.portraitDepth")
@@ -169,8 +167,7 @@ extension CameraView {
                                 .foregroundStyle(model.toolbarPanel == .tone || model.tone != .natural ? AppTheme.accent : .white)
                                 .frame(maxWidth: .infinity).frame(height: 32)
                         }
-                        .buttonStyle(.plain)
-                        .opacity(model.isPreparingSubmode ? AppTheme.disabledControlOpacity : 1)
+                        .buttonStyle(CameraToolbarButtonStyle())
                         .disabled(model.isPreparingSubmode)
                         .accessibilityLabel("Pro 影调")
                         .accessibilityValue(model.tone.rawValue)
@@ -178,32 +175,17 @@ extension CameraView {
                     } else {
                         toolbarIcon(model.livePhotoEnabled ? "livephoto" : "livephoto.slash", label: "Live 实况照片", active: model.capturesLivePhoto, feedback: false) { model.toggleLivePhoto() }
                             .accessibilityValue(model.livePhotoEnabled ? (model.capturesLivePhoto ? "已触发" : "已开启，当前不可用") : "已关闭")
-                            .opacity(model.canToggleLivePhoto ? 1 : AppTheme.disabledControlOpacity)
                             .disabled(!model.canToggleLivePhoto)
                             .captureControlGeometry("toolbar.live", model: model)
                     }
                     toolbarIcon("gearshape", label: "应用设置") { model.presentSettings() }
                         .captureControlGeometry("toolbar.settings", model: model)
                 }
-                .tag(0)
-                HStack(spacing: 0) {
-                    readout("S", value: camera.readings.map { model.shutterText($0.seconds) } ?? "—")
-                    readout("ISO", value: camera.readings.map { CameraNumericText.integer($0.iso) } ?? "—")
-                    readout(model.usesGlobalMeteringReadout ? "总EV" : "EV", value: String(format: "%+.1f", model.displayedExposureBias))
-                    readout("WB", value: camera.readings.map { CameraNumericText.integer($0.kelvin) == "—" ? "—" : CameraNumericText.integer($0.kelvin) + "K" } ?? "—")
-                    readout("FOCUS", value: camera.readings.map { String(format: "%.2f", $0.focus) } ?? "—")
-                }.tag(1)
-            }.buttonStyle(.plain).tabViewStyle(.page(indexDisplayMode: .never)).frame(height: 32)
-                .accessibilityLabel("顶部工具与拍摄参数，可左右滑动")
-            HStack(spacing: 4) {
-                ForEach(0..<2) { index in
-                    Capsule().fill(model.toolPage == index ? .white.opacity(0.7) : .white.opacity(0.2))
-                        .frame(width: model.toolPage == index ? 12 : 5, height: 3)
-                }
-            }
+                .frame(height: 32)
+                Color.clear.frame(height: 3)
             }
         }
-        .foregroundStyle(.white).padding(.horizontal, 6).padding(.vertical, 5)
+        .foregroundStyle(.white).padding(.horizontal, 6).padding(.vertical, CameraControlLayout.toolbarContentInset)
         .padding(.horizontal, 14)
         // Consume otherwise-empty toolbar taps so they can’t fall through to the
         // preview’s high-priority focus gesture. Keep the hit surface visually clear.
@@ -285,14 +267,7 @@ extension CameraView {
         } label: {
             Image(systemName: icon).rotatingCaptureContent().font(.system(size: 15, weight: .regular))
                 .foregroundStyle(active ? AppTheme.accent : .white).frame(maxWidth: .infinity).frame(height: 32)
-        }.buttonStyle(.plain).accessibilityLabel(label).accessibilityValue(active ? "开启" : "关闭")
-    }
-
-    func readout(_ title: String, value: String) -> some View {
-        VStack(spacing: 3) {
-            Text(title).font(.system(size: 8, design: .monospaced)).foregroundStyle(.white.opacity(0.45))
-            Text(value).font(.system(size: 9, weight: .medium, design: .monospaced)).lineLimit(1).minimumScaleFactor(0.6)
-        }.rotatingCaptureContent().frame(maxWidth: .infinity)
+        }.buttonStyle(CameraToolbarButtonStyle()).accessibilityLabel(label).accessibilityValue(active ? "开启" : "关闭")
     }
 
     @ViewBuilder
@@ -385,7 +360,7 @@ extension CameraView {
             VStack(spacing: 1) {
                 Text(value).font(.system(size: 9, weight: .semibold)).multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.75)
                 if let detail {
-                    Text(detail).font(.system(size: detailSize, weight: .medium)).lineLimit(1).minimumScaleFactor(0.7).opacity(0.75)
+                    Text(detail).font(.system(size: detailSize, weight: .medium)).lineLimit(1).minimumScaleFactor(0.7)
                 }
             }
             .foregroundStyle(selected ? AppTheme.accent : .white)
@@ -393,7 +368,7 @@ extension CameraView {
             .frame(maxWidth: .infinity).frame(height: 32)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CameraToolbarButtonStyle())
         .disabled(camera.videoBusy)
         .accessibilityLabel(accessibility)
     }
@@ -408,5 +383,15 @@ private struct ToneCurveSymbol: Shape {
         path.addCurve(to: end, control1: CGPoint(x: rect.width * 0.72, y: rect.height * 0.85), control2: CGPoint(x: rect.width * 0.27, y: rect.height * 0.15))
         for point in [start, end] { path.addEllipse(in: CGRect(x: point.x - 3, y: point.y - 3, width: 6, height: 6)) }
         return path
+    }
+}
+
+
+/// Toolbar availability affects interaction, not the label's default white tint.
+struct CameraToolbarButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(Rectangle().inset(by: -8))
+            .opacity(configuration.isPressed ? 0.72 : 1)
     }
 }

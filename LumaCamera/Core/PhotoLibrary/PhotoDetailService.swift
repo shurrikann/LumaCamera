@@ -25,8 +25,9 @@ struct PhotoAdjustments: Codable, Equatable {
     var filterIntensity = 0.8
     var filterAdjustments = FilterAdjustments()
     var rawDevelopment: RAWDevelopmentSettings? = nil
+    var watermark: PhotoEditWatermark? = nil
     init() {}
-    private enum CodingKeys: String, CodingKey { case exposure, contrast, saturation, quarterTurns, filterID, filterIntensity, filterAdjustments, crop, flipHorizontal, flipVertical, straightenAngle, rawDevelopment }
+    private enum CodingKeys: String, CodingKey { case exposure, contrast, saturation, quarterTurns, filterID, filterIntensity, filterAdjustments, crop, flipHorizontal, flipVertical, straightenAngle, rawDevelopment, watermark }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         exposure = try c.decodeIfPresent(Double.self, forKey: .exposure) ?? 0
@@ -42,9 +43,10 @@ struct PhotoAdjustments: Codable, Equatable {
         filterIntensity = try c.decodeIfPresent(Double.self, forKey: .filterIntensity) ?? 0.8
         filterAdjustments = try c.decodeIfPresent(FilterAdjustments.self, forKey: .filterAdjustments) ?? FilterAdjustments()
         rawDevelopment = try c.decodeIfPresent(RAWDevelopmentSettings.self,forKey:.rawDevelopment)
+        watermark = try c.decodeIfPresent(PhotoEditWatermark.self,forKey:.watermark)
     }
     var usesFilter: Bool { filterID != FilmStyle.original.rawValue && filterIntensity > 0 }
-    func apply(to source: CIImage, grainPhase: Double = 0, rawControlsApplied: Bool = false) -> CIImage {
+    func apply(to source: CIImage, grainPhase: Double = 0, rawControlsApplied: Bool = false, includesWatermark: Bool = true) -> CIImage {
         let selected = FilmStyle(rawValue: filterID) ?? .original
         let style = FilmStyle.availableStyles.contains(selected) ? selected : .original
         let look = CaptureLook(style: style, intensity: filterIntensity.isFinite ? min(max(filterIntensity, 0), 1) : 0.8, grainPhase: grainPhase,
@@ -70,7 +72,8 @@ struct PhotoAdjustments: Codable, Equatable {
                 .transformed(by: CGAffineTransform(translationX: extent.midX, y: extent.midY)).cropped(to: extent)
         }
         image = image.cropped(to: crop.imageRect(in: image.extent))
-        return image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
+        let upright = image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
+        return includesWatermark ? (watermark?.apply(to: upright, filterID: filterID, intensity: filterIntensity) ?? upright) : upright
     }
 }
 struct PhotoEditResult {
@@ -82,6 +85,7 @@ struct PhotoEditResult {
 final class PhotoEditSession: Identifiable {
     let id = UUID()
     let source: CIImage
+    let watermarkContent: PhotoWatermarkContent
     let initialAdjustments: PhotoAdjustments
     let rawDevelopment: RAWPhotoDevelopment?
     let liveCommit: ((PhotoAdjustments, Bool, @escaping (Result<PhotoEditResult, Error>) -> Void) -> Void)?
@@ -89,8 +93,8 @@ final class PhotoEditSession: Identifiable {
     private let copy: ((PhotoAdjustments, @escaping (Result<PhotoEditResult, Error>) -> Void) -> Void)?
     var supportsSaveCopy: Bool { copy != nil }
     private let commit: (PhotoAdjustments, @escaping (Result<PhotoEditResult, Error>) -> Void) -> Void
-    init(source: CIImage, initialAdjustments: PhotoAdjustments = PhotoAdjustments(), rawDevelopment: RAWPhotoDevelopment? = nil, liveCommit: ((PhotoAdjustments, Bool, @escaping (Result<PhotoEditResult, Error>) -> Void) -> Void)? = nil, copy: ((PhotoAdjustments, @escaping (Result<PhotoEditResult, Error>) -> Void) -> Void)? = nil, commit: @escaping (PhotoAdjustments, @escaping (Result<PhotoEditResult, Error>) -> Void) -> Void) {
-        self.source = source; self.initialAdjustments = initialAdjustments; self.rawDevelopment = rawDevelopment
+    init(source: CIImage, watermarkContent: PhotoWatermarkContent? = nil, initialAdjustments: PhotoAdjustments = PhotoAdjustments(), rawDevelopment: RAWPhotoDevelopment? = nil, liveCommit: ((PhotoAdjustments, Bool, @escaping (Result<PhotoEditResult, Error>) -> Void) -> Void)? = nil, copy: ((PhotoAdjustments, @escaping (Result<PhotoEditResult, Error>) -> Void) -> Void)? = nil, commit: @escaping (PhotoAdjustments, @escaping (Result<PhotoEditResult, Error>) -> Void) -> Void) {
+        self.source = source; self.watermarkContent = watermarkContent ?? PhotoEditWatermark.content(metadata: source.properties); self.initialAdjustments = initialAdjustments; self.rawDevelopment = rawDevelopment
         self.liveCommit = liveCommit; self.copy = copy; self.commit = commit
     }
     func saveLive(_ adjustments: PhotoAdjustments, asCopy: Bool, completion: @escaping (Result<PhotoEditResult, Error>) -> Void) {

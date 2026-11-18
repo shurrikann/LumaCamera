@@ -36,7 +36,7 @@ enum RAWPhotoEditLoader {
                         do {
                             let rawData = try result.get(), developer = RAWPhotoDevelopment(raw:rawData,initial:initial,metadata:properties)
                             let base = try developer.source(initial,preview:true)
-                            let session = PhotoEditSession(source:base,initialAdjustments:initial,rawDevelopment:developer,
+                            let session = PhotoEditSession(source:base,watermarkContent:PhotoEditWatermark.content(metadata:properties,capturedAt:asset.creationDate,location:asset.location.flatMap { PhotoLocation.recorded($0) },parameters:PhotoCaptureDiagnosticsStore.shared.load(assetID:asset.localIdentifier)?.currentParameters),initialAdjustments:initial,rawDevelopment:developer,
                                 copy:{ changes,callback in save(asset:asset,input:input,developer:developer,changes:changes,copy:true,completion:callback) },
                                 commit:{ changes,callback in save(asset:asset,input:input,developer:developer,changes:changes,copy:false,completion:callback) })
                             DispatchQueue.main.async { if !cancel.isCancelled { completion(.success(session)) } }
@@ -68,7 +68,7 @@ enum RAWPhotoEditLoader {
                     // 官方HEIF编辑输出入口保留HDR，不能把HEIF字节写进默认JPEG输出URL。
                     let destination = try editing.renderedContentURL(for:.heic)
                     try rendered.resource.data.write(to:destination,options:.atomic)
-                    editing.adjustmentData = PHAdjustmentData(formatIdentifier:"com.shurrikann.LumaCamera.photo-edit",formatVersion:"6",data:try JSONEncoder().encode(changes))
+                    editing.adjustmentData = PHAdjustmentData(formatIdentifier:"com.shurrikann.LumaCamera.photo-edit",formatVersion:"7",data:try JSONEncoder().encode(changes))
                     output = editing
                 } else { output = nil }
                 let staged = try copy ? PhotoLibraryStagedResources([rendered.resource,PhotoResource(data:developer.raw,filename:"Luma-Original-"+UUID().uuidString+".dng",alternate:true)]) : nil

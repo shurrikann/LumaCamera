@@ -1,4 +1,5 @@
-import AVFoundation
+#if DEBUG
+@preconcurrency import AVFoundation
 import CoreImage
 import Photos
 import SwiftUI
@@ -45,8 +46,9 @@ final class StarPhotoLab: NSObject, ObservableObject {
     @Published var exposure: StarPhotoExposure = .s1
     let frameOptions = [10, 30, 60]
 
-    let session = AVCaptureSession()
-    private let photoOutput = AVCapturePhotoOutput()
+    // Immutable route handles; configuration remains on the dedicated queue.
+    nonisolated(unsafe) let session = AVCaptureSession()
+    nonisolated(unsafe) private let photoOutput = AVCapturePhotoOutput()
     private let sessionQueue = DispatchQueue(label: "camera.star-photo-raw.session")
     private let linearSpace = CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
     private let context = CIContext(options: [
@@ -54,7 +56,11 @@ final class StarPhotoLab: NSObject, ObservableObject {
         .workingFormat: CIFormat.RGBAh,
         .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
     ])
-    private var device: AVCaptureDevice?
+    nonisolated private let deviceSlot = LockedCaptureValue<AVCaptureDevice?>(nil)
+    nonisolated private var device: AVCaptureDevice? {
+        get { deviceSlot.value }
+        set { deviceSlot.value = newValue }
+    }
     private var accumulator: CIImage?
     private var accumulatorBuffer: CVPixelBuffer?
     private var fusionExtent: CGRect = .zero
@@ -127,8 +133,9 @@ final class StarPhotoLab: NSObject, ObservableObject {
                 if device.isFocusModeSupported(.locked) { device.setFocusModeLocked(lensPosition: 1.0) }
                 if device.isWhiteBalanceModeSupported(.locked) { device.whiteBalanceMode = .locked }
                 device.unlockForConfiguration()
-                self.capturing = true
                 DispatchQueue.main.async {
+                    guard self.isCapturing else { return }
+                    self.capturing = true
                     self.status = "正在拍摄 RAW 星空照片 0/\(target)"
                     self.acceptedAt = CACurrentMediaTime()
                     self.captureNext(rawType: rawType)
@@ -350,6 +357,7 @@ final class StarPhotoLab: NSObject, ObservableObject {
 
     func stop() {
         capturing = false
+        started = false
         rawDelegates.removeAll()
         restoreAfterCapture()
         sessionQueue.async { [weak self] in
@@ -448,3 +456,5 @@ private struct StarPhotoRAWPreview: UIViewRepresentable {
     }
     func updateUIView(_ uiView: View, context: Context) {}
 }
+
+#endif

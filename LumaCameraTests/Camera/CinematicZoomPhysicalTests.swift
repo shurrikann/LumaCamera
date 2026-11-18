@@ -18,6 +18,7 @@ import XCTest
             XCTFail(label+" "+(camera.message ?? "")); throw CancellationError()
         }
         func settle() async throws {
+            try await wait("焦段过渡结束") { !model.focalZoomAnimation.isRunning }
             await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
             try await wait("会话就绪") { camera.ready && !camera.videoConfiguring && !camera.videoBusy && !model.isPreparingSubmode }
         }

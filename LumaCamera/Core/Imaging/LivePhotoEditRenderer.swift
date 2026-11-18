@@ -23,7 +23,7 @@ enum LivePhotoEditRenderer {
             autoreleasepool { Self.frame(frame.image, adjustments: adjustments, time: frame.time.seconds) }
         }
         let output = PHContentEditingOutput(contentEditingInput: input)
-        output.adjustmentData = PHAdjustmentData(formatIdentifier: "com.shurrikann.LumaCamera.photo-edit", formatVersion: "5", data: try JSONEncoder().encode(adjustments))
+        output.adjustmentData = PHAdjustmentData(formatIdentifier: "com.shurrikann.LumaCamera.photo-edit", formatVersion: "7", data: try JSONEncoder().encode(adjustments))
         if !copy {
             try await context.saveLivePhoto(to: output, options: nil)
             return Output(output: output, resources: [])
@@ -57,8 +57,9 @@ enum LivePhotoEditRenderer {
             }
         })
         let extent = CGRect(origin: .zero, size: composition.renderSize)
-        let size = adjustments.apply(to: CIImage(color: .black).cropped(to: extent)).extent.size
-        composition.renderSize = CGSize(width: max(2, floor(size.width / 2) * 2), height: max(2, floor(size.height / 2) * 2))
+        let size = adjustments.apply(to: CIImage(color: .black).cropped(to: extent), includesWatermark: false).extent.size
+        let outputSize = adjustments.watermark.map { PhotoWatermarkLayout(photoSize: size, settings: $0.settings, content: $0.content).size } ?? size
+        composition.renderSize = CGSize(width: max(2, floor(outputSize.width / 2) * 2), height: max(2, floor(outputSize.height / 2) * 2))
         guard let export = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else { throw PhotoEncodingError.encoding }
         export.videoComposition = composition
         export.metadata = try await asset.load(.metadata)

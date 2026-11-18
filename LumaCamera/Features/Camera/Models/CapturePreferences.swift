@@ -14,6 +14,7 @@ struct CapturePreferences: Codable, Equatable {
     var videoBitratePreset = VideoBitratePreset.systemDefault
     var videoStabilization = VideoStabilizationPreference.standard
     var auxiliaryWatermark = false
+    var watermark = PhotoWatermarkSettings()
     var auxiliaryTimerSeconds = 0
     var auxiliaryGrid = false
     var auxiliaryHistogram = false
@@ -30,6 +31,7 @@ struct CapturePreferences: Codable, Equatable {
     init() {}
     private enum CodingKeys: String, CodingKey {
         case focusLockMode, exposureLockEnabled, focusTrackingState, silentShutter, recordLocation, copyright, focusAssist, saveUnfilteredOriginal, saveCaptureSettings, lockVideoWhiteBalance, videoBitratePreset, videoStabilization
+        case watermark
         case auxiliaryWatermark, auxiliaryTimerSeconds, auxiliaryGrid, auxiliaryHistogram, auxiliaryFocusPeaking, auxiliarySmoothPreview
         case auxiliaryLevel, auxiliaryPreviewQuarterTurns, auxiliaryRecordingCapacity, auxiliaryAudioMeter
         case dockKitTrackingEnabled
@@ -61,6 +63,7 @@ struct CapturePreferences: Codable, Equatable {
         lockVideoWhiteBalance = try values.decodeIfPresent(Bool.self, forKey: .lockVideoWhiteBalance) ?? false
         videoBitratePreset = try values.decodeIfPresent(VideoBitratePreset.self, forKey: .videoBitratePreset) ?? .systemDefault
         videoStabilization = try values.decodeIfPresent(VideoStabilizationPreference.self, forKey: .videoStabilization) ?? .standard
+        watermark = try values.decodeIfPresent(PhotoWatermarkSettings.self, forKey: .watermark) ?? PhotoWatermarkSettings()
         auxiliaryWatermark = try values.decodeIfPresent(Bool.self, forKey: .auxiliaryWatermark) ?? false
         auxiliaryTimerSeconds = try values.decodeIfPresent(Int.self, forKey: .auxiliaryTimerSeconds) ?? 0
         auxiliaryGrid = try values.decodeIfPresent(Bool.self, forKey: .auxiliaryGrid) ?? false

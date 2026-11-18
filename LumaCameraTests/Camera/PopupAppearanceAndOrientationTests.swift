@@ -518,7 +518,12 @@ final class PopupAppearanceAndOrientationTests: XCTestCase {
         #if targetEnvironment(simulator)
         throw XCTSkip("Log filter panel alignment is validated on a physical device")
         #else
-        let (window, model, _) = try await makeCameraWindow(angle: 0)
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene:scene)
+        window.rootViewController = UIHostingController(rootView:CameraView(model:model)
+            .environment(\.captureControlAngle,0).environment(\.scenePhase,.active))
+        window.makeKeyAndVisible()
         let previousLogLUTID = model.selectedLogLUTID
         let previousBurnSetting = model.burnLogLUT
         defer {
@@ -528,7 +533,17 @@ final class PopupAppearanceAndOrientationTests: XCTestCase {
         }
 
         model.setCaptureKind(.video)
+        for _ in 0..<300 {
+            if model.captureKind == .video && model.camera.ready && !model.captureKindSwitching && !model.camera.videoConfiguring { break }
+            try await Task.sleep(for:.milliseconds(20))
+        }
+        XCTAssertTrue(model.camera.ready)
         model.videoColorSpace = .appleLog
+        for _ in 0..<300 {
+            if !model.camera.videoConfiguring && model.logVideoLUTControlsEnabled { break }
+            try await Task.sleep(for:.milliseconds(20))
+        }
+        XCTAssertTrue(model.logVideoLUTControlsEnabled)
         model.panel = .film
         if let preset = model.logLUTPresets.first { model.selectLogLUT(preset.id) }
         for _ in 0..<50 {

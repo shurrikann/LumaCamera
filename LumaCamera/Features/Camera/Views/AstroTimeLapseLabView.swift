@@ -1,4 +1,5 @@
-import AVFoundation
+#if DEBUG
+@preconcurrency import AVFoundation
 import CoreImage
 import Photos
 import SwiftUI
@@ -23,8 +24,9 @@ final class AstroTimeLapseLab: NSObject, ObservableObject, AVCaptureVideoDataOut
     @Published var intervalSeconds = 10
     let intervalOptions = [1, 2, 4, 10, 15, 20, 30]
 
-    let session = AVCaptureSession()
-    private let output = AVCaptureVideoDataOutput()
+    // Immutable route handles; configuration remains on the dedicated queue.
+    nonisolated(unsafe) let session = AVCaptureSession()
+    nonisolated(unsafe) private let output = AVCaptureVideoDataOutput()
     private let sessionQueue = DispatchQueue(label: "camera.astro-timelapse.session")
     private let videoQueue = DispatchQueue(label: "camera.astro-timelapse.video", qos: .userInitiated)
     private let renderContext = CIContext(options: [
@@ -32,7 +34,11 @@ final class AstroTimeLapseLab: NSObject, ObservableObject, AVCaptureVideoDataOut
         .workingFormat: CIFormat.RGBAh,
         .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
     ])
-    private var device: AVCaptureDevice?
+    nonisolated private let deviceSlot = LockedCaptureValue<AVCaptureDevice?>(nil)
+    nonisolated private var device: AVCaptureDevice? {
+        get { deviceSlot.value }
+        set { deviceSlot.value = newValue }
+    }
     private var writer: AVAssetWriter?
     private var writerInput: AVAssetWriterInput?
     private var adaptor: AVAssetWriterInputPixelBufferAdaptor?
@@ -120,10 +126,15 @@ final class AstroTimeLapseLab: NSObject, ObservableObject, AVCaptureVideoDataOut
                 if device.isFocusModeSupported(.locked) { device.setFocusModeLocked(lensPosition: 1.0) }
                 if device.isWhiteBalanceModeSupported(.locked) { device.whiteBalanceMode = .locked }
                 device.unlockForConfiguration()
-                try self.setupWriter()
-                self.capturing = true
-                self.acceptedAt = CACurrentMediaTime() + 0.25
-                DispatchQueue.main.async { self.status = "正在拍摄星空延时 · 间隔 \(interval) 秒" }
+                DispatchQueue.main.async {
+                    guard self.isRecording else { return }
+                    do {
+                        try self.setupWriter()
+                        self.capturing = true
+                        self.acceptedAt = CACurrentMediaTime() + 0.25
+                        self.status = "正在拍摄星空延时 · 间隔 \(interval) 秒"
+                    } catch { self.isRecording = false; self.error = error.localizedDescription }
+                }
             } catch {
                 DispatchQueue.main.async {
                     self.isRecording = false
@@ -194,9 +205,9 @@ final class AstroTimeLapseLab: NSObject, ObservableObject, AVCaptureVideoDataOut
             return
         }
         input.markAsFinished()
-        writer.finishWriting { [weak self] in
+        Task { @MainActor [weak self] in
+            await writer.finishWriting()
             guard let self else { return }
-            DispatchQueue.main.async {
                 guard writer.status == .completed else {
                     self.isFinishing = false
                     self.status = "视频封装失败"
@@ -230,7 +241,6 @@ final class AstroTimeLapseLab: NSObject, ObservableObject, AVCaptureVideoDataOut
                     self.status = "读取视频失败"
                     self.error = error.localizedDescription
                 }
-            }
         }
     }
 
@@ -298,6 +308,7 @@ final class AstroTimeLapseLab: NSObject, ObservableObject, AVCaptureVideoDataOut
 
     func stop() {
         capturing = false
+        started = false
         if isRecording { cancel() }
         sessionQueue.async { [weak self] in
             guard let self else { return }
@@ -382,3 +393,5 @@ private struct AstroPreview: UIViewRepresentable {
     }
     func updateUIView(_ uiView: View, context: Context) {}
 }
+
+#endif

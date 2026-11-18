@@ -18,6 +18,326 @@ final class CameraNewUIFeaturesTests: XCTestCase {
     }
     private func descendants(_ view: UIView) -> [UIView] { [view] + view.subviews.flatMap(descendants) }
 
+    func testTopToolbarDefaultWhiteSurvivesDisabledStateAcrossPhotoVideoAndAstro() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        model.setCameraActive(true)
+        defer { model.closePopups(); model.selectTopLevelMode(.photo); model.setCameraActive(true) }
+        let deadline = CACurrentMediaTime()+15
+        while !model.camera.ready && CACurrentMediaTime()<deadline { try await Task.sleep(for:.milliseconds(20)) }
+        XCTAssertTrue(model.camera.ready)
+        model.flashMode = .off
+        if model.livePhotoEnabled { model.toggleLivePhoto() }
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene:scene)
+        let host = UIHostingController(rootView:AnyView(Color.black))
+        host.safeAreaRegions = [] // Keep the specimen independent of the status-bar inset.
+        window.rootViewController = host; window.isHidden = false
+        defer { window.isHidden = true; window.rootViewController = nil }
+        func whites(_ image: UIImage) throws -> Int {
+            let cg = try XCTUnwrap(image.cgImage), w = cg.width, h = cg.height
+            var bytes = [UInt8](repeating:0,count:w*h*4)
+            let context = try XCTUnwrap(CGContext(data:&bytes,width:w,height:h,bitsPerComponent:8,bytesPerRow:w*4,
+                space:CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+            context.draw(cg,in:CGRect(x:0,y:0,width:w,height:h))
+            return stride(from:0,to:bytes.count,by:4).filter { bytes[$0]>240 && bytes[$0+1]>240 && bytes[$0+2]>240 }.count
+        }
+        var drawCosts = [Double](), pairs = 0
+        for kind in [CameraViewModel.CaptureKind.photo,.video] {
+            model.requestCaptureKind(kind)
+            let limit = CACurrentMediaTime()+15
+            while (model.captureKind != kind || model.captureKindSwitching || model.camera.videoConfiguring), CACurrentMediaTime()<limit {
+                try await Task.sleep(for:.milliseconds(20))
+            }
+            model.toolbarPanel = nil
+            for width: CGFloat in [320,390,430] {
+                for angle in [0.0,90.0] {
+                    var counts = [Int]()
+                    for disabled in [false,true] {
+                        window.frame = CGRect(x:0,y:0,width:width,height:760)
+                        // Page-style TabView requires a full-height UIKit host. Crop only
+                        // the toolbar when recording; a 70pt UIWindow clips its page child.
+                        host.rootView = AnyView(VStack(spacing:0) {
+                            Color.clear.frame(height:120)
+                            CameraView(model:model).toolStrip
+                                .environment(\.captureControlAngle,angle).disabled(disabled)
+                                .frame(width:width,height:70)
+                            Spacer(minLength:0)
+                        }.frame(width:width,height:760).background(.black))
+                        host.view.frame = window.bounds
+                        // Rotation uses a 0.22s animation; compare only settled glyphs.
+                        try await Task.sleep(for:.milliseconds(320)); host.view.layoutIfNeeded()
+                        let start = CACurrentMediaTime()
+                        let format = UIGraphicsImageRendererFormat(); format.scale = 2; format.opaque = true
+                        let image = UIGraphicsImageRenderer(size:CGSize(width:width,height:70),format:format).image { _ in
+                            window.drawHierarchy(in:CGRect(x:0,y:-120,width:width,height:760),afterScreenUpdates:true)
+                        }
+                        drawCosts.append((CACurrentMediaTime()-start)*1000)
+                        counts.append(try whites(image))
+                        let a = XCTAttachment(image:image)
+                        a.name = "Toolbar-\(kind)-w\(Int(width))-a\(Int(angle))-disabled-\(disabled)"
+                        a.lifetime = .keepAlways; add(a)
+                    }
+                    print("TOOLBAR-WHITE pair kind=\(kind) width=\(width) angle=\(angle) brightPixels=\(counts)")
+                    XCTAssertGreaterThan(counts[0],100)
+                    XCTAssertGreaterThanOrEqual(Double(counts[1]),Double(counts[0])*0.95,"Disabling must not gray white toolbar glyphs: \(kind) width=\(width) angle=\(angle)")
+                    pairs += 1
+                }
+            }
+        }
+        window.isHidden = true
+        host.rootView = AnyView(Color.black)
+        window.rootViewController = nil
+        try await Task.sleep(for:.milliseconds(150))
+        model.selectTopLevelMode(.astro)
+        for _ in 0..<750 { if model.topLevelMode == .astro && model.modeHandoffTarget == nil && AstroModeDiagnostics.previewReady { break }; try await Task.sleep(for:.milliseconds(20)) }
+        for mode in [AstroCaptureMode.photo,.trails,.timelapse,.photo] {
+            AstroModeDiagnostics.submode?.wrappedValue = mode
+            try await Task.sleep(for:.milliseconds(500))
+            let actual = try XCTUnwrap(scene.windows.first(where: \.isKeyWindow))
+            let image = UIGraphicsImageRenderer(bounds:actual.bounds).image { _ in actual.drawHierarchy(in:actual.bounds,afterScreenUpdates:true) }
+            let a = XCTAttachment(image:image); a.name = "Astro-White-Toolbar-\(mode.rawValue)"; a.lifetime = .keepAlways; add(a)
+        }
+        model.selectTopLevelMode(.photo)
+        let returnLimit = CACurrentMediaTime()+15
+        while (model.topLevelMode != .photo || model.modeHandoffTarget != nil || !model.camera.ready), CACurrentMediaTime()<returnLimit {
+            try await Task.sleep(for:.milliseconds(20))
+        }
+        XCTAssertEqual(model.topLevelMode,.photo)
+        XCTAssertNil(model.modeHandoffTarget)
+        XCTAssertTrue(model.camera.ready)
+        print("TOOLBAR-WHITE enabledDisabledPairs=\(pairs) realDrawSamples=\(drawCosts.count) draw_ms=\(drawCosts) astroSubmodes=4 PhotosWrites=0; draw cost is not FPS")
+    }
+
+    func testManualReadoutsKeepEditorAndButtonGeometryAcrossPhotoVideoRatios() async throws {
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        model.setCameraActive(true)
+        defer { model.closePopups(); model.setCameraActive(false) }
+        for _ in 0..<300 { if model.camera.ready { break }; try await Task.sleep(for:.milliseconds(20)) }
+        let (_, window) = try host(model)
+        defer { window.isHidden = true; window.rootViewController = nil }
+        var costs = [Double]()
+        model.setCaptureKind(.photo)
+        model.setMode(.auto)
+        for _ in 0..<100 {
+            if model.captureButtonFramesForTesting["autoEVGlass"] != nil { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        let autoEVGlass = try XCTUnwrap(model.captureButtonFramesForTesting["autoEVGlass"])
+        for kind in [CameraViewModel.CaptureKind.photo, .video] {
+            model.setCaptureKind(kind); model.setMode(.manual)
+            for _ in 0..<300 {
+                if model.mode == .manual && !model.captureKindSwitching && !model.camera.videoConfiguring { break }
+                try await Task.sleep(for:.milliseconds(20))
+            }
+            XCTAssertEqual(model.captureKind,kind); XCTAssertEqual(model.mode,.manual)
+            XCTAssertTrue(model.displayedManualParameters.contains(.shutter))
+            XCTAssertEqual(model.displayedManualParameters.map(\.readoutLabel), ["S","ISO","EV","AF","WEB","T"])
+            let originalEV = model.ev
+            model.ev = 1.2
+            XCTAssertEqual(model.parameterReadout(.ev), "+1.2")
+            model.ev = originalEV
+            var reference: CGRect?
+            let ratios = kind == .photo ? FrameRatio.allCases : VideoRatio.aspectOptions.map(\.frameRatio)
+            for ratio in ratios {
+                if kind == .photo { model.ratio = ratio }
+                else { model.videoRatio = try XCTUnwrap(VideoRatio.aspectOptions.first { $0.frameRatio == ratio }) }
+                try await Task.sleep(for:.milliseconds(300))
+                let frame = try XCTUnwrap(model.captureButtonFramesForTesting["parameter.S"])
+                XCTAssertGreaterThan(frame.width,35); XCTAssertGreaterThan(frame.height,35)
+                if let reference { XCTAssertEqual(frame,reference) } else { reference = frame }
+                let row = try XCTUnwrap(model.captureButtonFramesForTesting["parameters"])
+                let glass = try XCTUnwrap(model.captureButtonFramesForTesting["manualParameterGlass"])
+                XCTAssertEqual(glass.midY, row.midY, accuracy: 0.5)
+                XCTAssertEqual(glass.midX, row.midX, accuracy: 0.5)
+                XCTAssertEqual(glass.height, 46, accuracy: 0.5)
+                XCTAssertEqual(glass.minX, autoEVGlass.minX, accuracy: 0.5)
+                XCTAssertEqual(glass.maxX, autoEVGlass.maxX, accuracy: 0.5)
+                let buttons = try model.displayedManualParameters.map { parameter in
+                    try XCTUnwrap(model.captureButtonFramesForTesting["parameter." + parameter.rawValue])
+                }
+                let slotWidth = glass.width / CGFloat(buttons.count)
+                for (index, button) in buttons.enumerated() {
+                    XCTAssertEqual(button.width, slotWidth, accuracy: 0.5)
+                    XCTAssertEqual(button.minX, glass.minX + CGFloat(index) * slotWidth, accuracy: 0.5)
+                    XCTAssertEqual(button.midY, frame.midY, accuracy: 0.5)
+                }
+                XCTAssertEqual(try XCTUnwrap(buttons.last).maxX, glass.maxX, accuracy: 0.5)
+                for _ in 0..<2 {
+                    model.openParameter(.shutter)
+                    XCTAssertEqual(model.parameter,.shutter); XCTAssertEqual(model.panel,.manual)
+                    model.closePopups(); XCTAssertNil(model.panel)
+                }
+                let start = CACurrentMediaTime()
+                let shot = UIGraphicsImageRenderer(bounds:window.bounds).image { _ in
+                    window.drawHierarchy(in:window.bounds,afterScreenUpdates:true)
+                }
+                costs.append((CACurrentMediaTime()-start)*1000)
+                if ratio == .wide {
+                    let attachment = XCTAttachment(image:shot)
+                    attachment.name = "Manual-Readout-\(kind)"; attachment.lifetime = .keepAlways; add(attachment)
+                }
+            }
+        }
+        #if !targetEnvironment(simulator)
+        model.toggleCinematicVideoMode()
+        for _ in 0..<350 {
+            if model.cinematicVideoEnabled && !model.isPreparingSubmode && !model.camera.videoConfiguring { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertTrue(model.cinematicVideoEnabled)
+        XCTAssertEqual(model.displayedManualParameters, [.ev, .wb, .tint])
+        let cinematicGlass = try XCTUnwrap(model.captureButtonFramesForTesting["manualParameterGlass"])
+        XCTAssertEqual(cinematicGlass, autoEVGlass)
+        let cinematicSlotWidth = cinematicGlass.width / 3
+        for (index, item) in model.displayedManualParameters.enumerated() {
+            let button = try XCTUnwrap(model.captureButtonFramesForTesting["parameter." + item.rawValue])
+            XCTAssertEqual(button.minX, cinematicGlass.minX + CGFloat(index) * cinematicSlotWidth, accuracy: 0.5)
+            XCTAssertEqual(button.width, cinematicSlotWidth, accuracy: 0.5)
+        }
+        model.toggleCinematicVideoMode()
+        #endif
+        print("MANUAL-READOUT kinds=photo,video photoRatios=8 videoRatios=5 snapshots=\(costs.count) openClose=\(costs.count*2) snapshotMilliseconds=\(costs); snapshot drawing, not display FPS; PhotosWrites=0")
+    }
+
+    func testFilterPickerInsetsContainCategoriesAndFooterAcrossWidthsAndLog() async throws {
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        model.setCameraActive(true)
+        defer { model.closePopups(); model.setCameraActive(false) }
+        for _ in 0..<300 { if model.camera.ready { break }; try await Task.sleep(for:.milliseconds(20)) }
+        let (_, window) = try host(model,angle:90)
+        defer { window.isHidden = true; window.rootViewController = nil }
+        model.style = .leicaM9
+        var costs = [Double](), checked = 0
+        func check(log:Bool) throws {
+            let card = try XCTUnwrap(model.captureButtonFramesForTesting["filter.card"])
+            let bar = try XCTUnwrap(model.captureButtonFramesForTesting[log ? "filter.logCategories" : "filter.categories"])
+            XCTAssertGreaterThan(card.width,200)
+            XCTAssertGreaterThanOrEqual(card.height,200)
+            XCTAssertEqual(bar.minX,card.minX,accuracy:0.5)
+            XCTAssertEqual(bar.maxX,card.maxX,accuracy:0.5)
+            XCTAssertGreaterThanOrEqual(bar.minY,card.minY+19)
+            XCTAssertLessThanOrEqual(bar.maxY,card.maxY)
+            if !log {
+                let favorite = try XCTUnwrap(model.captureButtonFramesForTesting["filter.favorite"])
+                let edit = try XCTUnwrap(model.captureButtonFramesForTesting["filter.edit"])
+                XCTAssertGreaterThanOrEqual(favorite.minX-card.minX,23.5)
+                XCTAssertGreaterThanOrEqual(card.maxX-edit.maxX,23.5)
+                XCTAssertEqual(favorite.width,44,accuracy:0.5); XCTAssertEqual(edit.width,44,accuracy:0.5)
+            }
+        }
+        for log in [false,true] {
+            model.setCaptureKind(log ? .video : .photo)
+            if log { model.videoColorSpace = .appleLog }
+            model.filters.showStrength = false; model.panel = .film
+            try await Task.sleep(for:.milliseconds(450))
+            XCTAssertEqual(model.logVideoLUTControlsEnabled,log)
+            for width in [320.0,390,440] {
+                window.frame.size.width = width
+                for index in 0..<(log ? LogLUTCategory.allCases.count : FilterCategory.allCases.count) {
+                    if log {
+                        model.videoRatio = VideoRatio.aspectOptions[index % VideoRatio.aspectOptions.count]
+                        model.selectLogLUTCategory(LogLUTCategory.allCases[index])
+                    } else {
+                        model.ratio = FrameRatio.allCases[index % FrameRatio.allCases.count]
+                        model.selectFilterCategory(FilterCategory.allCases[index])
+                    }
+                    try await Task.sleep(for:.milliseconds(130))
+                    try check(log:log); checked += 1
+                    let start = CACurrentMediaTime()
+                    let shot = UIGraphicsImageRenderer(bounds:window.bounds).image { _ in
+                        window.drawHierarchy(in:window.bounds,afterScreenUpdates:true)
+                    }
+                    costs.append((CACurrentMediaTime()-start)*1000)
+                    if index == 0 || index == (log ? LogLUTCategory.allCases.count : FilterCategory.allCases.count)-1 {
+                        let attachment = XCTAttachment(image:shot)
+                        attachment.name = "Filter-Picker-Inset-\(log ? "Log" : "Photo")-\(Int(width))-\(index)"
+                        attachment.lifetime = .keepAlways; add(attachment)
+                    }
+                }
+                model.closePopups(); try await Task.sleep(for:.milliseconds(80))
+                model.panel = .film; try await Task.sleep(for:.milliseconds(250))
+                try check(log:log)
+            }
+        }
+        print("FILTER-PICKER-INSET checks=\(checked) widths=320,390,440 photoCategories=9 logCategories=10 photoRatios=8 videoRatios=5 closeReopen=6 hostAngle=90 popupAngle=0 snapshotMilliseconds=\(costs); snapshot drawing, not FPS; PhotosWrites=0")
+        // Drain this isolated camera before the next UI test starts another one.
+        model.closePopups(); model.setCameraActive(false)
+        await withCheckedContinuation { continuation in
+            model.camera.afterPendingSessionTasks { continuation.resume() }
+        }
+        let running = await withCheckedContinuation { continuation in
+            model.camera.actualSessionRunningForTesting { continuation.resume(returning:$0) }
+        }
+        XCTAssertFalse(running)
+    }
+
+    func testWatermarkStylesPanelRepeatedSwitchesAndCancellation() async throws {
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        model.preferences.watermark.showsLocation = false
+        model.setCameraActive(true)
+        defer { model.closePopups(); model.setCameraActive(false) }
+        for _ in 0..<300 { if model.camera.ready { break }; try await Task.sleep(for:.milliseconds(20)) }
+        var samples = [Double]()
+        for width: CGFloat in [320,390,440] {
+            let (_, window) = try host(model,width:width,angle:90)
+            defer { window.isHidden = true; window.rootViewController = nil }
+            try await Task.sleep(for:.milliseconds(500))
+            model.setCameraActive(true)
+            for ratio in FrameRatio.allCases {
+                model.ratio = ratio
+                try await Task.sleep(for:.milliseconds(80))
+                model.openWatermarkPanel()
+                try await Task.sleep(for:.milliseconds(250))
+                print("WATERMARK-UI-CHECK width=\(width) ratio=\(ratio) visible=\(model.watermarkPanelVisible)")
+                let frame = try XCTUnwrap(model.captureButtonFramesForTesting["watermark.panel"])
+                XCTAssertGreaterThanOrEqual(frame.minX,0)
+                XCTAssertLessThanOrEqual(frame.maxX,width)
+                var preceding: CGRect?
+                for style in PhotoWatermarkStyle.allCases {
+                    let option = try XCTUnwrap(model.captureButtonFramesForTesting["watermark.style."+style.rawValue])
+                    XCTAssertEqual(option.height,54,accuracy:0.5)
+                    XCTAssertGreaterThanOrEqual(option.minX,frame.minX)
+                    XCTAssertLessThanOrEqual(option.maxX,frame.maxX)
+                    if let preceding { XCTAssertGreaterThanOrEqual(option.minX,preceding.maxX+7) }
+                    preceding = option
+                    model.border = false
+                    model.selectWatermarkStyle(style)
+                    XCTAssertTrue(model.border)
+                    XCTAssertEqual(model.preferences.watermark.style,style)
+                    model.selectWatermarkStyle(style)
+                    XCTAssertFalse(model.border)
+                    model.selectWatermarkStyle(style)
+                    XCTAssertTrue(model.border)
+                }
+                if ratio == .standard { try await Task.sleep(for:.milliseconds(300)) }
+                let start = CACurrentMediaTime()
+                let shot = UIGraphicsImageRenderer(bounds:window.bounds).image { _ in
+                    window.drawHierarchy(in:window.bounds,afterScreenUpdates:true)
+                }
+                samples.append((CACurrentMediaTime()-start)*1000)
+                if ratio == .standard {
+                    let attachment = XCTAttachment(image:shot); attachment.name = "Watermark-Panel-\(width)"
+                    attachment.lifetime = .keepAlways; add(attachment)
+                    model.border = false
+                    try await Task.sleep(for:.milliseconds(250))
+                    let defaultShot = UIGraphicsImageRenderer(bounds:window.bounds).image { _ in
+                        window.drawHierarchy(in:window.bounds,afterScreenUpdates:true)
+                    }
+                    let defaultAttachment = XCTAttachment(image:defaultShot)
+                    defaultAttachment.name = "Watermark-Thumbnails-White-\(width)"
+                    defaultAttachment.lifetime = .keepAlways; add(defaultAttachment)
+                }
+                model.closePopups(); XCTAssertFalse(model.watermarkPanelVisible)
+                try await Task.sleep(for:.milliseconds(300))
+            }
+        }
+        for _ in 0..<20 { model.openWatermarkPanel(); model.selectWatermarkStyle(.glassStrip); model.closePopups() }
+        model.openWatermarkPanel(); model.setCameraActive(false)
+        XCTAssertFalse(model.watermarkPanelVisible)
+        await withCheckedContinuation { continuation in model.camera.afterPendingSessionTasks { continuation.resume() } }
+        print("WATERMARK-UI widths=3 ratios=8 styleTaps=288 rapidOpenClose=20 backgroundDismiss=true snapshotMilliseconds=\(samples); not FPS; PhotosWrites=0")
+    }
+
     func test48MPPillIsDisabledInAutoAndEnabledInManual() async throws {
         let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
         model.setCameraActive(true)

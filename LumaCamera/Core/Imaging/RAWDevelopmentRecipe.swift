@@ -17,6 +17,9 @@ enum RAWDevelopmentRecipe {
         result.filterID = look.style.rawValue; result.filterIntensity = look.intensity; result.filterAdjustments = look.adjustments
         result.rawDevelopment = RAWDevelopmentSettings(hdr:hdr,tone:look.tone.rawValue,virtualAperture:look.virtualAperture)
         result.rawDevelopment?.maximumPixels = maximumPixels
+        if look.border, let content = look.watermarkContent {
+            result.watermark = PhotoEditWatermark(settings: look.watermark, content: content)
+        }
         let e = source.extent, crop = look.ratio.crop(source,landscape:look.landscape).extent
         result.crop = PhotoCropRectangle(x:(crop.minX-e.minX)/e.width,y:(e.maxY-crop.maxY)/e.height,
             width:crop.width/e.width,height:crop.height/e.height).clamped

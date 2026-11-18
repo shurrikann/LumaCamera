@@ -28,7 +28,9 @@ struct PhotoEditorView: View {
                     ZStack {
                         if model.editorControlsVisible {
                             Group {
-                                if model.tool == .filters { filterPanel } else { adjustmentPanel }
+                                if model.tool == .filters { filterPanel }
+                                else if model.tool == .watermark { watermarkPanel }
+                                else { adjustmentPanel }
                             }.transition(.opacity)
                         }
                     }
@@ -62,7 +64,8 @@ struct PhotoEditorView: View {
                 .alert("图片编辑", isPresented: Binding(get: { model.message != nil }, set: { if !$0 { model.message = nil } })) {
                     Button("好", role: .cancel) { model.message = nil }
                 } message: { Text(model.message ?? "") }
-        }.ignoresSafeArea(.keyboard, edges: .bottom)
+        }.environment(\.captureControlAngle, 0)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .tint(AppTheme.accent).preferredColorScheme(.dark)
             .presentationCornerRadius(0)
     }
@@ -102,10 +105,15 @@ struct PhotoEditorView: View {
         }
     }
     private var toolBar: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: 0) {
             toolButton(.crop, icon: "crop") { model.enterCrop() }
+            Spacer(minLength: 4)
             toolButton(.filters, icon: "camera.filters") { model.toggleEditorControls(.filters) }
+            Spacer(minLength: 4)
             toolButton(.adjustments, icon: "slider.horizontal.3") { model.toggleEditorControls(.adjustments) }
+            Spacer(minLength: 4)
+            toolButton(.watermark, icon: "photo.artframe") { model.toggleEditorControls(.watermark) }
+            Spacer(minLength: 4)
             Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); model.presentSaveOptions() } label: {
                 ZStack {
                     Circle().fill(AppTheme.accent)
@@ -161,6 +169,51 @@ struct PhotoEditorView: View {
                 }.scrollIndicators(.hidden).onAppear { proxy.scrollTo(model.style, anchor: .center) }
             }
         }.buttonStyle(.plain)
+    }
+    private var watermarkPanel: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("水印").font(.system(size: 15, weight: .semibold))
+                Spacer()
+                Button { model.closeEditorControls() } label: {
+                    Image(systemName: "xmark").frame(width: 30, height: 30)
+                        .background(.white.opacity(0.1), in: Circle())
+                }.accessibilityLabel("收起水印面板")
+            }
+            HStack(spacing: 8) {
+                ForEach(PhotoWatermarkStyle.allCases) { style in
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        model.selectWatermarkStyle(style)
+                    } label: {
+                        WatermarkStyleThumbnail(style: style, selected: model.adjustments.watermark?.settings.style == style)
+                    }.accessibilityLabel(style.title)
+                        .accessibilityAddTraits(model.adjustments.watermark?.settings.style == style ? .isSelected : [])
+                        #if DEBUG
+                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                            model.captureButtonFramesForTesting["photo.editor.watermark." + style.rawValue] = $0
+                        }
+                        #endif
+                }
+            }
+            HStack(spacing: 18) {
+                Toggle(isOn: Binding(get: { model.watermarkSettings.showsLocation },
+                    set: { model.setWatermarkInformation(location: $0) })) {
+                    Text("地理位置").font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+                }
+                Toggle(isOn: Binding(get: { model.watermarkSettings.showsParameters },
+                    set: { model.setWatermarkInformation(parameters: $0) })) {
+                    Text("参数信息").font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+                }
+            }.tint(AppTheme.accent)
+        }.padding(16).buttonStyle(.plain)
+            .modifier(PopupSurface(radius: 28, glass: true))
+            .environment(\.captureControlAngle, 0)
+            #if DEBUG
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                model.captureButtonFramesForTesting["photo.editor.watermark.panel"] = $0
+            }
+            #endif
     }
     private var adjustmentPanel: some View {
         VStack(spacing: 12) {

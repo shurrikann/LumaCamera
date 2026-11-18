@@ -29,6 +29,12 @@ struct LumaCameraApp: App {
                     UIApplication.shared.isIdleTimerDisabled = phase == .active
                     if phase != .active { cameraModel.flushFilterSettings() }
                 }
+                #if DEBUG
+                .task {
+                    await UltraWideStarSelfTest.run(model: cameraModel)
+                    await StarStabilitySelfTest.run(model: cameraModel)
+                }
+                #endif
         }
     }
 }

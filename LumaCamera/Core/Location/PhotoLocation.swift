@@ -7,6 +7,7 @@ struct PhotoLocation: Codable, Equatable, Hashable {
     var altitude: Double? = nil
     var horizontalAccuracy: Double? = nil
     var timestamp: Date = Date()
+    var addressText: String?
 
     var isValid: Bool {
         latitude.isFinite && longitude.isFinite && (-90...90).contains(latitude) && (-180...180).contains(longitude)
@@ -14,6 +15,14 @@ struct PhotoLocation: Codable, Equatable, Hashable {
     var coordinate: CLLocationCoordinate2D { .init(latitude: latitude, longitude: longitude) }
     var clLocation: CLLocation { CLLocation(coordinate: coordinate, altitude: altitude ?? 0, horizontalAccuracy: horizontalAccuracy ?? -1, verticalAccuracy: altitude == nil ? -1 : 0, timestamp: timestamp) }
     var coordinateText: String { String(format: "%.5f, %.5f", latitude, longitude) }
+
+    var watermarkText: String {
+        if let address = addressText?.trimmingCharacters(in:.whitespacesAndNewlines),!address.isEmpty { return address }
+        if let horizontalAccuracy,horizontalAccuracy > CaptureLocationPolicy.maximumHorizontalAccuracy {
+            return String(format:"约 %.2f, %.2f",latitude,longitude)
+        }
+        return coordinateText
+    }
 
     static func recorded(_ location: CLLocation) -> Self? {
         let value = Self(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude,

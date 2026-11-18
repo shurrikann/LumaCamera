@@ -66,7 +66,7 @@ enum LivePhotoProcessor {
         }
         let extent = CGRect(origin: .zero, size: composition.renderSize)
         let crop = look.ratio.crop(CIImage(color: .black).cropped(to: extent), landscape: look.landscape).extent.size
-        let rendered = look.border ? CGSize(width: crop.width * 1.07, height: crop.height + crop.width * 0.19) : crop
+        let rendered = look.border ? PhotoWatermarkLayout(photoSize:crop,settings:look.watermark,content:look.watermarkContent).size : crop
         // Video encoders require even dimensions. Scale the graph by at most one pixel.
         composition.renderSize = CGSize(width: max(2, floor(rendered.width / 2) * 2), height: max(2, floor(rendered.height / 2) * 2))
         guard let exporter = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {

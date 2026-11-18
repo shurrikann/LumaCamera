@@ -33,3 +33,16 @@ final class PreviewRevision {
         return true
     }
 }
+
+/// Shares small lifecycle values / reference slots between the UI and session queue.
+/// The lock protects the slot; AVFoundation objects themselves remain configured
+/// only on their owning session queue.
+final class LockedCaptureValue<Value>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: Value
+    init(_ value: Value) { storage = value }
+    var value: Value {
+        get { lock.withLock { storage } }
+        set { lock.withLock { storage = newValue } }
+    }
+}

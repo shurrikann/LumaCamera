@@ -54,8 +54,11 @@ import UIKit
         model.toggleVideoRecording(); try await wait("开始录制") { camera.videoRecording }
         let lens = try XCTUnwrap(model.displayedFocalLenses.first { abs($0.displayZoom - 2) < 0.01 })
         XCTAssertTrue(model.canSelectFocalLength(lens))
+        let tapStart = CACurrentMediaTime()
         model.selectFocalLength(lens)
-        try await Task.sleep(for: .milliseconds(250))
+        if !UIAccessibility.isReduceMotionEnabled { XCTAssertTrue(model.focalZoomAnimation.isRunning) }
+        try await wait("焦段按钮完成半秒变焦") { !model.focalZoomAnimation.isRunning && abs(camera.currentZoom-2) < 0.02 }
+        print("DUAL_VIDEO_FOCAL tapSeconds=\(CACurrentMediaTime()-tapStart)")
         let tapped = await state()
         XCTAssertEqual(Double(tapped["mainZoom"] ?? "") ?? -1, 2, accuracy: 0.02)
         model.openZoomDial(); XCTAssertTrue(model.zoomDialVisible)

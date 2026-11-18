@@ -1,6 +1,9 @@
 import SwiftUI
 
 extension CameraView {
+    private var filterPickerSideInset: CGFloat { 24 }
+    private var browsingFilters: Bool { model.logVideoLUTControlsEnabled || !filters.showStrength }
+
     var filmPanel: some View {
         VStack(spacing: 10) {
             if model.logVideoLUTControlsEnabled {
@@ -12,16 +15,18 @@ extension CameraView {
                 filterActions
             }
         }
-        .padding(.top, 10).padding(.bottom, 4)
+        .padding(.top, browsingFilters ? 20 : 10)
+        .padding(.bottom, browsingFilters ? 14 : 4)
+        .clipShape(RoundedRectangle(cornerRadius: parameterBottomCornerRadius, style: .continuous))
         .background {
             PopupGlassBackground(
-                shape: UnevenRoundedRectangle(
-                    cornerRadii: .init(topLeading: 28, bottomLeading: 0, bottomTrailing: 0, topTrailing: 28),
-                    style: .continuous
-                ),
+                shape: RoundedRectangle(cornerRadius: parameterBottomCornerRadius, style: .continuous),
                 materialOpacity: AppTheme.cameraPopupMaterialOpacity
-            ).ignoresSafeArea(edges: .bottom)
+            )
         }
+        #if DEBUG
+        .captureControlGeometry("filter.card", model: model)
+        #endif
         .onAppear { if !model.logVideoLUTControlsEnabled { filters.prepareThumbnails() } }
         .allowsHitTesting(!model.camera.videoBusy)
     }
@@ -102,7 +107,7 @@ extension CameraView {
                 .buttonStyle(.plain).disabled(camera.videoBusy || model.selectedLogLUTID == LogLUTPreset.originalID)
                 .accessibilityLabel(model.burnLogLUT ? "关闭 Log LUT 烧录" : "开启 Log LUT 烧录")
                 .accessibilityValue(model.burnLogLUT ? "已开启，录制时 LUT 写入成片并保留 Log 色彩标记" : "已关闭，仅在预览中显示 LUT")
-            }.padding(.horizontal, 10)
+            }.padding(.horizontal, filterPickerSideInset)
         }
     }
 
@@ -197,8 +202,12 @@ extension CameraView {
                     .accessibilityLabel(category.rawValue + " Log 滤镜")
                     .accessibilityAddTraits(model.logLUTCategory == category ? .isSelected : [])
                 }
-            }.padding(.horizontal, 14)
+            }.padding(.horizontal, filterPickerSideInset + 2)
         }
+        .clipped()
+        #if DEBUG
+        .captureControlGeometry("filter.logCategories", model: model)
+        #endif
     }
 
     private var logLUTScrollTarget: String? {
@@ -228,8 +237,12 @@ extension CameraView {
                         }.id(category.id).accessibilityLabel(category.rawValue + "滤镜")
                             .accessibilityAddTraits(filters.category == category ? .isSelected : [])
                     }
-                }.padding(.horizontal, 14)
+                }.padding(.horizontal, filterPickerSideInset + 2)
             }
+            .clipped()
+            #if DEBUG
+            .captureControlGeometry("filter.categories", model: model)
+            #endif
             .onChange(of: filters.category) { _, category in
                 withAnimation(.easeInOut(duration: 0.18)) { proxy.scrollTo(category.id, anchor: .center) }
             }
@@ -294,6 +307,9 @@ extension CameraView {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(filters.favorites.contains(model.style) ? "取消收藏当前滤镜" : "收藏当前滤镜")
+            #if DEBUG
+            .captureControlGeometry("filter.favorite", model: model)
+            #endif
             VStack(alignment: .leading, spacing: 3) {
                 Text(model.style.title).rotatingCaptureContent().font(.system(size: 11, weight: .medium)).foregroundStyle(.white.opacity(0.85))
                     .lineLimit(1).minimumScaleFactor(0.8)
@@ -307,8 +323,11 @@ extension CameraView {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("调整滤镜参数")
+            #if DEBUG
+            .captureControlGeometry("filter.edit", model: model)
+            #endif
             .accessibilityValue(model.style == .original ? "原片，无基础滤镜浓度" : "\(Int(model.intensity * 100))%")
-        }.padding(.horizontal, 10)
+        }.padding(.horizontal, filterPickerSideInset)
     }
 
     private func filterActionIcon(_ symbol: String, highlighted: Bool) -> some View {

@@ -115,6 +115,8 @@ private struct SlowShutterSequenceState {
 @MainActor
 final class CameraViewModel: ObservableObject {
     enum CaptureKind: Equatable { case photo, video }
+    enum TopLevelMode: Equatable { case photo, video, astro }
+    @Published private(set) var topLevelMode: TopLevelMode = .photo
     @Published private(set) var captureKind: CaptureKind = .photo {
         didSet {
             photoSubmodeRequest = UUID()
@@ -136,6 +138,9 @@ final class CameraViewModel: ObservableObject {
                 cinematicVideoEnabled = false
             }
             compatibleSubmodeLensIDs = nil
+            if topLevelMode != .astro {
+                topLevelMode = captureKind == .video ? .video : .photo
+            }
             // Pro测光选择只归属照片HEIF Pro；进入视频不沿用全局/点测光。
             camera.setMetering(effectiveMetering)
             reconcileNightMode()
@@ -172,7 +177,6 @@ final class CameraViewModel: ObservableObject {
     private var lastAppliedFrontOrientation: Bool?
     private var lifecycleRequest = UUID()
     private var cameraActiveRequested = false
-    private var pagerRequest = UUID()
     private var sliderEVRequest = UUID()
     private var subscriptions = Set<AnyCancellable>()
     @Published private(set) var dockKitAccessoryConnected = false
@@ -228,7 +232,8 @@ final class CameraViewModel: ObservableObject {
                 if preferences.saveCaptureSettings { flushCaptureSettings() }
                 else { captureStateWriteTask?.cancel(); preferencesStore.clearCaptureState() }
             }
-            locationService.setActive(cameraActiveRequested && preferences.recordLocation)
+            if preferences.watermark != oldValue.watermark || preferences.copyright != oldValue.copyright { updateLook() }
+            locationService.setActive(cameraActiveRequested && wantsCaptureLocation)
         }
     }
     private let filterSettings: FilterSettingsStore
@@ -584,7 +589,7 @@ final class CameraViewModel: ObservableObject {
                         // input and format. Query the refreshed cinematic routes
                         // before using the old capability snapshot.
                         self.camera.compatibleVideoSubmodeRoutes(for: .cinematic,
-                            position: self.currentPosition, openGateEnabled: false) { routes in
+                            position: self.currentPosition, openGateEnabled: false) { [weak self] routes in
                             Task { @MainActor [weak self] in
                                 guard let self, self.videoSubmodeRequest == request,
                                       self.captureKind == .video, !self.camera.videoBusy else { return }
@@ -1011,6 +1016,7 @@ final class CameraViewModel: ObservableObject {
         camera.completeUserPreviewSwitch(focalTransitionID)
     }
     func swapDualCaptureCameras() {
+        cancelFocalZoom()
         guard camera.dualCaptureEnabled else { return }
         // 横幅小窗需要前置广角；前置主画面固定超广角，不再提供焦段切换。
         if camera.dualCaptureMainIsFront && camera.dualCaptureInsetLandscape {
@@ -1443,6 +1449,7 @@ final class CameraViewModel: ObservableObject {
         didSet {
             if border { adaptiveHighDynamic = false }
             updateLook(); synchronizeHDRPreview()
+            locationService.setActive(cameraActiveRequested && wantsCaptureLocation)
             persistAuxiliaryPreferences()
         }
     }
@@ -1640,14 +1647,14 @@ final class CameraViewModel: ObservableObject {
                                landscape: photoLandscape, border: border,
                                tone: photoFormat == .heifPro ? tone : .natural,
                                adjustments: FilterAdjustments(), virtualAperture: nil,
-                               nightPreviewAssist: false).forOutput(photoFormat)
+                               nightPreviewAssist: false, watermark:preferences.watermark).forOutput(photoFormat)
         }
         return CaptureLook(style: style, intensity: intensity, ratio: ratio,
                            landscape: photoLandscape,
                            border: border, tone: photoFormat == .heifPro ? tone : .natural,
                            adjustments: filterAdjustments,
                            virtualAperture: virtualApertureEnabled && currentPosition == .back ? virtualAperture : nil,
-                           nightPreviewAssist: nightModeEnabled).forOutput(photoFormat)
+                           nightPreviewAssist: nightModeEnabled, watermark:preferences.watermark).forOutput(photoFormat)
     }
     var canToggleFrontPhotoAspectRatio: Bool {
         captureKind == .photo && currentPosition == .front && photoFormat != .raw
@@ -1794,7 +1801,8 @@ final class CameraViewModel: ObservableObject {
                      // 普通 M 挡也把曝光绑定到静态请求，避免视频往返后系统照片处理采用旧 AE。
                      prefersManualExposureBracket: slowShutterEnabled || (mode == .manual && manualExposure),
                      nightProfile: independentNightProfile,
-                     nightHDRPhoto: nightHDRPhotoEnabled)
+                     nightHDRPhoto: nightHDRPhotoEnabled,
+                     watermarkLocation: border && preferences.watermark.showsLocation ? locationService.watermarkSnapshot() : nil)
     }
 
     @Published private(set) var burstModeEnabled = false {
@@ -1936,6 +1944,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     func isFocalSelected(_ lens: CameraLens) -> Bool {
+        if let target = visibleFocalZoomTarget { return target.lensID == lens.id }
         guard camera.dualCaptureEnabled else { return camera.selectedLens == lens.id }
         if camera.dualCaptureMainIsFront {
             guard lens.device.position == .front else { return false }
@@ -2279,7 +2288,7 @@ final class CameraViewModel: ObservableObject {
         if cinematicApertureSliderVisible { scheduleSliderAutoHide() }
     }
     var depthControlPopupVisible: Bool {
-        captureKind == .photo && toolPage == 0 && !popupVisible && toolbarPanel == nil && panel == nil
+        captureKind == .photo && !popupVisible && toolbarPanel == nil && panel == nil
             && !settings && !review
             && ((virtualApertureEnabled && virtualApertureSliderVisible)
                 || (portraitModeEnabled && portraitDepthSliderVisible))
@@ -2319,7 +2328,7 @@ final class CameraViewModel: ObservableObject {
         guard !isAdjustingDepthControl,
               portraitDepthSliderVisible || virtualApertureSliderVisible || cinematicApertureSliderVisible else { return }
         sliderAutoHideTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(4))
+            try? await Task.sleep(for: .seconds(3))
             guard !Task.isCancelled, let self else { return }
             withAnimation(AppTheme.popupAnimation) {
                 self.isAdjustingDepthControl = false
@@ -2831,19 +2840,6 @@ final class CameraViewModel: ObservableObject {
             if panel == .manual { panel = nil }
         }
     }
-    /// UIKit-backed paging can write its selection while SwiftUI is laying out the page.
-    func updateToolPageFromPager(_ page: Int) {
-        guard (0...1).contains(page) else { return }
-        let request = UUID()
-        pagerRequest = request
-        guard page != toolPage else { return }
-        DispatchQueue.main.async { [weak self] in
-            guard let self, self.pagerRequest == request, self.toolPage != page else { return }
-            self.dismissDepthControls()
-            self.toolPage = page
-        }
-    }
-
     /// UIKit may echo a slider value during SwiftUI layout. Defer real changes and drop stale writes.
     func updateAutomaticEVFromSlider(_ value: Double) {
         guard value.isFinite, mode == .auto, !camera.capturing else { return }
@@ -2872,6 +2868,7 @@ final class CameraViewModel: ObservableObject {
     private var automaticEV = 0.0
     @Published var histogramFrame = CGRect.zero
     #if DEBUG
+    weak var previewContentTransitionForTesting: PreviewContentTransition?
     var previewFrameForTesting = CGRect.zero
     var toolbarFrameForTesting = CGRect.zero
     var toolbarBackdropFrameForTesting = CGRect.zero
@@ -2904,8 +2901,9 @@ final class CameraViewModel: ObservableObject {
             reconcileNightMode()
         }
     }
-    @Published var toolPage = 0
     @Published var functions = false
+    private var wantsCaptureLocation: Bool { preferences.recordLocation || (border && preferences.watermark.showsLocation) }
+    @Published var watermarkPanelVisible = false
     @Published var tools = false
     @Published var shootingModes = false
     @Published var zoomDialVisible = false
@@ -2918,9 +2916,25 @@ final class CameraViewModel: ObservableObject {
     @Published private(set) var focalTransitionImage: UIImage?
     @Published private(set) var focalTransitionOpacity = 1.0
     @Published private(set) var focalTransitionBlur = 0.0
+    @Published private(set) var focalTransitionScale: CGFloat = 1
     private var focalTransitionID = UUID()
     private var awaitingFocalFrame = false
     private var focalFadeDuration: TimeInterval = 0.18
+    let focalZoomAnimation = FocalZoomAnimation()
+    @Published private var focalZoomTarget: (lensID: String, zoom: CGFloat)?
+
+    private var visibleFocalZoomTarget: (lensID: String, zoom: CGFloat)? {
+        guard let focalZoomTarget,
+              focalZoomAnimation.isRunning || awaitingFocalFrame
+                || abs(camera.currentZoom - focalZoomTarget.zoom) < 0.02
+        else { return nil }
+        return focalZoomTarget
+    }
+
+    private func cancelFocalZoom() {
+        focalZoomAnimation.cancel()
+        focalZoomTarget = nil
+    }
     private var zoomDragOrigin: CGFloat?
     private var zoomDragTranslation: CGFloat = 0
     private var previewPinchOrigin: CGFloat?
@@ -2960,17 +2974,19 @@ final class CameraViewModel: ObservableObject {
     func selectFocalLength(_ lens: CameraLens) {
         cancelFocus()
         guard camera.ready, !camera.capturing, (!camera.videoBusy || camera.videoRecording), canSelectFocalLength(lens) else { return }
-        if captureKind == .video && camera.videoRecording && !camera.dualCaptureEnabled {
-            var target = lens.displayZoom
-            if (mode == .auto || mode == .manual || fixedCinematicFocalsOnly), lens.device.position == .back, abs(lens.displayZoom - 1) < 0.001, camera.selectedLens == lens.id {
-                target = nextMainFocalZoom()
-            }
-            zoomSelectionFeedback()
-            camera.setContinuousZoom(target, smooth: true)
-            endZoomDial()
+        cancelFocalZoom()
+        let currentInputCanFollowWheel = zoomRange.contains(lens.displayZoom)
+            && (lens.device.uniqueID == camera.activeCaptureDeviceID
+                || (captureKind == .video && (camera.videoRecording || fixedCinematicFocalsOnly)))
+        if !fixedHighResolutionFocalsOnly, !camera.dualCaptureEnabled, lens.device.position == .back,
+           mode == .auto || camera.selectedLens == lens.id || currentInputCanFollowWheel {
+            let target = abs(lens.displayZoom-1) < 0.001 && camera.selectedLens == lens.id
+                ? nextMainFocalZoom() : lens.displayZoom
+            zoomSelectionFeedback(); endZoomDial()
+            transitionToFocalZoom(target, presenting: lens)
             return
         }
-        if photoResolution == .high {
+        if fixedHighResolutionFocalsOnly {
             // 48MP仅在三个受支持原生焦段切换；当前1×不执行24/35mm轮换。
             if camera.selectedLens == lens.id && abs(camera.currentZoom-lens.displayZoom) < 0.015 { return }
         }
@@ -2986,8 +3002,7 @@ final class CameraViewModel: ObservableObject {
                 if abs(lens.displayZoom - 1) < 0.001 {
                     target = nextMainFocalZoom()
                 }
-                dualMainFocalPreset = lens.displayZoom
-                camera.setDualCaptureMainZoom(target)
+                transitionToFocalZoom(target, presenting: lens)
                 return
             }
         }
@@ -2998,15 +3013,40 @@ final class CameraViewModel: ObservableObject {
         }
         if !fixedHighResolutionFocalsOnly, (mode == .auto || mode == .manual || fixedCinematicFocalsOnly || capturesLivePhoto), lens.device.position == .back, abs(lens.displayZoom - 1) < 0.001,
            camera.selectedLens == lens.id {
-            startFocalTransition()
-            camera.setContinuousZoom(nextMainFocalZoom(), transitionID: focalTransitionID)
+            let target = nextMainFocalZoom()
+            startFocalTransition(zoomScale: target/max(camera.currentZoom, 0.01))
+            camera.setContinuousZoom(target, transitionID: focalTransitionID)
             flash = false
             return
         }
         guard camera.selectedLens != lens.id || abs(camera.currentZoom - lens.displayZoom) > 0.001 else { return }
+        // A physical input can only hand off to its first frame. Avoid magnifying
+        // or shrinking the outgoing frame as if it were a continuous zoom.
         startFocalTransition()
+        focalZoomTarget = (lensID: lens.id, zoom: lens.displayZoom)
         camera.selectLens(lens, transitionID: focalTransitionID)
         flash = false
+    }
+
+    func transitionToFocalZoom(_ target: CGFloat, presenting lens: CameraLens? = nil) {
+        if awaitingFocalFrame { camera.completeUserPreviewSwitch(focalTransitionID) }
+        awaitingFocalFrame = false; focalTransitionID = UUID(); focalTransitionImage = nil
+        let target = min(max(target, zoomRange.lowerBound), zoomRange.upperBound)
+        focalZoomTarget = lens.map { (lensID: $0.id, zoom: target) }
+        if UIAccessibility.isReduceMotionEnabled {
+            focalZoomAnimation.cancel(); applyZoomValue(target)
+            return
+        }
+        let origin = camera.currentZoom
+        focalZoomAnimation.start(from: origin, to: target) { [weak self] value in
+            guard let self, self.camera.ready, !self.camera.capturing,
+                  !self.camera.videoBusy || self.camera.videoRecording else {
+                self?.cancelFocalZoom(); return
+            }
+            // A button is a timed virtual wheel drag, not a separate lens switch.
+            let translation = -log2(value/origin) * 360 / 3
+            self.applyZoomWheelDelta(origin: origin, translation: translation, width: 360)
+        }
     }
 
     func toggleFrontPhotoAspectRatio() {
@@ -3030,8 +3070,7 @@ final class CameraViewModel: ObservableObject {
         return 1
     }
 
-    private var mainFocalTitle: String? {
-        let value = camera.currentZoom
+    private func mainFocalTitle(at value: CGFloat) -> String? {
         if abs(value - 1) < 0.02 { return "24mm" }
         if abs(value - 28.0 / 24.0) < 0.02 { return "28mm" }
         if abs(value - 35.0 / 24.0) < 0.02 { return "35mm" }
@@ -3039,10 +3078,16 @@ final class CameraViewModel: ObservableObject {
     }
 
     func focalButtonTitle(for lens: CameraLens) -> String {
+        if let target = visibleFocalZoomTarget {
+            if target.lensID == lens.id, abs(lens.displayZoom-1) < 0.001 {
+                return mainFocalTitle(at: target.zoom) ?? lens.title
+            }
+            return lens.title
+        }
         if camera.dualCaptureEnabled, !camera.dualCaptureMainIsFront, lens.device.position == .back {
             guard camera.selectedLens == lens.id else { return lens.title }
             if abs(lens.displayZoom - 1) < 0.001 {
-                return mainFocalTitle ?? zoomText
+                return mainFocalTitle(at: camera.currentZoom) ?? zoomText
             }
             // 选中的最近固定档显示实际倍率，例如 2.6× 命中 2× 时显示 2.6×。
             return zoomText
@@ -3050,7 +3095,7 @@ final class CameraViewModel: ObservableObject {
         if fixedHighResolutionFocalsOnly || (fixedCinematicFocalsOnly && abs(lens.displayZoom-1)>0.001) { return lens.title }
         guard camera.selectedLens == lens.id else { return lens.title }
         if (mode == .auto || mode == .manual || fixedCinematicFocalsOnly || capturesLivePhoto), lens.device.position == .back, abs(lens.displayZoom - 1) < 0.001,
-           let title = mainFocalTitle { return title }
+           let title = mainFocalTitle(at: camera.currentZoom) { return title }
         return zoomText
     }
 
@@ -3063,7 +3108,8 @@ final class CameraViewModel: ObservableObject {
         camera.setContinuousZoom(1)
     }
 
-    private func startFocalTransition(fadeDuration: TimeInterval = 0.18) {
+    private func startFocalTransition(fadeDuration: TimeInterval = 0.18, zoomScale: CGFloat = 1) {
+        cancelFocalZoom()
         focalFadeDuration = fadeDuration
         focalTransitionID = UUID()
         let request = focalTransitionID
@@ -3071,8 +3117,10 @@ final class CameraViewModel: ObservableObject {
         focalTransitionOpacity = 1
         awaitingFocalFrame = focalTransitionImage != nil
         focalTransitionBlur = 0
+        focalTransitionScale = 1
         if !UIAccessibility.isReduceMotionEnabled {
             withAnimation(.easeOut(duration: 0.12)) { focalTransitionBlur = 2 }
+            withAnimation(.easeOut(duration: 0.16)) { focalTransitionScale = min(2, max(0.5, zoomScale)) }
         }
         // A failed switch must never leave a frozen snapshot over the live preview.
         Task { [weak self] in
@@ -3087,7 +3135,9 @@ final class CameraViewModel: ObservableObject {
         awaitingFocalFrame = false
         let request = focalTransitionID
         let duration = UIAccessibility.isReduceMotionEnabled ? 0.1 : focalFadeDuration
-        withAnimation(.easeInOut(duration: duration)) { focalTransitionOpacity = 0 }
+        withAnimation(.easeInOut(duration: duration)) {
+            focalTransitionOpacity = 0
+        }
         Task { [weak self] in
             try? await Task.sleep(for: .seconds(duration + 0.02))
             guard let self, self.focalTransitionID == request else { return }
@@ -3118,6 +3168,7 @@ final class CameraViewModel: ObservableObject {
     /// Maps pinch magnification to the same continuous zoom route used by the wheel and preset buttons.
     /// Rebasing at a device limit makes reversing the pinch respond immediately.
     func updatePreviewPinchZoom(scale: CGFloat) {
+        cancelFocalZoom()
         guard !fixedHighResolutionFocalsOnly else { return }
         guard scale.isFinite, scale > 0 else { return }
         guard camera.ready, !camera.capturing, (!camera.videoBusy || camera.videoRecording), canAdjustCurrentLens, !zoomDialVisible,
@@ -3171,6 +3222,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     func beginZoomDial(at value: CGFloat) {
+        cancelFocalZoom()
         guard !fixedHighResolutionFocalsOnly else { return }
         guard !camera.dualCapturePreparing else { return }
         guard camera.ready, !camera.capturing, (!camera.videoBusy || camera.videoRecording), canAdjustCurrentLens else { return }
@@ -3193,11 +3245,16 @@ final class CameraViewModel: ObservableObject {
     func dragZoomDial(translation: CGFloat, width: CGFloat) {
         guard zoomDialVisible, let origin = zoomDragOrigin, translation.isFinite else { return }
         // Rebase at each event so overshooting a limit never creates a dead zone on reversal.
-        let value = ContinuousZoomPolicy.draggedValue(origin: origin, translation: translation - zoomDragTranslation, width: width, range: zoomRange)
+        let value = applyZoomWheelDelta(origin: origin, translation: translation - zoomDragTranslation, width: width)
         zoomDragOrigin = value
         zoomDragTranslation = translation
-        applyZoomValue(value)
         provideZoomDetentFeedback(for: value)
+    }
+    @discardableResult
+    private func applyZoomWheelDelta(origin: CGFloat, translation: CGFloat, width: CGFloat) -> CGFloat {
+        let value = ContinuousZoomPolicy.draggedValue(origin: origin, translation: translation, width: width, range: zoomRange)
+        applyZoomValue(value)
+        return value
     }
     /// Finishes only this drag; the wheel remains available for the next gesture.
     func finishZoomDrag() {
@@ -3209,7 +3266,7 @@ final class CameraViewModel: ObservableObject {
         videoZoomAutoHideTask?.cancel(); videoZoomAutoHideTask = nil
         guard zoomDialVisible else { return }
         videoZoomAutoHideTask = Task { @MainActor [weak self] in
-            do { try await Task.sleep(for: .seconds(4)) } catch { return }
+            do { try await Task.sleep(for: .seconds(3)) } catch { return }
             guard let self, self.zoomDialVisible, self.zoomDragOrigin == nil else { return }
             self.endZoomDial()
         }
@@ -3268,9 +3325,28 @@ final class CameraViewModel: ObservableObject {
     private(set) var reviewCapture = false
     private(set) var reviewVideoID: String?
     func openLibrary() {
-        guard !review, !camera.videoBusy, !library.videoSaving else { return }
+        guard !review, !settings, !camera.videoBusy, !library.videoSaving else { return }
         closePopups()
         cancelCountdown()
+        stopBurstCapture()
+        holdPreviewForPresentation()
+        gallery.refresh()
+        reviewVideoID = library.consumeVideoReview()
+        reviewCapture = reviewVideoID == nil && library.consumeCaptureReview()
+        review = true
+    }
+
+    func presentSettings() {
+        guard !settings, !review, !camera.videoBusy else { return }
+        closePopups()
+        cancelCountdown()
+        stopBurstCapture()
+        holdPreviewForPresentation()
+        settings = true
+    }
+
+    private func holdPreviewForPresentation() {
+        guard topLevelMode != .astro else { return }
         resumeTransitionRequest = UUID()
         resumeTransitionFinishing = false
         // Cinematic uses the system preview layer and has no ordinary preview
@@ -3278,12 +3354,7 @@ final class CameraViewModel: ObservableObject {
         // live cinematic feed after returning from the gallery.
         resumeTransitionImage = cinematicVideoEnabled ? nil : camera.preview
         resumeTransitionOpacity = 1
-        gallery.refresh()
-        reviewVideoID = library.consumeVideoReview()
-        reviewCapture = reviewVideoID == nil && library.consumeCaptureReview()
-        review = true
     }
-    func presentSettings() { closePopups(); settings = true }
     func openParameter(_ next: CameraParameter) {
         guard displayedManualParameters.contains(next) else { return }
         closePopups()
@@ -3491,9 +3562,23 @@ final class CameraViewModel: ObservableObject {
         restoreAuxiliaryPreferences()
         camera.$preview.dropFirst().sink { [weak self] image in
             guard let self else { return }
-            if !self.review, self.cameraActiveRequested, self.camera.ready,
+            if !self.review, !self.settings, self.cameraActiveRequested, self.camera.ready,
                let image, let previous = self.resumeTransitionImage, image !== previous {
                 self.finishResumeTransition()
+            }
+            if self.modeHandoffWaiting, let target = self.modeHandoffTarget, target != .astro,
+               target == self.topLevelMode, image != nil, self.camera.ready,
+               self.camera.latestPreviewFrameTime >= self.modeHandoffStartedAt,
+               !self.captureKindSwitching, !self.camera.videoConfiguring,
+               self.captureKind == (target == .video ? .video : .photo) {
+                let now = CACurrentMediaTime()
+                if self.modeHandoffFrameCount == 0 { self.modeHandoffFirstFrameAt = now }
+                self.modeHandoffFrameCount += 1
+                if self.modeHandoffFrameCount >= 3, now - self.modeHandoffFirstFrameAt >= 0.1 {
+                    self.finishModeHandoff(to: target)
+                }
+            } else if self.modeHandoffWaiting {
+                self.modeHandoffFrameCount = 0
             }
             guard self.awaitingFocalFrame else { return }
             if image != nil && self.camera.demo && self.camera.ready { self.finishFocalTransition() }
@@ -3516,7 +3601,6 @@ final class CameraViewModel: ObservableObject {
         mode = arguments.contains("--preview-manual") ? .manual : .auto
         panel = arguments.contains("--preview-filters") ? .film : nil
         filters.showStrength = arguments.contains("--preview-filter-strength")
-        toolPage = arguments.contains("--preview-readouts") ? 1 : 0
         ratio = arguments.contains("--preview-wide") ? .wide : .standard
         if let value = arguments.first(where: { $0.hasPrefix("--preview-ratio-value=") })?.dropFirst("--preview-ratio-value=".count),
            let selectedRatio = FrameRatio(rawValue: String(value)), FrameRatio.photoOptions.contains(selectedRatio) { ratio = selectedRatio }
@@ -3753,9 +3837,34 @@ final class CameraViewModel: ObservableObject {
         synchronizeHDRPreview()
     }
 
-    /// Lifecycle callbacks can run during SwiftUI's view-update transaction.
-    /// Defer published state changes, and ignore obsolete requests after rapid navigation.
-    func setCameraActive(_ active: Bool) {
+    var captureInProgressForPresentation: Bool {
+        camera.capturing || camera.pendingPhotoCount > 0 || camera.videoBusy
+            || slowShutterSequenceProgress != nil || burstCaptureActive
+    }
+
+    /// Reconcile presentation and foreground state together so a system alert
+    /// over the gallery cannot restart the camera behind it.
+    func updateCameraPresentation(isVisible: Bool, phase: ScenePhase) {
+        guard isVisible, topLevelMode != .astro, phase != .background else {
+            if cameraActiveRequested { setCameraActive(false) }
+            return
+        }
+        if review || settings {
+            // Let requests already in progress finish before suspending capture.
+            guard !captureInProgressForPresentation else { return }
+            camera.setCoveredPreviewPaused(true)
+            if cameraActiveRequested { setCameraActive(false, preservingCaptureRoute: true) }
+            return
+        }
+        camera.setCoveredPreviewPaused(false)
+        if phase == .active {
+            if !cameraActiveRequested || !camera.ready { setCameraActive(true) }
+        } else if cameraActiveRequested {
+            setCameraActive(false)
+        }
+    }
+
+    func setCameraActive(_ active: Bool, preservingCaptureRoute: Bool = false) {
         camera.noteLifecycleRequest(active: active, context: [
             "mode": mode.rawValue, "kind": captureKind == .photo ? "photo" : "video",
             "format": photoFormat.rawValue, "ratio": ratio.rawValue,
@@ -3763,6 +3872,7 @@ final class CameraViewModel: ObservableObject {
             "zoomAtRequest": String(Double(camera.currentZoom))
         ])
         if !active {
+            cancelFocalZoom()
             // 后台休眠期间不能让入口 watchdog 继续计时，否则回前台会误报“视频启动超时”。
             cancelVideoEntryWatchdog()
             pendingVideoEntryAfterRecovery?.cancel()
@@ -3803,13 +3913,19 @@ final class CameraViewModel: ObservableObject {
         } else {
             dockKitTracking.stopMonitoring()
         }
-        locationService.setActive(active && preferences.recordLocation)
+        locationService.setActive(active && wantsCaptureLocation)
         let request = UUID()
         lifecycleRequest = request
         DispatchQueue.main.async { [weak self] in
             guard let self, self.lifecycleRequest == request else { return }
             self.synchronizeLiveAudio()
-            self.camera.setVideoMode(self.captureKind == .video && (active || self.camera.dualCaptureEnabled))
+            if !active, self.topLevelMode == .astro {
+                self.camera.stop()
+                return
+            }
+            if active || !preservingCaptureRoute {
+                self.camera.setVideoMode(self.captureKind == .video && (active || self.camera.dualCaptureEnabled))
+            }
             if active {
                 // 前台恢复的排队回调不能把刚启动的慢门序列重新切回虚拟A挡输入。
                 let captureManualRoute = self.mode == .manual || self.slowShutterSequence != nil
@@ -3825,7 +3941,7 @@ final class CameraViewModel: ObservableObject {
                     let token = self.resumeTransitionRequest
                     Task { [weak self] in
                         try? await Task.sleep(for: .seconds(2))
-                        guard let self, self.resumeTransitionRequest == token, !self.review else { return }
+                        guard let self, self.resumeTransitionRequest == token, !self.review, !self.settings else { return }
                         self.finishResumeTransition()
                     }
                 }
@@ -3838,7 +3954,7 @@ final class CameraViewModel: ObservableObject {
                 self.cancelCountdown()
                 self.endZoomDial()
                 self.setFilterParameterEditing(false)
-                self.camera.stop()
+                self.camera.stop(preservingCaptureRoute: preservingCaptureRoute)
             }
         }
     }
@@ -4252,6 +4368,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     func setMode(_ next: CameraShootingMode) {
+        cancelFocalZoom()
         sliderEVRequest = UUID()
         guard slowShutterSequence == nil else { return }
         guard !camera.capturing, !camera.videoBusy, countdown == nil, !isPreparingSubmode else { return }
@@ -4342,6 +4459,8 @@ final class CameraViewModel: ObservableObject {
         if awaitingFocalFrame { camera.completeUserPreviewSwitch(focalTransitionID) }
     }
 
+    var shutterButtonText: String { shutterText(pow(2, shutter)) }
+
     func shutterText(_ seconds: Double) -> String {
         CameraNumericText.shutter(seconds)
     }
@@ -4356,28 +4475,38 @@ final class CameraViewModel: ObservableObject {
         }
     }
 
-    var currentParameterNumber: Double {
-        guard parameterAutomatic, let readings = camera.readings?.validated else { return parameterBinding.wrappedValue }
-        switch parameter {
-        case .iso: return readings.iso
-        case .shutter: return log2(max(readings.seconds, 0.000001))
-        case .wb: return readings.kelvin
-        case .tint: return readings.tint ?? whiteBalanceTint
-        case .focus: return readings.focus
+    var currentParameterNumber: Double { currentParameterNumber(for: parameter) }
+
+    private func currentParameterNumber(for item: CameraParameter) -> Double {
+        let readings = camera.readings?.validated
+        switch item {
+        case .iso: return (!manualExposure ? readings?.iso : nil) ?? iso
+        case .shutter:
+            if !manualExposure, let readings { return log2(max(readings.seconds, 0.000001)) }
+            return shutter
+        case .wb: return (!manualWB ? readings?.kelvin : nil) ?? wb
+        case .tint: return (!manualWB ? readings?.tint : nil) ?? whiteBalanceTint
+        case .focus: return (!manualFocus ? readings?.focus : nil) ?? focus
         case .ev: return ev
         }
     }
 
-    var parameterDisplay: String {
-        let value = currentParameterNumber
+    var parameterDisplay: String { parameterReadout(parameter, includesEVUnit: true) }
+
+    func parameterReadout(_ item: CameraParameter, includesEVUnit: Bool = false) -> String {
+        let value = currentParameterNumber(for: item)
         guard value.isFinite else { return "—" }
-        switch parameter {
+        switch item {
         case .iso: return CameraNumericText.integer(value)
         case .shutter: return shutterText(pow(2, value))
-        case .wb: return CameraNumericText.integer(value) == "—" ? "—" : CameraNumericText.integer(value) + "K"
+        case .wb:
+            let kelvin = CameraNumericText.integer(value)
+            return kelvin == "—" ? kelvin : kelvin + "K"
         case .tint: return String(format: "%+.0f", value)
         case .focus: return String(format: "%.2f", value)
-        case .ev: return String(format: "%+.1f EV", value)
+        case .ev:
+            let compensation = String(format: "%+.1f", value)
+            return includesEVUnit ? compensation + " EV" : compensation
         }
     }
 
@@ -4413,15 +4542,29 @@ final class CameraViewModel: ObservableObject {
         }
     }
 
-    var popupVisible: Bool { functions || tools || shootingModes || panel == .manual }
+    var popupVisible: Bool { watermarkPanelVisible || functions || tools || shootingModes || panel == .manual }
 
     func closePopups() {
+        watermarkPanelVisible = false
         dismissDepthControls()
         dismissFilterNumericInput()
         dismissFilterReset(); setFilterParameterEditing(false)
         flushFilterSettings()
         endZoomDial()
         withAnimation(AppTheme.popupAnimation) { functions = false; tools = false; shootingModes = false; panel = nil; toolbarPanel = nil; focusLockPickerVisible = false }
+    }
+
+    func openWatermarkPanel() {
+        closePopups()
+        withAnimation(AppTheme.popupAnimation) { watermarkPanelVisible = true }
+    }
+    func selectWatermarkStyle(_ style:PhotoWatermarkStyle) {
+        if border && preferences.watermark.style == style {
+            border = false
+        } else {
+            preferences.watermark.style = style
+            border = true
+        }
     }
 
     func openTools(feedback: Bool = true) {
@@ -4458,8 +4601,152 @@ final class CameraViewModel: ObservableObject {
         [("视频", "video.fill"), ("照片", "camera.fill")]
     }
 
+    /// Top-level peer modes: photo → video → astro → photo.
+    func cycleTopLevelMode(forward: Bool) {
+        let target: TopLevelMode
+        switch topLevelMode {
+        case .photo: target = forward ? .video : .astro
+        case .video: target = forward ? .astro : .photo
+        case .astro: target = forward ? .photo : .video
+        }
+        selectTopLevelMode(target)
+    }
+
+    @Published private(set) var modeHandoffImage: UIImage?
+    @Published private(set) var modeHandoffOpacity = 1.0
+    @Published private(set) var modeHandoffCoverVisible = false
+    private(set) var modeHandoffCoverFrame = CGRect.zero
+    private var modeHandoffCoverCommit: CameraModePresentationBarrier?
+    private(set) var modeHandoffTarget: TopLevelMode?
+    private var modeHandoffID = UUID()
+    private var modeHandoffWaiting = false
+    private(set) var modeHandoffTimedOut = false
+    private var modeHandoffStartedAt = 0.0
+    private var modeHandoffTimeout: Task<Void, Never>?
+    private var modeHandoffCommit: CameraModePresentationBarrier?
+    private var modeHandoffFrameCount = 0
+    private var modeHandoffFirstFrameAt = 0.0
+
+    private func beginModeHandoff(to target: TopLevelMode, image: UIImage?) {
+        modeHandoffTimeout?.cancel()
+        modeHandoffID = UUID()
+        let id = modeHandoffID
+        modeHandoffImage = image ?? modeHandoffImage
+        modeHandoffCoverCommit?.cancel(); modeHandoffCoverCommit = nil
+        modeHandoffCoverFrame = dualInsetPreviewFrame
+        modeHandoffCoverVisible = target == .astro && modeHandoffImage != nil
+        modeHandoffOpacity = 1
+        modeHandoffTarget = target
+        modeHandoffWaiting = true
+        modeHandoffFrameCount = 0; modeHandoffFirstFrameAt = 0
+        modeHandoffTimedOut = false
+        modeHandoffStartedAt = CACurrentMediaTime()
+        modeHandoffTimeout = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled, let self, self.modeHandoffID == id else { return }
+            self.modeHandoffTimedOut = true
+            self.finishModeHandoff(to: target)
+        }
+    }
+
+    func finishModeHandoff(to target: TopLevelMode) {
+        guard modeHandoffWaiting, modeHandoffTarget == target, topLevelMode == target else { return }
+        modeHandoffWaiting = false
+        modeHandoffTimeout?.cancel(); modeHandoffTimeout = nil
+        let id = modeHandoffID
+        let duration = UIAccessibility.isReduceMotionEnabled ? 0.1 : 0.18
+        withAnimation(.easeOut(duration: duration)) { modeHandoffOpacity = 0 }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(duration + 0.02))
+            guard let self, self.modeHandoffID == id else { return }
+            self.modeHandoffCoverVisible = false
+            self.modeHandoffImage = nil; self.modeHandoffTarget = nil
+        }
+    }
+
+    func modeDestinationDidAppear(_ target: TopLevelMode) {
+        guard modeHandoffCoverVisible, modeHandoffTarget == target else { return }
+        let id = modeHandoffID
+        modeHandoffCoverCommit?.cancel()
+        let barrier = CameraModePresentationBarrier { [weak self] in
+            guard let self, self.modeHandoffID == id else { return }
+            self.modeHandoffCoverVisible = false
+            self.modeHandoffCoverCommit = nil
+        }
+        modeHandoffCoverCommit = barrier
+        barrier.start()
+    }
+
+    func cancelModeHandoff() {
+        modeHandoffCoverCommit?.cancel(); modeHandoffCoverCommit = nil
+        modeHandoffCoverVisible = false
+        modeHandoffCommit?.cancel(); modeHandoffCommit = nil
+        modeHandoffTimeout?.cancel(); modeHandoffTimeout = nil
+        modeHandoffID = UUID(); modeHandoffWaiting = false
+        modeHandoffImage = nil; modeHandoffTarget = nil; modeHandoffOpacity = 1
+    }
+
+    func selectTopLevelMode(_ target: TopLevelMode, outgoingPreview: UIImage? = nil, feedback: Bool = true) {
+        cancelFocalZoom()
+        guard target != topLevelMode else {
+            if modeHandoffCommit != nil { cancelModeHandoff() }
+            return
+        }
+        let leavingAstro = topLevelMode == .astro
+        guard leavingAstro || (camera.ready && !camera.capturing && !camera.videoBusy
+              && !captureKindSwitching && !isPreparingSubmode
+              && !(captureKind == .video && camera.videoRecording)) else { return }
+        if leavingAstro || target == .astro {
+            beginModeHandoff(to: target, image: leavingAstro ? outgoingPreview : camera.preview)
+            modeHandoffCommit?.cancel()
+            let id = modeHandoffID
+            let barrier = CameraModePresentationBarrier { [weak self] in
+                guard let self, self.modeHandoffID == id else { return }
+                self.modeHandoffCommit = nil
+                self.commitTopLevelMode(target, feedback: feedback)
+            }
+            modeHandoffCommit = barrier
+            barrier.start()
+        } else { commitTopLevelMode(target, feedback: feedback) }
+    }
+
+    private func commitTopLevelMode(_ target: TopLevelMode, feedback: Bool) {
+        var transaction = Transaction(animation: nil)
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { commitTopLevelModeWithoutAnimation(target, feedback: feedback) }
+    }
+
+    private func commitTopLevelModeWithoutAnimation(_ target: TopLevelMode, feedback: Bool) {
+        let leavingAstro = topLevelMode == .astro
+        if feedback { CameraHaptics.impact(.light) }
+        switch target {
+        case .astro:
+            camera.astroSharedCaptureSession.reserve()
+            closePopups()
+            endSubjectTracking()
+            topLevelMode = .astro
+            setCameraActive(false)
+        case .photo, .video:
+            if leavingAstro { camera.astroSharedCaptureSession.restoreNormal() }
+            topLevelMode = target
+            setCameraActive(true)
+            let targetKind: CaptureKind = target == .video ? .video : .photo
+            let selectionID = modeHandoffID
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                for _ in 0..<200 {
+                    if self.camera.ready { break }
+                    try? await Task.sleep(for: .milliseconds(20))
+                }
+                guard self.topLevelMode == target, self.modeHandoffID == selectionID else { return }
+                self.setCaptureKind(targetKind)
+            }
+        }
+    }
+
     /// 模式按钮立即反馈；正在配置/收尾时排队，不能静默吞掉用户点击。
     func requestCaptureKind(_ kind: CaptureKind) {
+        cancelFocalZoom()
         if kind == .photo {
             pendingVideoEntryAfterRecovery?.cancel()
             pendingVideoEntryAfterRecovery = nil
@@ -4763,6 +5050,7 @@ final class CameraViewModel: ObservableObject {
 
     func toggleVideoRecording() {
         guard captureKind == .video, !captureKindSwitching else { return }
+        cancelFocalZoom()
         if camera.videoRecording {
             camera.stopVideoRecording()
         } else if videoShutterEnabled {
@@ -4942,6 +5230,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     func takePhoto() {
+        cancelFocalZoom()
         guard captureKind == .photo else { toggleVideoRecording(); return }
         if photoFormat.needsRAW,
            currentPosition == .front || !camera.availablePhotoFormats.contains(photoFormat) {
@@ -5339,7 +5628,9 @@ final class CameraViewModel: ObservableObject {
             }
             look.landscape = merged.extent.width > merged.extent.height
             var photo = try PhotoEncoder.encode(source: merged, raw: nil, look: look, options: input.options,
-                                                context: context, location: input.location)
+                                                context: context, location: input.location,
+                                                captureDate:input.frames.first?.diagnostics?.parameters?.capturedAt,
+                                                captureParameters:input.frames.first?.diagnostics?.parameters)
             // Preserve the per-frame diagnostics (parameters, filter, lens) from
             // the first frame; otherwise the detail sheet shows only two rows.
             var diagnostics = input.frames.first?.diagnostics ?? PhotoCaptureDiagnostics()
@@ -5779,7 +6070,6 @@ final class CameraViewModel: ObservableObject {
         state.videoRatio = videoRatio.rawValue; state.videoOpenGate = videoOpenGateEnabled; state.videoColorSpace = videoColorSpace.rawValue
         state.videoCodec = videoCodec.rawValue; state.proRes = proResSpecification.rawValue
         state.logLUT = selectedLogLUTID; state.burnLogLUT = burnLogLUT
-        state.toolPage = toolPage
         state.lensID = camera.selectedLens.isEmpty ? nil : camera.selectedLens
         state.lastBackLensID = lastBackLensID
         state.zoom = Double(camera.currentZoom); state.frontAutoCentering = false
@@ -5917,7 +6207,6 @@ final class CameraViewModel: ObservableObject {
         savedManualSettings = state.previousManual; automaticEV = number(state.automaticEV, -5...5, 0)
         selectedLogLUTID = state.logLUT ?? LogLUTPreset.originalID
         burnLogLUT = state.burnLogLUT && selectedLogLUTID != LogLUTPreset.originalID
-        toolPage = min(max(state.toolPage, 0), 1)
         if !preferences.saveCaptureSettings {
             preferences.videoBitratePreset = .systemDefault
             preferences.videoStabilization = .standard
@@ -5993,4 +6282,24 @@ enum CameraToolbarAccessory: Equatable {
         if heifPro { return .proTone }
         return .live
     }
+}
+
+/// Let the snapshot reach a display transaction before reconfiguring its source.
+@MainActor private final class CameraModePresentationBarrier: NSObject {
+    private var link: CADisplayLink?
+    private var ticks = 0
+    private var completion: (() -> Void)?
+    init(completion: @escaping () -> Void) { self.completion = completion }
+    func start() {
+        let link = CADisplayLink(target: self, selector: #selector(tick))
+        self.link = link; link.add(to: .main, forMode: .common)
+    }
+    @objc private func tick() {
+        ticks += 1
+        guard ticks >= 2 else { return }
+        let action = completion
+        cancel()
+        action?()
+    }
+    func cancel() { link?.invalidate(); link = nil; completion = nil }
 }

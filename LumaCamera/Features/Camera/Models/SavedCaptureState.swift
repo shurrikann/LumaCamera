@@ -59,7 +59,6 @@ struct SavedCaptureState: Codable, Equatable {
     var proRes = "422 HQ"
     var logLUT: String?
     var burnLogLUT = false
-    var toolPage = 0
     var lensID: String?
     var lastBackLensID: String?
     var zoom = 1.0

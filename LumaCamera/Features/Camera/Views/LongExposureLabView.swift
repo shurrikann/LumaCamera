@@ -1,4 +1,5 @@
-import AVFoundation
+#if DEBUG
+@preconcurrency import AVFoundation
 import CoreImage
 import Photos
 import SwiftUI
@@ -39,8 +40,9 @@ final class LongExposureLab: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     var targetFrames: Int { durationSeconds }
     @Published var prefer12MP = true
 
-    let session = AVCaptureSession()
-    private let output = AVCaptureVideoDataOutput()
+    // Immutable route handles; configuration remains on the dedicated queue.
+    nonisolated(unsafe) let session = AVCaptureSession()
+    nonisolated(unsafe) private let output = AVCaptureVideoDataOutput()
     private let sessionQueue = DispatchQueue(label: "camera.long-exposure.session")
     private let videoQueue = DispatchQueue(label: "camera.long-exposure.video", qos: .userInitiated)
     private let linearSpace = CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
@@ -56,12 +58,16 @@ final class LongExposureLab: NSObject, ObservableObject, AVCaptureVideoDataOutpu
         .workingFormat: CIFormat.RGBAh,
         .outputColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
     ])
-    private nonisolated(unsafe) static let frameContext = CIContext(options: [
+    private nonisolated static let frameContext = CIContext(options: [
         .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!,
         .workingFormat: CIFormat.RGBAh,
         .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
     ])
-    private var device: AVCaptureDevice?
+    nonisolated private let deviceSlot = LockedCaptureValue<AVCaptureDevice?>(nil)
+    nonisolated private var device: AVCaptureDevice? {
+        get { deviceSlot.value }
+        set { deviceSlot.value = newValue }
+    }
     private var accumulator: CIImage?
     private var accumulatorBuffer: CVPixelBuffer?
     private var fusionExtent: CGRect = .zero
@@ -74,6 +80,7 @@ final class LongExposureLab: NSObject, ObservableObject, AVCaptureVideoDataOutpu
     func start() {
         guard !started else { return }
         started = true
+        let uses12MP = prefer12MP
         sessionQueue.async { [weak self] in
             guard let self else { return }
             do {
@@ -85,7 +92,7 @@ final class LongExposureLab: NSObject, ObservableObject, AVCaptureVideoDataOutpu
                         ?? AVCaptureDevice.default(for: .video) else {
                     throw LabError.unavailable("没有可用后摄")
                 }
-                let prefer12MP = self.prefer12MP
+                let prefer12MP = uses12MP
                 let all = device.formats.filter { format in
                     let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
                     let pixels = Int(dims.width) * Int(dims.height)
@@ -190,9 +197,12 @@ final class LongExposureLab: NSObject, ObservableObject, AVCaptureVideoDataOutpu
                 }
                 if device.isWhiteBalanceModeSupported(.locked) { device.whiteBalanceMode = .locked }
                 device.unlockForConfiguration()
-                self.capturing = true
-                self.acceptedAt = CACurrentMediaTime() + 0.25
-                DispatchQueue.main.async { self.status = "正在长曝光 0/\(target)" }
+                DispatchQueue.main.async {
+                    guard self.isCapturing else { return }
+                    self.capturing = true
+                    self.acceptedAt = CACurrentMediaTime() + 0.25
+                    self.status = "正在长曝光 0/\(target)"
+                }
             } catch {
                 DispatchQueue.main.async {
                     self.isCapturing = false
@@ -426,6 +436,7 @@ final class LongExposureLab: NSObject, ObservableObject, AVCaptureVideoDataOutpu
 
     func stop() {
         capturing = false
+        started = false
         restoreAfterCapture()
         sessionQueue.async { [weak self] in
             guard let self else { return }
@@ -580,3 +591,5 @@ private struct LongExposurePreview: UIViewRepresentable {
 
     func updateUIView(_ uiView: View, context: Context) {}
 }
+
+#endif

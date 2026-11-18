@@ -61,6 +61,8 @@ final class LivePhotoEditorTests: XCTestCase {
         var recipe = PhotoAdjustments(); recipe.quarterTurns = 1; recipe.flipHorizontal = true
         recipe.crop = PhotoCropRectangle(x: 0.1, y: 0.1, width: 0.8, height: 0.8)
         recipe.filterAdjustments[.fade] = 45; recipe.filterAdjustments[.grainSize] = 30
+        recipe.watermark = PhotoEditWatermark(settings: .init(style: .whiteFrame, showsParameters: true),
+            content: PhotoWatermarkContent(capturedAt: asset.creationDate ?? Date(), signature: "Live 编辑验证", exposureSeconds: 1/125, iso: 100))
         let copied = try await LivePhotoEditRenderer.render(input: input, adjustments: recipe, copy: true)
         XCTAssertEqual(copied.resources.count, 2)
         for resource in copied.resources {
@@ -108,7 +110,7 @@ final class LivePhotoEditorTests: XCTestCase {
         loader.cancel()
         let replaced = try await LivePhotoEditRenderer.render(input: input, adjustments: recipe, copy: false)
         XCTAssertTrue(FileManager.default.fileExists(atPath: replaced.output.renderedContentURL.path))
-        XCTAssertEqual(replaced.output.adjustmentData?.formatVersion, "5")
+        XCTAssertEqual(replaced.output.adjustmentData?.formatVersion, "7")
         let replacement = try XCTUnwrap(CIImage(contentsOf: replaced.output.renderedContentURL, options: [.applyOrientationProperty: true]))
         print("LIVE-EDIT replacement size=\(replacement.extent.size), expected=\(expected.size), video=\(videoSize)")
         XCTAssertEqual(replacement.extent.width / replacement.extent.height, expected.width / expected.height, accuracy: 0.01)

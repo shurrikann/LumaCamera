@@ -1,4 +1,5 @@
-import AVFoundation
+#if DEBUG
+@preconcurrency import AVFoundation
 import CoreImage
 import SwiftUI
 import UIKit
@@ -113,7 +114,8 @@ private struct AFLabPreview: UIViewRepresentable {
 
 @MainActor
 final class AFTrackingLab: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureMetadataOutputObjectsDelegate {
-    let session = AVCaptureSession()
+    // Immutable route handles; configuration remains on the dedicated queue.
+    nonisolated(unsafe) let session = AVCaptureSession()
     @Published private(set) var trackingBox: CGRect?
     @Published private(set) var focusIndicator: CGPoint?
     @Published private(set) var lost = false
@@ -127,13 +129,29 @@ final class AFTrackingLab: NSObject, ObservableObject, AVCaptureVideoDataOutputS
     private let sessionQueue = DispatchQueue(label: "af.lab.session")
     private let frameQueue = DispatchQueue(label: "af.lab.frames")
     private let ciContext = CIContext(options: [.cacheIntermediates: false])
-    private let output = AVCaptureVideoDataOutput()
-    private let metadataOutput = AVCaptureMetadataOutput()
+    nonisolated(unsafe) private let output = AVCaptureVideoDataOutput()
+    nonisolated(unsafe) private let metadataOutput = AVCaptureMetadataOutput()
     private var systemTracking = false
-    private var systemTrackingAvailable = false
-    private var systemMetadataSubscribed = false
-    private var input: AVCaptureDeviceInput?
-    private var device: AVCaptureDevice?
+    nonisolated private let systemTrackingAvailableSlot = LockedCaptureValue<Bool>(false)
+    nonisolated private var systemTrackingAvailable: Bool {
+        get { systemTrackingAvailableSlot.value }
+        set { systemTrackingAvailableSlot.value = newValue }
+    }
+    nonisolated private let systemMetadataSubscribedSlot = LockedCaptureValue<Bool>(false)
+    nonisolated private var systemMetadataSubscribed: Bool {
+        get { systemMetadataSubscribedSlot.value }
+        set { systemMetadataSubscribedSlot.value = newValue }
+    }
+    nonisolated private let inputSlot = LockedCaptureValue<AVCaptureDeviceInput?>(nil)
+    nonisolated private var input: AVCaptureDeviceInput? {
+        get { inputSlot.value }
+        set { inputSlot.value = newValue }
+    }
+    nonisolated private let deviceSlot = LockedCaptureValue<AVCaptureDevice?>(nil)
+    nonisolated private var device: AVCaptureDevice? {
+        get { deviceSlot.value }
+        set { deviceSlot.value = newValue }
+    }
     private weak var previewLayer: AVCaptureVideoPreviewLayer?
     private var tracker: VisionSubjectTracker?
     private var previewSize: CGSize = .zero
@@ -249,7 +267,8 @@ final class AFTrackingLab: NSObject, ObservableObject, AVCaptureVideoDataOutputS
                     let acquired = device.isContinuousAutoFocusTrackingSubjectAcquired
                     let dims = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
                     let supportedCount = device.formats.filter { $0.isContinuousAutoFocusTrackingSupported }.count
-                    self.systemDetail = "系统AF supported=\(supported) enabled=\(enabled) acquired=\(acquired) format=\(dims.width)x\(dims.height) device=\(device.deviceType.rawValue) formats=\(supportedCount)/\(device.formats.count)"
+                    let description = "系统AF supported=\(supported) enabled=\(enabled) acquired=\(acquired) format=\(dims.width)x\(dims.height) device=\(device.deviceType.rawValue) formats=\(supportedCount)/\(device.formats.count)"
+                    DispatchQueue.main.async { self.systemDetail = description }
                 }
                 self.systemTrackingAvailable = self.systemMetadataSubscribed
                 DispatchQueue.main.async {
@@ -468,3 +487,5 @@ final class AFTrackingLab: NSObject, ObservableObject, AVCaptureVideoDataOutputS
         var errorDescription: String? { if case let .unavailable(s) = self { return s }; return nil }
     }
 }
+
+#endif

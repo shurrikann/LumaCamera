@@ -13,6 +13,24 @@ struct ShootingModeButtonSymbol: View {
     }
 }
 
+struct CaptureParameterReadout: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 3) {
+            Text(label).font(.system(size: 10, weight: .semibold))
+            Text(value).font(.system(size: 10, weight: .medium, design: .monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+        }
+        .foregroundStyle(AppTheme.accent)
+        .rotatingCaptureContent()
+        .frame(width: 42, height: 42)
+        .contentShape(Rectangle())
+    }
+}
+
 extension CameraView {
     /// 独立小窗画幅按钮保留固定热区，不占用拖动或双击交换手势。
     func dualInsetAspectButton(diameter: CGFloat) -> some View {
@@ -90,27 +108,36 @@ extension CameraView {
                         Text("A").rotatingCaptureContent().font(.system(size: 15, weight: .semibold)).foregroundStyle(AppTheme.accent)
                             .frame(width: 30, height: 30).background(AppTheme.accent.opacity(0.08), in: Circle())
                     }.accessibilityLabel("重置曝光补偿")
-                }.padding(.horizontal, 14).frame(height: 46).modifier(GlassSurface(radius: 29, previewOverlay: true))
+                }.padding(.horizontal, 14).frame(height: CameraControlLayout.parameterGlassHeight)
+                    .modifier(GlassSurface.parameterBar)
+                    .captureControlGeometry("autoEVGlass", model: model)
             } else {
-                HStack(spacing: 4) {
+                HStack(spacing: 0) {
                     ForEach(model.displayedManualParameters, id: \.self) { item in
                         Button {
                             CameraHaptics.impact(.light)
                             model.openParameter(item)
                         } label: {
-                            Image(systemName: model.parameterIcon(item)).rotatingCaptureContent().font(.system(size: 17, weight: .regular))
-                                .foregroundStyle(model.parameterIsManual(item) ? AppTheme.manualParameterColor : .white)
-                                .frame(width: 42, height: 42)
-                                .modifier(GlassSurface(radius: 21, previewOverlay: true))
-                                .frame(maxWidth: model.cinematicAutomaticControls ? 62 : .infinity)
-                        }.captureControlGeometry("parameter." + item.rawValue, model: model).accessibilityLabel(model.parameterTitle(item))
-                            .accessibilityValue(model.parameterIsManual(item) ? "手动" : "自动")
+                            CaptureParameterReadout(label: item.readoutLabel, value: model.parameterReadout(item))
+                                .frame(maxWidth: .infinity)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .captureControlGeometry("parameter." + item.rawValue, model: model)
+                        .accessibilityLabel(model.parameterTitle(item))
+                        .accessibilityValue(model.parameterReadout(item))
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
+                .background {
+                    Color.clear.frame(height: CameraControlLayout.parameterGlassHeight)
+                        .modifier(GlassSurface.parameterBar)
+                        .captureControlGeometry("manualParameterGlass", model: model)
+                        .allowsHitTesting(false)
+                }
                 .animation(.easeInOut(duration: reduceMotion ? 0.08 : 0.2), value: model.displayedManualParameters)
             }
-        }.padding(.horizontal, CameraControlLayout.parameterSideInset(automatic: model.mode == .auto))
+        }.padding(.horizontal, CameraControlLayout.parameterSideInset)
             .captureControlGeometry("parameters", model: model)
     }
 
@@ -411,16 +438,12 @@ extension CameraView {
                 .accessibilityValue("\(albumPendingCount) 张照片正在处理或保存")
                 .recordingHidden(recording)
             Spacer(minLength: 0)
-            bottomButton(model.captureKind == .video ? "video.fill" : "camera.fill",
-                         label: model.captureKind == .video ? "切换到照片模式" : "切换到视频模式",
-                         size: size, iconSize: 20, iconOffset: modeContentOffset) {
-                model.requestCaptureKind(model.captureKind == .video ? .photo : .video)
-            }.buttonStyle(.plain)
-                .captureControlGeometry("functions", model: model)
-                .simultaneousGesture(modeContentSwipeGesture)
-                // 配置/子模式准备/快速切换期间点击也要立即反馈，必要时由模型排队执行。
-                .disabled(camera.capturing || library.videoSaving)
-                .recordingHidden(recording)
+            ModeSwitchButton(current: model.topLevelMode, size: size) { target in
+                model.selectTopLevelMode(target, feedback: false)
+            }
+            .captureControlGeometry("functions", model: model)
+            .allowsHitTesting(!(camera.capturing || library.videoSaving))
+            .recordingHidden(recording)
             Spacer(minLength: 0)
             Group {
                 if model.captureKind == .photo && model.burstModeEnabled {
@@ -497,36 +520,6 @@ extension CameraView {
         .animation(AppTheme.popupAnimation, value: recording)
     }
 
-    private var modeContentSwipeGesture: some Gesture {
-        DragGesture(minimumDistance: 14)
-            .onChanged { value in
-                guard modeContentSwipeEnabled,
-                      abs(value.translation.width) > abs(value.translation.height) else { return }
-                modeContentOffset = max(-18, min(18, value.translation.width * 0.16))
-            }
-            .onEnded { value in
-                guard modeContentSwipeEnabled else {
-                    withAnimation(.easeOut(duration: 0.16)) { modeContentOffset = 0 }
-                    return
-                }
-                let horizontal = abs(value.translation.width) > abs(value.translation.height)
-                guard horizontal, abs(value.translation.width) > 42 else {
-                    withAnimation(.easeOut(duration: 0.16)) { modeContentOffset = 0 }
-                    return
-                }
-                let direction: CGFloat = value.translation.width < 0 ? -1 : 1
-                withAnimation(.easeOut(duration: 0.10)) { modeContentOffset = 22 * direction }
-                let next: CameraViewModel.CaptureKind = model.captureKind == .video ? .photo : .video
-                model.requestCaptureKind(next)
-                withAnimation(.easeOut(duration: 0.22)) { modeContentOffset = 0 }
-            }
-    }
-
-    private var modeContentSwipeEnabled: Bool {
-        camera.ready && !camera.capturing && !camera.videoBusy
-            && !model.captureKindSwitching && !model.isPreparingSubmode
-            && !(model.captureKind == .video && camera.videoRecording)
-    }
 
     private var captureShutterFace: some View {
         ZStack {
@@ -574,9 +567,9 @@ extension CameraView {
         .animation(.easeInOut(duration: 0.15), value: model.burstCaptureActive)
     }
 
-    func bottomButton(_ icon: String, label: String, active: Bool = false, size: CGFloat = 52, dimmed: Bool = false, iconSize: CGFloat? = nil, iconOffset: CGFloat = 0, action: @escaping () -> Void) -> some View {
+    func bottomButton(_ icon: String, label: String, active: Bool = false, size: CGFloat = 52, dimmed: Bool = false, iconSize: CGFloat? = nil, iconOffset: CGFloat = 0, haptics: Bool = true, action: @escaping () -> Void) -> some View {
         Button {
-            CameraHaptics.impact(.light)
+            if haptics { CameraHaptics.impact(.light) }
             action()
         } label: {
             Image(systemName: icon).rotatingCaptureContent().font(.system(size: iconSize ?? (size >= 50 ? 23 : 21)))

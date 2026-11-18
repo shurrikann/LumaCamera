@@ -132,20 +132,8 @@ enum Imaging {
         guard let cg = ownedCGImage(filtered, from: filtered.extent, context: context, format: extended ? .RGBAh : .RGBA8, colorSpace: CGColorSpace(name: extended ? CGColorSpace.extendedLinearDisplayP3 : CGColorSpace.sRGB)!) else { return nil }
         let photo = UIImage(cgImage: cg)
         guard look.border else { return photo }
-        let margin = photo.size.width * 0.035
-        let footer = photo.size.width * 0.12
-        let size = CGSize(width: photo.size.width + margin * 2, height: photo.size.height + margin * 2 + footer)
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        return UIGraphicsImageRenderer(size: size, format: format).image { renderer in
-            UIColor(white: 0.96, alpha: 1).setFill()
-            renderer.fill(CGRect(origin: .zero, size: size))
-            photo.draw(at: CGPoint(x: margin, y: margin))
-            let textY = photo.size.height + margin + footer * 0.25
-            ("LUMA / 光屿" as NSString).draw(at: CGPoint(x: margin, y: textY), withAttributes: [.font: UIFont.monospacedSystemFont(ofSize: photo.size.width * 0.027, weight: .medium), .foregroundColor: UIColor.black])
-            let detail = "\(look.style.title) · \(Date().formatted(.dateTime.year().month().day()))"
-            (detail as NSString).draw(at: CGPoint(x: margin, y: textY + photo.size.width * 0.04), withAttributes: [.font: UIFont.systemFont(ofSize: photo.size.width * 0.019), .foregroundColor: UIColor.darkGray])
-        }
+        return PhotoWatermarkRenderer.render(photo,settings:look.watermark,
+            content:look.watermarkContent ?? PhotoWatermarkContent(capturedAt:Date(),filter:look.style.title))
     }
 
 }
