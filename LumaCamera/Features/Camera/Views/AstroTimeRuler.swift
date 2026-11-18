@@ -37,8 +37,7 @@ struct AstroTimeRuler: View {
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { value in
-                    let fraction = min(max(value.location.x / width, 0), 1)
-                    let next = (fraction * maxHour).rounded()
+                    let next = Self.hour(at: value.location.x, width: width, maxHour: maxHour)
                     if next != hour {
                         hour = next
                         feedback.selectionChanged()
@@ -53,5 +52,11 @@ struct AstroTimeRuler: View {
             let delta = direction == .increment ? 1.0 : -1.0
             hour = min(max(hour + delta, 0), maxHour)
         }
+    }
+
+    static func hour(at x: CGFloat, width: CGFloat, maxHour: Double) -> Double {
+        guard width.isFinite, width > 0, maxHour > 0 else { return 0 }
+        let fraction = min(max(x / width, 0), 1)
+        return (fraction * maxHour).rounded()
     }
 }
