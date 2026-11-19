@@ -1,4 +1,5 @@
 import AVFoundation
+import Combine
 import CoreImage
 import ImageIO
 import Photos
@@ -108,6 +109,7 @@ final class AstroRecoveryJournal: @unchecked Sendable {
     @Published private(set) var items: [AstroRecoveryItem] = []
     @Published private(set) var busy: UUID?
     @Published var message: String?
+    let didImportCapture = PassthroughSubject<String, Never>()
     let journal: AstroRecoveryJournal
     private var active = Set<UUID>()
     private var expired = Set<UUID>()
@@ -164,31 +166,47 @@ final class AstroRecoveryJournal: @unchecked Sendable {
         journal.image(id: id, image: CIImage(cgImage: image), options: options, final: true) { [weak self] result in Task { @MainActor in
             guard let self else { return }
             switch result {
-            case .success(let file): self.importFile(id: id, file: file, video: false, completion: completion)
+            case .success(let file): self.importFile(id: id, file: file, video: false, captureOptions: options, opensReview: true, completion: completion)
             case .failure: self.keep(id); completion(result)
             }
         } }
     }
-    func saveVideo(id: UUID, file: URL, completion: @escaping (Result<URL, Error>) -> Void) {
+    func saveVideo(id: UUID, file: URL, opensReview: Bool = true, completion: @escaping (Result<URL, Error>) -> Void) {
         protect(id)
         journal.markReady(id: id, file: file) { [weak self] result in Task { @MainActor in
             guard let self else { return }
             switch result {
-            case .success(let file): self.importFile(id: id, file: file, video: true, completion: completion)
+            case .success(let file): self.importFile(id: id, file: file, video: true, opensReview: opensReview, completion: completion)
             case .failure: self.keep(id); completion(result)
             }
         } }
     }
-    private func importFile(id: UUID, file: URL, video: Bool, completion: @escaping (Result<URL, Error>) -> Void) {
+    private func importFile(id: UUID, file: URL, video: Bool, captureOptions: AstroImageOptions? = nil,
+                            opensReview: Bool = false,
+                            completion: @escaping (Result<URL, Error>) -> Void) {
         guard !diagnosticOnly, !expired.contains(id) else { keep(id); completion(.success(file)); return }
         journal.phase(id: id, value: "importing")
+        var assetID: String?
         PHPhotoLibrary.shared().performChanges({
             let request = PHAssetCreationRequest.forAsset()
+            request.creationDate = captureOptions?.parameters?.capturedAt
+            if let location = captureOptions?.parameters?.location, location.isValid {
+                request.location = location.clLocation
+            }
             let options = PHAssetResourceCreationOptions(); options.originalFilename = "Luma-" + file.lastPathComponent
             request.addResource(with: video ? .video : .photo, fileURL: file, options: options)
+            assetID = request.placeholderForCreatedAsset?.localIdentifier
         }) { [weak self] success, error in Task { @MainActor in
             guard let self else { return }
-            if success { self.imported.insert(id); self.discard(id); completion(.success(file)) }
+            if success {
+                if let assetID, let diagnostics = captureOptions?.diagnostics {
+                    PhotoCaptureDiagnosticsStore.shared.save(diagnostics, assetID: assetID)
+                }
+                if opensReview, let assetID { self.didImportCapture.send(assetID) }
+                self.imported.insert(id)
+                self.discard(id)
+                completion(.success(file))
+            }
             else { self.journal.phase(id: id, value: "ready"); self.keep(id); completion(.failure(error ?? AstroRecoveryJournal.Failure.invalidFile)) }
         } }
     }
@@ -210,13 +228,13 @@ final class AstroRecoveryJournal: @unchecked Sendable {
                 do {
                     try await export.export(to: output, as: .mov)
                     guard let self else { return }
-                    self.saveVideo(id: item.id, file: output, completion: done)
+                    self.saveVideo(id: item.id, file: output, opensReview: false, completion: done)
                 } catch {
                     guard let self else { return }
                     self.keep(item.id); done(.failure(error))
                 }
             }
 
-        } else { importFile(id: item.id, file: file, video: item.isVideo, completion: done) }
+        } else { importFile(id: item.id, file: file, video: item.isVideo, captureOptions: item.options, completion: done) }
     }
 }

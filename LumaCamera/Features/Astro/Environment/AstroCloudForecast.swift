@@ -40,7 +40,7 @@ struct AstroCloudRegion: Hashable, Sendable {
     }
 }
 
-struct AstroCloudFrame {
+struct AstroCloudFrame: Sendable {
     let gridID: UUID
     let date: Date
     let region: AstroCloudRegion
@@ -93,13 +93,11 @@ struct AstroCloudFrame {
 
     static func displayOpacity(for coverage: Double) -> Double {
         let fraction = min(100, max(0, coverage)) / 100
-        guard fraction > 0 else { return 0 }
-        // Keep low-cloud edges legible: a hard zero below 5% avoids haze over
-        // clear sky, while the 5–35% ramp makes the cloud perimeter readable.
-        let progress = min(1, max(0, (fraction - 0.05) / 0.30))
+        // Fade into clear sky continuously, then give the edge of denser cloud
+        // more contrast without drawing a fixed outline.
+        let progress = min(1, max(0, (fraction - 0.08) / 0.40))
         let contrast = progress * progress * (3 - 2 * progress)
-        let base = 0.12 + 0.88 * sqrt(fraction)
-        return min(1, base * (0.35 + 0.65 * contrast))
+        return sqrt(fraction) * (0.22 + 0.78 * contrast)
     }
 
     // Bound each cubic segment to its two reported values to prevent ringing
@@ -120,7 +118,7 @@ struct AstroCloudFrame {
     }
 }
 
-struct AstroCloudGrid {
+struct AstroCloudGrid: Sendable {
     let id = UUID()
     let region: AstroCloudRegion
     let hours: [Date: [Double?]]
@@ -138,7 +136,11 @@ struct AstroCloudGrid {
     }
 }
 
-struct OpenMeteoAstroCloudProvider {
+protocol AstroCloudProvider: Sendable {
+    func grid(for region: AstroCloudRegion) async throws -> AstroCloudGrid
+}
+
+struct OpenMeteoAstroCloudProvider: AstroCloudProvider {
     private struct Sample: Decodable {
         struct Hourly: Decodable {
             let time: [TimeInterval]
@@ -169,9 +171,7 @@ struct OpenMeteoAstroCloudProvider {
             URLQueryItem(name: "cell_selection", value: "nearest")
         ]
         guard let url = components.url else { throw AstroForecastError.serviceUnavailable }
-        let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url, timeoutInterval: 12))
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw AstroForecastError.serviceUnavailable }
-        return try Self.decode(data, for: region)
+        return try await Self.decode(AstroWeatherRequest.data(from: url), for: region)
         #else
         throw AstroForecastError.providerUnconfigured
         #endif
@@ -199,41 +199,64 @@ struct OpenMeteoAstroCloudProvider {
 
 @MainActor @Observable
 final class AstroCloudForecastStore {
+    static let shared = AstroCloudForecastStore()
+
     private struct Entry {
         let grid: AstroCloudGrid
         let loadedAt: Date
+        var validUntil: Date { grid.hours.keys.max()?.addingTimeInterval(3600) ?? .distantPast }
     }
 
+    private let provider: any AstroCloudProvider
+    private let refreshInterval = AstroWeatherRequest.cacheLifetime
     private var entries: [AstroCloudRegion: Entry] = [:]
     private(set) var failedRegion: AstroCloudRegion?
     private(set) var isUnconfigured = false
 
-    func grid(for region: AstroCloudRegion?) -> AstroCloudGrid? {
-        guard let region else { return nil }
-        return entries[region]?.grid
+    init(provider: any AstroCloudProvider = OpenMeteoAstroCloudProvider()) {
+        self.provider = provider
     }
 
-    func refresh(_ region: AstroCloudRegion) async {
+    func grid(for region: AstroCloudRegion?, now: Date = Date()) -> AstroCloudGrid? {
+        guard let region, let entry = entries[region], entry.validUntil > now else { return nil }
+        return entry.grid
+    }
+
+    func load(_ region: AstroCloudRegion, now: Date = Date()) async {
+        guard !Task.isCancelled else { return }
+        if let entry = entries[region], entry.validUntil > now,
+           now.timeIntervalSince(entry.loadedAt) < refreshInterval {
+            if failedRegion == region { failedRegion = nil }
+            return
+        }
+        failedRegion = nil
+        isUnconfigured = false
         do {
-            try await Task.sleep(for: .milliseconds(650))
-            while !Task.isCancelled {
-                let elapsed = entries[region].map { Date().timeIntervalSince($0.loadedAt) } ?? 1800
-                if elapsed < 1800 {
-                    try await Task.sleep(for: .seconds(1800 - elapsed))
-                }
-                failedRegion = nil
-                isUnconfigured = false
-                let grid = try await OpenMeteoAstroCloudProvider().grid(for: region)
-                try Task.checkCancellation()
-                entries[region] = Entry(grid: grid, loadedAt: Date())
-                if entries.count > 5, let oldest = entries.min(by: { $0.value.loadedAt < $1.value.loadedAt })?.key {
-                    entries.removeValue(forKey: oldest)
-                }
+            let grid = try await AstroWeatherRequest.retryTransientFailure {
+                try await provider.grid(for: region)
+            }
+            try Task.checkCancellation()
+            entries[region] = Entry(grid: grid, loadedAt: now)
+            if entries.count > 5, let oldest = entries.min(by: { $0.value.loadedAt < $1.value.loadedAt })?.key {
+                entries.removeValue(forKey: oldest)
             }
         } catch {
             guard !Task.isCancelled else { return }
             failedRegion = region
             if case AstroForecastError.providerUnconfigured = error { isUnconfigured = true }
+        }
+    }
+
+    func refresh(_ region: AstroCloudRegion) async {
+        do {
+            if grid(for: region) == nil { try await Task.sleep(for: .milliseconds(300)) }
+            while !Task.isCancelled {
+                await load(region)
+                let elapsed = failedRegion == region ? 0 : entries[region].map { Date().timeIntervalSince($0.loadedAt) } ?? 0
+                try await Task.sleep(for: .seconds(max(1, refreshInterval - elapsed)))
+            }
+        } catch {
+            // Viewport, layer or visibility changed.
         }
     }
 }

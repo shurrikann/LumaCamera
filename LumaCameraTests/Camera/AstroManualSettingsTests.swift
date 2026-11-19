@@ -20,6 +20,28 @@ final class AstroManualSettingsTests: XCTestCase {
         settings.isoAutomatic = false; settings.iso = 400; settings.exposureBiasAutomatic = false
         XCTAssertEqual(settings.resolvedISO(meteredISO: 800, meteredSeconds: 1, targetSeconds: 0.1, range: limits), 800)
     }
+    func testCaptureShortensOnlyWhenAutomaticISOReachesItsFloor() {
+        var settings = AstroManualSettings()
+        settings.exposureBias = 1
+        func exposure(iso: Double, seconds: Double, minimum: Double = 0.001) -> (seconds: Double, iso: Double) {
+            settings.captureExposure(meteredISO: iso, meteredSeconds: seconds, requestedSeconds: 0.5,
+                                     meteredOffset: 0, meteredBias: 0, isoRange: 50...3200, minimumSeconds: minimum)
+        }
+        let dim = exposure(iso: 800, seconds: 1.0 / 15)
+        XCTAssertEqual(dim.seconds, 0.5)
+        XCTAssertEqual(dim.iso, 213.3333, accuracy: 0.001)
+        let bright = exposure(iso: 100, seconds: 0.01)
+        XCTAssertEqual(bright.iso, 50)
+        XCTAssertEqual(bright.seconds, 0.04, accuracy: 0.000001)
+        XCTAssertEqual(exposure(iso: 100, seconds: 0.01, minimum: 0.05).seconds, 0.05)
+        XCTAssertEqual(exposure(iso: 0, seconds: 0.01).seconds, 0.5)
+        settings.isoAutomatic = false
+        settings.iso = 400
+        let manual = exposure(iso: 100, seconds: 0.01)
+        XCTAssertEqual(manual.seconds, 0.5)
+        XCTAssertEqual(manual.iso, 800)
+    }
+
     func testPhotoShutterClampsToRealShutterRange() {
         var settings = AstroManualSettings()
         settings.photoShutterSeconds = 1.0 / 60.0

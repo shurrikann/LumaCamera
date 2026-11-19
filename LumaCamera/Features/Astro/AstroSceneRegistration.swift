@@ -44,11 +44,14 @@ struct AstroSkyMatte {
                 texture.append(changes[changes.count/2])
             }
             let base = texture.prefix(max(3,rows/5)).sorted()[max(3,rows/5)/2]
-            for row in rows/4..<rows*4/5 {
-                let band = max(2,rows/16)
-                let above = level[max(0,row-band)..<row].reduce(0,+)/Float(band)
-                let below = level[row..<min(rows,row+band)].reduce(0,+)/Float(band)
-                let lowerTexture = texture[row..<min(rows,row+band)].reduce(0,+)/Float(band)
+            let nominalBand = max(2, rows / 16)
+            // Leave enough samples for evidence on the ground side, including
+            // strips much narrower than a fifth of the image.
+            for row in rows / 4..<(rows - 2) {
+                let band = min(nominalBand, rows - row)
+                let above = level[(row - band)..<row].reduce(0, +) / Float(band)
+                let below = level[row..<(row + band)].reduce(0, +) / Float(band)
+                let lowerTexture = texture[row..<(row + band)].reduce(0, +) / Float(band)
                 let upperTexture = texture[0..<row].reduce(0,+)/Float(row)
                 guard upperTexture <= max(0.01,base*2.5) else { continue }
                 let contrast = abs(below-above)
@@ -69,25 +72,28 @@ struct AstroSkyMatte {
             }
         }
         guard let best else { return uniform(source, sky: true) }
-        let f = CGFloat(best.row)/CGFloat(best.length), feather: CGFloat = 0.025
+        let skyFraction = CGFloat(best.row) / CGFloat(best.length)
+        let groundFraction = 1 - skyFraction
+        let feather = min(0.025, groundFraction / 4)
+        let groundInset = min(0.05, groundFraction / 3)
         let white: CGPoint, black: CGPoint, ground: CGRect
         switch best.edge {
         case 0:
-            let y = e.maxY-e.height*f
+            let y = e.maxY-e.height*skyFraction
             white = CGPoint(x:e.midX,y:y+e.height*feather); black = CGPoint(x:e.midX,y:y-e.height*feather)
-            ground = CGRect(x:e.minX,y:e.minY,width:e.width,height:max(1,y-e.minY-e.height*0.05))
+            ground = CGRect(x:e.minX,y:e.minY,width:e.width,height:max(1,y-e.minY-e.height*groundInset))
         case 1:
-            let y = e.minY+e.height*f
+            let y = e.minY+e.height*skyFraction
             white = CGPoint(x:e.midX,y:y-e.height*feather); black = CGPoint(x:e.midX,y:y+e.height*feather)
-            ground = CGRect(x:e.minX,y:y+e.height*0.05,width:e.width,height:max(1,e.maxY-y-e.height*0.05))
+            ground = CGRect(x:e.minX,y:y+e.height*groundInset,width:e.width,height:max(1,e.maxY-y-e.height*groundInset))
         case 2:
-            let x = e.minX+e.width*f
+            let x = e.minX+e.width*skyFraction
             white = CGPoint(x:x-e.width*feather,y:e.midY); black = CGPoint(x:x+e.width*feather,y:e.midY)
-            ground = CGRect(x:x+e.width*0.05,y:e.minY,width:max(1,e.maxX-x-e.width*0.05),height:e.height)
+            ground = CGRect(x:x+e.width*groundInset,y:e.minY,width:max(1,e.maxX-x-e.width*groundInset),height:e.height)
         default:
-            let x = e.maxX-e.width*f
+            let x = e.maxX-e.width*skyFraction
             white = CGPoint(x:x+e.width*feather,y:e.midY); black = CGPoint(x:x-e.width*feather,y:e.midY)
-            ground = CGRect(x:e.minX,y:e.minY,width:max(1,x-e.minX-e.width*0.05),height:e.height)
+            ground = CGRect(x:e.minX,y:e.minY,width:max(1,x-e.minX-e.width*groundInset),height:e.height)
         }
         let mask = CIFilter(name:"CILinearGradient", parameters:["inputPoint0":CIVector(cgPoint:black),
             "inputPoint1":CIVector(cgPoint:white), "inputColor0":CIColor.black,"inputColor1":CIColor.white])!.outputImage!.cropped(to:e)
@@ -121,19 +127,24 @@ final class AstroSceneRegistration {
             image.cropped(to:roi).transformed(by:CGAffineTransform(translationX:-roi.minX,y:-roi.minY))
                 .transformed(by:CGAffineTransform(scaleX:scale,y:scale))
         }
-        let a = thumbnail(reference), b = thumbnail(frame)
-        let request = VNTranslationalImageRegistrationRequest(targetedCIImage:b, options:[:])
         var displacement: CGPoint?
-        do {
-            try VNImageRequestHandler(ciImage:a, options:[:]).perform([request])
-            if let result = request.results?.first {
-                let t = result.alignmentTransform
-                let dx = t.tx/scale, dy = t.ty/scale
-                if dx.isFinite, dy.isFinite, hypot(dx,dy) <= max(frame.extent.width,frame.extent.height)*0.05 {
-                    displacement = CGPoint(x:dx,y:dy)
+        let isNarrow = roi.width < reference.extent.width * 0.15 || roi.height < reference.extent.height * 0.15
+        if !isNarrow {
+            let a = thumbnail(reference), b = thumbnail(frame)
+            let request = VNTranslationalImageRegistrationRequest(targetedCIImage:b, options:[:])
+            do {
+                try VNImageRequestHandler(ciImage:a, options:[:]).perform([request])
+                if let result = request.results?.first {
+                    let t = result.alignmentTransform
+                    let dx = t.tx/scale, dy = t.ty/scale
+                    if dx.isFinite, dy.isFinite, hypot(dx,dy) <= max(frame.extent.width,frame.extent.height)*0.05 {
+                        displacement = CGPoint(x:dx,y:dy)
+                    }
                 }
-            }
-        } catch { registrationDiagnostic = error.localizedDescription }
+            } catch { registrationDiagnostic = error.localizedDescription }
+        }
+        // A narrow strip can produce an apparently valid but ambiguous Vision
+        // match. Require a local displacement to improve the unshifted result.
         if displacement == nil { displacement = boundedTranslation(frame:frame,roi:roi) }
         guard let displacement else { return frame }
         registrationDiagnostic = "dx=\(displacement.x) dy=\(displacement.y)"
@@ -170,7 +181,9 @@ final class AstroSceneRegistration {
             }
             return sum/Double(max(1,count)) + (dx*dx+dy*dy)*0.0000001
         }
-        var best = CGPoint.zero, score = Double.infinity
+        let unchanged = cost(0, 0)
+        guard unchanged > 0.00002 else { return .zero }
+        var best = CGPoint.zero, score = unchanged
         for y in -radius...radius { for x in -radius...radius {
             let c = cost(Double(x),Double(y))
             if c < score { score = c; best = CGPoint(x:x,y:y) }
@@ -180,7 +193,7 @@ final class AstroSceneRegistration {
             let dx = coarse.x+Double(x)*0.025, dy = coarse.y+Double(y)*0.025, c = cost(dx,dy)
             if c < score { score = c; best = CGPoint(x:dx,y:dy) }
         } }
-        guard score <= cost(0,0)*0.95 else { return .zero }
+        guard score <= unchanged * 0.95 else { return .zero }
         return CGPoint(x:best.x/scale,y:best.y/scale)
     }
     func align(_ frame: CIImage, ground: Bool = true) -> CIImage {

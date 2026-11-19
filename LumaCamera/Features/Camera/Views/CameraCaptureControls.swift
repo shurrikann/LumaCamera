@@ -4,11 +4,15 @@ import AVFoundation
 /// 图标只在固定区域内淡入淡出，切换子模块不移动按钮或改变玻璃背景尺寸。
 struct ShootingModeButtonSymbol: View {
     let symbol: String
+    let active: Bool
+
     var body: some View {
         ZStack {
             Image(systemName: symbol).id(symbol).transition(.opacity)
         }
         .frame(width: 22, height: 22)
+        .foregroundStyle(active ? AppTheme.accent : .white)
+        .previewControlContrast(accent: active, icon: true)
         .animation(AppTheme.popupAnimation, value: symbol)
     }
 }
@@ -26,6 +30,7 @@ struct CaptureParameterReadout: View {
         }
         .foregroundStyle(AppTheme.accent)
         .rotatingCaptureContent()
+        .previewControlContrast(accent: true)
         .frame(width: 42, height: 42)
         .contentShape(Rectangle())
     }
@@ -42,6 +47,7 @@ extension CameraView {
             }
             .font(.system(size: camera.dualCaptureInsetLandscape ? 16 : 15, weight: .medium))
             .foregroundStyle(camera.dualCaptureInsetLandscape ? AppTheme.accent : Color.white.opacity(0.9))
+            .previewControlContrast(accent: camera.dualCaptureInsetLandscape, icon: true)
             .rotatingCaptureContent()
             .frame(width: diameter, height: diameter)
             .background(camera.dualCaptureInsetLandscape ? Color.white.opacity(0.06) : .clear, in: Circle())
@@ -63,6 +69,7 @@ extension CameraView {
                 if camera.frontVideoCenteringPreparing { ProgressView().tint(.white) }
             }
             .foregroundStyle(model.frontVideoCenteringRequested ? AppTheme.accent : .white)
+            .previewControlContrast(accent: model.frontVideoCenteringRequested, icon: true)
             .rotatingCaptureContent().frame(width: diameter, height: diameter)
             .contentShape(Circle())
         }.buttonStyle(.plain)
@@ -91,7 +98,10 @@ extension CameraView {
                 HStack(spacing: 12) {
                     VStack(spacing: 4) {
                         Text(model.usesGlobalMeteringReadout ? "总曝光" : "曝光").font(.system(size: 10)).foregroundStyle(.white.opacity(0.65))
-                        Text(String(format: "%+.1f", model.displayedExposureBias)).font(.system(size: 12, weight: .medium, design: .monospaced)).foregroundStyle(AppTheme.accent)
+                            .previewControlContrast()
+                        Text(String(format: "%+.1f", model.displayedExposureBias)).font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .foregroundStyle(AppTheme.accent)
+                            .previewControlContrast(accent: true)
                     }.rotatingCaptureContent().frame(width: 38)
                     ZStack {
                         HStack(alignment: .center, spacing: 0) {
@@ -102,10 +112,12 @@ extension CameraView {
                             }
                         }.allowsHitTesting(false)
                         Slider(value: Binding(get: { model.ev }, set: { model.updateAutomaticEVFromSlider($0) }), in: model.exposureCompensationRange)
-                            .tint(AppTheme.accent).disabled(!camera.ready || camera.demo).accessibilityLabel("自动曝光补偿")
+                            .tint(AppTheme.accent)
+                            .disabled(!camera.ready || camera.demo).accessibilityLabel("自动曝光补偿")
                     }
                     Button { CameraHaptics.impact(.light); model.ev = 0; model.applyExposure() } label: {
-                        Text("A").rotatingCaptureContent().font(.system(size: 15, weight: .semibold)).foregroundStyle(AppTheme.accent)
+                        Text("A").rotatingCaptureContent().font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(AppTheme.accent)
                             .frame(width: 30, height: 30).background(AppTheme.accent.opacity(0.08), in: Circle())
                     }.accessibilityLabel("重置曝光补偿")
                 }.padding(.horizontal, 14).frame(height: CameraControlLayout.parameterGlassHeight)
@@ -279,9 +291,9 @@ extension CameraView {
             CameraHaptics.impact(.light)
             model.openShootingModes()
         } label: {
-            ShootingModeButtonSymbol(symbol: model.shootingModeButtonSymbol)
+            ShootingModeButtonSymbol(symbol: model.shootingModeButtonSymbol,
+                active: model.shootingModes || model.shootingSubmodeEnabled)
                 .rotatingCaptureContent().font(.system(size: 15, weight: .regular))
-                .foregroundStyle(model.shootingModes || model.shootingSubmodeEnabled ? AppTheme.accent : .white)
                 .frame(width: diameter, height: diameter)
                 .contentShape(Rectangle().inset(by: -CameraControlLayout.buttonHitExpansion))
         }
@@ -470,6 +482,7 @@ extension CameraView {
                                             : model.slowShutterSequenceProgress == nil ? "拍照" : "结束慢门合成")
                 }
             }
+            .allowsHitTesting(model.modeHandoffTarget == nil)
             .captureControlGeometry("shutter", model: model)
             Spacer(minLength: 0)
             let showsStyle = model.filtersEnabled || model.hdr || model.captureKind == .video
@@ -522,49 +535,31 @@ extension CameraView {
 
 
     private var captureShutterFace: some View {
-        ZStack {
-            Circle().stroke(model.burstCaptureActive ? AppTheme.accent : .white.opacity(0.85), lineWidth: model.burstCaptureActive ? 3 : 2).frame(width: 76, height: 76)
-            Circle().fill(.ultraThinMaterial).frame(width: 70, height: 70)
-            if model.captureKind == .video {
-                RoundedRectangle(cornerRadius: camera.videoRecording ? 8 : 31)
-                    .fill(.red).frame(width: camera.videoRecording ? 30 : 62, height: camera.videoRecording ? 30 : 62)
-                if model.timeLapseEnabled, camera.videoRecording {
-                    Circle()
-                        .trim(from: 0, to: 0.18)
-                        .stroke(AppTheme.accent, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                        .frame(width: 76, height: 76)
-                        .rotationEffect(.degrees(Double(camera.timeLapseCapturedFrames) * 360))
-                        .animation(.linear(duration: max(0.12, model.timeLapseInterval.seconds)),
-                                   value: camera.timeLapseCapturedFrames)
-                        .allowsHitTesting(false)
-                }
+        let isVideo = model.captureKind == .video
+        let center: CaptureShutterFace.Center = if isVideo {
+            if model.timeLapseEnabled && (camera.videoRecording || camera.videoBusy || library.videoSaving) {
+                .loading
             } else {
-                Circle().fill(camera.ready ? Color(white: 0.95) : Color.gray).frame(width: 62, height: 62)
-                if model.slowShutterComposing {
-                    ProgressView().tint(.black).frame(width: 30, height: 30).allowsHitTesting(false)
-                } else if let progress = model.slowShutterSequenceProgress {
-                    Text(progress.countdownText)
-                        .font(.system(size: 13, weight: .semibold, design: .rounded)).monospacedDigit()
-                        .foregroundStyle(.black).allowsHitTesting(false)
+                camera.videoRecording ? .stop : .none
+            }
+        } else if model.slowShutterSequenceProgress != nil || model.slowShutterComposing {
+            .loading
+        } else if camera.capturing || camera.shutterBusy || model.burstCaptureActive {
+            model.slowShutterEnabled || model.nightCaptureAvailable ? .loading : .stop
+        } else {
+            .none
+        }
+        return CaptureShutterFace(kind: isVideo ? .video : .photo, center: center, ready: camera.ready)
+            .overlay {
+                if isVideo && model.videoOpenGateEnabled && center == .none {
+                    Text("Open\nGate").font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(.black).multilineTextAlignment(.center)
+                        .lineLimit(2).lineSpacing(-1)
+                        .transition(.opacity)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
                 }
             }
-            if model.captureKind == .video && model.videoOpenGateEnabled && !camera.videoRecording {
-                Text("Open\nGate").font(.system(size: 15, weight: .black, design: .rounded))
-                    .foregroundStyle(.black).multilineTextAlignment(.center)
-                    .lineLimit(2).lineSpacing(-1).fixedSize()
-                    .frame(width: 62, height: 62, alignment: .center)
-                    .transition(.opacity)
-                    .accessibilityHidden(true)
-            }
-            let hdrDirectBusy = model.captureKind == .photo && model.hdr && model.photoFormat == .heif
-            if camera.recoveringSession || camera.highResolutionPhotoConfiguring || (model.captureKind == .video && model.videoShutterBusy)
-                || (camera.shutterBusy && !hdrDirectBusy && !model.burstModeEnabled
-                    && model.slowShutterSequenceProgress == nil && !model.slowShutterComposing) {
-                ProgressView().tint(model.captureKind == .video ? .white : .black)
-            }
-        }
-        .animation(.easeInOut(duration: 0.18), value: camera.videoRecording)
-        .animation(.easeInOut(duration: 0.15), value: model.burstCaptureActive)
     }
 
     func bottomButton(_ icon: String, label: String, active: Bool = false, size: CGFloat = 52, dimmed: Bool = false, iconSize: CGFloat? = nil, iconOffset: CGFloat = 0, haptics: Bool = true, action: @escaping () -> Void) -> some View {

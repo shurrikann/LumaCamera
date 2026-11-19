@@ -42,6 +42,8 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
     @Published private(set) var lastFile = ""
     @Published private(set) var error: String?
     var outputOptions = AstroImageOptions()
+    var autoSaveOnFinish = true
+    private var captureOptions = AstroImageOptions()
     @Published private(set) var zoomFactor: CGFloat = 1
     @Published private(set) var activeDeviceType: AVCaptureDevice.DeviceType?
     @Published private(set) var isoRange: ClosedRange<Double> = 100...12800
@@ -87,16 +89,7 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         get { deviceSlot.value }
         set { deviceSlot.value = newValue }
     }
-    private var accumulator: CIImage?
-    private var accumulatorBuffer: CVPixelBuffer?
-    private var alignmentReference: CIImage?
-    private var sceneRegistration: AstroSceneRegistration?
-    private var qualityGate = AstroFrameQualityGate()
-    private var acceptedFrames = 0
-    private var groupAccumulators: [CIImage?] = [nil, nil, nil]
-    private var groupBuffers: [CVPixelBuffer?] = [nil, nil, nil]
-    private var groupCounts: [Int] = [0, 0, 0]
-    private var fusionExtent: CGRect = .zero
+    private lazy var stack = AstroPhotoStackProcessor(context: context, linearSpace: linearSpace)
     private let previewExposureGate = AstroPreviewExposureGate()
     nonisolated private let recoveryIDSlot = LockedCaptureValue<UUID?>(nil)
     nonisolated private var recoveryID: UUID? {
@@ -110,9 +103,6 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         set { startedSlot.value = newValue }
     }
     private var framePTS: [Double] = []
-    private var capturedExposure: Double?
-    private var capturedISO: Double?
-    private var capturedFocalLength: Double?
     private var rawDelegates: [UUID: RawCaptureDelegate] = [:]
 
     func start() { start(replacingLens: false) }
@@ -279,33 +269,27 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         }
     }
 
-    func begin() {
-        guard !isCapturing, !switchingLens, let device else { return }
+    func begin() { begin(location: nil) }
+
+    func begin(location: PhotoLocation?) {
+        guard !isCapturing, !isSaving, !switchingLens, let device else { return }
         guard let rawType = photoOutput.availableRawPhotoPixelFormatTypes.first else {
             error = "当前相机没有可用 RAW 格式"
             return
         }
         if let previous = recoveryID { AstroRecoveryStore.shared.keep(previous) }
-        let recovery = AstroRecoveryStore.shared.begin(kind: "星空照片", options: outputOptions)
+        captureOptions = outputOptions
+        captureOptions.recordCaptureStart(mode: "星空照片", location: location, settings: manualSettings)
+        lastFile = ""
+        let recovery = AstroRecoveryStore.shared.begin(kind: "星空照片", options: captureOptions)
         recoveryID = recovery
         previewExposureGate.setCaptureActive(true)
         isCapturing = true
         result = nil
         capturedFrames = 0
-        acceptedFrames = 0; qualityGate = AstroFrameQualityGate()
-        accumulator = nil
-        accumulatorBuffer = nil
-        alignmentReference = nil
-        sceneRegistration = nil
-        groupAccumulators = [nil, nil, nil]
-        groupBuffers = [nil, nil, nil]
-        groupCounts = [0, 0, 0]
-        fusionExtent = .zero
+        stack.reset()
         framePTS = []
         lastExposureReading = nil
-        capturedExposure = nil
-        capturedISO = nil
-        capturedFocalLength = nil
         info = ""
         error = nil
         status = "正在拍摄 RAW 星空照片 0/\(frameCount)"
@@ -323,6 +307,7 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
                     DispatchQueue.main.async {
                         guard self.recoveryID == recovery, !self.previewExposureGate.permitsPreview else { return }
                         self.lastExposureReading = reading
+                        self.captureOptions.recordCaptureDevice(device, settings: settings, reading: reading)
                         self.capturing = true
                         self.status = "正在拍摄 RAW 星空照片 0/\(target)"
                         self.acceptedAt = CACurrentMediaTime()
@@ -363,28 +348,26 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
                 guard self.capturing, self.recoveryID == captureID else { return }
                 switch result {
                 case .success(let rawFrame):
-                    self.capturedExposure = rawFrame.exposureSeconds
-                    self.capturedISO = rawFrame.iso
-                    self.capturedFocalLength = rawFrame.focalLength
+                    if let seconds = rawFrame.exposureSeconds, seconds.isFinite, seconds > 0 { self.captureOptions.exposureSeconds = seconds }
+                    if let iso = rawFrame.iso, iso.isFinite, iso > 0 { self.captureOptions.iso = iso }
+                    if let focal = rawFrame.focalLength, focal.isFinite, focal > 0 { self.captureOptions.focalLengthMM = focal }
+                    if let aperture = rawFrame.aperture, aperture.isFinite, aperture > 0 {
+                        self.captureOptions.parameters?.aperture = aperture
+                    }
                     guard let image = CIImage(data: rawFrame.data) else {
                         self.fail("DNG 解码失败")
                         return
                     }
-                    guard self.fuse(image) else {
+                    guard self.stack.append(image) else {
                         self.fail("RAW 累积失败")
                         return
                     }
                     self.framePTS.append(CACurrentMediaTime())
                     self.capturedFrames += 1
                     if let id = self.recoveryID,
-                       let image = AstroTemporalMedian.combine(self.groupAccumulators.compactMap { $0 }, extent: self.fusionExtent) {
-                        var options = self.outputOptions
-                        options.mode = "星空照片"; options.frameCount = self.acceptedFrames
-                        options.iso = rawFrame.iso ?? Double(self.device?.iso ?? 0)
-                        options.exposureSeconds = rawFrame.exposureSeconds ?? self.manualSettings.clampedPhotoShutter
-                        options.focalLengthMM = rawFrame.focalLength
-                        options.focalLength35mm = self.device?.astroEquivalentFocalLength
-                        AstroRecoveryStore.shared.checkpoint(id: id, image: image, options: options)
+                       let image = self.stack.stackedImage() {
+                        self.captureOptions.frameCount = self.stack.acceptedFrames
+                        AstroRecoveryStore.shared.checkpoint(id: id, image: image, options: self.captureOptions)
                     }
                     self.status = "正在拍摄 RAW 星空照片 \(self.capturedFrames)/\(self.frameCount)"
                     if self.capturedFrames >= self.frameCount {
@@ -415,18 +398,13 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
     }
 
     func cancel() {
+        guard !isSaving else { return }
         if let id = recoveryID { AstroRecoveryStore.shared.discard(id); recoveryID = nil }
 
         capturing = false
         isCapturing = false
         rawDelegates.removeAll()
-        accumulator = nil
-        accumulatorBuffer = nil
-        alignmentReference = nil
-        sceneRegistration = nil
-        groupAccumulators = [nil, nil, nil]
-        groupBuffers = [nil, nil, nil]
-        groupCounts = [0, 0, 0]
+        stack.releaseFrames()
         result = nil
         capturedFrames = 0
         status = "已取消"
@@ -434,6 +412,7 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
     }
 
     func reset() {
+        guard !isSaving else { return }
         if let id = recoveryID { AstroRecoveryStore.shared.discard(id); recoveryID = nil }
 
         result = nil
@@ -442,104 +421,25 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         status = "12MP RAW 星空照片测试"
     }
 
-    private func fuse(_ source: CIImage) -> Bool {
-        let extent = source.extent.integral
-        if fusionExtent == .zero { fusionExtent = CGRect(origin: .zero, size: extent.size) }
-        var frame = source.cropped(to: extent)
-            .transformed(by: CGAffineTransform(translationX: -extent.minX, y: -extent.minY))
-            .cropped(to: fusionExtent)
-        let statistics = AstroFrameStatistics.measure(frame,context:context)
-        switch qualityGate.consider(statistics) {
-        case .reject: return true
-        case .replaceReference:
-            groupAccumulators = [nil,nil,nil]; groupBuffers = [nil,nil,nil]; groupCounts = [0,0,0]
-            acceptedFrames = 0; accumulator = nil; accumulatorBuffer = nil; sceneRegistration = nil
-        case .accept: break
-        }
-        if sceneRegistration == nil { sceneRegistration = AstroSceneRegistration(reference: frame, context: context) }
-        frame = sceneRegistration?.align(frame) ?? frame
-        if let reference = accumulator, let matte = sceneRegistration?.matte.image {
-            frame = AstroTransientTracks.clean(frame,previous:reference,sky:matte,context:context)
-            frame = AstroSignalProtection.temporalClean(frame, reference:reference, noise:statistics.noise, sky:matte)
-        }
-
-        let group = acceptedFrames % 3
-        let count = groupCounts[group] + 1
-        let combined: CIImage
-        if let previous = groupAccumulators[group] {
-            let alpha = 1.0 / Double(count)
-            let current = frame.applyingFilter("CIColorMatrix", parameters: [
-                "inputRVector": CIVector(x: alpha, y: 0, z: 0, w: 0),
-                "inputGVector": CIVector(x: 0, y: alpha, z: 0, w: 0),
-                "inputBVector": CIVector(x: 0, y: 0, z: alpha, w: 0),
-                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
-            ])
-            let old = previous.applyingFilter("CIColorMatrix", parameters: [
-                "inputRVector": CIVector(x: 1 - alpha, y: 0, z: 0, w: 0),
-                "inputGVector": CIVector(x: 0, y: 1 - alpha, z: 0, w: 0),
-                "inputBVector": CIVector(x: 0, y: 0, z: 1 - alpha, w: 0),
-                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
-            ])
-            combined = current.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: old])
-        } else {
-            combined = frame
-        }
-        guard let next = materialize(combined) else { return false }
-        groupAccumulators[group] = next.image
-        groupBuffers[group] = next.buffer
-        groupCounts[group] = count
-        acceptedFrames += 1
-        accumulator = next.image
-        accumulatorBuffer = next.buffer
-        return true
-    }
-
-    private func materialize(_ image: CIImage) -> (image: CIImage, buffer: CVPixelBuffer)? {
-        let width = Int(fusionExtent.width.rounded()), height = Int(fusionExtent.height.rounded())
-        guard width > 0, height > 0 else { return nil }
-        var buffer: CVPixelBuffer?
-        let attrs: [String: Any] = [kCVPixelBufferIOSurfacePropertiesKey as String: [:]]
-        guard CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_64RGBAHalf,
-                                  attrs as CFDictionary, &buffer) == kCVReturnSuccess,
-              let buffer else { return nil }
-        context.render(image, to: buffer, bounds: CGRect(x: 0, y: 0, width: width, height: height),
-                       colorSpace: linearSpace)
-        return (CIImage(cvPixelBuffer: buffer, options: [.colorSpace: linearSpace]), buffer)
-    }
-
     private func finish() {
         guard capturing else { return }
         capturing = false
         isCapturing = false
         status = "正在合成 RAW 堆栈"
-        let images = zip(groupAccumulators, groupCounts).compactMap { image, count in count > 0 ? image : nil }
-        guard !images.isEmpty else { fail("没有可合成帧"); return }
-        guard let stacked = AstroTemporalMedian.combine(images, extent: fusionExtent) else {
+        guard let finished = stack.finishedImage(iso: captureOptions.iso) else {
             fail("没有可合成帧"); return
         }
-        var finished = AstroPostProcessor.flattenBackground(stacked, sky:sceneRegistration?.matte.image)
-        finished = AstroSignalProtection.denoise(finished, iso:capturedISO ?? manualSettings.iso,
-            context:context, sky:sceneRegistration?.matte.image)
-        guard let cg = context.createCGImage(finished, from: fusionExtent) else { fail("合成失败"); return }
+        guard let cg = context.createCGImage(finished, from: stack.extent) else { fail("合成失败"); return }
         result = UIImage(cgImage: cg)
-        if let id = recoveryID {
-            var options = outputOptions
-            options.mode = "星空照片"; options.frameCount = acceptedFrames
-            options.iso = capturedISO ?? manualSettings.iso
-            options.exposureSeconds = capturedExposure ?? manualSettings.clampedPhotoShutter
-            options.focalLengthMM = capturedFocalLength; options.focalLength35mm = device?.astroEquivalentFocalLength
-            AstroRecoveryStore.shared.checkpoint(id: id, image: finished, options: options, final: true)
+        captureOptions.frameCount = stack.acceptedFrames
+        if !autoSaveOnFinish, let id = recoveryID {
+            AstroRecoveryStore.shared.checkpoint(id: id, image: finished, options: captureOptions, final: true)
         }
-        accumulator = nil
-        accumulatorBuffer = nil
-        alignmentReference = nil
-        sceneRegistration = nil
-        groupAccumulators = [nil, nil, nil]
-        groupBuffers = [nil, nil, nil]
-        groupCounts = [0, 0, 0]
-        info = "\(cg.width)x\(cg.height) · \(acceptedFrames) 帧有效 RAW · 3 组中值"
+        stack.releaseFrames()
+        info = "\(cg.width)x\(cg.height) · \(stack.acceptedFrames) 帧有效 RAW · 3 组中值"
         status = "RAW 星空照片完成"
         restoreAfterCapture()
+        if autoSaveOnFinish { save() }
     }
 
     func keepResultForRecovery() {
@@ -551,19 +451,13 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         guard capturedFrames > 0 else { cancel(); return }
         if let id = recoveryID { AstroRecoveryStore.shared.protect(id) }
         finish()
-        if result != nil { save() }
+        if !autoSaveOnFinish, result != nil { save() }
     }
 
     func save() {
-        guard let cgImage = result?.cgImage, !isSaving else { return }
+        guard let cgImage = result?.cgImage, !isSaving, lastFile.isEmpty else { return }
         isSaving = true; info = ""
-        var options = outputOptions
-        options.mode = "星空照片"; options.frameCount = acceptedFrames
-        options.exposureSeconds = capturedExposure ?? manualSettings.clampedPhotoShutter
-        options.iso = capturedISO ?? Double(device?.iso ?? Float(manualSettings.iso))
-        options.lensName = device?.localizedName ?? ""
-        options.focalLengthMM = capturedFocalLength
-        options.focalLength35mm = device?.astroEquivalentFocalLength
+        let options = captureOptions
         let id = recoveryID ?? AstroRecoveryStore.shared.begin(kind: "星空照片", options: options)
         recoveryID = id
         AstroRecoveryStore.shared.saveImage(id: id, image: cgImage, options: options) { [weak self] saved in
@@ -627,6 +521,7 @@ struct AstroRawFrame {
     let focalLength: Double?
     let iso: Double?
     var exposureSeconds: Double? = nil
+    var aperture: Double? = nil
 }
 
 private final class RawCaptureDelegate: NSObject, AVCapturePhotoCaptureDelegate, @unchecked Sendable {
@@ -643,7 +538,8 @@ private final class RawCaptureDelegate: NSObject, AVCapturePhotoCaptureDelegate,
         let focal = (exif?[kCGImagePropertyExifFocalLength as String] as? NSNumber)?.doubleValue
         let iso = (exif?[kCGImagePropertyExifISOSpeedRatings as String] as? [NSNumber])?.first?.doubleValue
         completion(.success(AstroRawFrame(data: data, focalLength: focal, iso: iso,
-            exposureSeconds: (exif?[kCGImagePropertyExifExposureTime as String] as? NSNumber)?.doubleValue)))
+            exposureSeconds: (exif?[kCGImagePropertyExifExposureTime as String] as? NSNumber)?.doubleValue,
+            aperture: (exif?[kCGImagePropertyExifFNumber as String] as? NSNumber)?.doubleValue)))
     }
 }
 

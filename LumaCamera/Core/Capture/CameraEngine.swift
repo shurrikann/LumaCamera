@@ -295,7 +295,7 @@ final class CameraEngine: NSObject, ObservableObject {
                         self.refreshFrontVideoCentering(source.front)
                     }
                 } else {
-                    self.releaseDualCaptureOnQueue()
+                    self.releaseDualCaptureOnQueue(restoreMainGraph: !keepMainSessionStopped)
                     if self.wantsRunning && !keepMainSessionStopped { self.session.startRunning() }
                     self.syncPreviewState()
                 }
@@ -410,7 +410,7 @@ final class CameraEngine: NSObject, ObservableObject {
         }
     }
 
-    private func releaseDualCaptureOnQueue() {
+    private func releaseDualCaptureOnQueue(restoreMainGraph: Bool = true) {
         _ = dualCaptureRevision.advance()
         dualInsetThrottle.cancel()
         dualZoomThrottle.cancel()
@@ -419,7 +419,7 @@ final class CameraEngine: NSObject, ObservableObject {
         // 恢复单摄的格式/连接和用户参数，不能沿用双拍临时的1080p格式。
         // configureConnections 在视频路由内部会自己管理 begin/commit；这里再包一层
         // 会形成嵌套事务，双拍退出+前置4:3时触发 -11819。
-        if configured, let device = input?.device {
+        if restoreMainGraph, configured, let device = input?.device {
             configureConnections(device: device)
             publishCapabilities(device, lensID: selectedLens)
         }
@@ -1500,19 +1500,30 @@ final class CameraEngine: NSObject, ObservableObject {
                 NSLog("Camera capture session runtime error notification without AVCaptureSessionErrorKey: %@",
                       String(reflecting: note.userInfo ?? [:]))
             }
-            if self?.videoBusy == true { self?.stopVideoRecording() }
-            if let self, self.videoModeRequested {
+            // This observer is attached to the shared session. The previous
+            // normal video mode can still be selected while Astro owns the graph.
+            guard let self, self.runRequested, !self.astroSharedCaptureSession.isReserved else { return }
+            if self.videoBusy { self.stopVideoRecording() }
+            if self.videoModeRequested {
                 let code = (note.userInfo?[AVCaptureSessionErrorKey] as? NSError)?.code ?? 0
                 if code == -11819 || code == -11800 {
-                    DispatchQueue.main.async {
-                        guard !self.videoRouteFailureReported else { return }
-                        self.videoRouteFailureReported = true
-                        self.onVideoRouteFailure?("视频无法启动，已退出视频模式。")
+                    let revision = self.videoSettingsRevision.current
+                    self.queue.async {
+                        // A notification from an intermediate graph can arrive after the
+                        // replacement has already started on the session queue.
+                        guard !self.session.isRunning, !self.session.isInterrupted else { return }
+                        DispatchQueue.main.async {
+                            guard self.runRequested, !self.astroSharedCaptureSession.isReserved,
+                                  self.videoSettingsRevision.matches(revision), self.videoModeRequested,
+                                  !self.videoRouteFailureReported, !self.recoveringSession else { return }
+                            self.videoRouteFailureReported = true
+                            self.onVideoRouteFailure?("视频无法启动，已退出视频模式。")
+                        }
                     }
                     return
                 }
             }
-            self?.requestSessionRecovery()
+            self.requestSessionRecovery()
         })
     }
 
@@ -2487,6 +2498,10 @@ final class CameraEngine: NSObject, ObservableObject {
             }
             self.session.commitConfiguration()
             if !enabled {
+                if self.wantsRunning, !self.session.isRunning, !self.session.isInterrupted {
+                    self.session.startRunning()
+                    self.verifyRecoveredFrames(token: self.recoveryRevision.current, attempt: 0, startedAt: CACurrentMediaTime())
+                }
                 DispatchQueue.main.async {
                     guard self.videoModeRevision.matches(revision) else { return }
                     self.cinematicVideoCaptureActive = false
@@ -2504,8 +2519,10 @@ final class CameraEngine: NSObject, ObservableObject {
     }
 
     func setVideoSettings(_ settings: VideoCaptureSettings, openGate: Bool = false,
-                          cinematicVideo: Bool = false, preferredLensID: String? = nil, dualRatio: FrameRatio? = nil) {
+                          cinematicVideo: Bool = false, preferredLensID: String? = nil, dualRatio: FrameRatio? = nil,
+                          startIfStopped: Bool = false) {
         guard !videoBusy else { return }
+        if cinematicVideo || startIfStopped { videoRouteFailureReported = false }
         let revision = videoSettingsRevision.advance()
         videoConfiguring = true
         queue.async {
@@ -2527,6 +2544,7 @@ final class CameraEngine: NSObject, ObservableObject {
             var request = settings
             if !request.hardwareEncoderAvailable { request.codec = .hevc; request.proRes = .hq }
             if request.isRAW && !ExternalVideoStorage.shared.isEligibleNow { request.codec = .hevc; request.proRes = .hq }
+            let previousSettings = self.requestedVideoSettings
             self.requestedVideoSettings = request
             self.requestedCinematicVideo = cinematicVideo && !request.isRAW && !openGate
             self.requestedVideoOpenGate = openGate && !request.isRAW && !cinematicVideo
@@ -2535,23 +2553,44 @@ final class CameraEngine: NSObject, ObservableObject {
             // 再按目标镜头解析输入设备，避免先经过普通镜头、随后再次重建电影输入。
             let routeLens = preferredLensID.flatMap { id in self.lensCatalog.first(where: { $0.id == id }) }
                 ?? self.lensCatalog.first(where: { $0.id == self.selectedLens })
-            if let lens = routeLens,
-               self.captureDevice(for: lens).uniqueID != device.uniqueID || self.selectedLens != lens.id {
+            let changingLens = routeLens.map {
+                self.captureDevice(for: $0).uniqueID != device.uniqueID || self.selectedLens != $0.id
+            } ?? false
+            let cinematicActive: Bool
+            if #available(iOS 26.0, *) { cinematicActive = self.input?.isCinematicVideoCaptureEnabled == true }
+            else { cinematicActive = false }
+            let cinematic = self.requestedCinematicVideo
+            // Build the final input, format and outputs before starting the session.
+            // In particular, a handoff from MultiCam has already stopped the main session.
+            let restart = cinematic && (!cinematicActive || changingLens || previousSettings != request)
+            let shouldStart = self.wantsRunning && (restart || startIfStopped || cinematic)
+            if restart && self.session.isRunning { self.session.stopRunning() }
+            defer {
+                if shouldStart, self.wantsRunning, self.videoSettingsRevision.matches(revision),
+                   !self.session.isRunning, !self.session.isInterrupted {
+                    self.recordSessionOperation(cinematic ? "startFinalCinematicGraph" : "startRestoredVideoGraph")
+                    self.session.startRunning()
+                    self.syncPreviewState()
+                    self.configureRecordingHaptics()
+                    let running = self.session.isRunning
+                    if cinematic || !running {
+                        DispatchQueue.main.async {
+                            guard self.runRequested, self.videoSettingsRevision.matches(revision) else { return }
+                            self.ready = running
+                        }
+                    } else {
+                        self.verifyRecoveredFrames(token: self.recoveryRevision.current, attempt: 0, startedAt: CACurrentMediaTime())
+                    }
+                }
+            }
+            if let lens = routeLens, changingLens {
                 self.selectLensOnQueue(lens, previousID: lens.id, revision: self.zoomRevision.advance())
                 return
             }
-            // 规格提交必须只有一个事务：configureConnections 默认会再开一层，
-            // 前置4:3/16:9切换时嵌套事务会让 activeFormat 回退并触发 -11819。
-            // Cinematic reconfigures the render pipeline on the input; start it
-            // from a stopped session as Apple's sample does, otherwise the
-            // effect can report active while the tracking pipeline never engages.
-            let restartForCinematic = self.requestedCinematicVideo && self.session.isRunning
-            if restartForCinematic { self.session.stopRunning() }
             self.session.beginConfiguration()
             self.configureVideoFormat(device)
             self.configureConnections(device: device, configuresVideoFormat: false)
             self.session.commitConfiguration()
-            if restartForCinematic { self.session.startRunning() }
             self.publishCapabilities(device, lensID: self.selectedLens)
         }
     }
@@ -2697,78 +2736,6 @@ final class CameraEngine: NSObject, ObservableObject {
                 return
             }
             configuredPreviewRoute = ""
-        }
-    }
-
-    /// WWDC25 Cinematic 要求先使用 DualWide/TrueDepth 设备及其电影格式，再启用电影输入。
-    /// 视频普通格式往往在 TripleCamera 上；这里在开启电影子模式前直接换到电影设备。
-    func prepareCinematicInput(startIfStopped: Bool = false, completion: @escaping (Bool) -> Void) {
-        queue.async {
-            guard #available(iOS 26.0, *), self.videoModeRequested,
-                  let current = self.input,
-                  let target = self.cinematicCaptureDevice(for: current.device.position) else {
-                DispatchQueue.main.async { completion(false) }; return
-            }
-            if current.device.uniqueID == target.uniqueID,
-               current.isCinematicVideoCaptureEnabled,
-               current.device.activeFormat.isCinematicVideoCaptureSupported {
-                DispatchQueue.main.async { completion(true) }; return
-            }
-            let supported = VideoCaptureSettings.cinematicVideoSupported(by: target)
-            let preferred = supported.first {
-                $0.resolution == .hd1080 && $0.frameRate == .fps30 && $0.colorSpace == .sdr
-            } ?? supported.first
-            guard let preferred,
-                  let format = VideoCaptureSettings.format(for: preferred, device: target,
-                                                           requiringCinematicVideo: true) else {
-                DispatchQueue.main.async { completion(false) }; return
-            }
-            // Apple's Cinematic sample builds the session around the cinematic
-            // input instead of swapping the input on a live graph. A running
-            // session can keep serving the old preview after this swap, so stop
-            // and restart only for the cinematic entry path.
-            let wasRunning = self.session.isRunning
-            let shouldRun = wasRunning || startIfStopped
-            if wasRunning { self.session.stopRunning() }
-            self.session.beginConfiguration()
-            do {
-                // Apply the cinematic format before creating the input. A cached
-                // input created against the ordinary format can accept the
-                // property but never engage the cinematic tracking pipeline.
-                try target.lockForConfiguration()
-                target.activeFormat = format
-                target.unlockForConfiguration()
-                let replacement = try AVCaptureDeviceInput(device: target)
-                for existing in self.session.inputs {
-                    self.session.removeInput(existing)
-                }
-                guard self.session.canAddInput(replacement) else {
-                    self.addInputReplacingExisting(current); self.session.commitConfiguration()
-                    if shouldRun { self.session.startRunning() }
-                    DispatchQueue.main.async { completion(false) }; return
-                }
-                self.addInputReplacingExisting(replacement)
-                self.input = replacement
-                try self.prepareAutomaticRoute(target, factor: 1)
-                let duration = CMTime(value: 1, timescale: 30)
-                guard self.applySupportedFrameDuration(duration, to: target) else {
-                    throw MovieRecorder.RecorderError.cannotStart("当前电影格式不支持 30 fps 帧周期。")
-                }
-                self.configureConnections(device: target)
-                self.session.commitConfiguration()
-                if shouldRun { self.session.startRunning() }
-                if shouldRun && !wasRunning {
-                    self.verifyRecoveredFrames(token: self.recoveryRevision.current, attempt: 0,
-                                               startedAt: CACurrentMediaTime())
-                }
-                DispatchQueue.main.async { completion(true) }
-            } catch {
-                self.addInputReplacingExisting(current)
-                self.session.commitConfiguration()
-                if shouldRun { self.session.startRunning() }
-                self.report("切换电影设备失败：\(error.localizedDescription)")
-                DispatchQueue.main.async { completion(false) }
-            }
         }
     }
 
@@ -3094,7 +3061,7 @@ final class CameraEngine: NSObject, ObservableObject {
                         self.cinematicApertureRange = range
                     }
                 } else if cinematicRequested {
-                    report("当前相机输出组合无法启用电影模式。")
+                    NSLog("Cinematic output graph could not be enabled for %@", device.uniqueID)
                 }
                 let active = input.isCinematicVideoCaptureEnabled
                 DispatchQueue.main.async {
@@ -3708,6 +3675,13 @@ final class CameraEngine: NSObject, ObservableObject {
         if manualMode && manualZoomAnchorID == nil { manualZoomAnchorID = initialLens.id }
         DispatchQueue.main.async { self.lenses = found }
         publishCapabilities(device, lensID: initialLens.id)
+    }
+
+    func restoreNormalSessionAfterAstro() {
+        astroSharedCaptureSession.restoreNormal { [weak self] in
+            guard let self, !self.videoModeRequested, let device = self.input?.device else { return }
+            self.configurePhotoOutput(device)
+        }
     }
 
     private func configurePhotoOutput(_ device: AVCaptureDevice, publish: Bool = true) {
@@ -5125,7 +5099,7 @@ final class CameraEngine: NSObject, ObservableObject {
         }
         if frontVideoCenteringRequested && !preservingFrontAutoCentering { stopFrontVideoCentering() }
         let candidate = captureDevice(for: lens, forcePhysical: forcePhysical)
-        if !manualMode, candidate.isVirtualDevice {
+        if !manualMode, candidate.isVirtualDevice, !requestedCinematicVideo {
             resumeAutomaticLensSelectionForUserZoom(candidate)
             let factor = lens.displayZoom / CameraLensCatalog.displayMultiplier(candidate)
             if factor < candidate.minAvailableVideoZoomFactor - 0.0001, retry < 20 {
@@ -5190,7 +5164,14 @@ final class CameraEngine: NSObject, ObservableObject {
             #endif
             try self.applyZoom(lens)
             // Configure the replacement connections before publishing route readiness.
-            if changedDevice { self.configureConnections(device: device) }
+            if changedDevice {
+                if replacementTransactionOpen, self.requestedCinematicVideo {
+                    self.configureVideoFormat(device)
+                    self.configureConnections(device: device, configuresVideoFormat: false)
+                } else {
+                    self.configureConnections(device: device)
+                }
+            }
             #if DEBUG
             markPhase("connections")
             #endif
@@ -6773,7 +6754,8 @@ final class CameraEngine: NSObject, ObservableObject {
     }
 
     func capture(flashMode: CameraFlashMode, options: PhotoOptions) {
-        guard ready, !shutterBusy, hasCaptureCapacity(for: options), canCapture() else { return }
+        guard ready, !astroSharedCaptureSession.isReserved, !shutterBusy,
+              hasCaptureCapacity(for: options), canCapture() else { return }
         // 快门反馈先出当前预览占位；HDR编码稍后用最终成片替换。
         if let currentPreview = preview { onCaptureThumbnailReady?(currentPreview) }
         if let device = input?.device,
@@ -7013,8 +6995,12 @@ final class CameraEngine: NSObject, ObservableObject {
                 settings = self.makeNightCaptureSettings(context: context, device: device,
                                                         biases: NightCapturePolicy.exposureTargetBiases)
             } else if options.usesRAWCapture {
-                guard let pixelFormat = self.photoOutput.availableRawPhotoPixelFormatTypes.first(where: AVCapturePhotoOutput.isAppleProRAWPixelFormat)
-                        ?? self.photoOutput.availableRawPhotoPixelFormatTypes.first else {
+                if self.photoOutput.availableRawPhotoPixelFormatTypes.isEmpty, let device = self.input?.device {
+                    self.configurePhotoOutput(device)
+                }
+                let rawTypes = self.photoOutput.availableRawPhotoPixelFormatTypes
+                guard let pixelFormat = rawTypes.first(where: AVCapturePhotoOutput.isAppleProRAWPixelFormat)
+                        ?? rawTypes.first else {
                     self.report("当前镜头不支持 RAW，请选择其他格式。")
                     self.hardwareFinished(token: token)
                     self.completeCapture(context, photo: nil, message: nil); return

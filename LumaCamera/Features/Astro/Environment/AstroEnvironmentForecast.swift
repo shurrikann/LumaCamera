@@ -47,7 +47,12 @@ struct AstroForecast: Sendable {
     let sourceName: String
     let sourceURL: URL
 
-    func windows(at point: AstroForecastPoint, after now: Date) -> [DateInterval] {
+    func windows(at point: AstroForecastPoint, after now: Date,
+                 lightPollution: LightPollutionLegend.Band? = nil) -> [DateInterval] {
+        let sky = AstroDarkSkySuitability(band: lightPollution)
+        guard sky != .severe else { return [] }
+        let cloudLimit = sky == .high ? 25.0 : 50.0
+        let moonlightLimit = sky == .high ? 0.25 : 0.5
         var windows: [(interval: DateInterval, score: Double)] = []
         var start: Date?
         var end: Date?
@@ -70,7 +75,7 @@ struct AstroForecast: Sendable {
             let closing = AstroSkyPosition(at: hourEnd, point: point)
             let moonlight = max(opening.moonlight, closing.moonlight)
             guard max(opening.sunAltitude, closing.sunAltitude) <= -18,
-                  let cloud = hour.cloud, (0...50).contains(cloud), moonlight <= 0.5,
+                  let cloud = hour.cloud, (0...cloudLimit).contains(cloud), moonlight <= moonlightLimit,
                   let precipitationChance = hour.precipitationChance,
                   (0..<35).contains(precipitationChance) else {
                 finish()
@@ -89,14 +94,63 @@ struct AstroForecast: Sendable {
     }
 }
 
+enum AstroDarkSkySuitability: Equatable {
+    case unknown, normal, high, severe
+
+    init(band: LightPollutionLegend.Band?) {
+        switch band?.minimumRatio {
+        case let ratio? where ratio >= 5.12: self = .severe
+        case let ratio? where ratio >= 1.28: self = .high
+        case .some: self = .normal
+        case .none: self = .unknown
+        }
+    }
+}
+
 protocol AstroForecastProvider: Sendable {
     func forecast(at point: AstroForecastPoint) async throws -> AstroForecast
 }
 
 enum AstroForecastError: Error {
     case serviceUnavailable
+    case transientFailure
     case invalidForecast
     case providerUnconfigured
+}
+
+enum AstroWeatherRequest {
+    static let cacheLifetime: TimeInterval = 1800
+
+    static func data(from url: URL) async throws -> Data {
+        let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url, timeoutInterval: 12))
+        guard let status = (response as? HTTPURLResponse)?.statusCode else {
+            throw AstroForecastError.serviceUnavailable
+        }
+        switch status {
+        case 200: return data
+        case 408, 500...599: throw AstroForecastError.transientFailure
+        default: throw AstroForecastError.serviceUnavailable
+        }
+    }
+
+    static func retryTransientFailure<Value>(after delay: Duration = .milliseconds(650),
+                                              _ operation: () async throws -> Value) async throws -> Value {
+        try Task.checkCancellation()
+        do {
+            return try await operation()
+        } catch {
+            switch error {
+            case AstroForecastError.transientFailure:
+                break
+            case let error as URLError where [.timedOut, .networkConnectionLost, .cannotConnectToHost].contains(error.code):
+                break
+            default:
+                throw error
+            }
+            try await Task.sleep(for: delay)
+            return try await operation()
+        }
+    }
 }
 
 struct OpenMeteoAstroForecastProvider: AstroForecastProvider {
@@ -135,11 +189,7 @@ struct OpenMeteoAstroForecastProvider: AstroForecastProvider {
             URLQueryItem(name: "forecast_hours", value: "48")
         ]
         guard let url = components.url else { throw AstroForecastError.serviceUnavailable }
-        let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url, timeoutInterval: 12))
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            throw AstroForecastError.serviceUnavailable
-        }
-        return try Self.decode(data)
+        return try await Self.decode(AstroWeatherRequest.data(from: url))
         #else
         throw AstroForecastError.providerUnconfigured
         #endif
@@ -176,13 +226,15 @@ struct OpenMeteoAstroForecastProvider: AstroForecastProvider {
 
 @MainActor @Observable
 final class AstroForecastStore {
+    static let shared = AstroForecastStore()
+
     private struct Entry {
         let forecast: AstroForecast
         let loadedAt: Date
     }
 
     private let provider: any AstroForecastProvider
-    private let refreshInterval: TimeInterval = 1800
+    private let refreshInterval = AstroWeatherRequest.cacheLifetime
     private var entries: [AstroForecastPoint: Entry] = [:]
     private(set) var failedPoint: AstroForecastPoint?
     private(set) var isUnconfigured = false
@@ -198,14 +250,18 @@ final class AstroForecastStore {
     }
 
     func load(_ point: AstroForecastPoint, now: Date = Date()) async {
-        if let entry = entries[point], now.timeIntervalSince(entry.loadedAt) < refreshInterval {
+        guard !Task.isCancelled else { return }
+        if let entry = entries[point], now.timeIntervalSince(entry.loadedAt) < refreshInterval,
+           (entry.forecast.hours.last?.date.addingTimeInterval(3600) ?? .distantPast) > now {
             if failedPoint == point { failedPoint = nil }
             return
         }
         failedPoint = nil
         isUnconfigured = false
         do {
-            let forecast = try await provider.forecast(at: point)
+            let forecast = try await AstroWeatherRequest.retryTransientFailure {
+                try await provider.forecast(at: point)
+            }
             try Task.checkCancellation()
             entries[point] = Entry(forecast: forecast, loadedAt: now)
             if entries.count > 16, let oldest = entries.min(by: { $0.value.loadedAt < $1.value.loadedAt })?.key {
@@ -220,10 +276,11 @@ final class AstroForecastStore {
 
     func refreshWhileVisible(_ point: AstroForecastPoint) async {
         do {
-            try await Task.sleep(for: .milliseconds(400))
+            if forecast(at: point) == nil { try await Task.sleep(for: .milliseconds(250)) }
             while !Task.isCancelled {
                 await load(point)
-                try await Task.sleep(for: .seconds(refreshInterval))
+                let elapsed = failedPoint == point ? 0 : entries[point].map { Date().timeIntervalSince($0.loadedAt) } ?? 0
+                try await Task.sleep(for: .seconds(max(1, refreshInterval - elapsed)))
             }
         } catch {
             // Selection, location or visibility changed.

@@ -26,6 +26,10 @@ extension CameraView {
             let previewTop = previewRect.minY
             let width = previewRect.width
             let height = previewRect.height
+            // HDR 的纵向位置锁定 4:3 预览，横向仍贴住当前画幅右边框。
+            let hdrBadgeVerticalOffset = CameraPreviewLayout.hdrBadgeTop(
+                in: geometry.size, openGatePortraitRatio: camera.openGatePortraitRatio,
+                landscape: model.effectiveCaptureLook.landscape) - previewTop
             let toolbarOverlap = max(0, CameraControlLayout.toolbarHeight + 2 - previewTop)
             let isRecording = model.captureKind == .video && camera.videoRecording
             // 录像时工具栏已隐藏，不再为它保留HUD空白；窄画幅让数据面板避开居中的计时。
@@ -52,17 +56,6 @@ extension CameraView {
                 }.frame(width:width,height:height).allowsHitTesting(false)
                     .animation(reducingMotion ? .easeInOut(duration:0.1) : .easeInOut(duration:0.2),value:camera.nightPreviewReveal?.id)
                     .animation(reducingMotion ? .easeInOut(duration:0.1) : .easeInOut(duration:0.2),value:model.slowShutterAccumulationPreview?.id)
-                if model.hdr, model.captureKind == .photo {
-                    Text("HDR")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 7).padding(.vertical, 3)
-                        .background(.white.opacity(0.88), in: Capsule())
-                        .frame(width: width, height: height, alignment: .topTrailing)
-                        .padding(.top, 8).padding(.trailing, 10)
-                        .allowsHitTesting(false)
-                        .accessibilityIdentifier("preview.hdrBadge")
-                }
                 if let image = model.resumeTransitionImage {
                     Image(uiImage: image).resizable().allowedDynamicRange(.high).scaledToFill()
                         .frame(width: width, height: height).clipped()
@@ -300,6 +293,20 @@ extension CameraView {
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .contentShape(RoundedRectangle(cornerRadius: 16))
             .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.16), lineWidth: 0.5))
+            .overlay(alignment: .topTrailing) {
+                if model.hdr, model.captureKind == .photo {
+                    Text("HDR")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 7).padding(.vertical, 3)
+                        .background(.white.opacity(0.88), in: Capsule())
+                        .padding(.trailing, 10)
+                        .offset(y: hdrBadgeVerticalOffset)
+                        .allowsHitTesting(false)
+                        .accessibilityIdentifier("preview.hdrBadge")
+                }
+            }
+            .previewControlContrastFrame()
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
                 model.reportDualInsetPreviewFrame($0)
                 #if DEBUG
@@ -528,6 +535,7 @@ extension CameraView {
                 onDrag: { model.dragZoomDial(translation: $0, width: $1) },
                 onFinish: { model.finishZoomDrag() })
                 .frame(width: buttonWidth, height: buttonWidth)
+                .previewFocalContrast(title: model.zoomText, selected: true)
                 .padding(2)
                 .opacity(model.hidesFocalStripForZoomDial ? 0.001 : 1)
         } else if useFrontWideToggle, let wide = frontWide, let ultra = frontUltraWide {
@@ -538,6 +546,7 @@ extension CameraView {
                     Image(systemName: isWide ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
                         .font(.system(size: isWide ? 16 : 15, weight: .medium))
                         .foregroundStyle(isWide ? AppTheme.accent : Color.white.opacity(0.9))
+                        .previewControlContrast(accent: isWide, icon: true)
                         .frame(width: buttonWidth, height: buttonWidth)
                         .contentShape(Circle())
                 }
@@ -554,6 +563,7 @@ extension CameraView {
                         .rotatingCaptureContent()
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(isLandscapePhoto ? AppTheme.accent : .white)
+                        .previewControlContrast(accent: isLandscapePhoto, icon: true)
                         .opacity(camera.frontPhotoAspectRatioSwitchAvailable ? 1 : AppTheme.disabledControlOpacity)
                         .frame(width: buttonWidth, height: buttonWidth)
                         .contentShape(Circle())
@@ -586,6 +596,7 @@ extension CameraView {
                         onDrag: { model.dragZoomDial(translation: $0, width: $1) },
                         onFinish: { model.finishZoomDrag() })
                         .frame(width: buttonWidth, height: buttonWidth)
+                        .previewFocalContrast(title: model.focalButtonTitle(for: lens), selected: model.isFocalSelected(lens))
                         .overlay(alignment:.bottom) {
                             if model.fixedHighResolutionFocalsOnly && camera.highResolutionPhotoConfiguring && camera.selectedLens == lens.id {
                                 ProgressView().controlSize(.mini).scaleEffect(0.55)

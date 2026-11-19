@@ -9,16 +9,17 @@ struct GalleryView: View {
     @ObservedObject var library: PhotoLibraryViewModel
     let isDemo: Bool
     var openLatestCapture = false
-    var openVideoID: String? = nil
+    var openAssetID: String? = nil
     let onCamera: () -> Void
     @Environment(\.scenePhase) private var scenePhase
     @State private var path: [GalleryRoute] = []
     @State private var previewOpened = false
+    @State private var openingRequestedAsset = false
     @State private var recentOnly = false
     @StateObject private var batchShare: BatchPhotoShareModel
     @StateObject private var mediaOrientation: CaptureControlOrientation
-    init(model: GalleryViewModel, library: PhotoLibraryViewModel, isDemo: Bool, openLatestCapture: Bool = false, openVideoID: String? = nil, batchShare: BatchPhotoShareModel? = nil, mediaOrientation: CaptureControlOrientation? = nil, onCamera: @escaping () -> Void) {
-        self.model = model; self.library = library; self.isDemo = isDemo; self.openLatestCapture = openLatestCapture; self.openVideoID = openVideoID; self.onCamera = onCamera
+    init(model: GalleryViewModel, library: PhotoLibraryViewModel, isDemo: Bool, openLatestCapture: Bool = false, openAssetID: String? = nil, batchShare: BatchPhotoShareModel? = nil, mediaOrientation: CaptureControlOrientation? = nil, onCamera: @escaping () -> Void) {
+        self.model = model; self.library = library; self.isDemo = isDemo; self.openLatestCapture = openLatestCapture; self.openAssetID = openAssetID; self.onCamera = onCamera
         _batchShare = StateObject(wrappedValue: batchShare ?? BatchPhotoShareModel())
         _mediaOrientation = StateObject(wrappedValue: mediaOrientation ?? CaptureControlOrientation())
     }
@@ -117,14 +118,26 @@ struct GalleryView: View {
                 PhotoPagingView(model: model, library: library, initial: route, photos: displayedPhotos,
                                 isDemo: isDemo, canLoadMore: !recentOnly, onCamera: onCamera)
             }
-            .task {
-                openRequestedVideoIfAvailable()
+            .task(id: model.access) {
+                openRequestedAssetIfAvailable()
+                if let openAssetID, !previewOpened,
+                   let access = model.browser.existingAccess ?? model.access, access != .denied {
+                    openingRequestedAsset = true
+                    let photo = await withCheckedContinuation { continuation in
+                        model.browser.fetchPhoto(id: openAssetID) { continuation.resume(returning: $0) }
+                    }
+                    openingRequestedAsset = false
+                    if !Task.isCancelled, !previewOpened, let photo {
+                        previewOpened = true
+                        path = [.asset(photo)]
+                    }
+                }
                 if !previewOpened && openLatestCapture && library.lastPhoto != nil {
                     previewOpened = true; path = [.capture]
                 }
             }
             .onChange(of: model.photos) { _, photos in
-                openRequestedVideoIfAvailable()
+                openRequestedAssetIfAvailable()
                 #if DEBUG && targetEnvironment(simulator)
                 let arguments = ProcessInfo.processInfo.arguments
                 if !previewOpened, (arguments.contains("--preview-photo") || arguments.contains("--preview-editor") || arguments.contains("--preview-photo-info")), let first = photos.first {
@@ -133,7 +146,7 @@ struct GalleryView: View {
                 #endif
             }
             .overlay {
-                if openVideoID != nil && !previewOpened && model.loading {
+                if openAssetID != nil && !previewOpened && (model.loading || openingRequestedAsset) {
                     ProgressView().tint(.white).frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(AppTheme.popupColor.ignoresSafeArea())
                 }
@@ -155,11 +168,11 @@ struct GalleryView: View {
             .environment(\.videoPlaybackAngle, mediaOrientation.degrees)
             .onAppear { mediaOrientation.resetForMediaPresentation(UIDevice.current.orientation) }
     }
-    private func openRequestedVideoIfAvailable() {
-        guard !previewOpened, let openVideoID,
-              let video = model.photos.first(where: { $0.id == openVideoID && $0.isVideo }) else { return }
+    private func openRequestedAssetIfAvailable() {
+        guard !previewOpened, let openAssetID,
+              let asset = model.photos.first(where: { $0.id == openAssetID }) else { return }
         previewOpened = true
-        path = [.asset(video)]
+        path = [.asset(asset)]
     }
     private func photoTile(_ photo: LibraryPhoto) -> some View {
         GeometryReader { geometry in

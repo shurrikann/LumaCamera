@@ -22,13 +22,15 @@ import XCTest
             try await wait(timeout: 30) { engine.result != nil || engine.error != nil }
             XCTAssertNotNil(engine.result); XCTAssertNil(engine.error)
             let reading = try XCTUnwrap(engine.lastExposureReading)
-            let expected = engine.manualSettings.resolvedISO(meteredISO: reading.iso,
-                meteredSeconds: reading.seconds, targetSeconds: 0.5,
+            let expected = engine.manualSettings.captureExposure(meteredISO: reading.iso,
+                meteredSeconds: reading.seconds, requestedSeconds: 0.5,
                 meteredOffset: reading.offset, meteredBias: reading.bias,
-                range: Double(device.activeFormat.minISO)...Double(device.activeFormat.maxISO))
-            XCTAssertEqual(reading.appliedISO, expected, accuracy: 0.01)
-            XCTAssertEqual(reading.sensorISO, expected, accuracy: max(1, expected * 0.01))
-            XCTAssertEqual(reading.sensorSeconds, 0.5, accuracy: 0.002)
+                isoRange: Double(device.activeFormat.minISO)...Double(device.activeFormat.maxISO),
+                minimumSeconds: CMTimeGetSeconds(device.activeFormat.minExposureDuration))
+            XCTAssertEqual(reading.appliedISO, expected.iso, accuracy: 0.01)
+            XCTAssertEqual(reading.appliedSeconds, expected.seconds, accuracy: 0.000001)
+            XCTAssertEqual(reading.sensorISO, expected.iso, accuracy: max(1, expected.iso * 0.01))
+            XCTAssertEqual(reading.sensorSeconds, expected.seconds, accuracy: 0.002)
             XCTAssertEqual(engine.capturedFrames, 2)
             samples.append(reading.elapsed)
             engine.save(); try await wait(timeout: 20) { !engine.isSaving }
@@ -41,9 +43,9 @@ import XCTest
             let exif = try XCTUnwrap(props[kCGImagePropertyExifDictionary] as? [CFString: Any])
             let iso = try XCTUnwrap((exif[kCGImagePropertyExifISOSpeedRatings] as? [NSNumber])?.first?.doubleValue)
             let exposure = try XCTUnwrap((exif[kCGImagePropertyExifExposureTime] as? NSNumber)?.doubleValue)
-            XCTAssertEqual(iso, expected, accuracy: max(2, expected * 0.12))
-            XCTAssertEqual(exposure, 0.5, accuracy: 0.01)
-            print("ASTRO-AUTO-ISO meteredISO=\(reading.iso) time=\(reading.seconds) offset=\(reading.offset) nativeBias=\(reading.bias) targetISO=\(expected) sensorISO=\(reading.sensorISO) fileISO=\(iso) fileTime=\(exposure) settled=\(reading.settled) PhotosWrites=0")
+            XCTAssertEqual(iso, expected.iso, accuracy: max(2, expected.iso * 0.12))
+            XCTAssertEqual(exposure, expected.seconds, accuracy: max(0.00025, expected.seconds * 0.03))
+            print("ASTRO-AUTO-ISO meteredISO=\(reading.iso) time=\(reading.seconds) offset=\(reading.offset) nativeBias=\(reading.bias) targetISO=\(expected.iso) appliedSeconds=\(reading.appliedSeconds) sensorISO=\(reading.sensorISO) fileISO=\(iso) fileTime=\(exposure) settled=\(reading.settled) PhotosWrites=0")
             store.discard(item.id)
             try await Task.sleep(for: .milliseconds(300))
         }

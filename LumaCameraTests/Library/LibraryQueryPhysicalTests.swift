@@ -4,6 +4,30 @@ import Photos
 
 final class LibraryQueryPhysicalTests: XCTestCase {
     #if !targetEnvironment(simulator)
+    @MainActor func testCommittedAssetLookupBypassesGalleryPagination() async throws {
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        guard status == .authorized || status == .limited else {
+            throw XCTSkip("Existing Photos read permission required")
+        }
+        let album = SystemPhotoLibraryService()
+        let assets = PHAsset.fetchAssets(with: nil)
+        guard assets.count > 0 else { throw XCTSkip("No existing assets to read") }
+        let selected = [assets.firstObject, assets.lastObject].compactMap { $0 }
+        let start = ContinuousClock.now
+        for asset in selected {
+            let photo = await withCheckedContinuation { continuation in
+                album.fetchPhoto(id: asset.localIdentifier) { continuation.resume(returning: $0) }
+            }
+            XCTAssertEqual(photo?.id, asset.localIdentifier)
+            XCTAssertEqual(photo?.isVideo, asset.mediaType == .video)
+        }
+        let missing = await withCheckedContinuation { continuation in
+            album.fetchPhoto(id: UUID().uuidString) { continuation.resume(returning: $0) }
+        }
+        XCTAssertNil(missing)
+        print("GALLERY-ASSET-LOOKUP samples=\(selected.count + 1) elapsed=\(ContinuousClock.now - start) PhotosWrites=0")
+    }
+
     @MainActor func testReadOnlyGalleryQueryMatchesAccessibleRecentCaptures() async throws {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         print("LIBRARY-QUERY access=\(status.rawValue) add=\(PHPhotoLibrary.authorizationStatus(for:.addOnly).rawValue) now=\(Date().timeIntervalSince1970)")

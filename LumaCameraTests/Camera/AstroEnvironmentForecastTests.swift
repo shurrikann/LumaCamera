@@ -44,6 +44,24 @@ final class AstroEnvironmentForecastTests: XCTestCase {
         XCTAssertTrue(forecast.windows(at: point, after: expired).isEmpty)
     }
 
+    func testLightPollutionChangesWindowForTheSameForecast() throws {
+        let point = try XCTUnwrap(AstroForecastPoint(.init(latitude: 31.23, longitude: 121.47)))
+        let start = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-11-09T10:00:00Z"))
+        let bands = try XCTUnwrap(LightPollutionSources.current.legend).bands
+        let dark = try XCTUnwrap(bands.first)
+        let high = try XCTUnwrap(bands.first(where: { $0.minimumRatio == 1.28 }))
+        let severe = try XCTUnwrap(bands.last)
+        let clear = try makeForecast(start: start) { _ in 0 }
+        let cloudy = try makeForecast(start: start) { _ in 40 }
+        XCTAssertFalse(clear.windows(at: point, after: start, lightPollution: dark).isEmpty)
+        XCTAssertFalse(clear.windows(at: point, after: start, lightPollution: high).isEmpty)
+        XCTAssertTrue(clear.windows(at: point, after: start, lightPollution: severe).isEmpty)
+        XCTAssertFalse(cloudy.windows(at: point, after: start, lightPollution: dark).isEmpty)
+        XCTAssertTrue(cloudy.windows(at: point, after: start, lightPollution: high).isEmpty)
+        XCTAssertEqual(AstroDarkSkySuitability(band: nil), .unknown)
+        XCTAssertEqual(clear.windows(at: point, after: start), clear.windows(at: point, after: start, lightPollution: dark))
+    }
+
     func testCacheSeparatesSitesAndReusesNearbyPointsAfterSwitching() async throws {
         let current = try XCTUnwrap(AstroForecastPoint(.init(latitude: 31.23, longitude: 121.47)))
         let nearby = try XCTUnwrap(AstroForecastPoint(.init(latitude: 31.231, longitude: 121.471)))
@@ -60,6 +78,48 @@ final class AstroEnvironmentForecastTests: XCTestCase {
         await cancelled.value
         let afterCancellation = await provider.points
         XCTAssertEqual(afterCancellation.count, 2)
+    }
+
+    func testWeatherRetriesTransientFailureOnlyAndCancelsBackoff() async throws {
+        var attempts = 0
+        let result = try await AstroWeatherRequest.retryTransientFailure(after: .zero) {
+            attempts += 1
+            if attempts == 1 { throw URLError(.networkConnectionLost) }
+            return 48
+        }
+        XCTAssertEqual(result, 48)
+        XCTAssertEqual(attempts, 2)
+
+        attempts = 0
+        do {
+            _ = try await AstroWeatherRequest.retryTransientFailure(after: .zero) {
+                attempts += 1
+                throw AstroForecastError.providerUnconfigured
+            } as Int
+            XCTFail("Expected providerUnconfigured")
+        } catch AstroForecastError.providerUnconfigured {
+            XCTAssertEqual(attempts, 1)
+        }
+
+        let state = RetryCancellationFixture()
+        let cancelled = Task {
+            try await AstroWeatherRequest.retryTransientFailure(after: .seconds(10)) {
+                await state.fail()
+                throw AstroForecastError.transientFailure
+            } as Int
+        }
+        for _ in 0..<100 {
+            if await state.attempts == 1 { break }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        cancelled.cancel()
+        do {
+            _ = try await cancelled.value
+            XCTFail("Expected cancellation")
+        } catch is CancellationError {
+            let count = await state.attempts
+            XCTAssertEqual(count, 1)
+        }
     }
 
     func testWindowCalculationWithRepeated48HourInputs() throws {
@@ -107,4 +167,10 @@ private actor CountingProvider: AstroForecastProvider {
         points.append(point)
         return result
     }
+}
+
+
+private actor RetryCancellationFixture {
+    private(set) var attempts = 0
+    func fail() { attempts += 1 }
 }

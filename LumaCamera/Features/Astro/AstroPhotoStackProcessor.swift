@@ -1,0 +1,114 @@
+import CoreImage
+import CoreVideo
+
+/// Processes already decoded, linear frames on the caller's serial capture path.
+struct AstroPhotoStackProcessor {
+    private let context: CIContext
+    private let linearSpace: CGColorSpace
+    private var accumulator: CIImage?
+    private var accumulatorBuffer: CVPixelBuffer?
+    private var sceneRegistration: AstroSceneRegistration?
+    private var qualityGate = AstroFrameQualityGate()
+    private var groupAccumulators: [CIImage?] = [nil, nil, nil]
+    private var groupBuffers: [CVPixelBuffer?] = [nil, nil, nil]
+    private(set) var groupCounts = [0, 0, 0]
+    private(set) var acceptedFrames = 0
+    private(set) var extent = CGRect.zero
+
+    init(context: CIContext, linearSpace: CGColorSpace) {
+        self.context = context
+        self.linearSpace = linearSpace
+    }
+
+    mutating func reset() {
+        releaseFrames()
+        acceptedFrames = 0
+        extent = .zero
+        qualityGate = AstroFrameQualityGate()
+    }
+
+    mutating func releaseFrames() {
+        accumulator = nil
+        accumulatorBuffer = nil
+        sceneRegistration = nil
+        groupAccumulators = [nil, nil, nil]
+        groupBuffers = [nil, nil, nil]
+        groupCounts = [0, 0, 0]
+    }
+
+    func stackedImage() -> CIImage? {
+        AstroTemporalMedian.combine(groupAccumulators.compactMap { $0 }, extent: extent)
+    }
+
+    func finishedImage(iso: Double) -> CIImage? {
+        guard let stacked = stackedImage() else { return nil }
+        let matte = sceneRegistration?.matte.image
+        let flattened = AstroPostProcessor.flattenBackground(stacked, sky: matte)
+        return AstroSignalProtection.denoise(flattened, iso: iso, context: context, sky: matte)
+    }
+
+    mutating func append(_ source: CIImage) -> Bool {
+        let sourceExtent = source.extent.integral
+        if extent == .zero { extent = CGRect(origin: .zero, size: sourceExtent.size) }
+        var frame = source.cropped(to: sourceExtent)
+            .transformed(by: CGAffineTransform(translationX: -sourceExtent.minX, y: -sourceExtent.minY))
+            .cropped(to: extent)
+        let statistics = AstroFrameStatistics.measure(frame,context:context)
+        switch qualityGate.consider(statistics) {
+        case .reject: return true
+        case .replaceReference:
+            releaseFrames()
+            acceptedFrames = 0
+        case .accept: break
+        }
+        if sceneRegistration == nil { sceneRegistration = AstroSceneRegistration(reference: frame, context: context) }
+        frame = sceneRegistration?.align(frame) ?? frame
+        if let reference = accumulator, let matte = sceneRegistration?.matte.image {
+            frame = AstroTransientTracks.clean(frame,previous:reference,sky:matte,context:context)
+            frame = AstroSignalProtection.temporalClean(frame, reference:reference, noise:statistics.noise, sky:matte)
+        }
+
+        let group = acceptedFrames % 3
+        let count = groupCounts[group] + 1
+        let combined: CIImage
+        if let previous = groupAccumulators[group] {
+            let alpha = 1.0 / Double(count)
+            let current = frame.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: alpha, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: alpha, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: alpha, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+            ])
+            let old = previous.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: 1 - alpha, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: 1 - alpha, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: 1 - alpha, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+            ])
+            combined = current.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: old])
+        } else {
+            combined = frame
+        }
+        guard let next = materialize(combined) else { return false }
+        groupAccumulators[group] = next.image
+        groupBuffers[group] = next.buffer
+        groupCounts[group] = count
+        acceptedFrames += 1
+        accumulator = next.image
+        accumulatorBuffer = next.buffer
+        return true
+    }
+
+    private func materialize(_ image: CIImage) -> (image: CIImage, buffer: CVPixelBuffer)? {
+        let width = Int(extent.width.rounded()), height = Int(extent.height.rounded())
+        guard width > 0, height > 0 else { return nil }
+        var buffer: CVPixelBuffer?
+        let attrs: [String: Any] = [kCVPixelBufferIOSurfacePropertiesKey as String: [:]]
+        guard CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_64RGBAHalf,
+                                  attrs as CFDictionary, &buffer) == kCVReturnSuccess,
+              let buffer else { return nil }
+        context.render(image, to: buffer, bounds: CGRect(x: 0, y: 0, width: width, height: height),
+                       colorSpace: linearSpace)
+        return (CIImage(cvPixelBuffer: buffer, options: [.colorSpace: linearSpace]), buffer)
+    }
+}

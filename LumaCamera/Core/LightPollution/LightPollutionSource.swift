@@ -19,15 +19,40 @@ struct LightPollutionMetadata: Equatable {
 }
 
 struct LightPollutionLegend: Equatable {
+    struct Band: Equatable, Identifiable, Sendable {
+        let minimumRatio: Double
+        let range: String
+        let rgb: UInt32
+        var id: Double { minimumRatio }
+        var red: Int { Int((rgb >> 16) & 255) }
+        var green: Int { Int((rgb >> 8) & 255) }
+        var blue: Int { Int(rgb & 255) }
+    }
+
     let title: String
-    let detail: String
+    let bands: [Band]
 }
 
-protocol LightPollutionSource {
+struct LightPollutionPoint: Hashable, Sendable {
+    let latitude: Double
+    let longitude: Double
+
+    init(_ coordinate: CLLocationCoordinate2D) {
+        latitude = coordinate.latitude
+        longitude = coordinate.longitude
+    }
+}
+
+protocol LightPollutionSource: Sendable {
     var metadata: LightPollutionMetadata { get }
     var legend: LightPollutionLegend? { get }
     func overlays(in mapRect: MKMapRect) -> [MKOverlay]
     func brightness(at coordinate: CLLocationCoordinate2D) -> SkyBrightness?
+    func band(at point: LightPollutionPoint) -> LightPollutionLegend.Band?
+}
+
+extension LightPollutionSource {
+    func band(at point: LightPollutionPoint) -> LightPollutionLegend.Band? { nil }
 }
 
 enum LightPollutionSources {

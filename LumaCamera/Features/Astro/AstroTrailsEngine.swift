@@ -110,6 +110,7 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
     private var framePTS: [Double] = []
     private let previewExposureGate = AstroPreviewExposureGate()
     private var captureMetadata = AstroImageOptions()
+    private var savedCaptureID: UUID?
     nonisolated private let recoveryIDSlot = LockedCaptureValue<UUID?>(nil)
     nonisolated private var recoveryID: UUID? {
         get { recoveryIDSlot.value }
@@ -326,10 +327,15 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
         }
     }
 
-    func begin() {
-        guard !isCapturing, !switchingLens, let device else { return }
+    func begin() { begin(location: nil) }
+
+    func begin(location: PhotoLocation?) {
+        guard !isCapturing, !isSaving, !switchingLens, let device else { return }
         if let previous = recoveryID { AstroRecoveryStore.shared.keep(previous) }
-        let recovery = AstroRecoveryStore.shared.begin(kind: "星轨", options: outputOptions)
+        captureMetadata = outputOptions
+        captureMetadata.recordCaptureStart(mode: "星轨", location: location, settings: manualSettings)
+        savedCaptureID = nil
+        let recovery = AstroRecoveryStore.shared.begin(kind: "星轨", options: captureMetadata)
         recoveryID = recovery
         previewExposureGate.setCaptureActive(true)
         isCapturing = true
@@ -358,9 +364,10 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
                 isCurrent: { self.recoveryID == recovery && !self.previewExposureGate.permitsPreview
                     && (self.sharedSession?.owns(self.sessionOwner) ?? true) }) { outcome in
                 switch outcome {
-                case .success:
+                case .success(let reading):
                     DispatchQueue.main.async {
                         guard self.recoveryID == recovery, !self.previewExposureGate.permitsPreview else { return }
+                        self.captureMetadata.recordCaptureDevice(device, settings: settings, reading: reading)
                         self.capturing = true
                         self.acceptedAt = CACurrentMediaTime() + 0.25
                         self.status = "正在长曝光 0/\(target)"
@@ -378,6 +385,7 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
     }
 
     func cancel() {
+        guard !isSaving else { return }
         captureDeadline?.cancel(); captureDeadline = nil
         if let id = recoveryID { AstroRecoveryStore.shared.discard(id); recoveryID = nil }
 
@@ -392,6 +400,7 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
     }
 
     func reset() {
+        guard !isSaving else { return }
         if let id = recoveryID { AstroRecoveryStore.shared.discard(id); recoveryID = nil }
 
         self.accumulator = nil
@@ -440,21 +449,10 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
             self.frameTimes.append(now)
             self.framePTS.append(pts)
             if self.colorSpaceText.isEmpty { self.colorSpaceText = "CGImage: \(colorSpace)" }
-            if let device = self.device {
-                self.captureMetadata.iso = Double(device.iso)
-                self.captureMetadata.exposureSeconds = CMTimeGetSeconds(device.exposureDuration)
-                self.captureMetadata.lensName = device.localizedName
-                self.captureMetadata.focalLength35mm = device.astroEquivalentFocalLength
-                let actualExposure = CMTimeGetSeconds(device.exposureDuration)
-                self.exposureText = String(format: "曝光 %.3fs · ISO %.0f", actualExposure, device.iso)
-            }
+            self.exposureText = String(format: "曝光 %.3fs · ISO %.0f", self.captureMetadata.exposureSeconds, self.captureMetadata.iso)
             if let id = self.recoveryID, let image = self.accumulator {
-                var options = self.outputOptions
-                options.mode = "星轨"; options.frameCount = self.capturedCount
-                options.iso = self.captureMetadata.iso; options.exposureSeconds = self.captureMetadata.exposureSeconds
-                options.focalLength35mm = self.captureMetadata.focalLength35mm
-                options.lensName = self.captureMetadata.lensName
-                AstroRecoveryStore.shared.checkpoint(id: id, image: image, options: options)
+                self.captureMetadata.frameCount = self.capturedCount
+                AstroRecoveryStore.shared.checkpoint(id: id, image: image, options: self.captureMetadata)
             }
             self.status = "正在长曝光 \(self.capturedCount)/\(self.targetFrames)"
             if self.capturedCount >= self.targetFrames {
@@ -574,12 +572,9 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
             return
         }
         result = UIImage(cgImage: cgImage)
-        if let id = recoveryID {
-            var options = outputOptions
-            options.mode = "星轨"; options.frameCount = capturedCount
-            options.iso = captureMetadata.iso; options.exposureSeconds = captureMetadata.exposureSeconds
-            options.focalLength35mm = captureMetadata.focalLength35mm; options.lensName = captureMetadata.lensName
-            AstroRecoveryStore.shared.checkpoint(id: id, image: finished, options: options, final: true)
+        captureMetadata.frameCount = capturedCount
+        if !autoSaveOnFinish, let id = recoveryID {
+            AstroRecoveryStore.shared.checkpoint(id: id, image: finished, options: captureMetadata, final: true)
         }
         self.accumulator = nil
         self.accumulatorBuffer = nil
@@ -608,20 +603,16 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
     }
 
     func saveResult() {
-        guard let cgImage = result?.cgImage, !isSaving else { return }
+        guard let cgImage = result?.cgImage, !isSaving, savedCaptureID == nil else { return }
         isSaving = true; savedInfo = ""
-        var options = outputOptions
-        options.mode = "星轨"; options.frameCount = capturedCount
-        options.exposureSeconds = captureMetadata.exposureSeconds; options.iso = captureMetadata.iso
-        options.lensName = captureMetadata.lensName
-        options.focalLengthMM = captureMetadata.focalLengthMM
-        options.focalLength35mm = captureMetadata.focalLength35mm
+        let options = captureMetadata
         let id = recoveryID ?? AstroRecoveryStore.shared.begin(kind: "星轨", options: options)
         recoveryID = id
         AstroRecoveryStore.shared.saveImage(id: id, image: cgImage, options: options) { [weak self] saved in
             guard let self else { return }; self.isSaving = false
             switch saved {
             case .success:
+                self.savedCaptureID = id
                 self.savedInfo = AstroRecoveryStore.shared.wasImported(id) ? "已保存到相册" : "已暂存，可稍后恢复"
             case .failure(let error): self.savedInfo = "保存失败：\(error.localizedDescription)"; self.error = error.localizedDescription
             }

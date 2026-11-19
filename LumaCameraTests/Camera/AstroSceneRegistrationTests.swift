@@ -15,6 +15,33 @@ final class AstroSceneRegistrationTests: XCTestCase {
         XCTAssertNotNil(rotated.groundROI)
         XCTAssertGreaterThan(rotated.confidence,0)
     }
+    func testThinForegroundAndClearSkyAcrossSensorOrientations() {
+        var scene = AstroSyntheticScene()
+        scene.includesGround = true
+        let frame = scene.frame(0)
+        scene.includesGround = false
+        let clear = scene.frame(0)
+        let side = scene.extent.width
+        let transforms: [CGAffineTransform] = [
+            .identity,
+            .init(a: 0, b: 1, c: -1, d: 0, tx: side, ty: 0),
+            .init(a: -1, b: 0, c: 0, d: -1, tx: side, ty: side),
+            .init(a: 0, b: -1, c: 1, d: 0, tx: 0, ty: side)
+        ]
+        let start = ProcessInfo.processInfo.systemUptime
+        for transform in transforms {
+            let source = frame.transformed(by: transform)
+            let matte = AstroSkyMatte.estimate(source, context: context)
+            let ground = CGPoint(x: 140, y: 24).applying(transform)
+            let sky = CGPoint(x: 315, y: 390).applying(transform)
+            XCTAssertTrue(matte.groundROI?.contains(ground) == true)
+            XCTAssertLessThan(value(matte.image, at: ground), 0.01)
+            XCTAssertGreaterThan(value(matte.image, at: sky), 0.99)
+            XCTAssertNil(AstroSkyMatte.estimate(clear.transformed(by: transform), context: context).groundROI)
+        }
+        print("ASTRO-THIN-GROUND samples=8 orientations=4 seconds=\(ProcessInfo.processInfo.systemUptime - start)")
+    }
+
     func testSkyAndGroundReceiveSeparateTransformsWithoutLosingHDR() throws {
         let reference = scene()
         let movingSky = sky().clampedToExtent().transformed(by:CGAffineTransform(translationX:9,y:-3)).cropped(to:reference.extent)

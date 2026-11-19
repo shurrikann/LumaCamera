@@ -39,13 +39,73 @@ struct AstroManualSettings: Equatable {
     func resolvedISO(meteredISO: Double, meteredSeconds: Double, targetSeconds: Double,
                      meteredOffset: Double = 0, meteredBias: Double = 0,
                      range: ClosedRange<Double>) -> Double {
+        let proposed = targetISO(meteredISO: meteredISO, meteredSeconds: meteredSeconds,
+                                 targetSeconds: targetSeconds, meteredOffset: meteredOffset, meteredBias: meteredBias)
+        return min(max(proposed, range.lowerBound), range.upperBound)
+    }
+
+    func captureExposure(meteredISO: Double, meteredSeconds: Double, requestedSeconds: Double,
+                         meteredOffset: Double, meteredBias: Double, isoRange: ClosedRange<Double>,
+                         minimumSeconds: Double) -> (seconds: Double, iso: Double) {
+        let proposed = targetISO(meteredISO: meteredISO, meteredSeconds: meteredSeconds,
+                                 targetSeconds: requestedSeconds, meteredOffset: meteredOffset, meteredBias: meteredBias)
+        let iso = min(max(proposed, isoRange.lowerBound), isoRange.upperBound)
+        // Keep the requested shutter unless automatic ISO has reached the sensor floor.
+        guard isoAutomatic, minimumSeconds.isFinite, minimumSeconds > 0, minimumSeconds < requestedSeconds,
+              meteredISO.isFinite, meteredISO > 0, meteredSeconds.isFinite, meteredSeconds > 0,
+              proposed < isoRange.lowerBound else { return (requestedSeconds, iso) }
+        return (max(minimumSeconds, requestedSeconds * proposed / isoRange.lowerBound), iso)
+    }
+
+    private func targetISO(meteredISO: Double, meteredSeconds: Double, targetSeconds: Double,
+                           meteredOffset: Double, meteredBias: Double) -> Double {
         let bias = exposureBiasAutomatic ? 0 : min(max(exposureBias, -5), 5)
         let base: Double
-        if isoAutomatic, meteredISO.isFinite, meteredSeconds.isFinite, meteredSeconds > 0, targetSeconds > 0 {
-            let correction = bias - (meteredOffset.isFinite ? meteredOffset : 0) - meteredBias
+        if isoAutomatic, meteredISO.isFinite, meteredISO > 0, meteredSeconds.isFinite, meteredSeconds > 0,
+           targetSeconds.isFinite, targetSeconds > 0 {
+            let correction = bias - (meteredOffset.isFinite ? meteredOffset : 0) - (meteredBias.isFinite ? meteredBias : 0)
             base = meteredISO * meteredSeconds / targetSeconds * pow(2, min(max(correction, -16), 16))
         } else { base = iso * pow(2, bias) }
-        return min(max(base.isFinite ? base : iso, range.lowerBound), range.upperBound)
+        return base.isFinite ? base : iso
+    }
+}
+
+extension AstroImageOptions {
+    mutating func recordCaptureStart(mode: String, location: PhotoLocation?, settings: AstroManualSettings) {
+        self.mode = mode
+        parameters = PhotoCaptureParameters(mode: "星空", shootingType: mode,
+            requestedExposureBiasEV: settings.exposureBiasAutomatic ? 0 : min(max(settings.exposureBias, -5), 5),
+            requestedFormat: format == .heif ? "HEIF" : "JPG", location: location)
+        if mode == "星轨" { parameters?.ratio = "4:3" }
+        if let aspect {
+            parameters?.ratio = [(4.0 / 3, "4:3"), (1.0, "1:1"), (16.0 / 9, "16:9")]
+                .first { abs($0.0 - aspect) < 0.005 }?.1
+        }
+    }
+
+    mutating func recordCaptureDevice(_ device: AVCaptureDevice, settings: AstroManualSettings,
+                                      reading: AstroCaptureExposurePreparation.Reading) {
+        iso = reading.sensorISO
+        exposureSeconds = reading.sensorSeconds
+        lensName = device.localizedName
+        focalLength35mm = device.astroEquivalentFocalLength
+        let aperture = Double(device.lensAperture)
+        if aperture.isFinite, aperture > 0 { parameters?.aperture = aperture }
+        parameters?.lensType = device.deviceType.rawValue
+        parameters?.displayedZoom = Double(device.videoZoomFactor)
+        parameters?.sampledISO = reading.sensorISO
+        parameters?.sampledExposureSeconds = reading.sensorSeconds
+        parameters?.deviceExposureBiasEV = Double(device.exposureTargetBias)
+        let gains = device.deviceWhiteBalanceGains
+        if [gains.redGain, gains.greenGain, gains.blueGain].allSatisfy({ $0.isFinite && $0 >= 1 && $0 <= device.maxWhiteBalanceGain }) {
+            let whiteBalance = device.temperatureAndTintValues(for: gains)
+            if whiteBalance.temperature.isFinite, whiteBalance.temperature > 0 {
+                parameters?.whiteBalanceKelvin = Double(whiteBalance.temperature)
+            }
+            if whiteBalance.tint.isFinite { parameters?.whiteBalanceTint = Double(whiteBalance.tint) }
+        }
+        parameters?.whiteBalanceMode = settings.whiteBalanceAutomatic || settings.tintAutomatic ? "自动锁定" : "手动"
+        if device.isFocusModeSupported(.locked) { parameters?.focusPosition = Double(device.lensPosition) }
     }
 }
 
@@ -82,18 +142,20 @@ extension AVCaptureDevice {
     func applyAstroManualSettings(_ settings: AstroManualSettings, shutterSeconds: Double,
                                   lockAutomaticParameters: Bool = false,
                                   preservesMatchingExposure: Bool = false,
+                                  minimumShutterSeconds: Double = AstroManualSettings.photoShutterRange.lowerBound,
                                   exposureCompletion: (@Sendable (CMTime) -> Void)? = nil) throws {
         guard isExposureModeSupported(.custom) else {
             throw AstroManualSettingsError.customExposureUnsupported
         }
-        let shutter = min(max(shutterSeconds, AstroManualSettings.photoShutterRange.lowerBound),
+        let shutter = min(max(shutterSeconds, minimumShutterSeconds),
                           AstroManualSettings.photoShutterRange.upperBound)
         let bias = settings.exposureBiasAutomatic ? 0 : min(max(settings.exposureBias, -5), 5)
         // 66,667 microseconds is longer than a 1/15-second preview frame.
         // Keep this rational exact so exposure never exceeds its own cadence.
-        let duration = abs(shutter-1.0/15.0) < 1e-9
+        let requestedDuration = abs(shutter-1.0/15.0) < 1e-9
             ? CMTime(value: 1, timescale: 15)
             : CMTime(seconds: shutter, preferredTimescale: 1_000_000)
+        let duration = CMTimeMaximum(requestedDuration, activeFormat.minExposureDuration)
         if #available(iOS 27.0, *), settings.isoAutomatic, !lockAutomaticParameters, supportsAstroAutoISO(shutter: shutter) {
             setExposureTargetBias(Float(min(max(bias, Double(minExposureTargetBias)), Double(maxExposureTargetBias))))
             setExposureModeCustom(duration: duration, iso: AVCaptureDevice.autoISO, completionHandler: exposureCompletion)
@@ -161,7 +223,7 @@ enum AstroManualSettingsError: LocalizedError {
 final class AstroCaptureExposurePreparation: @unchecked Sendable {
     struct Reading {
         let iso: Double, seconds: Double, offset: Double, bias: Double
-        let appliedISO: Double, sensorISO: Double, sensorSeconds: Double, elapsed: Double
+        let appliedISO: Double, appliedSeconds: Double, sensorISO: Double, sensorSeconds: Double, elapsed: Double
         let settled: Bool
     }
     private let device: AVCaptureDevice
@@ -219,9 +281,11 @@ final class AstroCaptureExposurePreparation: @unchecked Sendable {
         guard isCurrent() else { return }
         let iso = Double(device.iso), seconds = CMTimeGetSeconds(device.exposureDuration)
         let offset = Double(device.exposureTargetOffset), bias = Double(device.exposureTargetBias)
-        let resolved = settings.resolvedISO(meteredISO: iso, meteredSeconds: seconds,
-            targetSeconds: shutter, meteredOffset: offset, meteredBias: bias,
-            range: Double(device.activeFormat.minISO)...Double(device.activeFormat.maxISO))
+        let minimumSeconds = CMTimeGetSeconds(device.activeFormat.minExposureDuration)
+        let resolved = settings.captureExposure(meteredISO: iso, meteredSeconds: seconds, requestedSeconds: shutter,
+            meteredOffset: offset, meteredBias: bias,
+            isoRange: Double(device.activeFormat.minISO)...Double(device.activeFormat.maxISO),
+            minimumSeconds: minimumSeconds)
         do {
             try device.lockForConfiguration()
             defer { device.unlockForConfiguration() }
@@ -235,13 +299,14 @@ final class AstroCaptureExposurePreparation: @unchecked Sendable {
             }
             device.activeMaxExposureDuration = device.activeFormat.maxExposureDuration
             var locked = settings
-            locked.isoAutomatic = false; locked.iso = resolved; locked.exposureBias = 0
+            locked.isoAutomatic = false; locked.iso = resolved.iso; locked.exposureBias = 0
             // Completion is delivered only after the sensor applies duration and ISO.
-            try device.applyAstroManualSettings(locked, shutterSeconds: shutter, lockAutomaticParameters: true) { _ in
+            try device.applyAstroManualSettings(locked, shutterSeconds: resolved.seconds, lockAutomaticParameters: true,
+                                                minimumShutterSeconds: min(shutter, resolved.seconds)) { _ in
                 self.queue.async {
                     guard self.isCurrent() else { return }
                     let reading = Reading(iso: iso, seconds: seconds, offset: offset, bias: bias,
-                        appliedISO: resolved, sensorISO: Double(self.device.iso),
+                        appliedISO: resolved.iso, appliedSeconds: resolved.seconds, sensorISO: Double(self.device.iso),
                         sensorSeconds: CMTimeGetSeconds(self.device.exposureDuration),
                         elapsed: ProcessInfo.processInfo.systemUptime - self.started, settled: settled)
                     self.completion(.success(reading))
@@ -390,8 +455,9 @@ final class AstroSharedCaptureSession: @unchecked Sendable {
         // Keep the old graph until the next owner's atomic configuration, so
         // a standalone empty-graph commit cannot tear down the running pipeline.
     }
-    func restoreNormal() {
+    func restoreNormal(then completion: @escaping () -> Void = {}) {
         queue.async {
+            defer { completion() }
             self.lock.lock(); self.owner = nil; self.reserved = false; self.lock.unlock()
             guard let graph = self.normal else { return }
             self.session.beginConfiguration()

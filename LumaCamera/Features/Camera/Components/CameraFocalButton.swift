@@ -5,6 +5,7 @@ import UIKit
 /// that tracking, so releasing a long press cannot also select the fixed focal length.
 struct CameraFocalButton: UIViewRepresentable {
     @Environment(\.captureControlAngle) private var controlAngle
+    @Environment(\.previewEdgeEnhanced) private var previewEdgeEnhanced
     let title: String
     var imageName: String? = nil
     let selected: Bool
@@ -59,7 +60,7 @@ struct CameraFocalButton: UIViewRepresentable {
             button.setTitle(nil, for: .normal)
             let configuration = UIImage.SymbolConfiguration(pointSize: selected ? 16 : 15, weight: .medium)
             button.setImage(UIImage(systemName: imageName, withConfiguration: configuration)?.withRenderingMode(.alwaysTemplate), for: .normal)
-            button.tintColor = selected ? UIColor(AppTheme.accent) : UIColor.white.withAlphaComponent(0.9)
+            button.tintColor = selected ? AppTheme.accentUIColor : UIColor.white.withAlphaComponent(0.9)
             if button.imageView?.transform != transform {
                 UIView.animate(withDuration: UIAccessibility.isReduceMotionEnabled ? 0 : 0.22, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction]) { button.imageView?.transform = transform }
             }
@@ -71,9 +72,15 @@ struct CameraFocalButton: UIViewRepresentable {
                 UIView.animate(withDuration: UIAccessibility.isReduceMotionEnabled ? 0 : 0.22, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction]) { button.titleLabel?.transform = transform }
             }
             button.imageView?.transform = .identity
-            button.setTitleColor(selected ? UIColor(AppTheme.accent) : UIColor.white.withAlphaComponent(0.85), for: .normal)
+            button.setTitleColor(selected ? AppTheme.accentUIColor : UIColor.white.withAlphaComponent(0.85), for: .normal)
         }
-        button.titleLabel?.font = .systemFont(ofSize: selected ? 12.5 : 10, weight: selected ? .semibold : .medium)
+        button.titleLabel?.font = Self.labelFont(selected: selected)
+        for layer in [button.titleLabel?.layer, button.imageView?.layer].compactMap({ $0 }) {
+            layer.shadowColor = UIColor.black.cgColor
+            layer.shadowRadius = 0.85
+            layer.shadowOffset = CGSize(width: 0, height: 0.35)
+            layer.shadowOpacity = previewEdgeEnhanced ? 0.94 : 0
+        }
         // The enclosing lens bar already supplies the glass background; a
         // selected inner background produced a visible double layer on tap.
         button.backgroundColor = .clear
@@ -82,6 +89,10 @@ struct CameraFocalButton: UIViewRepresentable {
         button.setNeedsLayout()
         button.accessibilityLabel = accessibilityLabel
         button.accessibilityHint = supportsContinuousZoom ? "点击切换焦段，长按打开变焦转盘" : "点击切换固定焦段"
+    }
+
+    fileprivate static func labelFont(selected: Bool) -> UIFont {
+        .systemFont(ofSize: selected ? 12.5 : 10, weight: selected ? .semibold : .medium)
     }
 
     static func dismantleUIView(_ button: UIButton, coordinator: Coordinator) {
@@ -189,5 +200,13 @@ enum CameraLensBarLayout {
         guard availableWidth.isFinite, count > 0 else { return 42 }
         let spacing = CGFloat(max(0, count - 1)) * 2
         return max(16, min(42, (availableWidth - 4 - spacing) / CGFloat(count)))
+    }
+}
+
+
+extension View {
+    func previewFocalContrast(title: String, selected: Bool) -> some View {
+        let size = (title as NSString).size(withAttributes: [.font: CameraFocalButton.labelFont(selected: selected)])
+        return previewControlContrast(accent: selected, glyphSize: size)
     }
 }

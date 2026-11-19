@@ -64,12 +64,15 @@ enum AstroSignalProtection {
         let mask = support.applyingFilter("CIMultiplyCompositing",parameters:[kCIInputBackgroundImageKey:sky])
         return clipped.applyingFilter("CIBlendWithMask",parameters:[kCIInputBackgroundImageKey:image,kCIInputMaskImageKey:mask]).cropped(to:image.extent)
     }
+    private static let denoiseKernel = MetalImageKernels.general("astroLinearDenoise")
+
     static func denoise(_ image: CIImage, iso: Double, context: CIContext, sky: CIImage? = nil) -> CIImage {
-        let statistics = AstroFrameStatistics.measure(image,context:context)
-        let strength = min(0.035,max(0.002,statistics.noise*1.5 + 0.003*log2(max(100,iso)/100)))
-        var reduced = image.applyingFilter("CINoiseReduction",parameters:["inputNoiseLevel":strength,"inputSharpness":0.25])
-        if let sky { reduced = reduced.applyingFilter("CIBlendWithMask",parameters:[kCIInputBackgroundImageKey:image,kCIInputMaskImageKey:sky]) }
-        return image.applyingFilter("CIBlendWithMask",parameters:[kCIInputBackgroundImageKey:reduced,kCIInputMaskImageKey:starMask(image,noise:statistics.noise)]).cropped(to:image.extent)
+        let statistics = AstroFrameStatistics.measure(image, context: context)
+        let noise = min(0.035, max(0.004, statistics.noise * 1.6 + 0.0008 * log2(max(100, iso) / 100)))
+        let matte = sky ?? CIImage(color: .white).cropped(to: image.extent)
+        return denoiseKernel?.apply(extent: image.extent, roiCallback: { index, region in
+            index == 0 ? region.insetBy(dx: -1, dy: -1) : region
+        }, arguments: [image.clampedToExtent(), matte, noise]) ?? image
     }
 }
 

@@ -153,6 +153,9 @@ struct CameraView: View {
                 }
             }
         }
+        .previewControlContrastSource(active: model.topLevelMode != .astro && !model.review && !model.settings) {
+            camera.preview
+        }
         .modifier(CameraHardwareCaptureModifier(
             enabled: cameraVisible && scenePhase == .active && !model.review && !model.settings && camera.ready,
             silent: model.preferences.silentShutter,
@@ -301,9 +304,10 @@ struct CameraView: View {
         .onChange(of: camera.videoBusy) { _, busy in
             if !busy { model.updateFrontFramingForOrientation(isLandscape: controlsLandscape) }
         }
+        .onReceive(AstroRecoveryStore.shared.didImportCapture) { library.acceptCommittedCaptureForReview($0) }
         .fullScreenCover(isPresented: $model.review) {
             GalleryView(model: model.gallery, library: library, isDemo: camera.demo, openLatestCapture: model.reviewCapture,
-                        openVideoID: model.reviewVideoID, onCamera: { model.review = false })
+                        openAssetID: model.reviewAssetID, onCamera: { model.review = false })
         }
         .overlay {
             if model.topLevelMode == .astro {
@@ -316,6 +320,7 @@ struct CameraView: View {
                 }, albumImage: gallery.albumButtonImage,
                    albumPendingCount: camera.pendingPhotoCount + library.pendingSaveCount + (library.videoSaving ? 1 : 0),
                    onOpenLibrary: { model.openLibrary() },
+                   recordsLocation: model.preferences.recordLocation,
                    externalCoverPresented: model.settings || model.review,
                    inheritedRatio: model.ratio, sharedSession: camera.astroSharedCaptureSession,
                    watermarkSettings: $model.preferences.watermark)

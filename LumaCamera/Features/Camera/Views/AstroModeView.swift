@@ -33,6 +33,8 @@ enum AstroCaptureMode: String, CaseIterable, Identifiable {
     static var toolbarButtonsFrame = CGRect.zero
     static var focalButtonsFrame = CGRect.zero
     static var shutterFrame = CGRect.zero
+    static var captureControlsHidden = false
+    static var shutterActivityVisible = false
     static var timelapseControlsHidden = false
     static var recordingTimerSeconds: Int?
     static var recordingTimerFrame = CGRect.zero
@@ -100,6 +102,8 @@ struct AstroModeView: View {
     let albumImage: UIImage?
     let albumPendingCount: Int
     let onOpenLibrary: () -> Void
+    let recordsLocation: Bool
+    @State private var captureLocation = CaptureLocationService()
     let externalCoverPresented: Bool
     @ObservedObject private var recovery = AstroRecoveryStore.shared
     @State private var recoveryPresented = false
@@ -144,13 +148,15 @@ struct AstroModeView: View {
     init(onSelectMode: @escaping (CameraViewModel.TopLevelMode, UIImage?) -> Void,
          handoffImage: UIImage?, handoffOpacity: Double, handoffBridgeFrame: CGRect?, onPreviewing: @escaping () -> Void,
          onOpenSettings: @escaping () -> Void, albumImage: UIImage?, albumPendingCount: Int,
-         onOpenLibrary: @escaping () -> Void, externalCoverPresented: Bool, inheritedRatio: FrameRatio,
+         onOpenLibrary: @escaping () -> Void, recordsLocation: Bool = false,
+         externalCoverPresented: Bool, inheritedRatio: FrameRatio,
          sharedSession: AstroSharedCaptureSession, watermarkSettings: Binding<PhotoWatermarkSettings>) {
         self.onSelectMode = onSelectMode; self.handoffImage = handoffImage
         self.handoffOpacity = handoffOpacity; self.onPreviewing = onPreviewing
         self.handoffBridgeFrame = handoffBridgeFrame
         self.onOpenSettings = onOpenSettings; self.albumImage = albumImage
         self.albumPendingCount = albumPendingCount; self.onOpenLibrary = onOpenLibrary
+        self.recordsLocation = recordsLocation
         self.externalCoverPresented = externalCoverPresented
         let initialPhotoRatio: AstroPhotoRatio = switch inheritedRatio {
         case .square: .r1x1
@@ -195,26 +201,20 @@ struct AstroModeView: View {
                         .frame(width: preview.width, height: preview.height)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
                         .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.16), lineWidth: 0.5))
+                        .previewControlContrastFrame()
                         .position(x: preview.midX + 8, y: preview.midY)
-                    if let result = currentImage {
-                        Image(uiImage: result)
-                            .resizable().scaledToFill()
-                            .frame(width: preview.width, height: preview.height)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .position(x: preview.midX + 8, y: preview.midY)
-                    }
-                    if showGrid {
+                    if showGrid, !captureControlsHidden {
                         StarGridOverlay()
                             .frame(width: preview.width, height: preview.height)
                             .position(x: preview.midX + 8, y: preview.midY)
                             .allowsHitTesting(false)
                     }
-                    if showLevel {
+                    if showLevel, !captureControlsHidden {
                         CameraLevelIndicator(roll: starLevel.roll)
                             .position(x: preview.midX + 8, y: preview.midY)
                             .allowsHitTesting(false)
                     }
-                    if showWatermark {
+                    if showWatermark, !captureControlsHidden {
                         Text("LUMA · 星空")
                             .font(.system(size: 9, weight: .semibold))
                             .foregroundStyle(.white.opacity(0.78))
@@ -263,8 +263,8 @@ struct AstroModeView: View {
                                 width: preview.width, height: frame.height)
                         } action: { AstroModeDiagnostics.toolbarClipFrame = $0 }
                         #endif
-                        .recordingHidden(timelapseControlsHidden)
-                        .animation(recordingControlsAnimation, value: timelapseControlsHidden)
+                        .recordingHidden(captureControlsHidden)
+                        .animation(recordingControlsAnimation, value: captureControlsHidden)
                     Spacer()
                 }
                 if timelapseControlsHidden {
@@ -276,11 +276,14 @@ struct AstroModeView: View {
                 bottomBar
             }
         }
-        .allowsHitTesting(activeParameter == nil || timelapseControlsHidden)
-        .accessibilityHidden(activeParameter != nil && !timelapseControlsHidden)
+        .previewControlContrastSource(active: ready && !externalCoverPresented && !environmentPresented && !captureControlsHidden) {
+            currentPreviewSnapshot ?? currentImage
+        }
+        .allowsHitTesting(activeParameter == nil || captureControlsHidden)
+        .accessibilityHidden(activeParameter != nil && !captureControlsHidden)
         .overlay(alignment: .top) {
             GeometryReader { proxy in
-                if let toolbarPanel, !timelapseControlsHidden {
+                if let toolbarPanel, !captureControlsHidden {
                     ZStack(alignment: .top) {
                         Color.clear
                             .contentShape(Rectangle())
@@ -293,13 +296,13 @@ struct AstroModeView: View {
                     }
                 }
             }
-            .allowsHitTesting(toolbarPanel != nil && activeParameter == nil && !timelapseControlsHidden)
+            .allowsHitTesting(toolbarPanel != nil && activeParameter == nil && !captureControlsHidden)
             .accessibilityHidden(activeParameter != nil)
             .animation(AppTheme.popupAnimation, value: toolbarPanel)
         }
         .overlay(alignment: .bottom) {
             Group {
-                if toolsVisible, !timelapseControlsHidden {
+                if toolsVisible, !captureControlsHidden {
                     ZStack(alignment: .bottom) {
                         Color.black.opacity(0.001).ignoresSafeArea()
                             .contentShape(Rectangle())
@@ -310,7 +313,7 @@ struct AstroModeView: View {
                     .ignoresSafeArea(edges: .bottom)
                     .transition(.opacity)
                 }
-                if watermarkPanelVisible, !timelapseControlsHidden {
+                if watermarkPanelVisible, !captureControlsHidden {
                     ZStack(alignment: .bottom) {
                         Color.black.opacity(0.001).ignoresSafeArea()
                             .contentShape(Rectangle())
@@ -326,7 +329,7 @@ struct AstroModeView: View {
         }
         .overlay(alignment: .bottom) {
             Group {
-                if let activeParameter, !timelapseControlsHidden {
+                if let activeParameter, !captureControlsHidden {
                     ZStack(alignment: .bottom) {
                         Color.black.opacity(0.001)
                             .ignoresSafeArea()
@@ -344,7 +347,7 @@ struct AstroModeView: View {
             .animation(AppTheme.popupAnimation, value: activeParameter)
         }
         .overlay {
-            if recoveryPresented, !timelapseControlsHidden {
+            if recoveryPresented, !captureControlsHidden {
                 AstroRecoveryPanel(store: recovery) {
                     withAnimation(AppTheme.popupAnimation) { recoveryPresented = false }
                 }.transition(.opacity)
@@ -383,11 +386,14 @@ struct AstroModeView: View {
         }
         .onChange(of: fileFormat) { _, _ in syncOutputOptions() }
         .onChange(of: photoRatio) { _, _ in
-            if mode == .photo { previewContentTransition.begin(currentImage ?? currentPreviewSnapshot, waitsForFrame: false, reducingMotion: reduceMotion) }
+            if mode == .photo { previewContentTransition.begin(currentPreviewSnapshot ?? currentImage, waitsForFrame: false, reducingMotion: reduceMotion) }
             syncOutputOptions()
         }
         .onChange(of: showWatermark) { _, _ in syncOutputOptions() }
         .onChange(of: watermarkSettings) { _, _ in syncOutputOptions() }
+        .onChange(of: recordsLocation && scenePhase == .active && !externalCoverPresented, initial: true) { _, active in
+            captureLocation.setActive(active)
+        }
         .onChange(of: showLevel) { _, enabled in
             if enabled { starLevel.start() } else { starLevel.stop() }
         }
@@ -401,10 +407,11 @@ struct AstroModeView: View {
         .onChange(of: isBusy) { _, busy in
             if !busy, previewCovered { updatePreviewPause() }
         }
-        .onChange(of: timelapseControlsHidden) { _, hidden in
+        .onChange(of: captureControlsHidden) { _, hidden in
             #if DEBUG
-            AstroModeDiagnostics.timelapseControlsHidden = hidden
-            if !hidden { AstroModeDiagnostics.recordingTimerSeconds = nil }
+            AstroModeDiagnostics.captureControlsHidden = hidden
+            AstroModeDiagnostics.timelapseControlsHidden = timelapseControlsHidden
+            if !timelapseControlsHidden { AstroModeDiagnostics.recordingTimerSeconds = nil }
             #endif
             if hidden {
                 environmentPresented = false
@@ -537,6 +544,8 @@ struct AstroModeView: View {
             AstroModeDiagnostics.toolbarButtonsFrame = .zero
             AstroModeDiagnostics.focalButtonsFrame = .zero
             AstroModeDiagnostics.shutterFrame = .zero
+            AstroModeDiagnostics.captureControlsHidden = false
+            AstroModeDiagnostics.shutterActivityVisible = false
             AstroModeDiagnostics.timelapseControlsHidden = false
             AstroModeDiagnostics.recordingTimerSeconds = nil
             AstroModeDiagnostics.recordingTimerFrame = .zero
@@ -555,6 +564,7 @@ struct AstroModeView: View {
             AstroModeDiagnostics.lensTransitionActive = false
             #endif
             recoveryPresented = false
+            captureLocation.setActive(false)
             interruptCaptureForBackground()
             countdownTask?.cancel()
             starLevel.stop()
@@ -613,6 +623,7 @@ struct AstroModeView: View {
         }
     }
 
+    private var captureControlsHidden: Bool { isBusy || countdownRemaining != nil }
     private var timelapseControlsHidden: Bool { mode == .timelapse && isBusy }
 
     private var recordingControlsAnimation: Animation {
@@ -688,11 +699,11 @@ struct AstroModeView: View {
                             .font(.system(size: 10, weight: .semibold))
                         Text(mode == .timelapse ? "4K" : "12MP")
                             .font(.system(size: 8))
-                    }.frame(maxWidth: .infinity).frame(height: 32)
+                    }.previewControlContrast().frame(maxWidth: .infinity).frame(height: 32)
                 }.buttonStyle(CameraToolbarButtonStyle()).disabled(mode == .timelapse)
                 Button { handleToolbarTap(1) } label: {
                     Text(mode == .timelapse ? "16:9" : mode == .trails ? "4:3" : photoRatio.rawValue)
-                        .font(.system(size: 10, weight: .semibold)).frame(maxWidth: .infinity).frame(height: 32)
+                        .font(.system(size: 10, weight: .semibold)).previewControlContrast().frame(maxWidth: .infinity).frame(height: 32)
                 }.buttonStyle(CameraToolbarButtonStyle()).disabled(mode != .photo)
                 Button { handleToolbarTap(2) } label: {
                     VStack(spacing: 1) {
@@ -700,10 +711,10 @@ struct AstroModeView: View {
                         if let subtitle = thirdSlotSubtitle {
                             Text(subtitle).font(.system(size: 8))
                         }
-                    }.frame(maxWidth: .infinity).frame(height: 32)
+                    }.previewControlContrast().frame(maxWidth: .infinity).frame(height: 32)
                 }.buttonStyle(CameraToolbarButtonStyle())
                 Button { handleToolbarTap(3) } label: {
-                    Image(systemName: "gearshape").font(.system(size: 17)).frame(maxWidth: .infinity).frame(height: 32)
+                    Image(systemName: "gearshape").font(.system(size: 17)).previewControlContrast(icon: true).frame(maxWidth: .infinity).frame(height: 32)
                 }.buttonStyle(CameraToolbarButtonStyle())
             }
             .frame(height: 32)
@@ -733,7 +744,7 @@ struct AstroModeView: View {
     }
 
     private func handleToolbarTap(_ item: Int) {
-        guard !timelapseControlsHidden, (0...3).contains(item), item != 0 || mode != .timelapse,
+        guard !captureControlsHidden, (0...3).contains(item), item != 0 || mode != .timelapse,
               item != 1 || mode == .photo else { return }
         CameraHaptics.impact(.light)
         switch item {
@@ -834,7 +845,7 @@ struct AstroModeView: View {
         } label: {
             Text(title).font(.system(size: 10, weight: .semibold))
                 .lineLimit(1).minimumScaleFactor(0.7)
-                .foregroundStyle(selected ? .black : .white.opacity(0.95))
+                .foregroundStyle(selected ? AppTheme.accentForeground : .white.opacity(0.95))
                 .frame(maxWidth: .infinity).frame(minHeight: 32)
                 .background(selected ? AppTheme.accent : Color.white.opacity(0.18), in: Capsule())
         }.buttonStyle(.plain)
@@ -858,6 +869,7 @@ struct AstroModeView: View {
                     onDrag: { _, _ in },
                     onFinish: {})
                     .frame(width: 42, height: 42)
+                    .previewFocalContrast(title: lens.title, selected: selectedLens == lens)
             }
         }
         .padding(2)
@@ -1103,16 +1115,6 @@ struct AstroModeView: View {
     @ViewBuilder private var bottomBar: some View {
         ZStack(alignment: .bottom) {
             Group {
-                if currentImage != nil {
-                    HStack(spacing: 12) {
-                        Button("保存") { saveCurrent() }.font(.system(size: 10, weight: .semibold)).disabled(isBusy)
-                        Button("重拍") { resetCurrent() }.font(.system(size: 10))
-                    }
-                    .foregroundStyle(.white.opacity(0.9))
-                    .padding(.horizontal, 12).frame(height: 28)
-                    .background(.black.opacity(0.34), in: Capsule())
-                    .padding(.bottom, 180)
-                }
                 zoomBar
                     #if DEBUG
                     .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
@@ -1171,8 +1173,8 @@ struct AstroModeView: View {
                 .padding(.horizontal, CameraControlLayout.parameterSideInset)
                 .padding(.bottom, CameraControlLayout.parameterBottom)
             }
-            .recordingHidden(timelapseControlsHidden)
-            .animation(recordingControlsAnimation, value: timelapseControlsHidden)
+            .recordingHidden(captureControlsHidden)
+            .animation(recordingControlsAnimation, value: captureControlsHidden)
             HStack(spacing: 0) {
                 Button { onOpenLibrary() } label: {
                     Group {
@@ -1208,14 +1210,14 @@ struct AstroModeView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("打开相册")
-                .recordingHidden(timelapseControlsHidden)
-                .animation(recordingControlsAnimation, value: timelapseControlsHidden)
+                .recordingHidden(captureControlsHidden)
+                .animation(recordingControlsAnimation, value: captureControlsHidden)
                 Spacer(minLength: 0)
                 ModeSwitchButton(current: .astro, size: 52) { target in
-                    onSelectMode(target, currentImage ?? currentPreviewSnapshot)
+                    onSelectMode(target, currentPreviewSnapshot ?? currentImage)
                 }
-                .recordingHidden(timelapseControlsHidden)
-                .animation(recordingControlsAnimation, value: timelapseControlsHidden)
+                .recordingHidden(captureControlsHidden)
+                .animation(recordingControlsAnimation, value: captureControlsHidden)
                 Spacer(minLength: 0)
                 shutterButton
                     #if DEBUG
@@ -1233,11 +1235,11 @@ struct AstroModeView: View {
                     mode = next
                 }
                 .disabled(isBusy)
-                .recordingHidden(timelapseControlsHidden)
-                .animation(recordingControlsAnimation, value: timelapseControlsHidden)
+                .recordingHidden(captureControlsHidden)
+                .animation(recordingControlsAnimation, value: captureControlsHidden)
                 Spacer(minLength: 0)
                 Button {
-                    guard !timelapseControlsHidden else { return }
+                    guard !captureControlsHidden else { return }
                     CameraHaptics.impact(.light)
                     environmentPresented = true
                 } label: {
@@ -1251,8 +1253,8 @@ struct AstroModeView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("星空环境信息")
                 .accessibilityIdentifier("astro.environment.open")
-                .recordingHidden(timelapseControlsHidden)
-                .animation(recordingControlsAnimation, value: timelapseControlsHidden)
+                .recordingHidden(captureControlsHidden)
+                .animation(recordingControlsAnimation, value: captureControlsHidden)
             }
             .frame(height: 78)
             .padding(.horizontal, 20)
@@ -1356,21 +1358,24 @@ struct AstroModeView: View {
     }
 
     private var shutterButton: some View {
-        Button { primaryAction() } label: {
-            ZStack {
-                Circle().stroke(.white.opacity(0.85), lineWidth: 3).frame(width: 76, height: 76)
-                Circle().fill(mode == .timelapse && timelapse.isRecording ? .red : .white)
-                    .frame(width: 66, height: 66)
-                if captureInProgress || countdownRemaining != nil {
-                    RoundedRectangle(cornerRadius: 7)
-                        .fill(mode == .timelapse && timelapse.isRecording ? .white : .black)
-                        .frame(width: 26, height: 26)
-                }
-            }
+        let center: CaptureShutterFace.Center = if captureInProgress || primaryDisabled {
+            .loading
+        } else if countdownRemaining != nil {
+            .countdown
+        } else {
+            .none
+        }
+        return Button { primaryAction() } label: {
+            CaptureShutterFace(kind: mode == .timelapse ? .video : .photo, center: center)
         }
         .buttonStyle(.plain)
         .disabled(primaryDisabled)
-        .accessibilityLabel(primaryLabel)
+        .accessibilityLabel(primaryDisabled ? "正在保存" : primaryLabel)
+        #if DEBUG
+        .onAppear { AstroModeDiagnostics.shutterActivityVisible = center == .loading }
+        .onChange(of: center) { _, value in AstroModeDiagnostics.shutterActivityVisible = value == .loading }
+        .onDisappear { AstroModeDiagnostics.shutterActivityVisible = false }
+        #endif
     }
 
     private var submodeButton: some View {
@@ -1431,7 +1436,7 @@ struct AstroModeView: View {
             return
         }
         if captureInProgress { performPrimaryAction(); return }
-        if countdownSeconds > 0, currentImage == nil {
+        if countdownSeconds > 0 {
             startCountdown()
             return
         }
@@ -1456,27 +1461,11 @@ struct AstroModeView: View {
     private func performPrimaryAction() {
         switch mode {
         case .photo:
-            if photo.isCapturing { photo.cancel() } else { photo.begin() }
+            if photo.isCapturing { photo.cancel() } else { photo.begin(location: recordsLocation ? captureLocation.snapshot() : nil) }
         case .trails:
-            if trails.isCapturing { trails.stopAndSave() } else { trails.begin() }
+            if trails.isCapturing { trails.stopAndSave() } else { trails.begin(location: recordsLocation ? captureLocation.snapshot() : nil) }
         case .timelapse:
             if timelapse.isRecording { timelapse.stopAndSave() } else { timelapse.begin() }
-        }
-    }
-
-    private func saveCurrent() {
-        switch mode {
-        case .photo: photo.save()
-        case .trails: trails.saveResult()
-        case .timelapse: break
-        }
-    }
-
-    private func resetCurrent() {
-        switch mode {
-        case .photo: photo.reset()
-        case .trails: trails.reset()
-        case .timelapse: break
         }
     }
 

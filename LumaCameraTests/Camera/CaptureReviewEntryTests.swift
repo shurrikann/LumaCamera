@@ -58,6 +58,23 @@ final class CaptureReviewEntryTests: XCTestCase {
     }
 
     @MainActor
+    func testCommittedAstroMediaOpensOnceByItsOwnAssetID() {
+        let model = AppDependencies.makeCameraModel(automaticallySave: false)
+        model.library.acceptPhoto(UIImage())
+        for assetID in ["astro-photo", "star-trails", "astro-timelapse"] {
+            model.library.acceptCommittedCaptureForReview(assetID)
+            model.openLibrary()
+            XCTAssertEqual(model.reviewAssetID, assetID)
+            XCTAssertFalse(model.reviewCapture)
+            model.review = false
+            model.openLibrary()
+            XCTAssertNil(model.reviewAssetID)
+            XCTAssertFalse(model.reviewCapture)
+            model.review = false
+        }
+    }
+
+    @MainActor
     func testEditingCurrentCaptureDoesNotMakeItAnUnviewedNewCapture() {
         let model = AppDependencies.makeCameraModel(automaticallySave: false)
         model.library.acceptPhoto(UIImage())

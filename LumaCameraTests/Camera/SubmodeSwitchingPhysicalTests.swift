@@ -1,3 +1,4 @@
+import AVFoundation
 import XCTest
 @testable import LumaCamera
 
@@ -278,6 +279,108 @@ final class SubmodeSwitchingPhysicalTests: XCTestCase {
             XCTAssertFalse(model.cinematicVideoEnabled, "cycle=\(cycle) cinematic did not turn off")
         }
         model.setCameraActive(false)
+    }
+
+    @MainActor func testOtherVideoSubmodeThroughDualCaptureToCinematic() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        let camera = model.camera
+        let idle = UIApplication.shared.isIdleTimerDisabled
+        let originalCompletion = camera.onVideoRecorded
+        var recording: Result<URL, Error>?
+        camera.onVideoRecorded = { recording = $0 }
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer {
+            if camera.videoBusy {
+                camera.onVideoRecorded = { result in
+                    if let url = try? result.get() { try? FileManager.default.removeItem(at: url) }
+                    camera.onVideoRecorded = originalCompletion
+                }
+                camera.stopVideoRecording()
+            } else {
+                camera.onVideoRecorded = originalCompletion
+            }
+            if let url = try? recording?.get() { try? FileManager.default.removeItem(at: url) }
+            model.setCameraActive(false)
+            UIApplication.shared.isIdleTimerDisabled = idle
+        }
+        model.setCameraActive(true)
+        for _ in 0..<400 {
+            if camera.ready { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        model.setCaptureKind(.video)
+        try await FullDeviceRegressionFixture.waitForVideoShutter(model, label: "before submode sequence")
+        guard model.dualCaptureAvailable else { throw XCTSkip("Requires MultiCam") }
+
+        func wait(_ label: String, until condition: () -> Bool) async throws {
+            let deadline = CACurrentMediaTime() + 12
+            while !condition(), camera.message == nil, CACurrentMediaTime() < deadline {
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            guard condition(), camera.message == nil else {
+                XCTFail("\(label): \(camera.message ?? "no readiness")")
+                throw CancellationError()
+            }
+        }
+
+        var durations: [Double] = []
+        for cycle in 0..<6 {
+            if model.cinematicVideoEnabled {
+                model.toggleCinematicVideoMode()
+                try await wait("leave cinematic") { !model.isPreparingTransition && !camera.cinematicVideoCaptureActive }
+            }
+            if cycle.isMultiple(of: 2) { model.toggleTimeLapseMode() }
+            else { model.toggleSlowMotionMode() }
+            try await wait("previous submode") {
+                !model.isPreparingTransition && (cycle.isMultiple(of: 2) ? model.timeLapseEnabled : model.slowMotionEnabled)
+            }
+            model.toggleDualCapture()
+            try await wait("dual ready") { camera.dualCaptureEnabled && model.videoShutterEnabled && !model.isPreparingTransition }
+            let begin = CACurrentMediaTime()
+            model.toggleCinematicVideoMode()
+            try await wait("cinematic entry cycle \(cycle)") {
+                model.cinematicVideoEnabled && camera.cinematicVideoCaptureActive
+                    && model.videoShutterEnabled && !model.isPreparingTransition
+            }
+            let running = await withCheckedContinuation { continuation in
+                camera.actualSessionRunningForTesting { continuation.resume(returning: $0) }
+            }
+            XCTAssertTrue(running)
+            XCTAssertEqual(model.captureKind, .video)
+            XCTAssertFalse(camera.dualCaptureEnabled)
+            durations.append(CACurrentMediaTime() - begin)
+        }
+        model.toggleVideoRecording()
+        try await wait("recording starts") { camera.videoRecording }
+        try await Task.sleep(for: .seconds(2))
+        model.toggleVideoRecording()
+        try await wait("movie available") { recording != nil && !camera.videoBusy }
+        let url = try XCTUnwrap(recording).get()
+        let movie = AVURLAsset(url: url)
+        let tracks = try await movie.loadTracks(withMediaType: .video)
+        let track = try XCTUnwrap(tracks.first)
+        let reader = try AVAssetReader(asset: movie)
+        let output = AVAssetReaderTrackOutput(track: track, outputSettings: [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+        ])
+        reader.add(output)
+        XCTAssertTrue(reader.startReading())
+        var frames = 0
+        while output.copyNextSampleBuffer() != nil { frames += 1 }
+        XCTAssertEqual(reader.status, .completed)
+        XCTAssertGreaterThan(frames, 1)
+
+        model.toggleDualCapture()
+        try await wait("dual ready for cancellation") { camera.dualCaptureEnabled && model.videoShutterEnabled && !model.isPreparingTransition }
+        let cancelledAt = CACurrentMediaTime()
+        model.toggleCinematicVideoMode()
+        model.requestCaptureKind(.photo)
+        try await wait("photo after cancelling cine handoff") {
+            model.captureKind == .photo && camera.ready && !model.isPreparingTransition
+                && camera.latestPreviewFrameTime > cancelledAt
+        }
+        XCTAssertFalse(camera.cinematicVideoCaptureActive)
+        print("CINEMATIC-FROM-DUAL samples=\(durations.count) elapsedSeconds=\(durations) decodedFrames=\(frames) cancelSeconds=\(CACurrentMediaTime() - cancelledAt) PhotosWrites=0")
     }
 
     @MainActor func testSubmodeCrossSwitchTimingAndStability() async throws {

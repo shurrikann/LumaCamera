@@ -11,6 +11,34 @@ inline float hdrExpansionGain(float peak) {
     return 3.0 * p4 * p2;
 }
 
+// Average only neighbors whose differences fit in the linear noise band.
+[[stitchable]] float4 astroLinearDenoise(coreimage::sampler source, coreimage::sampler sky,
+                                       float noise, coreimage::destination dest) {
+    const float2 point = dest.coord();
+    const float4 pixel = source.sample(source.transform(point));
+    const float skyWeight = clamp(sky.sample(sky.transform(point)).r, 0.0, 1.0);
+    if (skyWeight <= 0.0) {
+        return pixel;
+    }
+    const float3 center = unpremultiply(pixel).rgb;
+    float3 sum = center * 2.0;
+    float total = 2.0;
+    for (int y = -1; y <= 1; ++y) {
+        for (int x = -1; x <= 1; ++x) {
+            if (x == 0 && y == 0) { continue; }
+            const float2 neighborPoint = point + float2(x, y);
+            const float3 neighbor = unpremultiply(source.sample(source.transform(neighborPoint))).rgb;
+            const float3 delta = abs(neighbor - center);
+            const float difference = max(delta.r, max(delta.g, delta.b));
+            const float spatialWeight = x == 0 || y == 0 ? 1.0 : 0.65;
+            const float weight = spatialWeight * (1.0 - smoothstep(noise, noise * 3.0, difference));
+            sum += neighbor * weight;
+            total += weight;
+        }
+    }
+    return premultiply(float4(mix(center, sum / total, skyWeight), pixel.a));
+}
+
 [[stitchable]] float4 adaptiveSDRBase(sample_t pixel) {
     float4 c = unpremultiply(pixel);
     float headroom = max(1.0,max(c.r,max(c.g,c.b)));

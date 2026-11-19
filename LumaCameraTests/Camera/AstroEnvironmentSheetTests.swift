@@ -46,6 +46,7 @@ final class AstroEnvironmentSheetTests: XCTestCase {
 
         var times = [Int]()
         var bottomGaps = [CGFloat]()
+        var layerTimings = [Double]()
         for angle in [0.0, 90, -90, 0.0] {
             state.angle = angle
             let start = CACurrentMediaTime()
@@ -85,6 +86,26 @@ final class AstroEnvironmentSheetTests: XCTestCase {
             XCTAssertTrue(findMap(panel.view) === map)
             XCTAssertGreaterThanOrEqual(map.bounds.height, mediumSize.height)
             XCTAssertEqual(map.bounds.width, mediumSize.width, accuracy: 1)
+            if layerTimings.isEmpty {
+                let picker = try XCTUnwrap(findLayerPicker(panel.view))
+                let pollutionHeight = scroll.contentSize.height
+                for _ in 0..<3 {
+                    for index in [1, 2, 0] {
+                        let start = CACurrentMediaTime()
+                        picker.selectedSegmentIndex = index
+                        picker.sendActions(for: .valueChanged)
+                        try await wait {
+                            switch index {
+                            case 1: return scroll.contentSize.height < pollutionHeight - 6
+                            case 2: return scroll.contentSize.height > pollutionHeight + 6
+                            default: return abs(scroll.contentSize.height - pollutionHeight) < 1
+                            }
+                        }
+                        XCTAssertTrue(findMap(panel.view) === map)
+                        layerTimings.append((CACurrentMediaTime() - start) * 1000)
+                    }
+                }
+            }
             sheet.animateChanges { sheet.selectedDetentIdentifier = .medium }
             try await wait { abs(panel.view.bounds.height - collapsedHeight) < 1 }
             XCTAssertEqual(map.bounds.height, mediumSize.height, accuracy: 1)
@@ -99,6 +120,7 @@ final class AstroEnvironmentSheetTests: XCTestCase {
         try await wait { host.presentedViewController == nil }
         print("ASTRO-ENVIRONMENT samples=\(times.count) angles=0,90,-90,0 layoutReadyMilliseconds=\(times) (20ms polling; excludes network tiles)")
         print("ASTRO-ENVIRONMENT bottomInsetPoints=\(bottomGaps)")
+        print("ASTRO-ENVIRONMENT-LEGEND layerSwitches=\(layerTimings.count) layoutMilliseconds=\(layerTimings)")
     }
 
     func testDeleteAndRefillRemovesOnlyMatchingPin() {
@@ -130,7 +152,7 @@ final class AstroEnvironmentSheetTests: XCTestCase {
         print("ASTRO-SITES samples=\(times.count) mutationAndAssertionsMaxMS=\(times.max() ?? 0)")
     }
 
-    func testHeadingPresentationUpdatesWithFixedCoordinateAndClearsWhenInvalid() throws {
+    func testSolidHeadingPresentationSurvivesMissingUpdatesAndRecreation() throws {
         let map = MKMapView()
         let coordinator = AstroNightLightsMap.Coordinator(source: LightPollutionSources.current, onCenterChange: { _ in })
         let marker = coordinator.marker
@@ -140,8 +162,9 @@ final class AstroEnvironmentSheetTests: XCTestCase {
         XCTAssertNil(CaptureLocationService.usableHeading(trueNorth: 90, magneticNorth: 80, accuracy: -1))
         XCTAssertNil(CaptureLocationService.usableHeading(trueNorth: .nan, magneticNorth: 360, accuracy: 3))
         let view = try XCTUnwrap(coordinator.mapView(map, viewFor: marker) as? AstroLocationAnnotationView)
-        XCTAssertNotNil(view.arrow.image)
-        XCTAssertTrue(view.arrow.isHidden)
+        XCTAssertEqual(view.arrow.image?.renderingMode, .alwaysTemplate)
+        XCTAssertFalse(view.arrow.isHidden)
+        XCTAssertEqual(view.arrow.transform, .identity)
         let values: [Double] = [0, 90, 180, 270, 359, 1]
         var times = [Double]()
         for value in Array(repeating: values, count: 10).flatMap({ $0 }) {
@@ -152,8 +175,20 @@ final class AstroEnvironmentSheetTests: XCTestCase {
             XCTAssertEqual(view.arrow.transform.a, cos(value * .pi / 180), accuracy: 0.0001)
             XCTAssertEqual(view.arrow.transform.b, sin(value * .pi / 180), accuracy: 0.0001)
         }
-        view.setHeading(nil, animated: true)
-        XCTAssertTrue(view.arrow.isHidden)
+        // A new annotation view keeps the last valid bearing, even if the compass
+        // briefly reports no usable value while the map changes size.
+        for height in [250.0, 360.0, 250.0, 360.0, 250.0] {
+            map.frame.size.height = height
+            coordinator.setHeading(90, on: map)
+            coordinator.setHeading(nil, on: map)
+            let recreated = try XCTUnwrap(coordinator.mapView(map, viewFor: marker) as? AstroLocationAnnotationView)
+            XCTAssertFalse(recreated.arrow.isHidden)
+            XCTAssertEqual(recreated.arrow.image?.renderingMode, .alwaysTemplate)
+            XCTAssertEqual(recreated.arrow.transform.b, 1, accuracy: 0.0001)
+        }
+        view.setHeading(nil, animated: false)
+        XCTAssertFalse(view.arrow.isHidden)
+        XCTAssertEqual(view.arrow.transform, .identity)
         XCTAssertEqual(marker.coordinate.latitude, 31)
         XCTAssertEqual(marker.coordinate.longitude, 121)
         print("ASTRO-HEADING samples=\(times.count) transformUpdateMaxMS=\(times.max() ?? 0)")
@@ -181,6 +216,11 @@ final class AstroEnvironmentSheetTests: XCTestCase {
             if let scrollView = findScrollView(child) { return scrollView }
         }
         return nil
+    }
+
+    private func findLayerPicker(_ view: UIView) -> UISegmentedControl? {
+        if let picker = view as? UISegmentedControl, picker.numberOfSegments == 3 { return picker }
+        return view.subviews.lazy.compactMap { self.findLayerPicker($0) }.first
     }
 }
 

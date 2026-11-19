@@ -68,13 +68,14 @@ extension CameraView {
                                 Text("\(model.photoResolution.rawValue)MP").font(.system(size: 8, weight: .medium))
                             }
                         }.foregroundStyle(model.toolbarPanel == .format ? AppTheme.accent : .white)
-                            .rotatingCaptureContent().frame(maxWidth: .infinity).frame(height: 32)
+                            .rotatingCaptureContent().previewControlContrast(accent: model.toolbarPanel == .format).frame(maxWidth: .infinity).frame(height: 32)
                     }.buttonStyle(CameraToolbarButtonStyle()).accessibilityLabel(model.photoFormat == .heifPro ? "图片格式，HEIF Pro" : "图片格式与像素")
                         .accessibilityIdentifier("camera.toolbar.photoFormat")
                         .captureControlGeometry("toolbar.format", model: model)
                     Button { model.toggleToolbarPanel(.ratio) } label: {
-                        Text(model.ratio.rawValue).rotatingCaptureContent().font(.system(size: 10, weight: .semibold)).frame(maxWidth: .infinity).frame(height: 32)
+                        Text(model.ratio.rawValue).font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(model.toolbarPanel == .ratio ? AppTheme.accent : .white)
+                            .rotatingCaptureContent().previewControlContrast(accent: model.toolbarPanel == .ratio).frame(maxWidth: .infinity).frame(height: 32)
                     }.buttonStyle(CameraToolbarButtonStyle()).accessibilityLabel("画面比例").accessibilityValue(model.ratio.rawValue)
                         .captureControlGeometry("toolbar.ratio", model: model)
                     toolbarIcon(model.flashMode.icon, label: "闪光灯，\(model.flashMode.rawValue)", active: model.flashMode != .off) { model.flashMode = model.flashMode.next }
@@ -93,7 +94,7 @@ extension CameraView {
                                     .font(.system(size: 8, weight: .medium)).lineLimit(1).minimumScaleFactor(0.75)
                             }
                             .foregroundStyle(model.selectedSlowShutterPreset != nil ? AppTheme.accent : .white)
-                            .rotatingCaptureContent()
+                            .rotatingCaptureContent().previewControlContrast(accent: model.selectedSlowShutterPreset != nil)
                             .frame(maxWidth: .infinity)
                             .frame(height: 32)
                         }
@@ -113,8 +114,8 @@ extension CameraView {
                                     .font(.system(size: 7, weight: .medium, design: .rounded))
                                     .monospacedDigit()
                             }
-                            .rotatingCaptureContent()
                             .foregroundStyle(model.virtualApertureSliderVisible ? AppTheme.accent : .white)
+                            .rotatingCaptureContent().previewControlContrast(accent: model.virtualApertureSliderVisible)
                             .frame(maxWidth: .infinity).frame(height: 32)
                             .contentShape(Rectangle())
                         }
@@ -133,8 +134,8 @@ extension CameraView {
                                     .font(.system(size: 7, weight: .medium, design: .rounded))
                                     .monospacedDigit()
                             }
-                            .rotatingCaptureContent()
                             .foregroundStyle(model.portraitDepthSliderVisible ? AppTheme.accent : .white)
+                            .rotatingCaptureContent().previewControlContrast(accent: model.portraitDepthSliderVisible)
                             .frame(maxWidth: .infinity).frame(height: 32)
                             .contentShape(Rectangle())
                         }
@@ -153,8 +154,8 @@ extension CameraView {
                                 .monospacedDigit()
                                 .lineLimit(1)
                         }
-                        .rotatingCaptureContent()
                         .foregroundStyle(model.burstCaptureActive ? AppTheme.accent : .white)
+                        .rotatingCaptureContent().previewControlContrast(accent: model.burstCaptureActive)
                         .frame(maxWidth: .infinity).frame(height: 32)
                         .accessibilityLabel("连拍张数")
                         .accessibilityValue("\(model.burstCaptureCount)")
@@ -163,8 +164,8 @@ extension CameraView {
                         Button { model.toggleToolbarPanel(.tone) } label: {
                             ToneCurveSymbol().stroke(lineWidth: 1.4)
                                 .frame(width: 18, height: 15)
-                                .rotatingCaptureContent()
                                 .foregroundStyle(model.toolbarPanel == .tone || model.tone != .natural ? AppTheme.accent : .white)
+                                .rotatingCaptureContent().previewControlContrast(accent: model.toolbarPanel == .tone || model.tone != .natural, icon: true)
                                 .frame(maxWidth: .infinity).frame(height: 32)
                         }
                         .buttonStyle(CameraToolbarButtonStyle())
@@ -265,8 +266,9 @@ extension CameraView {
             if feedback { CameraHaptics.impact(.light) }
             action()
         } label: {
-            Image(systemName: icon).rotatingCaptureContent().font(.system(size: 15, weight: .regular))
-                .foregroundStyle(active ? AppTheme.accent : .white).frame(maxWidth: .infinity).frame(height: 32)
+            Image(systemName: icon).font(.system(size: 15, weight: .regular))
+                .foregroundStyle(active ? AppTheme.accent : .white)
+                .rotatingCaptureContent().previewControlContrast(accent: active, icon: true).frame(maxWidth: .infinity).frame(height: 32)
         }.buttonStyle(CameraToolbarButtonStyle()).accessibilityLabel(label).accessibilityValue(active ? "开启" : "关闭")
     }
 
@@ -364,7 +366,7 @@ extension CameraView {
                 }
             }
             .foregroundStyle(selected ? AppTheme.accent : .white)
-            .rotatingCaptureContent()
+            .rotatingCaptureContent().previewControlContrast(accent: selected)
             .frame(maxWidth: .infinity).frame(height: 32)
             .contentShape(Rectangle())
         }

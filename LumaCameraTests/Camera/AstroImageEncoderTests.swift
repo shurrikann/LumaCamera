@@ -55,6 +55,78 @@ final class AstroImageEncoderTests: XCTestCase {
         XCTAssertEqual(CGImageSourceGetType(sourceImage) as String?, UTType.heic.identifier)
     }
 
+    func testCommentsRoundTripInJPGAndHEIFFiles() throws {
+        let image = try makeImage(width: 120, height: 80)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        let start = ProcessInfo.processInfo.systemUptime
+        var count = 0
+        for format in [AstroImageFormat.jpg, .heif] {
+            for (mode, englishName) in [("星空照片", "Astro Photo"), ("星轨", "Star Trails")] {
+                let options = AstroImageOptions(format: format, mode: mode, frameCount: 12, exposureSeconds: 0.012195,
+                                               iso: 54, lensName: "Test Lens", focalLengthMM: 6.765, focalLength35mm: 24)
+                let encoded = try XCTUnwrap(AstroImageEncoder.encode(image, options: options))
+                let url = folder.appendingPathComponent("\(count).\(format.fileExtension)")
+                try encoded.write(to: url)
+                let source = try XCTUnwrap(CGImageSourceCreateWithURL(url as CFURL, nil))
+                XCTAssertEqual(CGImageSourceGetType(source) as String?, format.utType.identifier)
+                let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any])
+                let exif = try XCTUnwrap(properties[kCGImagePropertyExifDictionary] as? [CFString: Any])
+                XCTAssertEqual(exif[kCGImagePropertyExifUserComment] as? String, "Luma \(englishName) | 12 frames | 0.012195s | ISO 54")
+                XCTAssertEqual(try XCTUnwrap(exif[kCGImagePropertyExifExposureTime] as? Double), 0.012195, accuracy: 0.000001)
+                XCTAssertEqual(exif[kCGImagePropertyExifISOSpeedRatings] as? [Int], [54])
+                XCTAssertEqual(exif[kCGImagePropertyExifFocalLenIn35mmFilm] as? Int, 24)
+                let metadata = try XCTUnwrap(CGImageSourceCopyMetadataAtIndex(source, 0, nil))
+                let description = CGImageMetadataCopyStringValueWithPath(metadata, nil, "dc:description[x-default]" as CFString) as String?
+                XCTAssertEqual(description, "Luma \(mode) · 12 帧 · 0.012195s · ISO 54")
+                count += 1
+            }
+        }
+        XCTAssertEqual(count, 4)
+        print("ASTRO-METADATA samples=\(count) formats=JPG,HEIF encodeWriteReadMilliseconds=\((ProcessInfo.processInfo.systemUptime - start) * 1000)")
+    }
+
+    func testAstroDetailFieldsRoundTripAndLocationIsOptional() throws {
+        let image = try makeImage(width: 120, height: 80)
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        let start = ProcessInfo.processInfo.systemUptime
+        for format in [AstroImageFormat.jpg, .heif] {
+            for location in [PhotoLocation(latitude: -33.87, longitude: 151.21, timestamp: date), nil] {
+                let parameters = PhotoCaptureParameters(capturedAt: date, mode: "星空", shootingType: "星空照片",
+                    aperture: 1.78, requestedExposureBiasEV: -0.7, whiteBalanceKelvin: 4100,
+                    whiteBalanceTint: -4, whiteBalanceMode: "手动", requestedFormat: "HEIF", ratio: "4:3", location: location)
+                let options = AstroImageOptions(format: format, mode: "星空照片", frameCount: 9,
+                    exposureSeconds: 0.2, iso: 800, focalLengthMM: 6.765, focalLength35mm: 24,
+                    parameters: parameters)
+                let data = try XCTUnwrap(AstroImageEncoder.encode(image, options: options))
+                let source = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData, nil))
+                let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any])
+                let rawGPS = PhotoLocation.fromGPS(properties)
+                if let location {
+                    XCTAssertEqual(try XCTUnwrap(rawGPS?.latitude), location.latitude, accuracy: 0.000001)
+                    XCTAssertEqual(try XCTUnwrap(rawGPS?.longitude), location.longitude, accuracy: 0.000001)
+                } else {
+                    XCTAssertNil(properties[kCGImagePropertyGPSDictionary])
+                }
+                let diagnostics = try XCTUnwrap(AstroImageEncoder.readDiagnostics(source, properties: properties))
+                let recorded = try XCTUnwrap(diagnostics.currentParameters)
+                XCTAssertEqual(try XCTUnwrap(recorded.aperture), 1.78, accuracy: 0.001)
+                XCTAssertEqual(try XCTUnwrap(recorded.exifExposureBiasEV), -0.7, accuracy: 0.001)
+                XCTAssertEqual(recorded.capturedAt, date)
+                XCTAssertEqual(recorded.location, location)
+                let info = PhotoInfoPresentation(details: PhotoDetails(
+                    rows: PhotoCaptureDiagnostics.exposureRows(properties: properties) + diagnostics.detailRows,
+                    captureParameters: recorded, location: rawGPS, capturedAt: date))
+                XCTAssertEqual(info.parameterItems.first { $0.title == "拍摄类型" }?.value, "星空照片")
+                XCTAssertEqual(info.additionalRows.first { $0.title == "快门时白平衡" }?.value, "4100 K")
+                XCTAssertEqual(info.additionalRows.first { $0.title == "合成帧数" }?.value, "9 帧")
+            }
+        }
+        print("ASTRO-DETAIL-ROUNDTRIP samples=4 milliseconds=\((ProcessInfo.processInfo.systemUptime-start)*1000)")
+    }
+
     private func makeImage(width: Int, height: Int) throws -> CGImage {
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let context = try XCTUnwrap(CGContext(data: nil, width: width, height: height,

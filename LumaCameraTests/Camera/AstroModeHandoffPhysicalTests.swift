@@ -1,4 +1,5 @@
 import AVFoundation
+import ImageIO
 import ReplayKit
 import CoreImage
 import SwiftUI
@@ -102,6 +103,13 @@ import XCTest
             XCTAssertEqual(AstroModeDiagnostics.toolbarButtonsFrame.midY, videoToolbar.midY, accuracy: 0.5)
         }
 
+        model.camera.message = nil
+        NotificationCenter.default.post(name: AVCaptureSession.runtimeErrorNotification, object: model.camera.astroSharedCaptureSession.session,
+            userInfo: [AVCaptureSessionErrorKey: NSError(domain: AVFoundationErrorDomain, code: -11819)])
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertNil(model.camera.message)
+        XCTAssertFalse(model.camera.recoveringSession)
+        XCTAssertEqual(model.topLevelMode, .astro)
         let engine = try XCTUnwrap(AstroModeDiagnostics.timelapse)
         let shutter = try XCTUnwrap(AstroModeDiagnostics.shutterAction)
         try await wait { AstroModeDiagnostics.previewReady && engine.ownsCaptureRoute }
@@ -412,6 +420,53 @@ import XCTest
         print("ASTRO-MODE-HANDOFF sessionStops=\(stops.value) enterSamples=8 enterSeconds=\(entering) returnSamples=8 returnSeconds=\(leaving) ratios=8 starSubmodes=3 rapidExit=3 noTimeout=true PhotosWrites=0; request through actual-preview signal and fade cleanup, not display FPS")
         #endif
     }
+    func testProcessedAstroReturnPreservesOrdinaryRAWShutter() async throws {
+        #if targetEnvironment(simulator)
+        throw XCTSkip("Requires physical RAW capture")
+        #else
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        let camera = model.camera
+        let originalCompletion = camera.onCaptureCompleted
+        defer {
+            camera.onCaptureCompleted = originalCompletion
+            model.cancelModeHandoff()
+            model.selectTopLevelMode(.photo)
+            model.photoFormat = .jpeg
+        }
+        model.setCameraActive(true)
+        try await wait { camera.ready && camera.preview != nil && camera.availablePhotoFormats.contains(.raw) }
+        var samples: [Double] = []
+        for format in [PhotoFileFormat.raw, .rawJPEG] {
+            model.photoFormat = format
+            model.selectTopLevelMode(.astro)
+            try await wait { model.topLevelMode == .astro && model.modeHandoffTarget == nil && AstroModeDiagnostics.previewReady }
+            let astro = try XCTUnwrap(AstroModeDiagnostics.photo)
+            astro.manualSettings.photoShutterSeconds = 1.0 / 15
+            astro.frameCount = 1
+            astro.begin()
+            try await wait(timeout: 30) { astro.result != nil && !astro.isSaving && !astro.lastFile.isEmpty }
+            let start = CACurrentMediaTime()
+            model.selectTopLevelMode(.photo, outgoingPreview: astro.previewFrames.snapshot)
+            try await wait { model.topLevelMode == .photo && model.modeHandoffTarget == nil && camera.ready }
+            samples.append(CACurrentMediaTime() - start)
+            XCTAssertEqual(model.photoFormat, format)
+            XCTAssertTrue(camera.availablePhotoFormats.contains(format))
+            var result: CapturedPhoto?
+            camera.onCaptureCompleted = { result = $0 }
+            model.takePhoto()
+            try await wait(timeout: 40) { result != nil || camera.message != nil }
+            XCTAssertNil(camera.message)
+            let resources = try XCTUnwrap(result?.resources)
+            XCTAssertTrue(resources.contains { $0.filename.lowercased().hasSuffix(".dng") })
+            if format == .rawJPEG {
+                XCTAssertTrue(resources.contains { $0.filename.lowercased().hasSuffix(".jpg") })
+            }
+            try await wait { !camera.shutterBusy }
+        }
+        print("ASTRO-RAW-RETURN samples=\(samples.count) readySeconds=\(samples) formats=RAW,RAW+JPG PhotosWrites=0")
+        #endif
+    }
+
     func testSharedSessionCapturesRawTrailsAndTimelapseThenRestoresNormal() async throws {
         #if targetEnvironment(simulator)
         throw XCTSkip("Requires real shared capture hardware")
@@ -425,30 +480,73 @@ import XCTest
         let photo = try XCTUnwrap(AstroModeDiagnostics.photo)
         photo.manualSettings.isoAutomatic = true; photo.manualSettings.exposureBias = 1
         photo.manualSettings.photoShutterSeconds = 0.5; photo.frameCount = 2
+        logTonalRange("photo-preview", photo.previewFrames.snapshot?.cgImage)
         print("SHARED-STAGE RAW begin")
-        photo.begin()
+        let store = AstroRecoveryStore.shared
+        try await wait { !AstroModeDiagnostics.shutterFrame.isEmpty }
+        let shutterFrame = AstroModeDiagnostics.shutterFrame
+        let location = PhotoLocation(latitude: 31.23, longitude: 121.47)
+        photo.begin(location: location)
+        try await wait { AstroModeDiagnostics.captureControlsHidden && AstroModeDiagnostics.shutterActivityVisible }
+        XCTAssertEqual(AstroModeDiagnostics.shutterFrame, shutterFrame)
         try await wait(timeout: 30) { photo.result != nil || photo.error != nil }
         XCTAssertNil(photo.error); XCTAssertEqual(photo.capturedFrames, 2)
         let rawImage = try XCTUnwrap(photo.result?.cgImage)
         XCTAssertEqual(rawImage.width * rawImage.height, 4032 * 3024)
+        logTonalRange("photo-result", rawImage)
         print("SHARED-STAGE RAW complete")
-        photo.save(); try await wait(timeout: 20) { !photo.isSaving }
+        try await wait(timeout: 20) { !photo.isSaving && !photo.lastFile.isEmpty && !AstroModeDiagnostics.captureControlsHidden }
+        XCTAssertFalse(AstroModeDiagnostics.shutterActivityVisible)
+        XCTAssertEqual(AstroModeDiagnostics.shutterFrame, shutterFrame)
         XCTAssertNil(photo.error)
+        store.reload()
+        try await wait { store.items.contains { $0.fileName == photo.lastFile && $0.phase == "ready" } }
+        let autoSaved = try XCTUnwrap(store.items.first { $0.fileName == photo.lastFile && $0.phase == "ready" })
+        let photoURL = try XCTUnwrap(store.journal.url(for: autoSaved))
+        let source = try XCTUnwrap(CGImageSourceCreateWithURL(photoURL as CFURL, nil))
+        let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any])
+        let diagnostics = try XCTUnwrap(AstroImageEncoder.readDiagnostics(source, properties: properties))
+        XCTAssertEqual(diagnostics.parameters?.shootingType, "星空照片")
+        XCTAssertGreaterThan(diagnostics.parameters?.aperture ?? 0, 0)
+        XCTAssertEqual(diagnostics.parameters?.exifExposureBiasEV, 1)
+        XCTAssertEqual(try XCTUnwrap(PhotoLocation.fromGPS(properties)?.latitude), location.latitude, accuracy: 0.000001)
+        photo.save()
+        XCTAssertFalse(photo.isSaving, "A completed auto-save must not import twice")
         AstroModeDiagnostics.submode?.wrappedValue = .trails
         let trails = try XCTUnwrap(AstroModeDiagnostics.trails)
         try await wait { trails.ownsCaptureRoute && trails.previewFrames.snapshot != nil && AstroModeDiagnostics.previewReady }
-        trails.autoSaveOnFinish = false; trails.captureDurationSeconds = 1
+        trails.autoSaveOnFinish = true; trails.captureDurationSeconds = 5
+        let existingTrailIDs = Set(store.items.map(\.id))
         trails.manualSettings.isoAutomatic = true; trails.manualSettings.exposureBias = 1
+        logTonalRange("trails-preview", trails.previewFrames.snapshot?.cgImage)
         print("SHARED-STAGE trails begin")
-        trails.begin(); try await wait(timeout: 30) { trails.result != nil || trails.error != nil }
+        trails.begin(location: location)
+        try await wait { AstroModeDiagnostics.captureControlsHidden && AstroModeDiagnostics.shutterActivityVisible }
+        XCTAssertEqual(AstroModeDiagnostics.shutterFrame, shutterFrame)
+        try await wait(timeout: 30) { trails.result != nil || trails.error != nil }
+        try await wait { !AstroModeDiagnostics.captureControlsHidden }
+        XCTAssertFalse(AstroModeDiagnostics.shutterActivityVisible)
         XCTAssertNotNil(trails.result); XCTAssertNil(trails.error)
+        store.reload()
+        try await wait { store.items.contains { $0.kind == "星轨" && $0.phase == "ready" && !existingTrailIDs.contains($0.id) } }
+        let trailCapture = try XCTUnwrap(store.items.last { $0.kind == "星轨" && $0.phase == "ready" && !existingTrailIDs.contains($0.id) })
+        let trailURL = try XCTUnwrap(store.journal.url(for: trailCapture))
+        let trailSource = try XCTUnwrap(CGImageSourceCreateWithURL(trailURL as CFURL, nil))
+        let trailProperties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(trailSource, 0, nil) as? [CFString: Any])
+        XCTAssertEqual(AstroImageEncoder.readDiagnostics(trailSource, properties: trailProperties)?.parameters?.shootingType, "星轨")
+        XCTAssertEqual(try XCTUnwrap(PhotoLocation.fromGPS(trailProperties)?.longitude), location.longitude, accuracy: 0.000001)
+        trails.saveResult()
+        XCTAssertFalse(trails.isSaving)
         print("SHARED-STAGE trails complete")
         let frameCount = trails.capturedCount
+        XCTAssertGreaterThanOrEqual(frameCount, 2)
+        logTonalRange("trails-result", trails.result?.cgImage)
         AstroModeDiagnostics.submode?.wrappedValue = .timelapse
         let video = try XCTUnwrap(AstroModeDiagnostics.timelapse)
         try await wait { video.ownsCaptureRoute && video.previewFrames.snapshot != nil && AstroModeDiagnostics.previewReady }
         video.intervalSeconds = 1; video.durationMinutes = nil
         video.manualSettings.isoAutomatic = true; video.manualSettings.exposureBias = 1
+        logTonalRange("timelapse-preview", video.previewFrames.snapshot?.cgImage)
         print("SHARED-STAGE timelapse begin")
         video.begin(); try await wait(timeout: 30) { video.capturedFrames >= 3 || video.error != nil }
         XCTAssertNil(video.error)
@@ -456,13 +554,15 @@ import XCTest
         video.stopAndSave(manual: true)
         try await wait(timeout: 20) { !video.isFinishing }
         XCTAssertNil(video.error)
-        let store = AstroRecoveryStore.shared
         store.reload(); try await wait { store.items.contains { $0.kind == "星空延时" && $0.phase == "ready" } }
         let item = try XCTUnwrap(store.items.last { $0.kind == "星空延时" && $0.phase == "ready" })
         let file = try XCTUnwrap(store.journal.url(for: item))
         let asset = AVURLAsset(url: file), tracks = try await asset.loadTracks(withMediaType: .video)
         let track = try XCTUnwrap(tracks.first), size = try await track.load(.naturalSize)
         XCTAssertEqual(size, CGSize(width: 2160, height: 3840))
+        let generator = AVAssetImageGenerator(asset: asset)
+        let frame = try await generator.image(at: .zero).image
+        logTonalRange("timelapse-decoded", frame)
         print("SHARED-STAGE return photo")
         model.selectTopLevelMode(.photo, outgoingPreview: video.previewFrames.snapshot)
         try await wait { model.topLevelMode == .photo && model.camera.ready && model.modeHandoffTarget == nil }
@@ -494,6 +594,22 @@ import XCTest
         print("ASTRO-SHARED-NORMAL-VIDEO decodedFrames=\(decoded) PhotosWrites=0")
         print("ASTRO-SHARED-CAPTURE sameSession=true RAW=4032x3024 RAWFrames=2 trailsFrames=\(frameCount) timelapseFrames=\(video.capturedFrames) timelapse=2160x3840 autoISOEV=true returnPhoto=true PhotosWrites=0")
         #endif
+    }
+
+    private func logTonalRange(_ stage: String, _ image: CGImage?) {
+        guard let image else { return }
+        let side = 192
+        var pixels = [UInt8](repeating: 0, count: side * side)
+        let sampled = pixels.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(data: buffer.baseAddress, width: side, height: side, bitsPerComponent: 8,
+                                          bytesPerRow: side, space: CGColorSpaceCreateDeviceGray(),
+                                          bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return false }
+            context.draw(image, in: CGRect(x: 0, y: 0, width: side, height: side))
+            return true
+        }
+        guard sampled else { return }
+        pixels.sort()
+        print("ASTRO-CAPTURE-TONES stage=\(stage) samples=\(pixels.count) min=\(pixels[0]) p05=\(pixels[pixels.count / 20]) p95=\(pixels[pixels.count * 19 / 20]) max=\(pixels[pixels.count - 1])")
     }
 
     func testEntryScreenFramesForHandoffDiagnosis() async throws {

@@ -43,7 +43,9 @@ struct CameraZoomDial: View {
                 }
                 VStack(spacing: 12) {
                     Image(systemName: "arrowtriangle.down.fill").font(.system(size: 7)).foregroundStyle(AppTheme.accent)
-                    Text(String(format: "%.1f×", Double(value))).font(.system(size: 13, weight: .semibold, design: .monospaced)).foregroundStyle(AppTheme.accent)
+                        .shadow(color: .black, radius: 1)
+                    Text(String(format: "%.1f×", Double(value))).font(.system(size: 13, weight: .semibold, design: .monospaced))
+                        .previewAccentLabel()
                 }.padding(.top, 8)
             }
         }.accessibilityElement(children: .ignore).accessibilityLabel("变焦转盘").accessibilityValue(String(format: "%.1f 倍", Double(value)))

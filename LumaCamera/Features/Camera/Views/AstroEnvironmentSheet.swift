@@ -38,15 +38,16 @@ struct AstroEnvironmentSheet: View {
     @State private var recenterToken = UUID()
     @State private var layer: AstroEnvironmentLayer = .pollution
     @State private var cloudRegion: AstroCloudRegion?
-    @State private var cloudStore = AstroCloudForecastStore()
+    private let cloudStore = AstroCloudForecastStore.shared
     @State private var cloudRetry = 0
     @State private var cloudZoomToken = UUID()
     @State private var forecastIndex = 0.0
-    @State private var forecastStore = AstroForecastStore()
+    private let forecastStore = AstroForecastStore.shared
     @State private var forecastRetry = 0
     @State private var forecastSelection = AstroForecastSelection()
     @State private var plannedSites = AstroPlannedSite.restore()
     @State private var revealedSiteID: UUID?
+    @State private var pollutionBands: [LightPollutionPoint: LightPollutionLegend.Band?] = [:]
     private let lightPollution: any LightPollutionSource = LightPollutionSources.current
 
     var body: some View {
@@ -111,7 +112,13 @@ struct AstroEnvironmentSheet: View {
                             .clipShape(.rect(cornerRadius: 16))
 
                         layerSelector
-                        if layer.includesClouds { cloudLegend }
+                        VStack(alignment: .leading, spacing: 8) {
+                            if layer.includesPollution, let legend = lightPollution.legend {
+                                pollutionLegend(legend).transition(.opacity)
+                            }
+                            if layer.includesClouds { cloudLegend.transition(.opacity) }
+                        }
+                        .animation(reduceMotion ? .easeOut(duration: 0.08) : AppTheme.popupAnimation, value: layer)
                         recommendedSection
                         timeCard
                         conditionsCard
@@ -144,6 +151,18 @@ struct AstroEnvironmentSheet: View {
                                attempt: cloudRetry)) {
             guard scenePhase == .active, layer.includesClouds, let cloudRegion else { return }
             await cloudStore.refresh(cloudRegion)
+        }
+        .task(id: pollutionPoints) {
+            let points = pollutionPoints
+            let retained = pollutionBands.filter { points.contains($0.key) }
+            let missing = points.subtracting(retained.keys)
+            guard !missing.isEmpty || pollutionBands.count != retained.count else { return }
+            let source = lightPollution
+            let resolved = await Task.detached(priority: .utility) {
+                Dictionary(uniqueKeysWithValues: missing.map { ($0, source.band(at: $0)) })
+            }.value
+            guard !Task.isCancelled else { return }
+            pollutionBands = retained.merging(resolved) { _, new in new }
         }
         .onDisappear {
             locationService?.setActive(false)
@@ -195,6 +214,33 @@ struct AstroEnvironmentSheet: View {
         }
     }
 
+    private func pollutionLegend(_ legend: LightPollutionLegend) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(legend.title)
+            HStack(spacing: 0) {
+                ForEach(legend.bands) { band in
+                    Rectangle().fill(Color(red: Double(band.red) / 255,
+                        green: Double(band.green) / 255, blue: Double(band.blue) / 255))
+                }
+            }
+            .frame(height: 7)
+            .clipShape(Capsule())
+            .overlay { Capsule().strokeBorder(.white.opacity(0.22), lineWidth: 0.5) }
+            HStack {
+                Text(legend.bands.first?.range ?? "")
+                Spacer()
+                Text(legend.bands.last?.range ?? "")
+            }
+            .monospacedDigit()
+        }
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("光污染色阶，\(legend.title)")
+        .accessibilityValue(legend.bands.map(\.range).joined(separator: "，"))
+        .accessibilityIdentifier("astro.environment.pollution.legend")
+    }
+
     private var cloudLegend: some View {
         HStack(spacing: 5) {
             Text("0%")
@@ -208,6 +254,7 @@ struct AstroEnvironmentSheet: View {
         }
         .font(.caption2)
         .foregroundStyle(.secondary)
+        .accessibilityIdentifier("astro.environment.cloud.legend")
     }
 
     private struct ForecastRequest: Equatable {
@@ -217,6 +264,12 @@ struct AstroEnvironmentSheet: View {
 
     private var selectedSite: AstroPlannedSite? { plannedSites.first { $0.id == forecastSelection.siteID } }
     private var mapCenter: CLLocationCoordinate2D? { forecastSelection.mapCenter }
+    private var activeCoordinate: CLLocationCoordinate2D? { selectedSite?.coordinate ?? mapCenter ?? location?.coordinate }
+    private var pollutionPoints: Set<LightPollutionPoint> {
+        var points = Set(plannedSites.map { LightPollutionPoint($0.coordinate) })
+        if let activeCoordinate { points.insert(LightPollutionPoint(activeCoordinate)) }
+        return points
+    }
     private var forecastPoint: AstroForecastPoint? {
         forecastSelection.point(sites: plannedSites, location: location)
     }
@@ -351,14 +404,21 @@ struct AstroEnvironmentSheet: View {
 
     private func percent(_ value: Double?) -> String { number(value, suffix: "%") }
 
-    private func recommendation(at point: AstroForecastPoint?, forecast: AstroForecast?) -> String? {
-        guard let point, let forecast else { return nil }
-        let windows = forecast.windows(at: point, after: Date())
+    private func recommendation(at coordinate: CLLocationCoordinate2D?, forecast: AstroForecast?) -> String? {
+        guard let coordinate, let point = AstroForecastPoint(coordinate) else { return nil }
+        guard let resolved = pollutionBands[LightPollutionPoint(coordinate)] else { return nil }
+        let sky = AstroDarkSkySuitability(band: resolved)
+        if sky == .severe { return "光污染严重，未来 48 小时不推荐拍摄银河或暗弱星空" }
+        guard let forecast else { return nil }
+        let windows = forecast.windows(at: point, after: Date(), lightPollution: resolved)
         guard !windows.isEmpty else { return "未来 48 小时暂无合适窗口" }
         let style = Date.FormatStyle.dateTime.month().day().hour(.twoDigits(amPM: .omitted)).minute(.twoDigits)
-        return windows.map { window in
+        let times = windows.map { window in
             dateText(window.start, style, zone: forecast.timeZone) + " – " + dateText(window.end, style, zone: forecast.timeZone)
         }.joined(separator: "\n")
+        if sky == .unknown { return "光污染未知 · 仅按天气估算\n" + times }
+        if sky == .high { return "光污染偏强 · 拍摄条件有限\n" + times }
+        return times
     }
 
     private func dataRow(_ title: String, _ value: String) -> some View {
@@ -389,14 +449,19 @@ struct AstroEnvironmentSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
                         Text(forecastLocationLabel)
-                        if let coordinate = selectedSite?.coordinate ?? mapCenter ?? location?.coordinate {
+                        if let coordinate = activeCoordinate {
                             Text(String(format: "%.4f, %.4f", coordinate.latitude, coordinate.longitude))
                                 .monospacedDigit()
                         }
                     }
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                    if let text = recommendation(at: forecastPoint, forecast: forecast) {
+                    if let coordinate = activeCoordinate,
+                       let band = pollutionBands[LightPollutionPoint(coordinate)] ?? nil {
+                        Text("人工天光约为自然天光的 \(band.range)")
+                            .font(.caption2).foregroundStyle(.secondary)
+                    }
+                    if let text = recommendation(at: activeCoordinate, forecast: forecast) {
                         Text(text).font(.caption2).foregroundStyle(AppTheme.accent)
                             .accessibilityIdentifier("astro.environment.recommendation")
                     } else {
@@ -450,7 +515,7 @@ struct AstroEnvironmentSheet: View {
                     Text(site.coordinateText).font(.system(size: 9, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.5))
                     if forecastSelection.siteID != site.id {
-                        Text(recommendation(at: point, forecast: forecastStore.forecast(at: point)) ?? "轻点查看预报")
+                        Text(recommendation(at: site.coordinate, forecast: forecastStore.forecast(at: point)) ?? "轻点查看预报")
                             .font(.system(size: 9))
                             .foregroundStyle(.white.opacity(0.55))
                     }
@@ -591,6 +656,7 @@ struct AstroNightLightsMap: UIViewRepresentable {
     static func dismantleUIView(_ map: MKMapView, coordinator: Coordinator) {
         coordinator.observeHeading(from: nil, on: map)
         coordinator.stopOverlayUpdates()
+        coordinator.cancelCloudRender()
         map.delegate = nil
     }
 
@@ -609,8 +675,15 @@ struct AstroNightLightsMap: UIViewRepresentable {
         private var heading: CLLocationDirection?
         private var layer: AstroEnvironmentLayer = .pollution
         private var cloudOverlay: AstroCloudOverlay?
-        private var cloudGridID: UUID?
-        private var cloudDate: Date?
+        private struct CloudFrameKey: Equatable {
+            let gridID: UUID
+            let date: Date
+        }
+
+        private var cloudFrameKey: CloudFrameKey?
+        private var cloudRenderTask: Task<Void, Never>?
+        private var rasterGridID: UUID?
+        private let cloudRasters = NSCache<NSDate, CGImage>()
         private var lastCloudZoomToken: UUID?
         private var requestedCloudRegion: AstroCloudRegion?
 
@@ -623,6 +696,7 @@ struct AstroNightLightsMap: UIViewRepresentable {
             self.onPan = onPan
             self.onSelectSite = onSelectSite
             self.onRegionChange = onRegionChange
+            cloudRasters.countLimit = 12
         }
 
         func updateCloudViewport(for mode: AstroEnvironmentLayer, zoomToken: UUID,
@@ -643,7 +717,8 @@ struct AstroNightLightsMap: UIViewRepresentable {
 
         private func cloudRegion(for rect: MKMapRect) -> AstroCloudRegion? {
             let next = AstroCloudRegion(rect)
-            if let requestedCloudRegion, requestedCloudRegion.mapRect.width == next?.mapRect.width,
+            if let requestedCloudRegion, let next,
+               requestedCloudRegion.mapRect.width <= next.mapRect.width * 1.5,
                requestedCloudRegion.mapRect.contains(rect) { return requestedCloudRegion }
             requestedCloudRegion = next
             return next
@@ -663,30 +738,58 @@ struct AstroNightLightsMap: UIViewRepresentable {
             }
             layer = mode
             guard mode.includesClouds, let cloudFrame else {
+                cancelCloudRender()
                 if let cloudOverlay { map.removeOverlay(cloudOverlay) }
                 cloudOverlay = nil
-                cloudGridID = nil
-                cloudDate = nil
                 return
-            }
-            if cloudGridID != cloudFrame.gridID || cloudDate != cloudFrame.date,
-               let image = cloudFrame.makeImage() {
-                if let cloudOverlay, cloudOverlay.region == cloudFrame.region {
-                    cloudOverlay.setImage(image)
-                    map.renderer(for: cloudOverlay)?.setNeedsDisplay()
-                } else {
-                    if let cloudOverlay { map.removeOverlay(cloudOverlay) }
-                    let overlay = AstroCloudOverlay(region: cloudFrame.region, image: image)
-                    cloudOverlay = overlay
-                    map.addOverlay(overlay, level: .aboveRoads)
-                }
-                cloudGridID = cloudFrame.gridID
-                cloudDate = cloudFrame.date
             }
             if let cloudOverlay, let renderer = map.renderer(for: cloudOverlay), renderer.alpha != cloudsAlpha {
                 renderer.alpha = cloudsAlpha
                 renderer.setNeedsDisplay()
             }
+
+            let key = CloudFrameKey(gridID: cloudFrame.gridID, date: cloudFrame.date)
+            guard cloudFrameKey != key else { return }
+            cancelCloudRender()
+            cloudFrameKey = key
+            if rasterGridID != key.gridID {
+                cloudRasters.removeAllObjects()
+                rasterGridID = key.gridID
+            }
+            let cacheKey = key.date as NSDate
+            if let cached = cloudRasters.object(forKey: cacheKey) {
+                applyCloudRaster(cached, region: cloudFrame.region, on: map)
+                return
+            }
+            cloudRenderTask = Task { @MainActor [weak self, weak map] in
+                // Coalesce rapid ruler updates while keeping the last raster on screen.
+                try? await Task.sleep(for: .milliseconds(35))
+                guard !Task.isCancelled else { return }
+                let image = await Task.detached(priority: .userInitiated) { cloudFrame.makeImage() }.value
+                guard !Task.isCancelled, let self, let map, self.cloudFrameKey == key else { return }
+                self.cloudRenderTask = nil
+                guard let image else { return }
+                self.cloudRasters.setObject(image, forKey: cacheKey)
+                self.applyCloudRaster(image, region: cloudFrame.region, on: map)
+            }
+        }
+
+        private func applyCloudRaster(_ image: CGImage, region: AstroCloudRegion, on map: MKMapView) {
+            if let cloudOverlay, cloudOverlay.region == region {
+                cloudOverlay.setImage(image)
+                map.renderer(for: cloudOverlay)?.setNeedsDisplay()
+            } else {
+                if let cloudOverlay { map.removeOverlay(cloudOverlay) }
+                let overlay = AstroCloudOverlay(region: region, image: image)
+                cloudOverlay = overlay
+                map.addOverlay(overlay, level: .aboveRoads)
+            }
+        }
+
+        func cancelCloudRender() {
+            cloudRenderTask?.cancel()
+            cloudRenderTask = nil
+            cloudFrameKey = nil
         }
 
         private var cloudsAlpha: CGFloat { layer == .combined ? 0.70 : 0.90 }
@@ -735,6 +838,8 @@ struct AstroNightLightsMap: UIViewRepresentable {
         }
 
         func setHeading(_ value: CLLocationDirection?, on map: MKMapView) {
+            // Preserve the last valid bearing through a temporary compass outage or annotation reuse.
+            guard let value else { return }
             heading = value
             (map.view(for: marker) as? AstroLocationAnnotationView)?.setHeading(value, animated: true)
         }
@@ -761,11 +866,14 @@ struct AstroNightLightsMap: UIViewRepresentable {
             // At continental/world zoom avoid requesting every cell at once.
             guard layer.includesPollution, visible.width < MKMapRect.world.width * 0.15 else { return }
             let expanded = visible.insetBy(dx: -visible.width * 0.25, dy: -visible.height * 0.25)
-            if let last = lastOverlayRect, last.contains(expanded) { return }
+            if let last = lastOverlayRect, last.contains(visible) { return }
             lastOverlayRect = expanded
             let pending = source.overlays(in: expanded)
                 .compactMap { $0 as? LightPollutionImageOverlay }
                 .filter { !addedKeys.contains($0.id) }
+                .sorted {
+                    $0.boundingMapRect.intersects(visible) && !$1.boundingMapRect.intersects(visible)
+                }
             guard !pending.isEmpty else { return }
             generation += 1
             let token = generation
@@ -882,7 +990,9 @@ final class AstroSiteAnnotation: NSObject, MKAnnotation {
 }
 
 final class AstroLocationAnnotationView: MKAnnotationView {
-    let arrow = UIImageView(image: UIImage(systemName: "location.north.fill"))
+    let arrow = UIImageView(image: UIImage(systemName: "location.north.fill",
+                                          withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold))?
+        .withRenderingMode(.alwaysTemplate))
     private var heading: CLLocationDirection?
 
     override init(annotation: (any MKAnnotation)?, reuseIdentifier: String?) {
@@ -898,7 +1008,6 @@ final class AstroLocationAnnotationView: MKAnnotationView {
         arrow.frame = bounds.insetBy(dx: 6, dy: 6)
         arrow.contentMode = .scaleAspectFit
         arrow.tintColor = .white
-        arrow.isHidden = true
         addSubview(arrow)
     }
 
@@ -907,14 +1016,9 @@ final class AstroLocationAnnotationView: MKAnnotationView {
     func setHeading(_ value: CLLocationDirection?, animated: Bool) {
         let hadHeading = heading != nil
         heading = value
-        guard let value else {
-            arrow.layer.removeAllAnimations()
-            arrow.isHidden = true
-            return
-        }
-        arrow.isHidden = false
-        let transform = CGAffineTransform(rotationAngle: CGFloat(value * .pi / 180))
-        if animated, hadHeading, !UIAccessibility.isReduceMotionEnabled {
+        // Point up until the first bearing arrives. Style is independent of sensor availability.
+        let transform = CGAffineTransform(rotationAngle: CGFloat((value ?? 0) * .pi / 180))
+        if animated, hadHeading, value != nil, !UIAccessibility.isReduceMotionEnabled {
             UIView.animate(withDuration: 0.12, delay: 0, options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseOut]) {
                 self.arrow.transform = transform
             }

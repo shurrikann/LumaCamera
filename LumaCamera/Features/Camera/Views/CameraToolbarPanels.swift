@@ -102,7 +102,7 @@ extension CameraView {
                                 .fill(model.adaptiveHighDynamic ? AppTheme.accent : Color.white.opacity(0.18))
                             Text("高动态")
                                 .font(.system(size: 8, weight: .semibold))
-                                .foregroundStyle(model.adaptiveHighDynamic ? .black : .white.opacity(0.9))
+                                .foregroundStyle(model.adaptiveHighDynamic ? AppTheme.accentForeground : .white.opacity(0.9))
                                 .offset(x: model.adaptiveHighDynamic ? max(0, formatColumnWidth / 2 - 19) : -max(0, formatColumnWidth / 2 - 19))
                             Circle()
                                 .fill(.white)
@@ -146,11 +146,11 @@ extension CameraView {
                                 .fill(model.hdr ? AppTheme.accent : Color.white.opacity(0.18))
                             if camera.hdrPreviewConfiguring {
                                 ProgressView().controlSize(.mini)
-                                    .tint(model.hdr ? .black : .white)
+                                    .tint(model.hdr ? AppTheme.accentForeground : .white)
                             } else {
                                 Text("HDR")
                                     .font(.system(size: 8, weight: .semibold))
-                                    .foregroundStyle(model.hdr ? .black : .white.opacity(0.9))
+                                    .foregroundStyle(model.hdr ? AppTheme.accentForeground : .white.opacity(0.9))
                                     .offset(x: model.hdr ? max(0, formatColumnWidth / 2 - 19) : -max(0, formatColumnWidth / 2 - 19))
                             }
                             Circle()
@@ -438,7 +438,7 @@ extension CameraView {
         } label: {
             Text(title).font(.system(size: 10, weight: .semibold)).multilineTextAlignment(.center).lineLimit(lines)
                 .minimumScaleFactor(0.7).frame(maxWidth: .infinity).frame(minHeight: 32)
-                .foregroundStyle(selected ? .black.opacity(enabled ? 1 : 0.55) : .white.opacity(enabled ? 0.95 : 0.55))
+                .foregroundStyle(selected ? AppTheme.accentForeground.opacity(enabled ? 1 : 0.55) : .white.opacity(enabled ? 0.95 : 0.55))
                 .background(selected ? AppTheme.accent.opacity(enabled ? 1 : 0.7) : Color.white.opacity(enabled ? 0.18 : 0.10), in: Capsule())
         }.buttonStyle(.plain).disabled(!enabled || camera.capturing).accessibilityAddTraits(selected ? .isSelected : [])
     }

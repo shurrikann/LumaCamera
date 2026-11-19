@@ -65,6 +65,14 @@ final class SystemPhotoLibraryService: NSObject, PhotoLibraryService, PhotoBrows
             duration: asset.mediaType == .video ? asset.duration : nil, logLabel: badges?.logLabel, videoBadges: badges)
     }
 
+    func fetchPhoto(id: String, completion: @escaping (LibraryPhoto?) -> Void) {
+        availabilityQueue.async {
+            let asset = PHAsset.fetchAssets(withLocalIdentifiers: [id], options: nil).firstObject
+            let photo = asset.map(self.photoMetadata)
+            DispatchQueue.main.async { completion(photo) }
+        }
+    }
+
     func fetchPhotos(offset: Int, limit: Int, completion: @escaping (PhotoPage) -> Void) {
         let thumbnailOnly = offset == 0 && limit == 1
         metadataLock.lock()

@@ -275,7 +275,7 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
     }
 
     func begin() {
-        guard !isRecording, !isFinishing, !switchingLens, let device else { return }
+        guard !isRecording, !isFinishing, !switchingLens, ownsCaptureRoute, session.isRunning, let device else { return }
         if let previous = recoveryID { AstroRecoveryStore.shared.keep(previous) }
         let recovery = AstroRecoveryStore.shared.begin(kind: "星空延时", options: outputOptions)
         recoveryID = recovery
@@ -615,9 +615,10 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
 
     private func restoreAfterCapture() {
         previewExposureGate.setCaptureActive(false)
-        if started, UIApplication.shared.applicationState != .background, let device, CMTimeGetSeconds(device.exposureDuration) > 0.25 {
-            // Rebuild the idle route after acquisition; simply restarting the
-            // running graph does not reliably retain the preview exposure.
+        if started, UIApplication.shared.applicationState != .background, let device,
+           max(device.exposureDuration.seconds, device.activeVideoMaxFrameDuration.seconds) > 0.25 {
+            // Automatic ISO can shorten exposure while retaining the 1 fps
+            // capture cadence. Restore that graph just as for long exposures.
             sharedSession?.stopForLongExposureRecovery(sessionOwner)
             preservingCaptureStatus = true
             stop()

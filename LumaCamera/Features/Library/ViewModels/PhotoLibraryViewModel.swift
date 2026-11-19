@@ -8,16 +8,21 @@ final class PhotoLibraryViewModel: ObservableObject {
     @Published private(set) var lastPhotoDate: Date?
     /// Session-only: each new capture may open automatically once.
     @Published private(set) var captureAwaitingReview = false
-    /// A saved video can open once after recording; this in-memory token is consumed by the gallery entry.
-    @Published private(set) var videoAwaitingReviewID: String?
+    /// Captures already committed to Photos can open once by asset identifier.
+    @Published private(set) var assetAwaitingReviewID: String?
     func consumeCaptureReview() -> Bool {
         guard captureAwaitingReview, lastPhoto != nil else { return false }
         captureAwaitingReview = false
         return true
     }
-    func consumeVideoReview() -> String? {
-        defer { videoAwaitingReviewID = nil }
-        return videoAwaitingReviewID
+    func consumeAssetReview() -> String? {
+        defer { assetAwaitingReviewID = nil }
+        return assetAwaitingReviewID
+    }
+    func acceptCommittedCaptureForReview(_ assetID: String) {
+        captureAwaitingReview = false
+        assetAwaitingReviewID = assetID
+        didSavePhoto.send(assetID)
     }
     @Published private(set) var saving = false
     @Published private(set) var deleting = false
@@ -89,11 +94,8 @@ final class PhotoLibraryViewModel: ObservableObject {
                 self.failedVideos.removeAll { $0 == url }
                 if let badges = self.pendingVideoBadges.removeValue(forKey: url) { VideoCaptureBadgeStore.shared.save(badges, assetID: id) }
                 self.pendingVideoReviewFlags.removeValue(forKey: url)
-                if opensReview {
-                    self.captureAwaitingReview = false
-                    self.videoAwaitingReviewID = id
-                }
-                self.didSavePhoto.send(id)
+                if opensReview { self.acceptCommittedCaptureForReview(id) }
+                else { self.didSavePhoto.send(id) }
                 completion?(.success(id))
             case .failure(let error):
                 if !self.failedVideos.contains(url) { self.failedVideos.append(url) }
@@ -131,7 +133,7 @@ final class PhotoLibraryViewModel: ObservableObject {
     }
 
     private func setCurrentPhoto(_ image: UIImage?) {
-        videoAwaitingReviewID = nil
+        assetAwaitingReviewID = nil
         photoID = UUID()
         savedAssetID = nil
         photoSaved = false
@@ -329,7 +331,7 @@ final class PhotoLibraryViewModel: ObservableObject {
         photoSaved = false
         lastPhoto = nil
         captureAwaitingReview = false
-        videoAwaitingReviewID = nil
+        assetAwaitingReviewID = nil
         lastPhotoDate = nil
         capturedPhoto = nil
         editedFilterApplied = nil

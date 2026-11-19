@@ -53,6 +53,7 @@ final class DiagnosticReadOnlyPhotoService: PhotoLibraryService, PhotoBrowserSer
     func authorize(completion: @escaping (PhotoLibraryAccess) -> Void) { reader.authorize(completion: completion) }
     func availablePhotoIDs(_ ids: [String], completion: @escaping (Set<String>?) -> Void) { reader.availablePhotoIDs(ids, completion: completion) }
     func photoAvailability(id: String, completion: @escaping (PhotoAssetAvailability) -> Void) { reader.photoAvailability(id: id, completion: completion) }
+    func fetchPhoto(id: String, completion: @escaping (LibraryPhoto?) -> Void) { reader.fetchPhoto(id: id, completion: completion) }
     func fetchPhotos(offset: Int, limit: Int, completion: @escaping (PhotoPage) -> Void) { reader.fetchPhotos(offset: offset, limit: limit, completion: completion) }
     func requestImage(id: String, size: CGSize, completion: @escaping (UIImage?, Error?) -> Void) -> PhotoImageRequest { reader.requestImage(id: id, size: size, completion: completion) }
 

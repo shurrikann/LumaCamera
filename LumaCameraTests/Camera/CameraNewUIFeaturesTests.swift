@@ -18,6 +18,71 @@ final class CameraNewUIFeaturesTests: XCTestCase {
     }
     private func descendants(_ view: UIView) -> [UIView] { [view] + view.subviews.flatMap(descendants) }
 
+    func testFixedOrangeThemeAcrossLightDarkAndGlass() async throws {
+        var light = EnvironmentValues(), dark = EnvironmentValues()
+        light.colorScheme = .light
+        dark.colorScheme = .dark
+        let onLight = AppTheme.accent.resolve(in: light)
+        let onDark = AppTheme.accent.resolve(in: dark)
+        XCTAssertEqual(onLight.red, 201.0 / 255, accuracy: 0.01)
+        XCTAssertEqual(onLight.green, 101.0 / 255, accuracy: 0.01)
+        XCTAssertEqual(onLight.blue, 28.0 / 255, accuracy: 0.01)
+        XCTAssertEqual(onLight, onDark)
+        XCTAssertEqual(AppTheme.accentForeground.resolve(in: light), AppTheme.accentForeground.resolve(in: dark))
+
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let window = UIWindow(windowScene: scene)
+        let host = UIHostingController(rootView: AnyView(Color.clear))
+        host.safeAreaRegions = []
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+
+        var snapshots = [Double]()
+        for _ in 0..<4 {
+            for backdrop in [Color.black, .white] {
+                host.rootView = AnyView(ZStack {
+                    backdrop.ignoresSafeArea()
+                    Text("HEIF Pro").font(.system(size: 13, weight: .semibold))
+                        .frame(width: 72, height: 20)
+                        .foregroundStyle(AppTheme.accent)
+                        .frame(width: 120, height: 46)
+                        .modifier(GlassSurface(radius: 23))
+                })
+                try await Task.sleep(for: .milliseconds(85))
+                let start = CACurrentMediaTime()
+                let bounds = CGRect(x: 0, y: 0, width: 120, height: 46)
+                let crop = UIGraphicsImageRenderer(size: bounds.size).image { _ in
+                    window.drawHierarchy(in: window.bounds.offsetBy(dx: bounds.midX - window.bounds.midX,
+                        dy: bounds.midY - window.bounds.midY), afterScreenUpdates: true)
+                }
+                snapshots.append((CACurrentMediaTime() - start) * 1000)
+                let image = try XCTUnwrap(crop.cgImage)
+                var bytes = [UInt8](repeating: 0, count: image.width * image.height * 4)
+                let ink = try bytes.withUnsafeMutableBytes { buffer in
+                    let context = try XCTUnwrap(CGContext(data: buffer.baseAddress, width: image.width, height: image.height,
+                        bitsPerComponent: 8, bytesPerRow: image.width * 4, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+                    context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+                    let rgba = buffer.bindMemory(to: UInt8.self)
+                    return stride(from: 0, to: rgba.count, by: 4).filter {
+                        let red = Int(rgba[$0]), green = Int(rgba[$0 + 1]), blue = Int(rgba[$0 + 2])
+                        return red >= 150 && red - green > 36 && green - blue > 21
+                    }.count
+                }
+                XCTAssertGreaterThan(ink, 35)
+                if snapshots.count <= 2 {
+                    let attachment = XCTAttachment(image: crop)
+                    attachment.name = "Fixed orange on \(snapshots.count == 1 ? "dark" : "light") glass"
+                    attachment.lifetime = .keepAlways
+                    add(attachment)
+                }
+            }
+        }
+        print("FIXED-ORANGE-GLASS backdropSwitches=\(snapshots.count) snapshotMS=\(snapshots) PhotosWrites=0")
+    }
+
     func testTopToolbarDefaultWhiteSurvivesDisabledStateAcrossPhotoVideoAndAstro() async throws {
         let model = try await FullDeviceRegressionFixture.makeFreshModel()
         model.setCameraActive(true)

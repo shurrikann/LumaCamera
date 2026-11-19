@@ -41,6 +41,23 @@ final class AstroCloudForecastTests: XCTestCase {
         }
         print("ASTRO-CLOUD pixelsBefore=\(before) pixelsAfter=\(after) captureAndPollingMS=\((CACurrentMediaTime() - start) * 1000)")
         XCTAssertGreaterThan(after, before + 0.15)
+
+        let split = AstroCloudRegion.sampleWidth / 2
+        let splitFrame = AstroCloudFrame(gridID: frame.gridID, date: now.addingTimeInterval(3600), region: region,
+            values: (0..<AstroCloudRegion.sampleCount).map {
+                $0 % AstroCloudRegion.sampleWidth < split ? 0 : 70
+            })
+        coordinator.updateLayers(.cloud, cloudFrame: splitFrame, on: map)
+        var clearSide = 1.0
+        var cloudSide = 0.0
+        for _ in 0..<10 {
+            try await Task.sleep(for: .milliseconds(100))
+            clearSide = try cyanRatio(in: map, columns: 3..<19)
+            cloudSide = try cyanRatio(in: map, columns: 45..<61)
+            if cloudSide > clearSide + 0.15 { break }
+        }
+        print("ASTRO-CLOUD-EDGE-MAP clearSide=\(clearSide) cloudSide=\(cloudSide)")
+        XCTAssertGreaterThan(cloudSide, clearSide + 0.15)
     }
 
     func testPartialAndClearForecastFramesRemainUsable() throws {
@@ -54,9 +71,10 @@ final class AstroCloudForecastTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(partial.coverageSummary).isPartial)
         let image = try XCTUnwrap(partial.makeImage())
         let bytes = try XCTUnwrap(image.dataProvider?.data) as Data
-        XCTAssertGreaterThan(bytes[3], 20)
-        // Sample index 1 is missing; at the 193px raster it sits at x=16.
-        XCTAssertEqual(bytes[16 * 4 + 3], 0)
+        XCTAssertGreaterThan(bytes[3], 0)
+        XCTAssertLessThan(bytes[3], 25)
+        let step = (image.width - 1) / (AstroCloudRegion.sampleWidth - 1)
+        XCTAssertEqual(bytes[step * 4 + 3], 0)
         let clear = try XCTUnwrap(grid.frame(at: date.addingTimeInterval(3600)))
         let summary = try XCTUnwrap(clear.coverageSummary)
         XCTAssertEqual(summary.mean, 0)
@@ -65,15 +83,33 @@ final class AstroCloudForecastTests: XCTestCase {
 
 
 
-    func testLowCloudEdgeOpacityIsVisibleAndMonotonic() {
-        XCTAssertEqual(AstroCloudFrame.displayOpacity(for: 0), 0)
-        XCTAssertGreaterThan(AstroCloudFrame.displayOpacity(for: 20), 0.30)
-        XCTAssertGreaterThan(AstroCloudFrame.displayOpacity(for: 50), AstroCloudFrame.displayOpacity(for: 20))
-        XCTAssertGreaterThan(AstroCloudFrame.displayOpacity(for: 100), AstroCloudFrame.displayOpacity(for: 50))
-        XCTAssertLessThanOrEqual(AstroCloudFrame.displayOpacity(for: 150), 1)
+    func testLowCloudEdgeOpacityIsVisibleAndMonotonic() throws {
+        let opacity = (0...100).map { AstroCloudFrame.displayOpacity(for: Double($0)) }
+        XCTAssertEqual(opacity, opacity.sorted())
+        XCTAssertEqual(opacity[0], 0)
+        XCTAssertEqual(opacity[100], 1)
+        XCTAssertLessThan(opacity[5], 0.06)
+        XCTAssertGreaterThan(opacity[20], 0.15)
+        XCTAssertGreaterThan(opacity[70], 0.82)
+
+        let region = try sampleRegion()
+        let split = AstroCloudRegion.sampleWidth / 2
+        let values: [Double?] = (0..<AstroCloudRegion.sampleCount).map {
+            $0 % AstroCloudRegion.sampleWidth < split ? 0 : 70
+        }
+        let image = try XCTUnwrap(AstroCloudFrame(gridID: UUID(), date: Date(), region: region, values: values).makeImage())
+        let pixels = try XCTUnwrap(image.dataProvider?.data) as Data
+        let step = (image.width - 1) / (AstroCloudRegion.sampleWidth - 1)
+        let edge = (((split - 1) * step)...(split * step)).map { Int(pixels[$0 * 4 + 3]) }
+        XCTAssertEqual(edge, edge.sorted())
+        XCTAssertEqual(edge.first, 0)
+        XCTAssertEqual(edge.last, 213)
+        let midTransition = edge.filter { (43...170).contains($0) }.count
+        XCTAssertLessThanOrEqual(midTransition, 4)
+        print("ASTRO-CLOUD-EDGE profile=\(edge) middleSamples=\(midTransition)")
     }
 
-    private func cyanRatio(in map: MKMapView) throws -> Double {
+    private func cyanRatio(in map: MKMapView, columns: Range<Int> = 0..<64) throws -> Double {
         let image = UIGraphicsImageRenderer(bounds: map.bounds).image { _ in
             map.drawHierarchy(in: map.bounds, afterScreenUpdates: true)
         }
@@ -87,10 +123,11 @@ final class AstroCloudForecastTests: XCTestCase {
             context.draw(cgImage, in: CGRect(x: 0, y: 0, width: size, height: size))
         }
         let hits = stride(from: 0, to: bytes.count, by: 4).filter {
+            guard columns.contains(($0 / 4) % size) else { return false }
             let (r, g, b) = (Int(bytes[$0]), Int(bytes[$0 + 1]), Int(bytes[$0 + 2]))
             return b >= 110 && b - r >= 15 && g - r >= 10
         }.count
-        return Double(hits) / Double(size * size)
+        return Double(hits) / Double(size * columns.count)
     }
 
     func testBatchedHoursAndRasterUseViewportOrder() throws {
@@ -140,32 +177,70 @@ final class AstroCloudForecastTests: XCTestCase {
                             region: region, values: .init(repeating: Double(step % 100), count: AstroCloudRegion.sampleCount))
         }
         coordinator.updateLayers(.combined, cloudFrame: frame(0), on: map)
+        try await waitForCloud { map.overlays.last is AstroCloudOverlay }
         XCTAssertEqual(map.overlays.count, 2)
         let original = try XCTUnwrap(map.overlays.last as? AstroCloudOverlay)
+        let firstRaster = original.image
         let start = CACurrentMediaTime()
         for step in 1...96 {
             coordinator.updateLayers(.combined, cloudFrame: frame(step), on: map)
             XCTAssertTrue(map.overlays.last === original)
         }
-        print("ASTRO-CLOUD samples=96 rasterAndUpdateMS=\((CACurrentMediaTime() - start) * 1000)")
-        coordinator.updateLayers(.cloud, cloudFrame: frame(2), on: map)
+        let submissionsMS = (CACurrentMediaTime() - start) * 1000
+        try await waitForCloud { original.image !== firstRaster }
+        let settledMS = (CACurrentMediaTime() - start) * 1000
+        let finalRaster = original.image
+        XCTAssertEqual(finalRaster.dataProvider?.data as Data?, frame(96).makeImage()?.dataProvider?.data as Data?)
+        coordinator.updateLayers(.cloud, cloudFrame: frame(0), on: map)
         XCTAssertEqual(map.overlays.count, 1)
         XCTAssertTrue(map.overlays.first === original)
-        coordinator.updateLayers(.combined, cloudFrame: frame(3), on: map)
-        try await Task.sleep(for: .milliseconds(60))
-        XCTAssertTrue(map.overlays.first is LightPollutionImageOverlay)
+        XCTAssertTrue(original.image === firstRaster)
+        coordinator.updateLayers(.combined, cloudFrame: frame(96), on: map)
+        try await waitForCloud { map.overlays.first is LightPollutionImageOverlay }
         XCTAssertTrue(map.overlays.last === original)
-        coordinator.updateLayers(.pollution, cloudFrame: frame(4), on: map)
+        XCTAssertTrue(original.image === finalRaster)
+        coordinator.updateLayers(.combined, cloudFrame: frame(97), on: map)
+        coordinator.updateLayers(.pollution, cloudFrame: nil, on: map)
+        try await Task.sleep(for: .milliseconds(70))
         XCTAssertEqual(map.overlays.count, 1)
         XCTAssertTrue(map.overlays.first is LightPollutionImageOverlay)
         // A fast switch away from pollution cancels previously scheduled batches.
         for _ in 0..<20 {
-            coordinator.updateLayers(.combined, cloudFrame: frame(5), on: map)
-            coordinator.updateLayers(.cloud, cloudFrame: frame(5), on: map)
+            coordinator.updateLayers(.combined, cloudFrame: frame(96), on: map)
+            coordinator.updateLayers(.cloud, cloudFrame: frame(96), on: map)
         }
         await Task.yield()
         XCTAssertEqual(map.overlays.count, 1)
         XCTAssertTrue(map.overlays.first is AstroCloudOverlay)
+        print("ASTRO-CLOUD samples=96 submissionsMS=\(submissionsMS) lastRasterReadyMS=\(settledMS) cachedRevisits=2 cancelledRender=1")
+    }
+
+    private func waitForCloud(_ condition: () -> Bool) async throws {
+        let deadline = CACurrentMediaTime() + 2
+        while !condition(), CACurrentMediaTime() < deadline { try await Task.sleep(for: .milliseconds(5)) }
+        XCTAssertTrue(condition())
+    }
+
+    func testCloudCacheKeepsUsableGridAfterFailedRefresh() async throws {
+        let region = try sampleRegion()
+        let now = Date()
+        let grid = AstroCloudGrid(region: region, hours: [now.addingTimeInterval(3600): [60]])
+        let provider = CloudCacheProvider(grid: grid)
+        let store = AstroCloudForecastStore(provider: provider)
+        await store.load(region, now: now)
+        let start = CACurrentMediaTime()
+        for _ in 0..<40 {
+            await store.load(region, now: now)
+            XCTAssertEqual(store.grid(for: region, now: now)?.id, grid.id)
+        }
+        let cachedCount = await provider.requests
+        XCTAssertEqual(cachedCount, 1)
+        print("ASTRO-CLOUD-CACHE cachedLoads=40 hitChecksMS=\((CACurrentMediaTime() - start) * 1000)")
+        let later = now.addingTimeInterval(1801)
+        await store.load(region, now: later)
+        XCTAssertEqual(store.failedRegion, region)
+        XCTAssertEqual(store.grid(for: region, now: later)?.id, grid.id)
+        XCTAssertNil(store.grid(for: region, now: now.addingTimeInterval(7201)))
     }
 
     func testSitesRestoreAfterReopeningAndDeletionPersists() throws {
@@ -218,4 +293,18 @@ private struct TestLightSource: LightPollutionSource {
     }
 
     func brightness(at coordinate: CLLocationCoordinate2D) -> SkyBrightness? { nil }
+}
+
+
+private actor CloudCacheProvider: AstroCloudProvider {
+    let grid: AstroCloudGrid
+    private(set) var requests = 0
+
+    init(grid: AstroCloudGrid) { self.grid = grid }
+
+    func grid(for region: AstroCloudRegion) async throws -> AstroCloudGrid {
+        requests += 1
+        guard requests == 1 else { throw AstroForecastError.serviceUnavailable }
+        return grid
+    }
 }

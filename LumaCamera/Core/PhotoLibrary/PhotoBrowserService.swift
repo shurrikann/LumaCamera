@@ -45,11 +45,13 @@ protocol PhotoBrowserService: AnyObject {
     func authorize(completion: @escaping (PhotoLibraryAccess) -> Void)
     func availablePhotoIDs(_ ids: [String], completion: @escaping (Set<String>?) -> Void)
     func photoAvailability(id: String, completion: @escaping (PhotoAssetAvailability) -> Void)
+    func fetchPhoto(id: String, completion: @escaping (LibraryPhoto?) -> Void)
     func fetchPhotos(offset: Int, limit: Int, completion: @escaping (PhotoPage) -> Void)
     func requestImage(id: String, size: CGSize, completion: @escaping (UIImage?, Error?) -> Void) -> PhotoImageRequest
 }
 
 extension PhotoBrowserService {
+    func fetchPhoto(id: String, completion: @escaping (LibraryPhoto?) -> Void) { completion(nil) }
     func availablePhotoIDs(_ ids: [String], completion: @escaping (Set<String>?) -> Void) { completion(nil) }
     var existingAccess: PhotoLibraryAccess? { nil }
     func photoAvailability(id: String, completion: @escaping (PhotoAssetAvailability) -> Void) { completion(.unknown) }
