@@ -24,8 +24,15 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         }
     }
     @Published var watermarkSettings = PhotoWatermarkSettings()
-    @Published var tool = PhotoEditorTool.filters { didSet { dismissFilterNumericInput(); setParameterEditing(false); renderPreview(structural: true) } }
+    @Published var tool = PhotoEditorTool.filters {
+        didSet {
+            if tool != .filters { filterPopupVisible = false }
+            dismissFilterNumericInput(); setParameterEditing(false); renderPreview(structural: true)
+        }
+    }
     @Published private(set) var editorControlsVisible = true
+    /// 照片详情进入时工具栏可见，但滤镜底部弹窗必须等待用户点击。
+    @Published private(set) var filterPopupVisible = false
     @Published var preservesLive = true
     private var cropEntry: PhotoAdjustments?
     private var toolBeforeCrop = PhotoEditorTool.filters
@@ -118,7 +125,7 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         adjustments = next
     }
     func presentFilterNumericInput(_ parameter: FilterParameter) {
-        guard filterDialControlsEnabled, tool == .adjustments,
+        guard filterDialControlsEnabled, tool == .adjustments || tool == .filters,
               !(parameter == .strength && style == .original) else { return }
         setParameterEditing(false)
         let binding = parameterBinding(parameter)
@@ -155,16 +162,29 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
     func toggleEditorControls(_ requested: PhotoEditorTool) {
         guard !saving, requested != .crop else { return }
         dismissFilterNumericInput(); setParameterEditing(false)
+        if requested == .filters {
+            if filterPopupVisible {
+                closeEditorControls()
+            } else {
+                tool = .filters
+                editorControlsVisible = true
+                filterPopupVisible = true
+            }
+            return
+        }
+        filterPopupVisible = false
         if tool == requested { editorControlsVisible.toggle() }
         else { tool = requested; editorControlsVisible = true }
     }
     func closeEditorControls() {
         guard !saving else { return }
-        dismissFilterNumericInput(); setParameterEditing(false); editorControlsVisible = false
+        dismissFilterNumericInput(); setParameterEditing(false)
+        filterPopupVisible = false
+        editorControlsVisible = false
     }
     var editorControlsHeight: CGFloat {
         guard editorControlsVisible else { return 0 }
-        return tool == .filters ? 160 : tool == .watermark ? 174 : 290
+        return (tool == .filters || tool == .watermark) ? 0 : 290
     }
     func selectWatermarkStyle(_ style: PhotoWatermarkStyle) {
         guard !saving, !cancelled else { return }

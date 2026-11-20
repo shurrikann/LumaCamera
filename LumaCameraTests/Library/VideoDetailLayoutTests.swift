@@ -103,6 +103,317 @@ final class VideoDetailLayoutTests: XCTestCase {
         XCTAssertEqual(editor.selectedTrimDuration, 3, accuracy: 0.001)
     }
 
+    @MainActor func testSDRVideoFilterPopupUsesBottomPanelAndDialPad() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let url = try await makeVideo()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let app = AppDependencies.makeCameraModel(automaticallySave: false)
+        let photo = LibraryPhoto(id: "video-filter-popup", date: Date(), hasFilter: false, isVideo: true, duration: 1,
+                                 videoBadges: VideoCaptureBadges(logLabel: nil, hasFilter: false, colorSpace: .sdr))
+        let editor = VideoEditorViewModel(asset: AVURLAsset(url: url), photo: photo, library: app.library)
+        defer { editor.cancel() }
+        for _ in 0..<150 { if !editor.loading { break }; try await Task.sleep(for: .milliseconds(20)) }
+        editor.selectTool(.filters)
+        editor.style = .leicaM9
+        let filters = FilterPickerViewModel()
+        filters.showStrength = true
+        let window = UIWindow(windowScene: scene)
+        let host = UIHostingController(rootView: VideoFilterPopup(model: editor, filters: filters, onClose: {})
+            .frame(width: 390, height: 620))
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        for _ in 0..<50 {
+            if editor.captureButtonFramesForTesting["video.filter.popup"] != nil,
+               editor.filterDialPadFrameForTesting.height > 200 { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        let popup = try XCTUnwrap(editor.captureButtonFramesForTesting["video.filter.popup"])
+        XCTAssertGreaterThan(popup.height, 300)
+        XCTAssertGreaterThan(editor.filterDialPadFrameForTesting.height, 200,
+                             "SDR视频滤镜参数应复用调色盘")
+        XCTAssertTrue(editor.filterDialControlsEnabled)
+        let pair = editor.filterParameterPairBinding(.temperature, .tint)
+        pair.wrappedValue = CGPoint(x: 21, y: 12)
+        XCTAssertEqual(pair.wrappedValue, CGPoint(x: 21, y: 12))
+        editor.filterParameterBinding(.strength).wrappedValue = 42
+        XCTAssertEqual(editor.intensity, 0.42, accuracy: 0.001)
+        let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+        let attachment = XCTAttachment(image: shot)
+        attachment.name = "Video-SDR-Filter-Dial"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    @MainActor func testVideoFilterDialAndToolPopupsKeepPreviewStable() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let url = try await makeVideo()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let app = AppDependencies.makeCameraModel(automaticallySave: false)
+        let photo = LibraryPhoto(id: "video-dial", date: Date(), hasFilter: false, isVideo: true, duration: 1,
+                                 videoBadges: VideoCaptureBadges(logLabel: nil, hasFilter: false, colorSpace: .sdr))
+        let editor = VideoEditorViewModel(asset: AVURLAsset(url: url), photo: photo, library: app.library)
+        let host = UIHostingController(rootView: VideoEditorView(model: editor))
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { editor.cancel(); window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        for _ in 0..<150 {
+            if !editor.loading, editor.captureButtonFramesForTesting["preview"] != nil { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertFalse(editor.loading)
+        let preview = try XCTUnwrap(editor.captureButtonFramesForTesting["preview"])
+        var timings: [Double] = []
+        for _ in 0..<3 {
+            for tool in editor.availableTools.filter({ $0 != .adjustments }) {
+                let key = "tool." + tool.title
+                let before = try XCTUnwrap(editor.captureButtonFramesForTesting[key])
+                editor.captureButtonFramesForTesting["panel"] = nil
+                let start = CACurrentMediaTime()
+                editor.selectTool(tool)
+                for _ in 0..<100 {
+                    if editor.captureButtonFramesForTesting["panel"] != nil { break }
+                    try await Task.sleep(for: .milliseconds(10))
+                }
+                timings.append((CACurrentMediaTime() - start) * 1000)
+                if tool == .filters, !editor.isLogVideo {
+                    for _ in 0..<100 {
+                        if editor.captureButtonFramesForTesting["video.filter.popup"] != nil { break }
+                        try await Task.sleep(for: .milliseconds(10))
+                    }
+                    let popup = try XCTUnwrap(editor.captureButtonFramesForTesting["video.filter.popup"])
+                    XCTAssertGreaterThan(popup.width, before.width)
+                    XCTAssertGreaterThanOrEqual(popup.maxY, before.maxY)
+                    XCTAssertEqual(editor.captureButtonFramesForTesting["preview"], preview)
+                    XCTAssertEqual(editor.captureButtonFramesForTesting[key], before)
+                    try await Task.sleep(for: .milliseconds(220))
+                    let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                        window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+                    }
+                    let attachment = XCTAttachment(image: shot)
+                    attachment.name = "Video-SDR-Filter-Bottom"
+                    attachment.lifetime = .keepAlways
+                    add(attachment)
+                    editor.closeToolPanel()
+                    continue
+                }
+                let panel = try XCTUnwrap(editor.captureButtonFramesForTesting["panel"])
+                XCTAssertEqual(panel.maxY, before.minY - 8, accuracy: 1)
+                XCTAssertEqual(editor.captureButtonFramesForTesting["preview"], preview)
+                XCTAssertEqual(editor.captureButtonFramesForTesting[key], before)
+                if tool == .adjustments {
+                    XCTAssertGreaterThan(editor.filterDialPadFrameForTesting.height, 160)
+                    let pair = editor.filterParameterPairBinding(.temperature, .tint)
+                    pair.wrappedValue = CGPoint(x: 21, y: 12)
+                    XCTAssertEqual(pair.wrappedValue, CGPoint(x: 21, y: 12))
+                    editor.presentFilterNumericInput(.temperature)
+                    editor.filterNumericDraft = "32"
+                    editor.dismissFilterNumericInput()
+                    XCTAssertEqual(editor.value(for: .temperature), 21)
+                    editor.presentFilterNumericInput(.temperature)
+                    editor.filterNumericDraft = "32"
+                    editor.confirmFilterNumericInput()
+                    XCTAssertEqual(editor.value(for: .temperature), 32)
+                    editor.closeToolPanel()
+                    pair.wrappedValue = CGPoint(x: 8, y: 4)
+                    XCTAssertEqual(editor.value(for: .temperature), 32)
+                    XCTAssertFalse(editor.isToolPanelPresented)
+                }
+            }
+        }
+        print("VIDEO-TOOL-LAYOUT samples=\(timings.count) firstLayoutMs=\(timings)")
+        // 视频宿主首次展开 SDR 滤镜底部面板包含 AVPlayer/缩略图布局；
+        // 目前实测约 1.1–1.25s，不能用拍照页的 500ms 预算。
+        XCTAssertLessThan(timings.max() ?? .infinity, 1500)
+    }
+
+    @MainActor func testVideoSavePopupIsBottomGlassPanel() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let url = try await makeVideo()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let app = AppDependencies.makeCameraModel(automaticallySave: false)
+        let photo = LibraryPhoto(id: "video-save-popup", date: Date(), hasFilter: false, isVideo: true, duration: 1,
+                                 videoBadges: VideoCaptureBadges(logLabel: nil, hasFilter: false, colorSpace: .sdr))
+        let editor = VideoEditorViewModel(asset: AVURLAsset(url: url), photo: photo, library: app.library)
+        defer { editor.cancel() }
+        for _ in 0..<150 { if !editor.loading { break }; try await Task.sleep(for: .milliseconds(20)) }
+        let window = UIWindow(windowScene: scene)
+        let host = UIHostingController(rootView: VideoEditorView(model: editor, initialSaveChoicePresented: true))
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        for _ in 0..<100 {
+            if editor.captureButtonFramesForTesting["video.save.popup"] != nil { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        let popup = try XCTUnwrap(editor.captureButtonFramesForTesting["video.save.popup"])
+        XCTAssertGreaterThan(popup.width, 300)
+        XCTAssertGreaterThan(popup.height, 150)
+        XCTAssertGreaterThan(popup.maxY, window.bounds.height - 80)
+        let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+        let attachment = XCTAttachment(image: shot)
+        attachment.name = "Video-Save-Bottom"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    @MainActor func testLogVideoFilterPopupUsesBottomPanelAndCategories() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let url = try await makeVideo()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let app = AppDependencies.makeCameraModel(automaticallySave: false)
+        let photo = LibraryPhoto(id: "video-log-filter-popup", date: Date(), hasFilter: false, isVideo: true, duration: 1,
+                                 videoBadges: VideoCaptureBadges(logLabel: "LOG", hasFilter: false, colorSpace: .appleLog))
+        let editor = VideoEditorViewModel(asset: AVURLAsset(url: url), photo: photo, library: app.library)
+        defer { editor.cancel() }
+        for _ in 0..<150 { if !editor.loading { break }; try await Task.sleep(for: .milliseconds(20)) }
+        XCTAssertTrue(editor.isLogVideo)
+        let window = UIWindow(windowScene: scene)
+        let host = UIHostingController(rootView: VideoEditorView(model: editor))
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        editor.selectTool(.filters)
+        for _ in 0..<100 {
+            if editor.captureButtonFramesForTesting["video.logFilter.popup"] != nil { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        let popup = try XCTUnwrap(editor.captureButtonFramesForTesting["video.logFilter.popup"])
+        XCTAssertGreaterThan(popup.width, 300)
+        XCTAssertGreaterThan(popup.maxY, window.bounds.height - 80)
+        XCTAssertTrue(editor.logLUTOptions.contains { $0.id == editor.selectedLogLUTID })
+        for _ in 0..<150 {
+            if editor.logLUTThumbnails.count >= 4 { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertGreaterThanOrEqual(editor.logLUTThumbnails.count, 4, "Log LUT 卡应加载缩略图")
+        editor.selectLogLUTCategory(.favorites)
+        XCTAssertTrue(editor.logLUTOptions.allSatisfy { editor.logLUTFavorites.contains($0.id) })
+        editor.selectLogLUTCategory(.all)
+        try await Task.sleep(for: .milliseconds(500))
+        let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+        let attachment = XCTAttachment(image: shot)
+        attachment.name = "Video-Log-Filter-Bottom"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    @MainActor func testLiveFilterAdjustmentsReuseOnePreviewComposition() async throws {
+        let app = AppDependencies.makeCameraModel(automaticallySave: false)
+        let url = try await makeVideo()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let photo = LibraryPhoto(id: "video-live-preview", date: Date(), hasFilter: false, isVideo: true, duration: 1,
+                                 videoBadges: VideoCaptureBadges(logLabel: nil, hasFilter: false, colorSpace: .sdr))
+        let editor = VideoEditorViewModel(asset: AVURLAsset(url: url), photo: photo, library: app.library)
+        defer { editor.cancel() }
+        for _ in 0..<150 { if !editor.loading { break }; try await Task.sleep(for: .milliseconds(20)) }
+        editor.selectTool(.filters)
+        editor.style = .leicaM9
+        for _ in 0..<100 {
+            if editor.previewCompositionBuildCount > 0 { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertEqual(editor.previewCompositionBuildCount, 1)
+        for value in stride(from: 0.2, through: 0.9, by: 0.1) {
+            editor.intensity = value
+            editor.filterParameterBinding(.temperature).wrappedValue = value * 30
+            try await Task.sleep(for: .milliseconds(25))
+        }
+        try await Task.sleep(for: .milliseconds(250))
+        XCTAssertEqual(editor.previewCompositionBuildCount, 1, "拖动参数不能逐值重建视频合成")
+        XCTAssertNil(editor.message)
+    }
+
+    @MainActor func testPausedFilterEditingShowsImmediatePreviewOverlay() async throws {
+        let app = AppDependencies.makeCameraModel(automaticallySave: false)
+        let url = try await makeVideo()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let photo = LibraryPhoto(id: "video-live-overlay", date: Date(), hasFilter: false, isVideo: true, duration: 1,
+                                 videoBadges: VideoCaptureBadges(logLabel: nil, hasFilter: false, colorSpace: .sdr))
+        let editor = VideoEditorViewModel(asset: AVURLAsset(url: url), photo: photo, library: app.library)
+        defer { editor.cancel() }
+        for _ in 0..<150 { if !editor.loading { break }; try await Task.sleep(for: .milliseconds(20)) }
+        editor.selectTool(.filters)
+        editor.style = .leicaM9
+        editor.setFilterParameterEditing(true)
+        editor.filterParameterBinding(.temperature).wrappedValue = 28
+        for _ in 0..<100 {
+            if editor.liveFilterPreview != nil { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertNotNil(editor.liveFilterPreview, "暂停拖动滤镜参数时应立即显示当前帧预览")
+        editor.setFilterParameterEditing(false)
+        for _ in 0..<30 {
+            if editor.liveFilterPreview == nil { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertNil(editor.liveFilterPreview, "结束拖动后应回到播放器合成帧")
+    }
+
+    @MainActor func testVideoEditorLivePreviewReactsToGrainSize() async throws {
+        let app = AppDependencies.makeCameraModel(automaticallySave: false)
+        let url = try await makeVideo()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let photo = LibraryPhoto(id: "video-grain-preview", date: Date(), hasFilter: false, isVideo: true, duration: 1,
+                                 videoBadges: VideoCaptureBadges(logLabel: nil, hasFilter: false, colorSpace: .sdr))
+        let editor = VideoEditorViewModel(asset: AVURLAsset(url: url), photo: photo, library: app.library)
+        defer { editor.cancel() }
+        for _ in 0..<150 { if !editor.loading { break }; try await Task.sleep(for: .milliseconds(20)) }
+        editor.selectTool(.filters)
+        editor.style = .leicaM9
+        editor.setFilterParameterEditing(true)
+        editor.filterParameterBinding(.grainSize).wrappedValue = 0
+        for _ in 0..<100 { if editor.liveFilterPreview != nil { break }; try await Task.sleep(for: .milliseconds(20)) }
+        let before = try XCTUnwrap(editor.liveFilterPreview?.pngData())
+        editor.filterParameterBinding(.grainSize).wrappedValue = 90
+        var after: Data?
+        for _ in 0..<100 {
+            try await Task.sleep(for: .milliseconds(20))
+            let candidate = editor.liveFilterPreview?.pngData()
+            if let candidate, candidate != before { after = candidate; break }
+        }
+        XCTAssertNotNil(after, "颗粒大小变化必须反映到视频编辑实时预览")
+        editor.setFilterParameterEditing(false)
+    }
+
+    @MainActor func testPausedGrainPreviewChangesPhaseInsteadOfLookingLikeMask() async throws {
+        let app = AppDependencies.makeCameraModel(automaticallySave: false)
+        let url = try await makeVideo()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let photo = LibraryPhoto(id: "video-grain-animation", date: Date(), hasFilter: false, isVideo: true, duration: 1,
+                                 videoBadges: VideoCaptureBadges(logLabel: nil, hasFilter: false, colorSpace: .sdr))
+        let editor = VideoEditorViewModel(asset: AVURLAsset(url: url), photo: photo, library: app.library)
+        defer { editor.cancel() }
+        for _ in 0..<150 { if !editor.loading { break }; try await Task.sleep(for: .milliseconds(20)) }
+        editor.selectTool(.filters)
+        editor.style = .leicaM9
+        editor.setFilterParameterEditing(true)
+        editor.filterParameterBinding(.grainSize).wrappedValue = 90
+        for _ in 0..<100 {
+            if editor.liveFilterPreview != nil { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        let first = try XCTUnwrap(editor.liveFilterPreview?.pngData())
+        var changed = false
+        for _ in 0..<30 {
+            try await Task.sleep(for: .milliseconds(40))
+            if editor.liveFilterPreview?.pngData() != first { changed = true; break }
+        }
+        XCTAssertTrue(changed, "暂停颗粒预览必须逐帧变化，不能固定成蒙版")
+        editor.setFilterParameterEditing(false)
+    }
+
     @MainActor func testDraggingTrimHandlesSeeksThePreviewToEachCutPoint() async throws {
         let app = AppDependencies.makeCameraModel(automaticallySave: false)
         let url = try await makeVideo()
@@ -223,7 +534,7 @@ final class VideoDetailLayoutTests: XCTestCase {
         let window = UIWindow(windowScene: scene); window.rootViewController = host; window.makeKeyAndVisible()
         defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
         let photo = LibraryPhoto(id: "layout-video", date: Date(timeIntervalSince1970: 1_792_339_200),
-                                 hasFilter: true, isVideo: true, duration: 3661, logLabel: "LOG2")
+                                 isAstroCapture: true, hasFilter: true, isVideo: true, duration: 3661, logLabel: "LOG2")
         // Inject a real temporary video; never request Photos permission or start the camera.
         let url = try await makeVideo()
         defer { try? FileManager.default.removeItem(at: url) }
@@ -292,6 +603,43 @@ final class VideoDetailLayoutTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(250))
         let metrics = "Video layout: \(samples.count) snapshots, mean \(samples.reduce(0,+) / Double(samples.count))s, max \(samples.max() ?? 0)s; 40 rapid orientation changes + dismissal. Snapshot cost is not display FPS or camera performance."
         let attachment = XCTAttachment(string: metrics); attachment.name = "Video-detail-layout-metrics"; attachment.lifetime = .keepAlways; add(attachment)
+    }
+
+    @MainActor func testVideoInfoPopupAnchorsAboveItsButton() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let app = AppDependencies.makeCameraModel(automaticallySave: false)
+        let url = try await makeVideo()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let asset = AVURLAsset(url: url)
+        let photo = LibraryPhoto(id: "video-info-anchor", date: Date(), hasFilter: false, isVideo: true, duration: 1)
+        let host = UIHostingController(rootView: AnyView(Color.black))
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        var frames: [String: CGRect] = [:]
+        for width in [CGFloat(320), 402] {
+            for open in [false, true, false, true, false] {
+                let view = SystemVideoView(model: app.gallery, photo: photo, onCamera: {},
+                                           playbackAssetForTesting: asset, onLayoutForTesting: { frames = $0 },
+                                           infoVisibleForTesting: open)
+                host.rootView = AnyView(view.frame(width: width).frame(maxWidth: .infinity))
+                for _ in 0..<100 {
+                    if frames["info"] != nil, (frames["infoPanel"] != nil) == open { break }
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+                if open {
+                    let button = try XCTUnwrap(frames["info"])
+                    let panel = try XCTUnwrap(frames["infoPanel"])
+                    XCTAssertEqual(panel.maxY, button.minY - 8, accuracy: 1)
+                    XCTAssertLessThanOrEqual(panel.width, width - 16)
+                    XCTAssertGreaterThan(panel.height, 200)
+                } else {
+                    XCTAssertNil(frames["infoPanel"])
+                }
+            }
+        }
     }
 
     @MainActor private func playerLayer(in view: UIView) -> AVPlayerLayer? {

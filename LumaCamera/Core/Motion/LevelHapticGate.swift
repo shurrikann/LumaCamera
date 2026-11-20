@@ -5,6 +5,8 @@ struct LevelHapticGate {
     private var wasLevel: Bool?
     private var candidateSince: Double?
     private var lastFeedback = -Double.infinity
+    var isLevel: Bool { wasLevel == true }
+
     mutating func update(roll: Double, time: Double, enabled: Bool) -> Bool {
         guard enabled, roll.isFinite, time.isFinite else { wasLevel = nil; candidateSince = nil; return false }
         let angle = abs(roll)

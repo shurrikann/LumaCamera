@@ -23,7 +23,7 @@ struct SystemPhotoView: View {
         _detail = StateObject(wrappedValue: PhotoDetailViewModel(photo: photo, gallery: model, initialImage: initialImage))
     }
     var body: some View {
-        PhotoViewerLayout(image: detail.image, date: photo.date, location: photo.location ?? detail.details?.location, isRAW: photo.isRAW, isLive: photo.isLive, hasFilter: detail.hasFilter, isNightComposite: photo.isNightComposite, liveSource: photo.isLive ? LivePhotoPlaybackSource(assetID: photo.id) : nil, busy: detail.busy, pagingBusy: pagingBusy, destructiveBusy: model.library.deleting || model.library.editing, shareBusy: detail.preparingShare, infoVisible: info, details: detail.details, detailsLoading: detail.detailsLoading,
+        PhotoViewerLayout(image: detail.image, date: photo.date, location: photo.location ?? detail.details?.location, isRAW: photo.isRAW, isLive: photo.isLive, hasFilter: detail.hasFilter, isAstroCapture: photo.isAstroCapture || detail.details?.isAstroCapture == true || PhotoCaptureDiagnosticsStore.shared.isAstroCapture(assetID: photo.id), liveSource: photo.isLive ? LivePhotoPlaybackSource(assetID: photo.id) : nil, busy: detail.busy, pagingBusy: pagingBusy, destructiveBusy: model.library.deleting || model.library.editing, shareBusy: detail.preparingShare, infoVisible: info, details: detail.details, detailsLoading: detail.detailsLoading,
                           onBack: { dismiss() }, onCamera: onCamera,
                           onShare: { detail.prepareShare { share = $0 } },
                           onInfo: { info.toggle(); if info { detail.loadDetails() } },

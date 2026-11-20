@@ -43,7 +43,26 @@ enum PhotoEncoder {
         // 高动态在影调/滤镜之前完成；RAW白平衡与曝光已由解码器处理，不能重复应用。
         var renderLook = look
         if options.adaptiveHighDynamic { renderLook.adjustments = AdaptiveRAWDeveloper.withoutRAWControls(look.adjustments) }
-        let developed = options.adaptiveHighDynamic ? AdaptiveDynamicRenderer.apply(source,hdr:options.hdr,context:context) : source
+        var rawSDR: CIImage?
+        if options.format == .heifPro, options.hdr, !look.border, !options.portraitMode, let raw,
+           let filter = CIRAWFilter(imageData: raw, identifierHint: nil) {
+            if options.adaptiveHighDynamic {
+                AdaptiveRAWDeveloper.configure(filter, adaptive: true, hdr: false, adjustments: look.adjustments)
+            } else {
+                if filter.isSharpnessSupported { filter.sharpnessAmount = 0 }
+                if filter.isDetailSupported { filter.detailAmount = 0 }
+                filter.extendedDynamicRangeAmount = 0
+            }
+            if let decoded = filter.outputImage, decoded.extent == source.extent {
+                let base = options.adaptiveHighDynamic
+                    ? AdaptiveDynamicRenderer.apply(decoded, hdr: false, context: context) : decoded
+                rawSDR = Imaging.filtered(base, look: renderLook)
+            }
+        }
+        let developed = options.adaptiveHighDynamic
+            ? AdaptiveDynamicRenderer.apply(source, hdr: options.hdr, context: context,
+                                            limitHighlights: rawSDR == nil)
+            : source
         let maxPixels = Double(options.resolution.rawValue) * 1_000_000
         let pixels = source.extent.width * source.extent.height
         let scale = min(1, sqrt(maxPixels / pixels))
@@ -62,11 +81,12 @@ enum PhotoEncoder {
         // HDR 成片必须让影调处理保留超出 SDR 的高光范围。
         let hdrDestination = options.hdr && (options.format == .heif || options.format == .heifPro)
         let hdrLayers = hdrDestination ? Imaging.filteredHDR(portraitSource, look: renderLook) : nil
-        let styled = hdrLayers?.hdr ?? (options.adaptiveHighDynamic
+        let styledHDR = hdrLayers?.hdr ?? (options.adaptiveHighDynamic
             ? AdaptiveDynamicRenderer.filtered(portraitSource, look: renderLook, hdr: options.hdr)
             : Imaging.filtered(portraitSource, look: renderLook, hdr: hdrDestination))
-        let processed = styled.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-        let processedSDR = (systemSDR ?? hdrLayers?.sdr).map {
+        let matched = rawSDR.flatMap { AdaptiveDynamicRenderer.matchingHDR(styledHDR, to: $0) }
+        let processed = (matched ?? styledHDR).transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        let processedSDR = (systemSDR ?? (matched == nil ? hdrLayers?.sdr : rawSDR)).map {
             $0.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         }
         let previewScale = min(1, 2400 / max(processed.extent.width, processed.extent.height))
@@ -193,7 +213,7 @@ enum PhotoEncoder {
         return output as Data
     }
 
-    private static func encodeImageData(_ image: CIImage, fileExtension: String, hdr: Bool,
+    static func encodeImageData(_ image: CIImage, fileExtension: String, hdr: Bool,
                                         sdrBase: CIImage? = nil, context: CIContext, sourceHeadroom: Float? = nil) throws -> Data? {
         if hdr, fileExtension == "heic", #available(iOS 18.0, *) {
             let headroom = sourceHeadroom ?? HDRToneMapping.measuredHeadroom(image, context: context)

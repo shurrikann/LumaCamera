@@ -211,7 +211,7 @@ extension CameraView {
                 }
             }
             Divider().overlay(.white.opacity(0.15))
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 ForEach(CameraMetering.allCases) { metering in
                     Button { model.metering = metering } label: {
                         VStack(spacing: 8) {
@@ -219,6 +219,7 @@ extension CameraView {
                                 .frame(maxWidth: .infinity).frame(height: 34)
                                 .background(model.metering == metering ? AppTheme.accent.opacity(0.7) : .white.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
                             Text(metering.rawValue).font(.system(size: 12, weight: .medium))
+                                .lineLimit(1).minimumScaleFactor(0.75)
                         }
                     }.buttonStyle(.plain)
                 }

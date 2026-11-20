@@ -49,29 +49,56 @@ final class PhotoPagingAnimationTests: XCTestCase {
         XCTAssertEqual(zooms(window).count, 1)
         XCTAssertTrue(zooms(window).first?.photoView.image === first)
     }
-    @MainActor func testRAWBadgeAndLocationHeaderAcrossEveryPhotoRatio() async throws {
+    @MainActor func testTopLeadingBadgesAndLocationHeaderAcrossEveryPhotoRatio() async throws {
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let oldWindow = scene.windows.first(where: \.isKeyWindow)
         let location = PhotoLocation(latitude: 34.25, longitude: 108.95, timestamp: Date(timeIntervalSince1970: 0))
         func layout(_ image: UIImage, live: Bool = false) -> PhotoViewerLayout {
             PhotoViewerLayout(image: image, date: Date(timeIntervalSince1970: 1_700_000_000), location: location, isRAW: !live, isLive: live,
+                              hasFilter: true, isAstroCapture: true,
                               onBack: {}, onCamera: {}, onShare: {}, onInfo: {}, onEdit: {}, onDelete: {})
         }
         let host = UIHostingController(rootView: layout(image(.gray)))
         let window = UIWindow(windowScene: scene); window.rootViewController = host; window.makeKeyAndVisible()
         defer { window.isHidden = true; window.rootViewController = nil; oldWindow?.makeKey() }
+        var samples = [Double]()
         for ratio in FrameRatio.allCases {
             let size = CGSize(width: 300, height: 300 / ratio.portraitRatio)
             let photo = UIGraphicsImageRenderer(size: size).image { _ in UIColor.darkGray.setFill(); UIRectFill(CGRect(origin: .zero, size: size)) }
             host.rootView = layout(photo)
             try await Task.sleep(for: .milliseconds(150))
-            XCTAssertEqual(zooms(window).count, 1)
+            let zoom = try XCTUnwrap(zooms(window).first)
+            let frame = zoom.convert(zoom.bounds, to: window)
+            let fit = PhotoRAWBadgeLayout.fit(image: photo.size, viewport: frame.size)
+            let top = CGPoint(x: frame.midX - fit.width / 2, y: frame.midY - fit.height / 2)
+            let start = CACurrentMediaTime()
+            let shot = capture(window)
+            samples.append((CACurrentMediaTime() - start) * 1000)
+            // Each badge darkens the uniform image across the same top row.
+            for x in [14.0, 42.0, 75.0] {
+                XCTAssertLessThan(try brightness(in: shot, at: CGPoint(x: top.x + x, y: top.y + 14)), 0.24)
+            }
+            XCTAssertGreaterThan(try brightness(in: shot, at: CGPoint(x: top.x + 14, y: top.y + fit.height - 14)), 0.25)
             snapshot(window, name: "RAW-Header-" + ratio.rawValue.replacingOccurrences(of: ":", with: "-"))
             host.rootView = layout(photo, live: true)
             try await Task.sleep(for: .milliseconds(100))
             XCTAssertEqual(zooms(window).count, 1)
             snapshot(window, name: "LIVE-Header-" + ratio.rawValue.replacingOccurrences(of: ":", with: "-"))
         }
+        print("PHOTO-DETAIL-BADGES ratioSamples=\(samples.count) snapshotMS=\(samples)")
+    }
+
+    private func brightness(in image: UIImage, at point: CGPoint) throws -> Double {
+        let pixel = try XCTUnwrap(image.cgImage?.cropping(to: CGRect(
+            x: floor(point.x * image.scale), y: floor(point.y * image.scale), width: 1, height: 1)))
+        var rgba = [UInt8](repeating: 0, count: 4)
+        try rgba.withUnsafeMutableBytes { bytes in
+            let context = try XCTUnwrap(CGContext(data: bytes.baseAddress, width: 1, height: 1,
+                bitsPerComponent: 8, bytesPerRow: 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+            context.draw(pixel, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+        }
+        return Double(Int(rgba[0]) + Int(rgba[1]) + Int(rgba[2])) / (3 * 255)
     }
         @MainActor private func zooms(_ view: UIView) -> [PhotoZoomScrollView] {
         (view as? PhotoZoomScrollView).map { [$0] } ?? view.subviews.flatMap { zooms($0) }

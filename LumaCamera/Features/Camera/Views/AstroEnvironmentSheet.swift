@@ -45,6 +45,7 @@ struct AstroEnvironmentSheet: View {
     private let forecastStore = AstroForecastStore.shared
     @State private var forecastRetry = 0
     @State private var forecastSelection = AstroForecastSelection()
+    @State private var horizonResult: (request: AstroHorizonRequest, events: [AstroHorizonEvent])?
     @State private var plannedSites = AstroPlannedSite.restore()
     @State private var revealedSiteID: UUID?
     @State private var pollutionBands: [LightPollutionPoint: LightPollutionLegend.Band?] = [:]
@@ -60,6 +61,7 @@ struct AstroEnvironmentSheet: View {
                                                 recenterToken: recenterToken, sites: plannedSites,
                                                 layer: layer, cloudFrame: selectedCloudFrame, cloudZoomToken: cloudZoomToken,
                                                 cloudFocus: selectedSite?.coordinate ?? location?.coordinate,
+                                                horizonOrigin: activeCoordinate, horizonEvents: horizonEvents ?? [],
                                                 onRegionChange: { cloudRegion = $0 },
                                                 onCenterChange: { forecastSelection.updateCenter($0) },
                                                 onPan: { forecastSelection.updateCenter($0, afterPan: true) },
@@ -111,6 +113,10 @@ struct AstroEnvironmentSheet: View {
                             }
                             .clipShape(.rect(cornerRadius: 16))
 
+                        if let horizonRequest {
+                            AstroHorizonPanel(request: horizonRequest, events: horizonEvents)
+                                .transition(.opacity)
+                        }
                         layerSelector
                         VStack(alignment: .leading, spacing: 8) {
                             if layer.includesPollution, let legend = lightPollution.legend {
@@ -146,6 +152,12 @@ struct AstroEnvironmentSheet: View {
         .task(id: ForecastRequest(point: scenePhase == .active ? forecastPoint : nil, attempt: forecastRetry)) {
             guard scenePhase == .active, let forecastPoint else { return }
             await forecastStore.refreshWhileVisible(forecastPoint)
+        }
+        .task(id: scenePhase == .active ? horizonRequest : nil) {
+            guard scenePhase == .active, let horizonRequest, horizonResult?.request != horizonRequest else { return }
+            let events = await Task.detached(priority: .utility) { horizonRequest.events() }.value
+            guard !Task.isCancelled else { return }
+            horizonResult = (horizonRequest, events)
         }
         .task(id: CloudRequest(region: scenePhase == .active && layer.includesClouds ? cloudRegion : nil,
                                attempt: cloudRetry)) {
@@ -278,6 +290,20 @@ struct AstroEnvironmentSheet: View {
         forecast?.hours.first?.date ?? cloudGrid?.firstForecastHour ?? Date()
     }
     private var selectedDate: Date { forecastBase.addingTimeInterval(forecastIndex * 3600) }
+    private var planningTimeZone: TimeZone {
+        if let forecast { return forecast.timeZone }
+        guard let forecastPoint else { return .current }
+        let localPoint = location.flatMap { AstroForecastPoint($0.coordinate) }
+        return forecastPoint == localPoint ? .current : .gmt
+    }
+    private var horizonRequest: AstroHorizonRequest? {
+        guard let forecastPoint else { return nil }
+        return AstroHorizonRequest(point: forecastPoint, date: selectedDate, timeZone: planningTimeZone)
+    }
+    private var horizonEvents: [AstroHorizonEvent]? {
+        guard let horizonResult, horizonResult.request == horizonRequest else { return nil }
+        return horizonResult.events
+    }
     private var selectedHour: AstroForecastHour? { forecast?.hours.first { $0.date == selectedDate } }
     private var forecastLocationLabel: String {
         if let selectedSite { return selectedSite.name }
@@ -342,7 +368,7 @@ struct AstroEnvironmentSheet: View {
 
     private func dateText(_ date: Date, _ format: Date.FormatStyle, zone: TimeZone? = nil) -> String {
         var format = format
-        format.timeZone = zone ?? forecast?.timeZone ?? .current
+        format.timeZone = zone ?? planningTimeZone
         return date.formatted(format)
     }
 
@@ -599,6 +625,8 @@ struct AstroNightLightsMap: UIViewRepresentable {
     let cloudFrame: AstroCloudFrame?
     let cloudZoomToken: UUID
     let cloudFocus: CLLocationCoordinate2D?
+    let horizonOrigin: CLLocationCoordinate2D?
+    let horizonEvents: [AstroHorizonEvent]
     let onRegionChange: (AstroCloudRegion?) -> Void
     let onCenterChange: (CLLocationCoordinate2D?) -> Void
     let onPan: (CLLocationCoordinate2D?) -> Void
@@ -608,8 +636,10 @@ struct AstroNightLightsMap: UIViewRepresentable {
                     onRegionChange: onRegionChange)
     }
 
-    func makeUIView(context: Context) -> MKMapView {
-        let map = MKMapView()
+    func makeUIView(context: Context) -> AstroMapViewport {
+        let viewport = AstroMapViewport()
+        let map = viewport.map
+        context.coordinator.viewport = viewport
         map.accessibilityIdentifier = "astro.environment.map"
         map.delegate = context.coordinator
         map.overrideUserInterfaceStyle = .dark
@@ -618,28 +648,23 @@ struct AstroNightLightsMap: UIViewRepresentable {
         map.pointOfInterestFilter = .excludingAll
         map.isPitchEnabled = false
         map.isRotateEnabled = false
+        map.showsUserLocation = false
         map.setVisibleMapRect(.world, animated: false)
         context.coordinator.observePanning(on: map)
 
-        return map
+        return viewport
     }
 
-    func updateUIView(_ map: MKMapView, context: Context) {
+    func updateUIView(_ viewport: AstroMapViewport, context: Context) {
+        let map = viewport.map
         let coordinator = context.coordinator
         coordinator.updateCloudViewport(for: layer, zoomToken: cloudZoomToken, focus: cloudFocus, on: map)
         coordinator.updateLayers(layer, cloudFrame: cloudFrame, on: map)
-        coordinator.observeHeading(from: locationService, on: map)
+        coordinator.observeHeading(from: locationService)
+        viewport.setLocation(location?.coordinate)
         coordinator.syncSites(sites, on: map)
-        guard let location else {
-            if map.annotations.contains(where: { $0 === coordinator.marker }) {
-                map.removeAnnotation(coordinator.marker)
-            }
-            return
-        }
-        if coordinator.marker.coordinate.latitude != location.latitude || coordinator.marker.coordinate.longitude != location.longitude {
-            coordinator.marker.coordinate = location.coordinate
-        }
-        if !map.annotations.contains(where: { $0 === coordinator.marker }) { map.addAnnotation(coordinator.marker) }
+        coordinator.updateHorizon(origin: horizonOrigin, events: horizonEvents, on: map)
+        guard let location else { return }
         if coordinator.lastRecenterToken != recenterToken {
             coordinator.lastRecenterToken = recenterToken
             coordinator.centeredOnLocation = true
@@ -653,15 +678,16 @@ struct AstroNightLightsMap: UIViewRepresentable {
         DispatchQueue.main.async { coordinator.refreshOverlays(on: map) }
     }
 
-    static func dismantleUIView(_ map: MKMapView, coordinator: Coordinator) {
-        coordinator.observeHeading(from: nil, on: map)
+    static func dismantleUIView(_ viewport: AstroMapViewport, coordinator: Coordinator) {
+        coordinator.observeHeading(from: nil)
         coordinator.stopOverlayUpdates()
         coordinator.cancelCloudRender()
-        map.delegate = nil
+        viewport.map.delegate = nil
+        coordinator.viewport = nil
     }
 
     final class Coordinator: NSObject, MKMapViewDelegate, UIGestureRecognizerDelegate {
-        let marker = MKPointAnnotation()
+        weak var viewport: AstroMapViewport?
         var centeredOnLocation = false
         var lastRecenterToken: UUID?
         private let source: any LightPollutionSource
@@ -671,8 +697,8 @@ struct AstroNightLightsMap: UIViewRepresentable {
         private let onSelectSite: (UUID) -> Void
         private let onRegionChange: (AstroCloudRegion?) -> Void
         private var siteAnnotations: [UUID: AstroSiteAnnotation] = [:]
+        private let horizonAnnotation = AstroHorizonAnnotation()
         private weak var headingService: CaptureLocationService?
-        private var heading: CLLocationDirection?
         private var layer: AstroEnvironmentLayer = .pollution
         private var cloudOverlay: AstroCloudOverlay?
         private struct CloudFrameKey: Equatable {
@@ -697,6 +723,23 @@ struct AstroNightLightsMap: UIViewRepresentable {
             self.onSelectSite = onSelectSite
             self.onRegionChange = onRegionChange
             cloudRasters.countLimit = 12
+        }
+
+        func updateHorizon(origin: CLLocationCoordinate2D?, events: [AstroHorizonEvent], on map: MKMapView) {
+            let isVisible = map.annotations.contains { $0 === horizonAnnotation }
+            guard let origin, !events.isEmpty else {
+                if isVisible { map.removeAnnotation(horizonAnnotation) }
+                return
+            }
+            if horizonAnnotation.coordinate.latitude != origin.latitude ||
+                horizonAnnotation.coordinate.longitude != origin.longitude {
+                horizonAnnotation.coordinate = origin
+            }
+            if horizonAnnotation.events != events {
+                horizonAnnotation.events = events
+                (map.view(for: horizonAnnotation) as? AstroHorizonAnnotationView)?.setEvents(events)
+            }
+            if !isVisible { map.addAnnotation(horizonAnnotation) }
         }
 
         func updateCloudViewport(for mode: AstroEnvironmentLayer, zoomToken: UUID,
@@ -826,22 +869,20 @@ struct AstroNightLightsMap: UIViewRepresentable {
             map.visibleMapRect.width < MKMapRect.world.width * 0.15 ? map.centerCoordinate : nil
         }
 
-        func observeHeading(from service: CaptureLocationService?, on map: MKMapView) {
+        func observeHeading(from service: CaptureLocationService?) {
             guard headingService !== service else { return }
             headingService?.onHeadingChange = nil
             headingService = service
-            setHeading(service?.heading, on: map)
-            service?.onHeadingChange = { [weak self, weak map] value in
-                guard let self, let map else { return }
-                self.setHeading(value, on: map)
+            setHeading(service?.heading)
+            service?.onHeadingChange = { [weak self] value in
+                self?.setHeading(value)
             }
         }
 
-        func setHeading(_ value: CLLocationDirection?, on map: MKMapView) {
-            // Preserve the last valid bearing through a temporary compass outage or annotation reuse.
+        func setHeading(_ value: CLLocationDirection?) {
+            // Preserve the last valid bearing through a temporary compass outage.
             guard let value else { return }
-            heading = value
-            (map.view(for: marker) as? AstroLocationAnnotationView)?.setHeading(value, animated: true)
+            viewport?.locationMarker.setHeading(value, animated: true)
         }
 
         func syncSites(_ sites: [AstroPlannedSite], on map: MKMapView) {
@@ -897,7 +938,12 @@ struct AstroNightLightsMap: UIViewRepresentable {
             }
         }
 
+        func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+            viewport?.updateMarkerPosition()
+        }
+
         func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            viewport?.updateMarkerPosition()
             let center = forecastCenter(of: mapView)
             let region = cloudRegion(for: mapView.visibleMapRect)
             DispatchQueue.main.async {
@@ -913,6 +959,14 @@ struct AstroNightLightsMap: UIViewRepresentable {
         }
 
         func mapView(_ mapView: MKMapView, viewFor annotation: any MKAnnotation) -> MKAnnotationView? {
+            if annotation === horizonAnnotation {
+                let identifier = "astro.horizon.directions"
+                let view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? AstroHorizonAnnotationView
+                    ?? AstroHorizonAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                view.annotation = annotation
+                view.setEvents(horizonAnnotation.events)
+                return view
+            }
             if annotation is AstroSiteAnnotation {
                 let identifier = "astro.planned.site"
                 let view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView
@@ -921,14 +975,6 @@ struct AstroNightLightsMap: UIViewRepresentable {
                 view.glyphImage = UIImage(systemName: "camera.fill")
                 view.markerTintColor = UIColor(AppTheme.accent)
                 view.displayPriority = .required
-                return view
-            }
-            if annotation === marker {
-                let identifier = "astro.current.location"
-                let view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? AstroLocationAnnotationView
-                    ?? AstroLocationAnnotationView(annotation: annotation, reuseIdentifier: identifier)
-                view.annotation = annotation
-                view.setHeading(heading, animated: false)
                 return view
             }
             return nil
@@ -989,21 +1035,65 @@ final class AstroSiteAnnotation: NSObject, MKAnnotation {
     init(site: AstroPlannedSite) { self.site = site }
 }
 
-final class AstroLocationAnnotationView: MKAnnotationView {
+final class AstroMapViewport: UIView {
+    let map = MKMapView()
+    let locationMarker = AstroLocationMarker(frame: CGRect(x: 0, y: 0, width: 28, height: 28))
+    private var location: CLLocationCoordinate2D?
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        clipsToBounds = true
+        addSubview(map)
+        addSubview(locationMarker)
+        locationMarker.isHidden = true
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        if map.frame != bounds { map.frame = bounds }
+        updateMarkerPosition()
+    }
+
+    func setLocation(_ coordinate: CLLocationCoordinate2D?) {
+        location = coordinate
+        updateMarkerPosition()
+    }
+
+    func updateMarkerPosition() {
+        guard let location, !bounds.isEmpty else {
+            locationMarker.isHidden = true
+            return
+        }
+        // The glyph stays above MapKit's map labels and annotation layout at both detents.
+        let point = map.convert(location, toPointTo: self)
+        guard point.x.isFinite, point.y.isFinite else {
+            locationMarker.isHidden = true
+            return
+        }
+        let radius = locationMarker.bounds.width / 2
+        locationMarker.isHidden = !bounds.insetBy(dx: -radius, dy: -radius).contains(point)
+        if locationMarker.center != point {
+            UIView.performWithoutAnimation { locationMarker.center = point }
+        }
+    }
+}
+
+final class AstroLocationMarker: UIView {
     let arrow = UIImageView(image: UIImage(systemName: "location.north.fill",
                                           withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold))?
         .withRenderingMode(.alwaysTemplate))
     private var heading: CLLocationDirection?
 
-    override init(annotation: (any MKAnnotation)?, reuseIdentifier: String?) {
-        super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
-        bounds = CGRect(x: 0, y: 0, width: 28, height: 28)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         backgroundColor = .systemBlue
         layer.cornerRadius = 14
         layer.borderWidth = 1.5
         layer.borderColor = UIColor.white.cgColor
-        displayPriority = .required
-        collisionMode = .circle
+        isUserInteractionEnabled = false
+        isAccessibilityElement = true
         accessibilityLabel = "当前位置"
         arrow.frame = bounds.insetBy(dx: 6, dy: 6)
         arrow.contentMode = .scaleAspectFit

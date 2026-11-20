@@ -52,7 +52,7 @@ inline float hdrExpansionGain(float peak) {
 }
 
 // 线性浮点亮度肩部：保留高光层次、RGB比例和黑位，不把HDR简单截到1。
-[[stitchable]] float4 adaptiveDynamic(sample_t pixel, float shadowEV, float deepShadowEV, float knee, float cap, float shoulder) {
+[[stitchable]] float4 adaptiveDynamic(sample_t pixel, float shadowEV, float deepShadowEV, float regionalShadowEV, float knee, float cap, float shoulder) {
     float4 c = unpremultiply(pixel);
     float y = max(dot(c.rgb,float3(0.2126,0.7152,0.0722)),0.0);
     // 有理曲线在0到锚点严格单调，黑色仍为0；最暗细节也能提亮。
@@ -62,9 +62,34 @@ inline float hdrExpansionGain(float peak) {
     // 深暗部独立恢复；0.12以上保持不变，避免中位数正常时整张继续提亮。
     float deepGain = exp2(deepShadowEV);
     raised = raised < 0.12 ? raised*deepGain/(1.0+(deepGain-1.0)*raised/0.12) : raised;
-    float mapped = raised <= knee ? raised : knee+(cap-knee)*(1.0-exp(-(raised-knee)/shoulder));
+    float regionalGain = exp2(regionalShadowEV);
+    raised = raised < 0.18 ? raised*regionalGain/(1.0+(regionalGain-1.0)*raised/0.18) : raised;
+    float mapped = raised <= knee || shoulder <= 0.0 ? raised : knee+(cap-knee)*(1.0-exp(-(raised-knee)/shoulder));
     c.rgb *= y > 0.000001 ? mapped/y : 1.0;
     return premultiply(c);
+}
+
+// Match low and middle tones to the SDR development. Luminance selects
+// extended highlights, while a channel-peak shoulder preserves their color.
+[[stitchable]] float4 rawMatchedHDR(sample_t extended, sample_t reference) {
+    const float4 base = unpremultiply(reference);
+    const float3 source = max(unpremultiply(extended).rgb, 0.0);
+    const float3 luma = float3(0.2126, 0.7152, 0.0722);
+    const float baseLuma = max(dot(base.rgb, luma), 0.0);
+    const float sourceLuma = dot(source, luma);
+    const float brightWeight = smoothstep(0.38, 0.78, baseLuma);
+    const float extendedWeight = smoothstep(0.75, 1.25, sourceLuma);
+    const float3 lifted = base.rgb * (1.0 + 0.85 * brightWeight);
+    float3 result = lifted;
+    if (sourceLuma > dot(lifted, luma)) {
+        result = mix(lifted, source, max(brightWeight, extendedWeight));
+    }
+    const float peak = max(result.r, max(result.g, result.b));
+    if (peak > 1.0) {
+        const float mapped = 1.0 + 3.0 * (1.0 - exp(-(peak - 1.0) / 3.0));
+        result *= mapped / peak;
+    }
+    return premultiply(float4(result, base.a));
 }
 
 [[stitchable]] float4 chromaticShift(coreimage::sampler image, float amount, float2 center, coreimage::destination dest) {
@@ -154,6 +179,36 @@ inline float hdrExpansionGain(float peak) {
 }
 
 
+
+// Keep neutral values anchored, retain warm midtone colors, and compress
+// saturated bright colors toward the same luminance.
+[[stitchable]] float4 cinematicGrade(coreimage::sample_t pixel, float extended, coreimage::destination dest) {
+    float4 c = unpremultiply(pixel);
+    const float3 lumaWeights = float3(0.2126, 0.7152, 0.0722);
+    float lum = dot(c.rgb, lumaWeights);
+    float peak = max(c.r, max(c.g, c.b));
+    float floorRGB = min(c.r, min(c.g, c.b));
+    float spread = peak - floorRGB;
+    if (lum <= 0.0 || spread < 0.0001) { return pixel; }
+    float saturation = spread / max(peak, 0.0001);
+    float highlight = smoothstep(0.40, 1.10, peak);
+    float warmth = smoothstep(0.03, 0.25, (c.r - c.b) / spread)
+        * smoothstep(0.05, 0.35, (c.g - c.b) / spread)
+        * (1.0 - smoothstep(0.45, 0.88, saturation));
+    float chromaRetention = 1.0 - highlight * mix(0.025, 0.16, smoothstep(0.35, 0.95, saturation));
+    float3 amber = float3(0.40, 0.12, -1.0);
+    amber -= float3(dot(amber, lumaWeights));
+    float3 chroma = (c.rgb - float3(lum)) * chromaRetention
+        + amber * (spread * warmth * highlight * 0.045);
+    if (extended < 0.5 && lum < 1.0) {
+        float top = max(chroma.r, max(chroma.g, chroma.b));
+        float bottom = min(chroma.r, min(chroma.g, chroma.b));
+        float room = min((1.0 - lum) / max(top, 0.0001), lum / max(-bottom, 0.0001));
+        chroma *= min(1.0, room);
+    }
+    c.rgb = float3(lum) + chroma;
+    return premultiply(c);
+}
 
 [[stitchable]] float4 hdrExpand(sample_t image, float maxGain) {
     float4 c = unpremultiply(image);

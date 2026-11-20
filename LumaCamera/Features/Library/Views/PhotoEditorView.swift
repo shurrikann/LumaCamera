@@ -26,18 +26,17 @@ struct PhotoEditorView: View {
                 if model.tool == .crop { cropFooter.transition(.opacity) }
                 else {
                     ZStack {
-                        if model.editorControlsVisible {
-                            Group {
-                                if model.tool == .filters { filterPanel }
-                                else if model.tool == .watermark { watermarkPanel }
-                                else { adjustmentPanel }
-                            }.transition(.opacity)
+                        if model.editorControlsVisible, model.tool == .adjustments {
+                            adjustmentPanel.transition(.opacity)
                         }
                     }
                     .frame(height: model.editorControlsHeight).padding(.horizontal, 10)
                     .animation(AppTheme.popupAnimation, value: model.editorControlsVisible)
                     .animation(AppTheme.popupAnimation, value: model.tool)
                     toolBar.padding(.horizontal, 12).transition(.opacity)
+                        .opacity(bottomPopupVisible ? 0 : 1)
+                        .allowsHitTesting(!bottomPopupVisible)
+                        .accessibilityHidden(bottomPopupVisible)
                         #if DEBUG
                         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
                             model.captureButtonFramesForTesting["photo.editor.toolbar"] = $0
@@ -46,6 +45,29 @@ struct PhotoEditorView: View {
                 }
             }.padding(.bottom, 10).background(AppTheme.popupColor)
                 .overlay(alignment: .top) { if model.tool != .crop { editorHeader.transition(.opacity) } }
+                .overlay(alignment: .bottom) {
+                    if model.filterPopupVisible {
+                        PhotoFilterPopup(model: model, filters: filters) {
+                            filters.showStrength = false
+                            model.closeEditorControls()
+                        }
+                        .padding(.horizontal, 10).padding(.bottom, 10)
+                        .ignoresSafeArea(edges: .bottom)
+                        .transition(.opacity)
+                        .zIndex(1)
+                    }
+                }
+                .animation(AppTheme.popupAnimation, value: model.filterPopupVisible)
+                .overlay(alignment: .bottom) {
+                    if watermarkPopupVisible {
+                        watermarkPanel
+                            .padding(.horizontal, 10).padding(.bottom, 10)
+                            .ignoresSafeArea(edges: .bottom)
+                            .transition(.opacity)
+                            .zIndex(1)
+                    }
+                }
+                .animation(AppTheme.popupAnimation, value: watermarkPopupVisible)
                 .overlay { if model.resetVisible { resetDialog.transition(.opacity) }; if model.saveOptionsVisible { saveDialog.transition(.opacity) } }
                 .overlay {
                     if model.filterNumericParameter != nil {
@@ -58,6 +80,9 @@ struct PhotoEditorView: View {
                 .animation(AppTheme.popupAnimation, value: model.saveOptionsVisible)
                 .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: model.tool == .crop)
                 .onChange(of: controlAngle) { _, _ in model.setParameterEditing(false) }
+                .onChange(of: model.filterPopupVisible) { _, visible in
+                    if !visible { filters.showStrength = false }
+                }
                 .task { model.renderPreview(); filters.prepareThumbnails() }.onDisappear { model.cancelPreview() }
                 .interactiveDismissDisabled(model.saving)
                 .allowsHitTesting(!model.saving)
@@ -104,16 +129,27 @@ struct PhotoEditorView: View {
             } else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
         }
     }
+    private var watermarkPopupVisible: Bool {
+        model.tool == .watermark && model.editorControlsVisible
+    }
+    private var bottomPopupVisible: Bool {
+        model.filterPopupVisible || watermarkPopupVisible
+    }
+    private var bottomPopupCornerRadius: CGFloat {
+        let bottom = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first(where: { $0.activationState == .foregroundActive })?
+            .keyWindow?.safeAreaInsets.bottom ?? 0
+        return bottom > 0 ? 55 : 0
+    }
     private var toolBar: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 20) {
             toolButton(.crop, icon: "crop") { model.enterCrop() }
-            Spacer(minLength: 4)
-            toolButton(.filters, icon: "camera.filters") { model.toggleEditorControls(.filters) }
-            Spacer(minLength: 4)
-            toolButton(.adjustments, icon: "slider.horizontal.3") { model.toggleEditorControls(.adjustments) }
-            Spacer(minLength: 4)
+            toolButton(.filters, icon: "camera.filters") {
+                if !model.filterPopupVisible { filters.showStrength = false }
+                model.toggleEditorControls(.filters)
+            }
             toolButton(.watermark, icon: "photo.artframe") { model.toggleEditorControls(.watermark) }
-            Spacer(minLength: 4)
             Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); model.presentSaveOptions() } label: {
                 ZStack {
                     Circle().fill(AppTheme.accent)
@@ -125,50 +161,14 @@ struct PhotoEditorView: View {
     }
     private func toolButton(_ tool: PhotoEditorTool, icon: String, action: @escaping () -> Void) -> some View {
         Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); action() } label: {
-            Image(systemName: icon).rotatingCaptureContent().font(.system(size: 20)).foregroundStyle(model.tool == tool && model.editorControlsVisible ? AppTheme.accent : .white.opacity(0.8))
+            let active = tool == .filters ? model.filterPopupVisible : (model.tool == tool && model.editorControlsVisible)
+            Image(systemName: icon).rotatingCaptureContent().font(.system(size: 20)).foregroundStyle(active ? AppTheme.accent : .white.opacity(0.8))
                 .frame(width: 44, height: 44).modifier(PopupSurface(radius: 22, glass: true))
-                .overlay(Circle().stroke(model.tool == tool && model.editorControlsVisible ? AppTheme.accent.opacity(0.65) : .clear, lineWidth: 1))
+                .overlay(Circle().stroke(active ? AppTheme.accent.opacity(0.65) : .clear, lineWidth: 1))
                 .contentShape(Circle())
                 .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: model.tool)
-        }.accessibilityLabel("照片编辑" + tool.rawValue).accessibilityAddTraits(model.tool == tool && model.editorControlsVisible ? .isSelected : [])
-    }
-    private var filterPanel: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 8) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 14) {
-                        ForEach(FilterCategory.allCases) { category in
-                            Button { filters.category = category } label: {
-                                Text(category.rawValue).rotatingCaptureContent().font(.system(size: 11))
-                                    .foregroundStyle(filters.category == category ? AppTheme.accent : .white.opacity(0.55))
-                            }
-                        }
-                    }.padding(.vertical, 4)
-                }
-                Button { model.closeEditorControls() } label: {
-                    Image(systemName: "xmark").frame(width: 28, height: 32)
-                }.accessibilityLabel("收起滤镜列表")
-            }.padding(.horizontal, 10)
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal) {
-                    LazyHStack(alignment: .top, spacing: 12) {
-                        ForEach(filters.styles) { style in
-                            Button { model.selectFilter(style) } label: {
-                                VStack(spacing: 6) {
-                                    ZStack {
-                                        Circle().fill(.white.opacity(0.05))
-                                        if let image = filters.thumbnails[style] { Image(uiImage: image).resizable().scaledToFill() }
-                                        else { ProgressView().controlSize(.small) }
-                                    }.frame(width: 60, height: 60).clipShape(Circle())
-                                        .overlay(Circle().stroke(model.style == style ? AppTheme.accent : .white.opacity(0.2), lineWidth: model.style == style ? 2 : 0.5))
-                                    Text(style.title).font(.system(size: 10)).lineLimit(2).multilineTextAlignment(.center).frame(width: 72, height: 27)
-                                }.foregroundStyle(model.style == style ? AppTheme.accent : .white)
-                            }.id(style).accessibilityLabel("编辑滤镜" + style.title).accessibilityAddTraits(model.style == style ? .isSelected : [])
-                        }
-                    }.padding(.horizontal, 10)
-                }.scrollIndicators(.hidden).onAppear { proxy.scrollTo(model.style, anchor: .center) }
-            }
-        }.buttonStyle(.plain)
+        }.accessibilityLabel("照片编辑" + tool.rawValue).accessibilityAddTraits(
+            (tool == .filters ? model.filterPopupVisible : (model.tool == tool && model.editorControlsVisible)) ? .isSelected : [])
     }
     private var watermarkPanel: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -196,18 +196,23 @@ struct PhotoEditorView: View {
                         #endif
                 }
             }
-            HStack(spacing: 18) {
-                Toggle(isOn: Binding(get: { model.watermarkSettings.showsLocation },
-                    set: { model.setWatermarkInformation(location: $0) })) {
-                    Text("地理位置").font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
-                }
-                Toggle(isOn: Binding(get: { model.watermarkSettings.showsParameters },
-                    set: { model.setWatermarkInformation(parameters: $0) })) {
-                    Text("参数信息").font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
-                }
-            }.tint(AppTheme.accent)
+            WatermarkInfoToggles(
+                showsLocation: Binding(
+                    get: { model.watermarkSettings.showsLocation },
+                    set: { model.setWatermarkInformation(location: $0) }),
+                showsParameters: Binding(
+                    get: { model.watermarkSettings.showsParameters },
+                    set: { model.setWatermarkInformation(parameters: $0) })
+            )
         }.padding(16).buttonStyle(.plain)
-            .modifier(PopupSurface(radius: 28, glass: true))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .clipShape(RoundedRectangle(cornerRadius: bottomPopupCornerRadius, style: .continuous))
+            .background {
+                PopupGlassBackground(
+                    shape: RoundedRectangle(cornerRadius: bottomPopupCornerRadius, style: .continuous),
+                    materialOpacity: AppTheme.cameraPopupMaterialOpacity
+                )
+            }
             .environment(\.captureControlAngle, 0)
             #if DEBUG
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {

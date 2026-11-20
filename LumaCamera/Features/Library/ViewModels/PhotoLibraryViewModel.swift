@@ -159,7 +159,7 @@ final class PhotoLibraryViewModel: ObservableObject {
     var hasRAWResource: Bool { savedRAW || shareResources.contains { PhotoResourceKind.isRAW(typeIdentifier: nil, filename: $0.filename) } }
     var shareResources: [PhotoResource] { capturedPhoto?.resources ?? [] }
     var captureLocation: PhotoLocation? { capturedPhoto?.location ?? captureParameters?.location }
-    var hasNightCompositeResource: Bool { capturedPhoto?.diagnostics?.isNightComposite ?? false }
+    var hasAstroCaptureResource: Bool { capturedPhoto?.diagnostics?.isAstroCapture ?? false }
     var captureParameters: PhotoCaptureParameters? { capturedPhoto?.diagnostics?.currentParameters }
     var captureInfoRows: [PhotoInfoRow] {
         savedInfoRows ?? PhotoCaptureDiagnostics.merged(PhotoCaptureDiagnostics.resourceRows(shareResources), with: capturedPhoto?.diagnostics?.detailRows ?? [])

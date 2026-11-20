@@ -239,20 +239,14 @@ extension CameraView {
                         .accessibilityAddTraits(model.border && model.preferences.watermark.style == style ? .isSelected : [])
                 }
             }
-            HStack(spacing: 18) {
-                Toggle(isOn: Binding(
+            WatermarkInfoToggles(
+                showsLocation: Binding(
                     get: { model.preferences.watermark.showsLocation },
-                    set: { model.preferences.watermark.showsLocation = $0 }
-                )) {
-                    Text("地理位置").font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
-                }.tint(AppTheme.accent)
-                Toggle(isOn: Binding(
+                    set: { model.preferences.watermark.showsLocation = $0 }),
+                showsParameters: Binding(
                     get: { model.preferences.watermark.showsParameters },
-                    set: { model.preferences.watermark.showsParameters = $0 }
-                )) {
-                    Text("参数信息").font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
-                }.tint(AppTheme.accent)
-            }
+                    set: { model.preferences.watermark.showsParameters = $0 })
+            )
         }
         .padding(16)
         .captureControlGeometry("watermark.panel", model: model)

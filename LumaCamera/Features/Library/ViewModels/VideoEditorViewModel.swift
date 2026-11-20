@@ -6,7 +6,7 @@ import SwiftUI
 import UIKit
 
 @MainActor
-final class VideoEditorViewModel: ObservableObject {
+final class VideoEditorViewModel: FilterEditingControls {
     let asset: AVAsset
     let photo: LibraryPhoto
     let player: AVPlayer
@@ -29,19 +29,65 @@ final class VideoEditorViewModel: ObservableObject {
     @Published var trimStart = 0.0
     @Published var trimEnd = 0.0
     @Published var style: FilmStyle { didSet { if style != oldValue { rememberAndPreview(oldValue) } } }
-    @Published var intensity: Double { didSet { schedulePreview() } }
-    @Published var adjustments: FilterAdjustments { didSet { schedulePreview() } }
+    @Published var intensity: Double { didSet { if editingFilter { renderLiveFilterPreview() }; schedulePreview() } }
+    @Published var adjustments: FilterAdjustments {
+        didSet {
+            if editingFilter {
+                if adjustments[.grainSize] > 0 { startLivePreviewGrainAnimation() }
+                else { stopLivePreviewGrainAnimation() }
+                renderLiveFilterPreview()
+            }
+            schedulePreview()
+        }
+    }
     @Published var selectedLogLUTID: String { didSet { if selectedLogLUTID != oldValue { schedulePreview() } } }
-    @Published var filterTab: FilterEditorTab = .color
-    @Published var selectedParameter: FilterParameter = .strength
+    /// 与相机 Log 面板一致：关闭时只预览 LUT，导出保留原始 Log 色彩。
+    @Published var burnLogLUT = true
+    @Published private(set) var logLUTCategory: LogLUTCategory = .all
+    @Published private(set) var logLUTFavorites: Set<String> =
+        Set(UserDefaults.standard.stringArray(forKey: "camera.favoriteLogLUTs") ?? [])
+    @Published private(set) var logLUTThumbnails: [String: UIImage] = [:]
+    @Published private(set) var logLUTThumbnailLoading: Set<String> = []
+    @Published var filterEditorTab: FilterEditorTab = .color {
+        didSet { if filterEditorTab != oldValue { invalidateFilterControls() } }
+    }
+    @Published private(set) var filterNumericParameter: FilterParameter?
+    @Published var filterNumericDraft = ""
+    /// 暂停拖动参数时覆盖在播放器上的小尺寸实时预览；不改变最终合成。
+    @Published private(set) var liveFilterPreview: UIImage?
+    #if DEBUG
+    var filterDialPadFrameForTesting: CGRect = .zero
+    var captureButtonFramesForTesting: [String: CGRect] = [:]
+    private(set) var previewCompositionBuildCount = 0
+    #endif
+    private var filterControlRevision: UInt64 = 0
+    private var editingFilter = false
 
     private(set) var trimPreviewSeekRequestCount = 0
     private(set) var isSeekingTrimPreview = false
 
     private let library: PhotoLibraryViewModel
     private let context = CIContext(options: [.cacheIntermediates: false])
+    private static let logLUTThumbnailQueue = DispatchQueue(label: "videoEditor.logLUTThumbnails", qos: .userInitiated)
+    private static let logLUTThumbnailContext = CIContext(options: [.cacheIntermediates: false])
+    private static let logLUTThumbnailCache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.countLimit = 64
+        return cache
+    }()
     private var recipes: [String: SavedFilterSettings] = [:]
     private var previewTask: Task<Void, Never>?
+    private let previewState = VideoEditorPreviewState()
+    private var previewComposition: AVMutableVideoComposition?
+    private var videoFrameRate = 30.0
+    private var livePreviewSource: CIImage?
+    private var livePreviewSourceTime: Double = .nan
+    private var livePreviewSourceTask: Task<Void, Never>?
+    private var livePreviewRenderTask: Task<Void, Never>?
+    private var livePreviewClearTask: Task<Void, Never>?
+    private var livePreviewAnimationTask: Task<Void, Never>?
+    private var livePreviewRevision: UInt64 = 0
+    private var livePreviewGrainFrame: Int64 = 0
     private var filmstripTask: Task<Void, Never>?
     private var trimPreviewSeekTask: Task<Void, Never>?
     private var pendingTrimPreviewTime: Double?
@@ -83,7 +129,62 @@ final class VideoEditorViewModel: ObservableObject {
         Task { await loadDuration() }
     }
 
-    var logLUTOptions: [LogLUTPreset] { [.original] + LogLUTCubeRepository.presets() }
+    var allLogLUTOptions: [LogLUTPreset] { [.original] + LogLUTCubeRepository.presets() }
+    var logLUTOptions: [LogLUTPreset] {
+        let compatible = LogLUTCubeRepository.presets().filter {
+            $0.requiredColorSpace == nil || $0.requiredColorSpace == colorSpace
+        }
+        if logLUTCategory == .favorites {
+            return compatible.filter { logLUTFavorites.contains($0.id) }
+        }
+        return [.original] + compatible.filter { logLUTCategory.includes($0) }
+    }
+    var selectedLogLUTPreset: LogLUTPreset? {
+        allLogLUTOptions.first { $0.id == selectedLogLUTID }
+    }
+    func selectLogLUTCategory(_ category: LogLUTCategory) { logLUTCategory = category }
+    func toggleLogLUTFavorite(_ id: String) {
+        guard LogLUTCubeRepository.presets().contains(where: { $0.id == id }) else { return }
+        if logLUTFavorites.contains(id) { logLUTFavorites.remove(id) }
+        else { logLUTFavorites.insert(id) }
+        UserDefaults.standard.set(
+            LogLUTCubeRepository.presets().filter { logLUTFavorites.contains($0.id) }.map(\.id),
+            forKey: "camera.favoriteLogLUTs")
+    }
+    func prepareLogLUTThumbnail(for preset: LogLUTPreset) {
+        guard preset.id != LogLUTPreset.originalID,
+              logLUTThumbnails[preset.id] == nil,
+              !logLUTThumbnailLoading.contains(preset.id) else { return }
+        if let cached = Self.logLUTThumbnailCache.object(forKey: preset.id as NSString) {
+            logLUTThumbnails[preset.id] = cached
+            return
+        }
+        logLUTThumbnailLoading.insert(preset.id)
+        let thumbnailContext = Self.logLUTThumbnailContext
+        Self.logLUTThumbnailQueue.async { [weak self] in
+            let image: UIImage? = autoreleasepool {
+                guard let photo = UIImage(named: "FilterLandscape"),
+                      let sourceImage = CIImage(image: photo) else { return nil }
+                let square = FrameRatio.square.crop(sourceImage)
+                let size: CGFloat = 112
+                let sample = square.transformed(by: CGAffineTransform(scaleX: size / square.extent.width,
+                                                                       y: size / square.extent.width))
+                return LogLUTCubeRepository.thumbnail(for: preset, source: sample, context: thumbnailContext)
+            }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.logLUTThumbnailLoading.remove(preset.id)
+                guard let image else { return }
+                let cost = (image.cgImage?.bytesPerRow ?? 0) * (image.cgImage?.height ?? 0)
+                Self.logLUTThumbnailCache.setObject(image, forKey: preset.id as NSString, cost: cost)
+                self.logLUTThumbnails[preset.id] = image
+            }
+        }
+    }
+    func selectLogLUT(_ id: String) {
+        guard allLogLUTOptions.contains(where: { $0.id == id }) else { return }
+        selectedLogLUTID = id
+    }
     var minimumTrimDuration: Double { min(0.1, max(0, duration)) }
     var selectedLook: CaptureLook { CaptureLook(style: style, intensity: intensity, adjustments: adjustments) }
     var isSavingLibrary: Bool { library.videoSaving }
@@ -100,8 +201,21 @@ final class VideoEditorViewModel: ObservableObject {
     }
 
     func selectTool(_ selected: VideoEditorTool) {
+        guard availableTools.contains(selected), !saving else { return }
+        invalidateFilterControls()
         isToolPanelPresented = tool != selected || !isToolPanelPresented
         tool = selected
+        if selected == .filters, isToolPanelPresented {
+            prepareLiveFilterPreviewSource()
+        } else {
+            clearLiveFilterPreviewImmediately()
+        }
+    }
+
+    func closeToolPanel() {
+        invalidateFilterControls()
+        isToolPanelPresented = false
+        clearLiveFilterPreviewImmediately()
     }
 
     func toggleLivePhotoSelection() {
@@ -210,6 +324,7 @@ final class VideoEditorViewModel: ObservableObject {
 
     func togglePlayback() {
         if player.timeControlStatus == .playing { player.pause(); return }
+        clearLiveFilterPreviewImmediately()
         syncPreviewTrimRange(keepCurrentPreview: true)
         let current = player.currentTime().seconds
         if !current.isFinite || current < trimStart || current >= trimEnd {
@@ -225,7 +340,7 @@ final class VideoEditorViewModel: ObservableObject {
     }
 
     func setValue(_ value: Double, for parameter: FilterParameter) {
-        guard !saving else { return }
+        guard !saving, value.isFinite else { return }
         if parameter == .strength {
             guard style != .original else { return }
             let normalized = parameter.clamped(value) / 100
@@ -236,8 +351,93 @@ final class VideoEditorViewModel: ObservableObject {
         }
     }
 
+    var filterDialControlsEnabled: Bool {
+        !loading && !saving && isToolPanelPresented
+            && (tool == .filters || tool == .adjustments) && availableTools.contains(tool)
+    }
+
+    func filterParameterBinding(_ parameter: FilterParameter) -> Binding<Double> {
+        let revision = filterControlRevision
+        return Binding(get: { [self] in value(for: parameter) }, set: { [self] value in
+            guard filterDialControlsEnabled, revision == filterControlRevision else { return }
+            setValue(value, for: parameter)
+        })
+    }
+
+    func filterParameterPairBinding(_ x: FilterParameter, _ y: FilterParameter) -> Binding<CGPoint> {
+        let revision = filterControlRevision
+        return Binding(get: { [self] in CGPoint(x: value(for: x), y: value(for: y)) }, set: { [self] point in
+            guard filterDialControlsEnabled, revision == filterControlRevision,
+                  x != .strength, y != .strength, point.x.isFinite, point.y.isFinite else { return }
+            var next = adjustments
+            next[x] = Double(point.x); next[y] = Double(point.y)
+            if next != adjustments { adjustments = next }
+        })
+    }
+
+    func filterParameterText(_ parameter: FilterParameter) -> String {
+        parameter == .strength && style == .original ? "—" : parameter.text(value(for: parameter))
+    }
+
+    func setFilterParameterEditing(_ editing: Bool) {
+        guard editingFilter != editing else { return }
+        editingFilter = editing
+        if editing {
+            livePreviewGrainFrame = Int64(max(0, player.currentTime().seconds * videoFrameRate))
+            if adjustments[.grainSize] > 0 { startLivePreviewGrainAnimation() }
+            prepareLiveFilterPreviewSource()
+            renderLiveFilterPreview()
+        } else {
+            stopLivePreviewGrainAnimation()
+            schedulePreview(delay: .zero)
+            clearLiveFilterPreviewAfterRefresh()
+        }
+    }
+
+    func resetCurrentFilterTab() {
+        guard filterDialControlsEnabled else { return }
+        invalidateFilterControls()
+        var next = adjustments
+        for parameter in filterEditorTab.parameters {
+            if parameter == .strength { if style != .original { intensity = parameter.defaultValue / 100 } }
+            else { next[parameter] = parameter.defaultValue }
+        }
+        if next != adjustments { adjustments = next }
+    }
+
+    func presentFilterNumericInput(_ parameter: FilterParameter) {
+        guard filterDialControlsEnabled, parameter != .strength || style != .original else { return }
+        setFilterParameterEditing(false)
+        filterNumericDraft = String(value(for: parameter))
+        filterNumericParameter = parameter
+    }
+
+    var filterNumericValue: Double? { filterNumericParameter?.inputValue(from: filterNumericDraft) }
+
+    func restoreFilterNumericDraft() {
+        if let filterNumericParameter { filterNumericDraft = String(filterNumericParameter.defaultValue) }
+    }
+
+    func confirmFilterNumericInput() {
+        guard filterDialControlsEnabled, let filterNumericParameter, let filterNumericValue else { return }
+        setValue(filterNumericValue, for: filterNumericParameter)
+        dismissFilterNumericInput()
+    }
+
+    func dismissFilterNumericInput() {
+        filterNumericParameter = nil
+        filterNumericDraft = ""
+    }
+
+    private func invalidateFilterControls() {
+        filterControlRevision &+= 1
+        dismissFilterNumericInput()
+        setFilterParameterEditing(false)
+    }
+
     func resetCurrentLook() {
         guard !saving else { return }
+        invalidateFilterControls()
         if isLogVideo { selectedLogLUTID = LogLUTPreset.originalID }
         else {
             style = .original
@@ -257,7 +457,7 @@ final class VideoEditorViewModel: ObservableObject {
                 let lutID = selectedLogLUTID
                 let cube: LogLUTCube?
                 if isLogVideo, lutID != LogLUTPreset.originalID {
-                    guard let preset = logLUTOptions.first(where: { $0.id == lutID }) else { throw VideoEditError.filterUnavailable }
+                    guard let preset = allLogLUTOptions.first(where: { $0.id == lutID }) else { throw VideoEditError.filterUnavailable }
                     cube = try await Task.detached(priority: .userInitiated) { try LogLUTCubeRepository.load(preset) }.value
                 } else { cube = nil }
 
@@ -267,7 +467,8 @@ final class VideoEditorViewModel: ObservableObject {
                     selection: selection,
                     isLogVideo: isLogVideo,
                     look: selectedLook,
-                    logLUTCube: cube
+                    logLUTCube: cube,
+                    frameRate: videoFrameRate
                 )
                 outputURL = url
                 let badges = editedBadges(colorSpace: colorSpace)
@@ -305,8 +506,8 @@ final class VideoEditorViewModel: ObservableObject {
             var outputURL: URL?
             do {
                 let cube: LogLUTCube?
-                if isLogVideo, selectedLogLUTID != LogLUTPreset.originalID {
-                    guard let preset = logLUTOptions.first(where: { $0.id == selectedLogLUTID }) else { throw VideoEditError.filterUnavailable }
+                if isLogVideo, burnLogLUT, selectedLogLUTID != LogLUTPreset.originalID {
+                    guard let preset = allLogLUTOptions.first(where: { $0.id == selectedLogLUTID }) else { throw VideoEditError.filterUnavailable }
                     cube = try await Task.detached(priority: .userInitiated) { try LogLUTCubeRepository.load(preset) }.value
                 } else { cube = nil }
 
@@ -316,7 +517,8 @@ final class VideoEditorViewModel: ObservableObject {
                     selection: selection,
                     isLogVideo: isLogVideo,
                     look: selectedLook,
-                    logLUTCube: cube
+                    logLUTCube: cube,
+                    frameRate: videoFrameRate
                 )
                 outputURL = url
                 let ext = url.pathExtension
@@ -353,11 +555,11 @@ final class VideoEditorViewModel: ObservableObject {
             do {
                 let range = livePhotoSelection()
                 let cube: LogLUTCube?
-                if isLogVideo, selectedLogLUTID != LogLUTPreset.originalID {
-                    guard let preset = logLUTOptions.first(where: { $0.id == selectedLogLUTID }) else { throw VideoEditError.filterUnavailable }
+                if isLogVideo, burnLogLUT, selectedLogLUTID != LogLUTPreset.originalID {
+                    guard let preset = allLogLUTOptions.first(where: { $0.id == selectedLogLUTID }) else { throw VideoEditError.filterUnavailable }
                     cube = try await Task.detached(priority: .userInitiated) { try LogLUTCubeRepository.load(preset) }.value
                 } else { cube = nil }
-                let url = try await VideoEditExportService.export(asset: asset, selection: range, isLogVideo: isLogVideo, look: selectedLook, logLUTCube: cube)
+                let url = try await VideoEditExportService.export(asset: asset, selection: range, isLogVideo: isLogVideo, look: selectedLook, logLUTCube: cube, frameRate: videoFrameRate)
                 exportedURL = url
                 let coverTime = min(max(playheadTime - range.start, 0), range.duration)
                 let paired = try await VideoToLivePhotoService.makePair(from: url, coverTime: coverTime)
@@ -389,8 +591,14 @@ final class VideoEditorViewModel: ObservableObject {
     }
 
     func cancel() {
+        invalidateFilterControls()
         previewTask?.cancel()
         previewTask = nil
+        livePreviewSourceTask?.cancel(); livePreviewSourceTask = nil
+        livePreviewRenderTask?.cancel(); livePreviewRenderTask = nil
+        livePreviewClearTask?.cancel(); livePreviewClearTask = nil
+        stopLivePreviewGrainAnimation()
+        clearLiveFilterPreviewImmediately()
         filmstripTask?.cancel()
         filmstripTask = nil
         trimPreviewSeekTask?.cancel()
@@ -409,12 +617,12 @@ final class VideoEditorViewModel: ObservableObject {
 
     private func editedBadges(colorSpace: VideoColorSpace?) -> VideoCaptureBadges {
         if isLogVideo {
-            let selectedFilter = selectedLogLUTID != LogLUTPreset.originalID
+            let burnedLUT = burnLogLUT && selectedLogLUTID != LogLUTPreset.originalID
             return VideoCaptureBadges(
                 logLabel: photo.logLabel ?? (effectiveColorSpace == .appleLog2 ? "LOG2" : "LOG"),
-                hasFilter: photo.hasFilter || selectedFilter,
+                hasFilter: photo.hasFilter || burnedLUT,
                 colorSpace: colorSpace,
-                logLUTID: selectedFilter ? selectedLogLUTID : nil
+                logLUTID: burnedLUT ? selectedLogLUTID : nil
             )
         }
         let chosenStyle = style == .original ? nil : style.rawValue
@@ -434,22 +642,26 @@ final class VideoEditorViewModel: ObservableObject {
         do {
             let value = try await asset.load(.duration).seconds
             guard value.isFinite, value > 0 else { throw VideoEditError.invalidDuration }
-            if !hasKnownColorSpace,
-               let tracks = try? await asset.loadTracks(withMediaType: .video),
-               let track = tracks.first,
-               let descriptions = try? await track.load(.formatDescriptions),
-               let detected = descriptions.compactMap(VideoColorSpaceDetector.detect).first {
-                colorSpace = detected
-                hasKnownColorSpace = true
-                isLogVideo = detected.isLog
-                availableTools = VideoEditorTool.available(colorSpace: detected)
+            if let tracks = try? await asset.loadTracks(withMediaType: .video), let track = tracks.first {
+                if let rate = try? await track.load(.nominalFrameRate), rate.isFinite, rate > 0 {
+                    videoFrameRate = Double(rate)
+                }
+                if !hasKnownColorSpace,
+                   let descriptions = try? await track.load(.formatDescriptions),
+                   let detected = descriptions.compactMap(VideoColorSpaceDetector.detect).first {
+                    colorSpace = detected
+                    hasKnownColorSpace = true
+                    isLogVideo = detected.isLog
+                    availableTools = VideoEditorTool.available(colorSpace: detected)
+                }
             }
             duration = value
+            livePreviewSource = nil
+            livePreviewSourceTime = .nan
             trimEnd = value
             trimStart = 0
             playheadTime = 0
             syncPreviewTrimRange()
-            selectedParameter = .strength
             schedulePreview()
             filmstripTask?.cancel()
             filmstripTask = Task { [weak self] in await self?.loadFilmstripThumbnails() }
@@ -480,6 +692,7 @@ final class VideoEditorViewModel: ObservableObject {
     }
 
     private func rememberAndPreview(_ previous: FilmStyle) {
+        invalidateFilterControls()
         recipes[previous.rawValue] = SavedFilterSettings(intensity: intensity, adjustments: adjustments)
         let restored = recipes[style.rawValue] ?? SavedFilterSettings()
         intensity = restored.intensity
@@ -487,48 +700,166 @@ final class VideoEditorViewModel: ObservableObject {
         schedulePreview()
     }
 
-    private func schedulePreview() {
-        guard !isLogVideo || selectedLogLUTID != LogLUTPreset.originalID else {
-            previewTask?.cancel()
-            playerItem.videoComposition = nil
-            return
-        }
+    /// 参数变化只更新一份共享状态并刷新当前暂停帧；CI 视频合成只创建一次。
+    /// 这样拖调色盘/滑条时不需要为每个值重建 videoComposition。
+    private func schedulePreview(delay: Duration = .milliseconds(8)) {
         previewRevision &+= 1
         let revision = previewRevision
         previewTask?.cancel()
         previewTask = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(110))
+            if delay > .zero { try? await Task.sleep(for: delay) }
             guard !Task.isCancelled, let self else { return }
             do {
                 let cube: LogLUTCube?
-                if self.isLogVideo {
-                    guard let preset = self.logLUTOptions.first(where: { $0.id == self.selectedLogLUTID }) else { throw VideoEditError.filterUnavailable }
+                if self.isLogVideo, self.selectedLogLUTID != LogLUTPreset.originalID {
+                    guard let preset = self.allLogLUTOptions.first(where: { $0.id == self.selectedLogLUTID }) else { throw VideoEditError.filterUnavailable }
                     cube = try await Task.detached(priority: .userInitiated) { try LogLUTCubeRepository.load(preset) }.value
-                } else { cube = nil }
-                let look = self.selectedLook
-                let composition: AVMutableVideoComposition?
-                let sourceAsset = self.asset
-                let renderContext = self.context
-                if let cube {
-                    composition = try await VideoFilterComposition.make(asset: sourceAsset) { request in
-                        autoreleasepool { request.finish(with: cube.apply(to: request.sourceImage), context: renderContext) }
-                    }
-                } else if look.requiresImageProcessing {
-                    composition = try await VideoFilterComposition.make(asset: sourceAsset) { request in
-                        autoreleasepool {
-                            var frameLook = look
-                            frameLook.grainPhase += request.compositionTime.seconds * 127.7
-                            request.finish(with: Imaging.filtered(request.sourceImage, look: frameLook), context: renderContext)
-                        }
-                    }
-                } else { composition = nil }
+                } else {
+                    cube = nil
+                }
                 guard !Task.isCancelled, revision == self.previewRevision else { return }
-                self.playerItem.videoComposition = composition
+                self.previewState.update(look: self.selectedLook, cube: cube)
+                await self.ensurePreviewComposition()
+                guard !Task.isCancelled, revision == self.previewRevision else { return }
+                self.refreshPausedPreview()
             } catch {
                 guard !Task.isCancelled, revision == self.previewRevision else { return }
                 self.message = error.localizedDescription
             }
         }
+    }
+
+    /// 相机视频的颗粒每帧换相位；暂停编辑时也按 30fps 推进，避免颗粒像一张固定蒙版。
+    private func startLivePreviewGrainAnimation() {
+        guard livePreviewAnimationTask == nil else { return }
+        livePreviewAnimationTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self, self.editingFilter else { break }
+                self.livePreviewGrainFrame &+= 1
+                self.renderLiveFilterPreview()
+                try? await Task.sleep(for: .milliseconds(33))
+            }
+        }
+    }
+
+    private func stopLivePreviewGrainAnimation() {
+        livePreviewAnimationTask?.cancel()
+        livePreviewAnimationTask = nil
+    }
+
+    private func prepareLiveFilterPreviewSource() {
+        guard !isLogVideo, !loading else { return }
+        let time = player.currentTime().seconds
+        guard time.isFinite else { return }
+        if livePreviewSource != nil, abs(time - livePreviewSourceTime) < 0.2 { return }
+        livePreviewSourceTask?.cancel()
+        livePreviewSource = nil
+        livePreviewSourceTime = time
+        let sourceAsset = asset
+        let target = CMTime(seconds: max(0, time), preferredTimescale: 600)
+        let generation = Task.detached(priority: .userInitiated) { () -> CIImage? in
+            let generator = AVAssetImageGenerator(asset: sourceAsset)
+            generator.appliesPreferredTrackTransform = true
+            generator.maximumSize = CGSize(width: 900, height: 900)
+            generator.requestedTimeToleranceBefore = CMTime(seconds: 0.05, preferredTimescale: 600)
+            generator.requestedTimeToleranceAfter = CMTime(seconds: 0.05, preferredTimescale: 600)
+            guard let (image, _) = try? await generator.image(at: target) else { return nil }
+            return CIImage(cgImage: image)
+        }
+        livePreviewSourceTask = Task { [weak self] in
+            let image = await generation.value
+            guard let self, !Task.isCancelled else { return }
+            guard abs(self.player.currentTime().seconds - time) < 0.25 else { return }
+            self.livePreviewSource = image
+            if self.editingFilter { self.renderLiveFilterPreview() }
+        }
+    }
+
+    private func renderLiveFilterPreview() {
+        guard !isLogVideo, editingFilter,
+              player.timeControlStatus != .playing,
+              let source = livePreviewSource else { return }
+        livePreviewRevision &+= 1
+        let revision = livePreviewRevision
+        var look = selectedLook
+        look.grainPhase = VideoGrainPhase.phase(frame: livePreviewGrainFrame)
+        let renderContext = context
+        livePreviewRenderTask?.cancel()
+        livePreviewRenderTask = Task { [weak self] in
+            let image = await Task.detached(priority: .userInitiated) { () -> UIImage? in
+                let output = Imaging.filtered(source, look: look)
+                guard let cg = renderContext.createCGImage(output, from: output.extent,
+                    format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!) else { return nil }
+                return UIImage(cgImage: cg)
+            }.value
+            guard let self, !Task.isCancelled, revision == self.livePreviewRevision,
+                  self.editingFilter else { return }
+            self.liveFilterPreview = image
+        }
+    }
+
+    private func clearLiveFilterPreviewAfterRefresh() {
+        livePreviewClearTask?.cancel()
+        livePreviewClearTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(140))
+            guard let self, !self.editingFilter else { return }
+            self.liveFilterPreview = nil
+            self.livePreviewSource = nil
+        }
+    }
+
+    private func clearLiveFilterPreviewImmediately() {
+        stopLivePreviewGrainAnimation()
+        livePreviewRevision &+= 1
+        livePreviewRenderTask?.cancel(); livePreviewRenderTask = nil
+        livePreviewClearTask?.cancel(); livePreviewClearTask = nil
+        liveFilterPreview = nil
+    }
+
+    private func ensurePreviewComposition() async {
+        guard previewComposition == nil else { return }
+        let snapshot = previewState.snapshot()
+        guard snapshot.cube != nil || snapshot.look.requiresImageProcessing else { return }
+        let state = previewState
+        let sourceAsset = asset
+        let renderContext = context
+        let frameRate = videoFrameRate
+        let composition: AVMutableVideoComposition
+        do {
+            composition = try await VideoFilterComposition.make(asset: sourceAsset) { request in
+                let current = state.snapshot()
+                if let cube = current.cube {
+                    autoreleasepool { request.finish(with: cube.apply(to: request.sourceImage), context: renderContext) }
+                } else if current.look.requiresImageProcessing {
+                    autoreleasepool {
+                        var look = current.look
+                        look.grainPhase = VideoGrainPhase.phase(
+                            seconds: request.compositionTime.seconds, frameRate: frameRate)
+                        request.finish(with: Imaging.filtered(request.sourceImage, look: look), context: renderContext)
+                    }
+                } else {
+                    request.finish(with: request.sourceImage, context: renderContext)
+                }
+            }
+        } catch {
+            message = error.localizedDescription
+            return
+        }
+        previewComposition = composition
+        playerItem.videoComposition = composition
+        #if DEBUG
+        previewCompositionBuildCount += 1
+        #endif
+        refreshPausedPreview()
+    }
+
+    /// paused 时 videoComposition 状态变化不会自动出帧，用零容差 seek 强制刷新当前帧。
+    private func refreshPausedPreview() {
+        guard player.timeControlStatus != .playing else { return }
+        let current = player.currentTime()
+        guard current.isValid, current.isNumeric else { return }
+        if let previewComposition { playerItem.videoComposition = previewComposition }
+        player.seek(to: current, toleranceBefore: .zero, toleranceAfter: .zero)
     }
 
     private func syncPreviewTrimRange(keepCurrentPreview: Bool = false) {
@@ -549,6 +880,37 @@ final class VideoEditorViewModel: ObservableObject {
     private func boundedEnd(_ value: Double) -> Double {
         guard duration > 0, value.isFinite else { return duration }
         return min(max(value, min(duration, trimStart + minimumTrimDuration)), duration)
+    }
+}
+
+/// 播放器和滤镜参数共用的一份可变预览状态；安装一次 CI 视频合成后，
+/// 参数变化只更新状态并刷新当前帧，不再反复重建 videoComposition。
+private final class VideoEditorPreviewState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var look = CaptureLook()
+    private var cube: LogLUTCube?
+
+    func update(look: CaptureLook, cube: LogLUTCube?) {
+        lock.lock(); defer { lock.unlock() }
+        self.look = look
+        self.cube = cube
+    }
+
+    func snapshot() -> (look: CaptureLook, cube: LogLUTCube?) {
+        lock.lock(); defer { lock.unlock() }
+        return (look, cube)
+    }
+}
+
+/// 与相机视频录制相同的逐帧颗粒相位，避免编辑预览使用连续秒数导致颗粒流动速度不同。
+enum VideoGrainPhase {
+    static func phase(seconds: Double, frameRate: Double) -> Double {
+        guard seconds.isFinite, frameRate.isFinite, frameRate > 0 else { return 0 }
+        return phase(frame: Int64(max(0, seconds * frameRate)))
+    }
+
+    static func phase(frame: Int64) -> Double {
+        Double(((max(0, frame) &* 73) % 4093))
     }
 }
 
@@ -636,7 +998,7 @@ enum VideoEditError: LocalizedError {
 
 enum VideoEditExportService {
     static func export(asset: AVAsset, selection: VideoTrimSelection, isLogVideo: Bool,
-                       look: CaptureLook, logLUTCube: LogLUTCube?) async throws -> URL {
+                       look: CaptureLook, logLUTCube: LogLUTCube?, frameRate: Double = 30) async throws -> URL {
         guard selection.duration > 0 else { throw VideoEditError.invalidDuration }
         var url: URL?
         do {
@@ -662,7 +1024,8 @@ enum VideoEditExportService {
                 exporter.videoComposition = try await VideoFilterComposition.make(asset: asset) { request in
                     autoreleasepool {
                         var frameLook = look
-                        frameLook.grainPhase += request.compositionTime.seconds * 127.7
+                        frameLook.grainPhase = VideoGrainPhase.phase(
+                            seconds: request.compositionTime.seconds, frameRate: frameRate)
                         request.finish(with: Imaging.filtered(request.sourceImage, look: frameLook), context: context)
                     }
                 }

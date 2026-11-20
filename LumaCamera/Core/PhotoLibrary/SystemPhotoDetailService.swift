@@ -33,11 +33,15 @@ extension SystemPhotoLibraryService: PhotoDetailService {
             }
             var diagnostics = PhotoCaptureDiagnosticsStore.shared.load(assetID: id)
             if let fileDiagnostics = AstroImageEncoder.readDiagnostics(source, properties: properties) {
+                let alreadyRecorded = diagnostics?.isAstroCapture == true
                 if var record = diagnostics {
                     record.parameters = record.parameters ?? fileDiagnostics.parameters
                     record.rows = PhotoCaptureDiagnostics.merged(record.rows, with: fileDiagnostics.rows)
                     diagnostics = record
                 } else { diagnostics = fileDiagnostics }
+                if !alreadyRecorded, let diagnostics, diagnostics.isAstroCapture {
+                    PhotoCaptureDiagnosticsStore.shared.save(diagnostics, assetID: id)
+                }
             }
             // 仅修复延迟HDR资产：历史记录可能只有快门时EV，必须用当前最终文件补齐成片参数。
             if diagnostics?.rows.contains(where: { $0.title == "HDR处理" && $0.value == "系统延迟融合完成" }) == true {

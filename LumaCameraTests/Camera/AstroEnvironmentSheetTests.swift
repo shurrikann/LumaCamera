@@ -5,6 +5,57 @@ import XCTest
 
 @MainActor
 final class AstroEnvironmentSheetTests: XCTestCase {
+    func testHorizonPanelFitsCompactMap() throws {
+        let zone = try XCTUnwrap(TimeZone(identifier: "America/New_York"))
+        let date = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-03-08T12:00:00-04:00"))
+        let point = try XCTUnwrap(AstroForecastPoint(.init(latitude: 40.71, longitude: -74.01)))
+        let request = try XCTUnwrap(AstroHorizonRequest(point: point, date: date, timeZone: zone))
+        let panel = AstroHorizonPanel(request: request, events: request.events())
+        let renderer = ImageRenderer(content: panel
+            .frame(width: 288)
+            .environment(\.locale, Locale(identifier: "zh_CN")))
+        let image = try XCTUnwrap(renderer.uiImage)
+        XCTAssertEqual(image.size.width, 288, accuracy: 1)
+        XCTAssertLessThan(image.size.height, 95)
+        print("ASTRO-HORIZON panelPoints=\(image.size)")
+        let attachment = XCTAttachment(image: image)
+        attachment.name = "Horizon time card"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    func testHorizonAnnotationFollowsSiteWithoutInterceptingMapGestures() throws {
+        let map = MKMapView(frame: CGRect(x: 0, y: 0, width: 360, height: 250))
+        let coordinator = AstroNightLightsMap.Coordinator(source: LightPollutionSources.current, onCenterChange: { _ in })
+        let sites = [
+            CLLocationCoordinate2D(latitude: 31.23, longitude: 121.47),
+            CLLocationCoordinate2D(latitude: 39.90, longitude: 116.41),
+        ]
+        let events = [AstroHorizonEvent(kind: .sunrise, date: Date(), azimuth: 100)]
+        coordinator.updateHorizon(origin: sites[0], events: events, on: map)
+        let annotation = try XCTUnwrap(map.annotations.compactMap { $0 as? AstroHorizonAnnotation }.first)
+        let view = try XCTUnwrap(coordinator.mapView(map, viewFor: annotation) as? AstroHorizonAnnotationView)
+        XCTAssertNotNil(view.image)
+        XCTAssertFalse(view.isUserInteractionEnabled)
+        let north = AstroHorizonAnnotationView.point(from: CGPoint(x: 50, y: 50), angle: 0, radius: 20)
+        let east = AstroHorizonAnnotationView.point(from: CGPoint(x: 50, y: 50), angle: .pi / 2, radius: 20)
+        XCTAssertEqual(north, CGPoint(x: 50, y: 30))
+        XCTAssertEqual(east, CGPoint(x: 70, y: 50))
+        for i in 0..<20 {
+            let site = sites[i % sites.count]
+            coordinator.updateHorizon(origin: site, events: events, on: map)
+            XCTAssertEqual(map.annotations.filter { $0 is AstroHorizonAnnotation }.count, 1)
+            XCTAssertEqual(annotation.coordinate.latitude, site.latitude)
+            XCTAssertEqual(annotation.coordinate.longitude, site.longitude)
+        }
+        coordinator.updateHorizon(origin: sites[0], events: [], on: map)
+        XCTAssertFalse(map.annotations.contains { $0 === annotation })
+        coordinator.updateHorizon(origin: sites[1], events: events, on: map)
+        XCTAssertTrue(map.annotations.contains { $0 === annotation })
+        coordinator.updateHorizon(origin: nil, events: events, on: map)
+        XCTAssertFalse(map.annotations.contains { $0 === annotation })
+    }
+
     func testMapPanSwitchesFromSavedPinToNewForecastPoint() throws {
         var selection = AstroForecastSelection()
         let site = AstroPlannedSite(slot: 1, coordinate: .init(latitude: 31.23, longitude: 121.47))
@@ -152,46 +203,61 @@ final class AstroEnvironmentSheetTests: XCTestCase {
         print("ASTRO-SITES samples=\(times.count) mutationAndAssertionsMaxMS=\(times.max() ?? 0)")
     }
 
-    func testSolidHeadingPresentationSurvivesMissingUpdatesAndRecreation() throws {
-        let map = MKMapView()
+    func testSolidLocationMarkerTracksRegionAcrossResizeAndMissingHeading() {
+        let viewport = AstroMapViewport(frame: CGRect(x: 0, y: 0, width: 360, height: 250))
+        let map = viewport.map
         let coordinator = AstroNightLightsMap.Coordinator(source: LightPollutionSources.current, onCenterChange: { _ in })
-        let marker = coordinator.marker
-        marker.coordinate = CLLocationCoordinate2D(latitude: 31, longitude: 121)
+        coordinator.viewport = viewport
+        viewport.layoutIfNeeded()
+        let marker = viewport.locationMarker
+        let location = CLLocationCoordinate2D(latitude: 31.23, longitude: 121.47)
+        let near = CLLocationCoordinate2D(latitude: 31.24, longitude: 121.48)
+        map.setRegion(.init(center: location, latitudinalMeters: 12_000, longitudinalMeters: 12_000), animated: false)
+        viewport.setLocation(location)
         XCTAssertEqual(CaptureLocationService.usableHeading(trueNorth: 90, magneticNorth: 80, accuracy: 3), 90)
         XCTAssertEqual(CaptureLocationService.usableHeading(trueNorth: -1, magneticNorth: 80, accuracy: 3), 80)
         XCTAssertNil(CaptureLocationService.usableHeading(trueNorth: 90, magneticNorth: 80, accuracy: -1))
         XCTAssertNil(CaptureLocationService.usableHeading(trueNorth: .nan, magneticNorth: 360, accuracy: 3))
-        let view = try XCTUnwrap(coordinator.mapView(map, viewFor: marker) as? AstroLocationAnnotationView)
-        XCTAssertEqual(view.arrow.image?.renderingMode, .alwaysTemplate)
-        XCTAssertFalse(view.arrow.isHidden)
-        XCTAssertEqual(view.arrow.transform, .identity)
-        let values: [Double] = [0, 90, 180, 270, 359, 1]
+
+        let headings: [Double] = [0, 90, 180, 270, 359, 1]
         var times = [Double]()
-        for value in Array(repeating: values, count: 10).flatMap({ $0 }) {
+        for sample in 0..<60 {
+            viewport.frame.size.height = sample.isMultiple(of: 2) ? 360 : 250
+            viewport.layoutIfNeeded()
+            let center = sample.isMultiple(of: 2) ? location : near
+            map.setRegion(.init(center: center, latitudinalMeters: 12_000, longitudinalMeters: 12_000), animated: false)
+            let heading = headings[sample % headings.count]
             let start = CACurrentMediaTime()
-            view.setHeading(value, animated: true)
+            coordinator.mapViewDidChangeVisibleRegion(map)
+            coordinator.setHeading(heading)
+            coordinator.setHeading(nil)
             times.append((CACurrentMediaTime() - start) * 1000)
-            XCTAssertFalse(view.arrow.isHidden)
-            XCTAssertEqual(view.arrow.transform.a, cos(value * .pi / 180), accuracy: 0.0001)
-            XCTAssertEqual(view.arrow.transform.b, sin(value * .pi / 180), accuracy: 0.0001)
+            XCTAssertFalse(marker.isHidden)
+            XCTAssertFalse(marker.isUserInteractionEnabled)
+            XCTAssertFalse(marker.arrow.isHidden)
+            XCTAssertEqual(marker.arrow.image?.renderingMode, .alwaysTemplate)
+            XCTAssertEqual(marker.arrow.transform.a, cos(heading * .pi / 180), accuracy: 0.0001)
+            XCTAssertEqual(marker.arrow.transform.b, sin(heading * .pi / 180), accuracy: 0.0001)
+            XCTAssertTrue(viewport.subviews.last === marker)
+            XCTAssertTrue(map.annotations.isEmpty)
+            XCTAssertEqual(marker.bounds.size, CGSize(width: 28, height: 28))
+            let projected = map.convert(location, toPointTo: viewport)
+            XCTAssertEqual(marker.center.x, projected.x, accuracy: 0.5)
+            XCTAssertEqual(marker.center.y, projected.y, accuracy: 0.5)
         }
-        // A new annotation view keeps the last valid bearing, even if the compass
-        // briefly reports no usable value while the map changes size.
-        for height in [250.0, 360.0, 250.0, 360.0, 250.0] {
-            map.frame.size.height = height
-            coordinator.setHeading(90, on: map)
-            coordinator.setHeading(nil, on: map)
-            let recreated = try XCTUnwrap(coordinator.mapView(map, viewFor: marker) as? AstroLocationAnnotationView)
-            XCTAssertFalse(recreated.arrow.isHidden)
-            XCTAssertEqual(recreated.arrow.image?.renderingMode, .alwaysTemplate)
-            XCTAssertEqual(recreated.arrow.transform.b, 1, accuracy: 0.0001)
-        }
-        view.setHeading(nil, animated: false)
-        XCTAssertFalse(view.arrow.isHidden)
-        XCTAssertEqual(view.arrow.transform, .identity)
-        XCTAssertEqual(marker.coordinate.latitude, 31)
-        XCTAssertEqual(marker.coordinate.longitude, 121)
-        print("ASTRO-HEADING samples=\(times.count) transformUpdateMaxMS=\(times.max() ?? 0)")
+
+        map.setRegion(.init(center: .init(latitude: 40.71, longitude: -74.01),
+                            latitudinalMeters: 12_000, longitudinalMeters: 12_000), animated: false)
+        coordinator.mapViewDidChangeVisibleRegion(map)
+        XCTAssertTrue(marker.isHidden)
+        map.setRegion(.init(center: location, latitudinalMeters: 12_000, longitudinalMeters: 12_000), animated: false)
+        coordinator.mapViewDidChangeVisibleRegion(map)
+        XCTAssertFalse(marker.isHidden)
+        viewport.setLocation(nil)
+        XCTAssertTrue(marker.isHidden)
+        viewport.setLocation(location)
+        XCTAssertFalse(marker.isHidden)
+        print("ASTRO-HEADING samples=\(times.count) projectionAndHeadingMaxMS=\(times.max() ?? 0)")
     }
 
     private func wait(until condition: () -> Bool) async throws {

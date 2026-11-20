@@ -292,6 +292,9 @@ final class AstroForecastStore {
 struct AstroSkyPosition {
     let sunAltitude: Double
     let moonAltitude: Double
+    let sunAzimuth: Double
+    let moonAzimuth: Double
+    let moonRiseSetAltitude: Double
     let illuminatedFraction: Double
     var moonlight: Double { max(0, sin(moonAltitude * .pi / 180)) * illuminatedFraction }
 
@@ -311,6 +314,14 @@ struct AstroSkyPosition {
             asin(sin(latitude) * sin(body.dec) + cos(latitude) * cos(body.dec) * cos(siderealTime - body.ra)) / radians
         }
 
+        func azimuth(_ body: (ra: Double, dec: Double)) -> Double {
+            let hourAngle = siderealTime - body.ra
+            let east = -cos(body.dec) * sin(hourAngle)
+            let north = sin(body.dec) * cos(latitude) - cos(body.dec) * cos(hourAngle) * sin(latitude)
+            let degrees = atan2(east, north) / radians
+            return degrees < 0 ? degrees + 360 : degrees
+        }
+
         let solarAnomaly = (357.5291 + 0.98560028 * days) * radians
         let solarCenter = 1.9148 * sin(solarAnomaly) + 0.02 * sin(2 * solarAnomaly) + 0.0003 * sin(3 * solarAnomaly)
         let sun = equatorial(solarAnomaly + (solarCenter + 102.9372 + 180) * radians, 0)
@@ -323,6 +334,9 @@ struct AstroSkyPosition {
         let elongation = acos(min(1, max(-1, elongationCosine)))
         let incidence = atan2(149_598_000 * sin(elongation), distance - 149_598_000 * cos(elongation))
         sunAltitude = altitude(sun)
+        sunAzimuth = azimuth(sun)
+        moonAzimuth = azimuth(moon)
+        moonRiseSetAltitude = -(34.0 / 60 + asin(1737.4 / distance) / radians)
         // Approximate lunar horizontal parallax. Use the geometric horizon for planning.
         let moonGeocentricAltitude = altitude(moon)
         moonAltitude = moonGeocentricAltitude - (6378 / distance) * cos(moonGeocentricAltitude * radians) / radians

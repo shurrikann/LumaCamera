@@ -32,8 +32,8 @@ final class PhotoFilterEditorTests: XCTestCase {
                 let attachment = XCTAttachment(image: image); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
             }
             for tool in [PhotoEditorTool.crop, .filters] {
-                model.tool = tool
-                if tool == .crop { model.setCropAspect(.square) }
+                if tool == .filters { model.toggleEditorControls(.filters) }
+                else { model.tool = tool; model.setCropAspect(.square) }
                 try await Task.sleep(for: .milliseconds(250))
                 let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
                 let attachment = XCTAttachment(image: image); attachment.name = "Photo-Tool-" + ratio.rawValue + "-" + tool.rawValue; attachment.lifetime = .keepAlways; add(attachment)
@@ -53,6 +53,7 @@ final class PhotoFilterEditorTests: XCTestCase {
         let session = PhotoEditSession(source: source) { _, _ in }
         let model = PhotoEditorViewModel(session: session, library: library)
         defer { model.cancelPreview() }
+        XCTAssertFalse(model.filterPopupVisible, "进入编辑器时滤镜弹窗不应自动出现")
         model.selectFilter(.leicaM9); model.tool = .adjustments
         model.filterEditorTab = .color
         let pair = model.filterParameterPairBinding(.temperature, .tint)
@@ -93,14 +94,20 @@ final class PhotoFilterEditorTests: XCTestCase {
         let beforeClose = model.adjustments
         for _ in 0..<30 {
             model.toggleEditorControls(.filters)
-            XCTAssertFalse(model.editorControlsVisible)
-            model.toggleEditorControls(.filters)
+            XCTAssertTrue(model.filterPopupVisible)
             XCTAssertTrue(model.editorControlsVisible)
+            model.toggleEditorControls(.filters)
+            XCTAssertFalse(model.filterPopupVisible)
+            XCTAssertFalse(model.editorControlsVisible)
             model.toggleEditorControls(.adjustments)
             XCTAssertEqual(model.tool, .adjustments)
+            XCTAssertTrue(model.editorControlsVisible)
+            XCTAssertFalse(model.filterPopupVisible)
             model.closeEditorControls()
             model.toggleEditorControls(.filters)
+            XCTAssertTrue(model.filterPopupVisible)
             XCTAssertTrue(model.editorControlsVisible)
+            model.closeEditorControls()
         }
         XCTAssertEqual(model.adjustments, beforeClose)
         for _ in 0..<20 {
@@ -175,8 +182,9 @@ final class PhotoFilterEditorTests: XCTestCase {
                 }
                 let frame = model.photoViewportFrameForTesting
                 let toolbar = try XCTUnwrap(model.captureButtonFramesForTesting["photo.editor.toolbar"])
-                model.tool = .filters
+                model.toggleEditorControls(.filters)
                 try await Task.sleep(for: .milliseconds(260))
+                XCTAssertTrue(model.filterPopupVisible)
                 XCTAssertGreaterThan(model.photoViewportFrameForTesting.height, frame.height, "滤镜选择页应把空白还给照片")
                 XCTAssertEqual(model.captureButtonFramesForTesting["photo.editor.toolbar"]?.minY ?? -1, toolbar.minY, accuracy: 1)
                 model.closeEditorControls()
@@ -193,6 +201,30 @@ final class PhotoFilterEditorTests: XCTestCase {
         }
         timings.sort()
         print("PHOTO-SHARED-LAYOUT samples=\(samples) snapshotMedianMs=\(timings[timings.count/2]) p95Ms=\(timings[Int(Double(timings.count)*0.95)]); host snapshot cost, not FPS")
+    }
+
+    @MainActor func testPhotoFilterPopupUsesSameStrengthEditorAsCamera() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let old = scene.windows.first(where: \.isKeyWindow)
+        let window = UIWindow(windowScene: scene)
+        let host = UIHostingController(rootView: AnyView(EmptyView()))
+        window.rootViewController = host; window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; old?.makeKey() }
+        let model = PhotoEditorViewModel(session: PhotoEditSession(source: source) { _, _ in },
+                                         library: PhotoLibraryViewModel(service: FilterEditLibraryStub()))
+        model.tool = .filters
+        let filters = FilterPickerViewModel()
+        filters.showStrength = true
+        host.rootView = AnyView(PhotoFilterPopup(model: model, filters: filters, onClose: {} )
+            .frame(width: 390, height: 620))
+        for _ in 0..<50 {
+            if model.filterDialPadFrameForTesting.height > 200 { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertGreaterThan(model.filterDialPadFrameForTesting.height, 200,
+                             "照片编辑器滤镜参数应复用拍照模式调色盘")
+        XCTAssertNotNil(model.captureButtonFramesForTesting["photo.filter.popup"])
+        model.cancelPreview()
     }
 
     private var source: CIImage { CIImage(image: DemoImageFactory.make())! }

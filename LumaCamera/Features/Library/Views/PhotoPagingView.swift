@@ -16,7 +16,7 @@ struct PhotoPagingView: View {
     @State private var deletionBoundaryID: String?
     @State private var deletionWasRAW = false
     @State private var deletionWasLive = false
-    @State private var deletionWasNight = false
+    @State private var deletionWasAstro = false
     @State private var deletionHadFilter = false
     @State private var handledUnavailableID: String?
     @State private var deferredUnavailableIDs = Set<String>()
@@ -82,7 +82,7 @@ struct PhotoPagingView: View {
         switch selected { case .asset(let photo): id = photo.id; case .capture: id = captureAssetID ?? library.savedPhotoID }
         guard let id, ids.contains(id), handledUnavailableID != id else { return }
         handledUnavailableID = id
-        deletionWasRAW = selectedIsRAW; deletionWasLive = selectedIsLive; deletionWasNight = selectedIsNightComposite; deletionHadFilter = selectedHasFilter
+        deletionWasRAW = selectedIsRAW; deletionWasLive = selectedIsLive; deletionWasAstro = selectedIsAstroCapture; deletionHadFilter = selectedHasFilter
         let remainingOrder = photos.filter { $0.id == id || !ids.contains($0.id) }
         deletionFallback = GalleryPhotoPaging.afterDeleting(selected, photos: remainingOrder,
             hasCapture: library.lastPhoto != nil && !library.photoSaved, captureID: captureAssetID ?? library.savedPhotoID)
@@ -98,8 +98,12 @@ struct PhotoPagingView: View {
     private var selectedIsLive: Bool {
         switch selected { case .asset(let photo): return photo.isLive; case .capture: return library.hasLiveResource }
     }
-    private var selectedIsNightComposite: Bool {
-        switch selected { case .asset(let photo): return photo.isNightComposite; case .capture: return library.hasNightCompositeResource }
+    private var selectedIsAstroCapture: Bool {
+        switch selected {
+        case .asset(let photo):
+            return photo.isAstroCapture || PhotoCaptureDiagnosticsStore.shared.isAstroCapture(assetID: photo.id)
+        case .capture: return library.hasAstroCaptureResource
+        }
     }
     private var selectedHasFilter: Bool {
         switch selected { case .asset(let photo): return PhotoCaptureDiagnosticsStore.shared.filterApplied(assetID: photo.id); case .capture: return library.hasFilterResource }
@@ -108,7 +112,7 @@ struct PhotoPagingView: View {
         deletionFallback = GalleryPhotoPaging.afterDeleting(selected, photos: photos, hasCapture: library.lastPhoto != nil && !library.photoSaved, captureID: captureAssetID ?? library.savedPhotoID)
         deletionWasRAW = selectedIsRAW
         deletionWasLive = selectedIsLive
-        deletionWasNight = selectedIsNightComposite
+        deletionWasAstro = selectedIsAstroCapture
         deletionHadFilter = selectedHasFilter
         let deletedID: String?
         switch selected { case .asset(let p): deletedID = p.id; case .capture: deletedID = captureAssetID ?? library.savedPhotoID }
@@ -161,7 +165,7 @@ struct PhotoPagingView: View {
                 outgoingRAW: afterDeletion ? deletionWasRAW : selectedIsRAW,
                 outgoingLive: afterDeletion ? deletionWasLive : selectedIsLive,
                 outgoingFilter: afterDeletion ? deletionHadFilter : selectedHasFilter,
-                outgoingNight: afterDeletion ? deletionWasNight : selectedIsNightComposite)
+                outgoingAstro: afterDeletion ? deletionWasAstro : selectedIsAstroCapture)
             seed = nil
             displayedImage = nil
             // 已删除照片不能因下一张仍在下载而占住详情，也不能锁住返回操作。
@@ -180,7 +184,7 @@ struct PhotoPagingView: View {
                 outgoingRAW: afterDeletion ? deletionWasRAW : selectedIsRAW,
                 outgoingLive: afterDeletion ? deletionWasLive : selectedIsLive,
                 outgoingFilter: afterDeletion ? deletionHadFilter : selectedHasFilter,
-                outgoingNight: afterDeletion ? deletionWasNight : selectedIsNightComposite)
+                outgoingAstro: afterDeletion ? deletionWasAstro : selectedIsAstroCapture)
             transitioning = true
             seed = image; selected = next
             if let deletionToken { deletionNavigation.finish(deletionToken) }

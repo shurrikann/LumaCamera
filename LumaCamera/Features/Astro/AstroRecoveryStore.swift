@@ -182,7 +182,7 @@ final class AstroRecoveryJournal: @unchecked Sendable {
         } }
     }
     private func importFile(id: UUID, file: URL, video: Bool, captureOptions: AstroImageOptions? = nil,
-                            opensReview: Bool = false,
+                            recoveredKind: String? = nil, opensReview: Bool = false,
                             completion: @escaping (Result<URL, Error>) -> Void) {
         guard !diagnosticOnly, !expired.contains(id) else { keep(id); completion(.success(file)); return }
         journal.phase(id: id, value: "importing")
@@ -199,7 +199,14 @@ final class AstroRecoveryJournal: @unchecked Sendable {
         }) { [weak self] success, error in Task { @MainActor in
             guard let self else { return }
             if success {
-                if let assetID, let diagnostics = captureOptions?.diagnostics {
+                let kind = video ? "星空延时" : (recoveredKind ?? captureOptions?.mode)
+                var diagnostics = captureOptions?.diagnostics
+                if let kind, PhotoCaptureDiagnostics.isAstroShootingType(kind), diagnostics?.isAstroCapture != true {
+                    var record = diagnostics ?? PhotoCaptureDiagnostics()
+                    record.add("拍摄类型", kind)
+                    diagnostics = record
+                }
+                if let assetID, let diagnostics {
                     PhotoCaptureDiagnosticsStore.shared.save(diagnostics, assetID: assetID)
                 }
                 if opensReview, let assetID { self.didImportCapture.send(assetID) }
@@ -235,6 +242,9 @@ final class AstroRecoveryJournal: @unchecked Sendable {
                 }
             }
 
-        } else { importFile(id: item.id, file: file, video: item.isVideo, captureOptions: item.options, completion: done) }
+        } else {
+            importFile(id: item.id, file: file, video: item.isVideo, captureOptions: item.options,
+                       recoveredKind: item.kind, completion: done)
+        }
     }
 }

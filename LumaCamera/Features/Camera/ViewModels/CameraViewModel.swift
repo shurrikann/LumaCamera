@@ -116,7 +116,9 @@ private struct SlowShutterSequenceState {
 final class CameraViewModel: ObservableObject {
     enum CaptureKind: Equatable { case photo, video }
     enum TopLevelMode: Equatable { case photo, video, astro }
-    @Published private(set) var topLevelMode: TopLevelMode = .photo
+    @Published private(set) var topLevelMode: TopLevelMode = .photo {
+        didSet { camera.setLevelMonitoringEnabled(level) }
+    }
     @Published private(set) var captureKind: CaptureKind = .photo {
         didSet {
             photoSubmodeRequest = UUID()
@@ -1756,12 +1758,15 @@ final class CameraViewModel: ObservableObject {
         }
     }
     @Published var tone = PhotoTone.natural { didSet { updateLook() } }
-    @Published var metering = CameraMetering.system { didSet { camera.setMetering(effectiveMetering) } }
+    @Published var metering = CameraMetering.system { didSet {
+        camera.setMetering(effectiveMetering)
+        scheduleCaptureStateSave()
+    } }
     /// 选中值与生效值分开：非HEIF Pro格式始终使用系统测光，不改M挡手动曝光参数。
     var effectiveMetering: CameraMetering { captureKind == .photo && photoFormat == .heifPro ? metering : .system }
-    /// 全局测光时主读数显示设备总补偿；滑条仍操作用户EV，分项在测光面板明确显示。
-    var usesGlobalMeteringReadout: Bool { effectiveMetering == .global && camera.globalMeteringReadout.automatic }
-    var displayedExposureBias: Double { usesGlobalMeteringReadout ? camera.globalMeteringReadout.actual : ev }
+    /// 自定义测光时主读数显示设备总补偿；滑条仍操作用户 EV。
+    var usesPhotoMeteringReadout: Bool { effectiveMetering.usesPreviewMetering && camera.photoMeteringReadout.automatic }
+    var displayedExposureBias: Double { usesPhotoMeteringReadout ? camera.photoMeteringReadout.actual : ev }
 
     var photoOptions: PhotoOptions {
         let shootingType: String
@@ -3537,7 +3542,8 @@ final class CameraViewModel: ObservableObject {
         }.store(in: &subscriptions)
         camera.$roll.dropFirst().sink { [weak self] roll in
             guard let self else { return }
-            if self.levelHapticGate.update(roll: CameraLevelReading(roll: roll).tilt, time: CACurrentMediaTime(), enabled: self.level && self.camera.ready && !self.review && !self.settings) {
+            if self.levelHapticGate.update(roll: CameraLevelReading(roll: roll).tilt, time: CACurrentMediaTime(),
+                                          enabled: self.level && self.camera.ready && !self.review && !self.settings) {
                 cameraImpactFeedback(.light)
             }
         }.store(in: &subscriptions)
@@ -6187,7 +6193,7 @@ final class CameraViewModel: ObservableObject {
         portraitModeEnabled = restoringPortrait
         portraitBlurStrength = number(state.portraitBlurStrength ?? 0.5, 0...1, 0.5)
         portraitDepthSliderVisible = false
-        tone = PhotoTone(rawValue: state.tone) ?? .natural; metering = CameraMetering(rawValue: state.metering) ?? .system
+        tone = PhotoTone(rawValue: state.tone) ?? .natural; metering = CameraMetering(storedValue: state.metering) ?? .system
         let selected = FilmStyle(rawValue: state.style) ?? .original
         style = FilmStyle.availableStyles.contains(selected) ? selected : .original
         restoringFilterSettings = true

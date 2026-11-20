@@ -8,10 +8,20 @@ enum AdaptiveDynamicRenderer {
         let contrast: Double
         let shadowEV: Double
         let deepShadowEV: Double
+        let regionalShadowEV: Double
         let deepShadowLuminance: Double
         let brightAreaLuminance: Double
     }
     private static let kernel = MetalImageKernels.color("adaptiveDynamic")
+    private static let matchedHDRKernel = MetalImageKernels.color("rawMatchedHDR")
+
+    /// Use the SDR development for shadows and midtones. The HDR development
+    /// supplies highlight detail, with additional restrained gain near white.
+    static func matchingHDR(_ image: CIImage, to base: CIImage) -> CIImage? {
+        guard image.extent == base.extent else { return nil }
+        return matchedHDRKernel?.apply(extent: image.extent, arguments: [image, base])?
+            .settingProperties(image.properties)
+    }
     private static let sdrBase = MetalImageKernels.color("adaptiveSDRBase")
     private static let restoreHDR = MetalImageKernels.color("adaptiveHDRRestore")
     /// LUT通常只定义0–1域；分离逐像素亮度余量后调色，再恢复余量，避免滤镜截断HDR层次。
@@ -39,13 +49,21 @@ enum AdaptiveDynamicRenderer {
                 colorSpace:CGColorSpace(name:CGColorSpace.extendedLinearSRGB)!)
         }
         var values:[Double] = []; values.reserveCapacity(width*height)
+        var tileSums = Array(repeating: 0.0, count: 16)
+        var tileCounts = Array(repeating: 0, count: 16)
         for p in stride(from:0,to:rgba.count,by:4) {
             // 缩小图边缘无效透明像素不是场景黑位，不能压住2%分位使深暗补偿失效。
             guard rgba[p+3].isFinite, rgba[p+3] >= 0.99 else { continue }
             let y = Double(rgba[p])*0.2126+Double(rgba[p+1])*0.7152+Double(rgba[p+2])*0.0722
-            if y.isFinite { values.append(max(0,y)) }
+            guard y.isFinite else { continue }
+            values.append(max(0, y))
+            let row = (p / 4 / width) * 4 / height
+            let column = (p / 4 % width) * 4 / width
+            let tile = row * 4 + column
+            tileSums[tile] += min(1, max(0, y))
+            tileCounts[tile] += 1
         }
-        guard !values.isEmpty else { return Analysis(median:0,white:1,contrast:1,shadowEV:0,deepShadowEV:0,deepShadowLuminance:0,brightAreaLuminance:0) }
+        guard !values.isEmpty else { return Analysis(median:0,white:1,contrast:1,shadowEV:0,deepShadowEV:0,regionalShadowEV:0,deepShadowLuminance:0,brightAreaLuminance:0) }
         values.sort()
         func percentile(_ p:Double) -> Double { values[min(values.count-1,Int(Double(values.count-1)*p))] }
         let median = percentile(0.5), white = percentile(0.998)
@@ -70,18 +88,45 @@ enum AdaptiveDynamicRenderer {
             ? deepTarget * (deepAnchor - raisedTail) / (raisedTail * (deepAnchor - deepTarget)) : 1
         let deep = white > 0.3 && percentile(0.90) > 0.18
             ? min(3, max(0, log2(max(1, deepGain)))) * deepWeight : 0
+        let tiles = zip(tileSums, tileCounts).map { $1 > 0 ? $0 / Double($1) : nil }
+        let regional = regionalRecovery(tiles, globalEV: shadow, deepEV: deep)
         return Analysis(median:median,white:white,contrast:contrast,shadowEV:shadow,deepShadowEV:deep,
-                        deepShadowLuminance:tail,brightAreaLuminance:percentile(0.90))
+                        regionalShadowEV:regional,deepShadowLuminance:tail,brightAreaLuminance:percentile(0.90))
     }
-    static func apply(_ image:CIImage,hdr:Bool,context:CIContext) -> CIImage {
+    /// Look for substantial bright and dark areas on opposite sides, including
+    /// top/bottom framing. Isolated lamps and small dark patches use the old policy.
+    private static func regionalRecovery(_ tiles: [Double?], globalEV: Double, deepEV: Double) -> Double {
+        let halves = [
+            [0, 1, 4, 5, 8, 9, 12, 13],
+            Array(0..<8)
+        ]
+        var recovery = 0.0
+        for indices in halves {
+            let first = indices.compactMap { tiles[$0] }
+            let second = tiles.indices.filter { !indices.contains($0) }.compactMap { tiles[$0] }
+            for (darkSide, lightSide) in [(first, second), (second, first)] {
+                let dark = darkSide.filter { (0.005...0.08).contains($0) }.sorted()
+                guard dark.count >= 3, lightSide.filter({ $0 >= 0.28 }).count >= 3 else { continue }
+                let level = dark[dark.count / 2]
+                let gain = pow(2, globalEV)
+                let raised = level * gain / (1 + (gain - 1) * level / 0.45)
+                let deepGain = pow(2, deepEV)
+                let recovered = raised < 0.12 ? raised * deepGain / (1 + (deepGain - 1) * raised / 0.12) : raised
+                guard recovered < 0.055 else { continue }
+                let needed = 0.055 * (0.18 - recovered) / (recovered * (0.18 - 0.055))
+                recovery = max(recovery, min(1.25, log2(needed)))
+            }
+        }
+        return recovery
+    }
+    static func apply(_ image:CIImage,hdr:Bool,context:CIContext,limitHighlights:Bool = true) -> CIImage {
         let a = analyze(image,context:context)
-        // 使用全图统一、连续且保色相的亮度映射，不做易产生边缘光晕的局部模糊叠加。
-        // HDR成片以RAW默认显影的黑位和中灰为基准，只在参考白以上保留柔和肩部；
-        // 不再把SDR逆光恢复所需的暗部增益叠加到PQ输出，避免整幅中灰抬高、层次变平。
+        // HDR and SDR share the same backlight recovery. A matched HDR/SDR
+        // pair applies its final highlight shoulder after combining both developments.
         let knee = hdr ? 1.0 : 0.65
         let cap = hdr ? 4.0 : 1.0
-        let scale = max(cap-knee,(a.white-knee)/3.7)
-        return kernel?.apply(extent:image.extent,arguments:[image,hdr ? 0 : a.shadowEV,hdr ? 0 : a.deepShadowEV,knee,cap,scale]) ?? image
+        let scale = limitHighlights ? max(cap-knee,(a.white-knee)/3.7) : 0
+        return kernel?.apply(extent:image.extent,arguments:[image,a.shadowEV,a.deepShadowEV,a.regionalShadowEV,knee,cap,scale]) ?? image
     }
 }
 

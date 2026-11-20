@@ -71,6 +71,7 @@ struct GalleryView: View {
                                                     else if !library.photoSaved { Text("未保存").font(.system(size: 9)).padding(4).background(AppTheme.popupBackground) }
                                                     if library.hasRAWResource { rawBadge }
                                                     if library.hasLiveResource { formatBadge("LIVE") }
+                                                    if library.hasAstroCaptureResource { PhotoAstroBadge() }
                                                 }.padding(5)
                                             }
                                     }.aspectRatio(1, contentMode: .fit)
@@ -189,7 +190,9 @@ struct GalleryView: View {
                     } else {
                         if photo.isRAW { rawBadge }
                         if photo.isLive { formatBadge("LIVE") }
-                        if photo.isNightComposite { PhotoNightBadge() }
+                    }
+                    if photo.isAstroCapture || PhotoCaptureDiagnosticsStore.shared.isAstroCapture(assetID: photo.id) {
+                        PhotoAstroBadge()
                     }
                 }.padding(5)
             }

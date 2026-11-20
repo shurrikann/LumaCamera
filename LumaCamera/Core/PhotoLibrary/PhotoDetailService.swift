@@ -11,6 +11,10 @@ struct PhotoDetails {
     var captureParameters: PhotoCaptureParameters? = nil
     var location: PhotoLocation? = nil
     var capturedAt: Date? = nil
+    var isAstroCapture: Bool {
+        PhotoCaptureDiagnostics.isAstroShootingType(captureParameters?.shootingType)
+            || rows.contains { $0.title == "拍摄类型" && PhotoCaptureDiagnostics.isAstroShootingType($0.value) }
+    }
 }
 struct PhotoAdjustments: Codable, Equatable {
     var exposure = 0.0

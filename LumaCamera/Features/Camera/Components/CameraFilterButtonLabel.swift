@@ -10,7 +10,7 @@ struct CameraFilterButtonLabel: View {
     var body: some View {
         VStack(spacing: 2) {
             Image(systemName: "camera.filters").font(.system(size: equipment == nil ? 19 : 17))
-                .previewAccentLabel(active: active)
+                .foregroundStyle(active ? AppTheme.accent : .white)
             VStack(spacing: 0) {
                 Text(title).font(.system(size: equipment == nil ? 8 : 7.5, weight: .medium)).foregroundStyle(.white.opacity(0.9))
                     .lineLimit(1).truncationMode(.middle).frame(width: size - 8, height: 11)

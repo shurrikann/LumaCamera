@@ -37,7 +37,8 @@ enum NativePhotoGlassRenderer {
         host.view.addSubview(image)
         let effect = UIVisualEffectView(effect:UIGlassEffect(style:.clear))
         effect.frame = CGRect(x:card.minX/scale,y:(card.minY-viewport.minY)/scale,width:card.width/scale,height:card.height/scale)
-        effect.layer.cornerRadius = cornerRadius/scale; effect.clipsToBounds = true
+        effect.cornerConfiguration = .uniformCorners(radius: .fixed(Double(cornerRadius / scale)))
+        effect.clipsToBounds = true
         host.view.addSubview(effect)
         window.isUserInteractionEnabled = false
         window.isHidden = false

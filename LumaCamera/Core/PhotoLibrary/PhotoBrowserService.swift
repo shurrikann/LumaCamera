@@ -6,7 +6,7 @@ struct LibraryPhoto: Identifiable, Hashable {
     var isRAW = false
     var location: PhotoLocation? = nil
     var isLive = false
-    var isNightComposite = false
+    var isAstroCapture = false
     var hasFilter = false
     var isVideo = false
     var duration: TimeInterval? = nil

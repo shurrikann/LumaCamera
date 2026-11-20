@@ -257,6 +257,53 @@ final class AdaptiveDynamicPhysicalTests:XCTestCase {
         print("ADAPTIVE-DEEP-SHADOW median=\(a.median) globalEV=\(a.shadowEV) deepEV=\(a.deepShadowEV) dark-before=\(rgb(input,x:30,y:100)[0]) after=\(rgb(output,x:30,y:100)[0])")
     }
 
+    func testSeparatedBrightAreaRecoversDarkTonesAcrossOrientation() throws {
+        let input = chart(Array(repeating: Float(0.025), count: 4) + Array(repeating: Float(0.6), count: 6),
+                          width: 1000)
+        let analysis = AdaptiveDynamicRenderer.analyze(input, context: context)
+        XCTAssertGreaterThan(analysis.median, 0.14)
+        XCTAssertEqual(analysis.shadowEV, 0)
+        XCTAssertGreaterThan(analysis.regionalShadowEV, 0.5)
+        for orientation in [CGImagePropertyOrientation.left, .upMirrored] {
+            let rotated = AdaptiveDynamicRenderer.analyze(input.oriented(orientation), context: context)
+            XCTAssertEqual(rotated.regionalShadowEV, analysis.regionalShadowEV, accuracy: 0.05)
+        }
+        let sdr = AdaptiveDynamicRenderer.apply(input, hdr: false, context: context)
+        let hdr = AdaptiveDynamicRenderer.apply(input, hdr: true, context: context)
+        let dark = rgb(hdr, x: 200, y: 100)[0]
+        XCTAssertGreaterThan(dark, rgb(input, x: 200, y: 100)[0] * 1.5)
+        XCTAssertEqual(dark, rgb(sdr, x: 200, y: 100)[0], accuracy: 0.001)
+        XCTAssertEqual(rgb(hdr, x: 800, y: 100)[0], rgb(input, x: 800, y: 100)[0], accuracy: 0.001)
+        let isolatedLight = chart(Array(repeating: Float(0.025), count: 39) + [3], width: 1200)
+        XCTAssertEqual(AdaptiveDynamicRenderer.analyze(isolatedLight, context: context).regionalShadowEV, 0)
+        print("HDR-SIDE-SHADOW regionalEV=\(analysis.regionalShadowEV) recovered=\(dark)")
+    }
+
+    func testMatchedHDRKeepsSDRMidtonesAndExpandsBroadHighlights() throws {
+        let base = chart([0.01, 0.18, 0.4, 0.82, 0.92])
+        let source = chart([0.002, 0.12, 0.3, 0.7, 8])
+        let matched = try XCTUnwrap(AdaptiveDynamicRenderer.matchingHDR(source, to: base))
+        for x in [80, 240, 400] {
+            XCTAssertEqual(rgb(matched, x: x, y: 100)[0], rgb(base, x: x, y: 100)[0], accuracy: 0.001)
+        }
+        let screen = rgb(matched, x: 560, y: 100)[0]
+        let peak = rgb(matched, x: 720, y: 100)[0]
+        XCTAssertGreaterThan(screen, 1)
+        XCTAssertGreaterThan(peak, screen)
+        XCTAssertLessThan(peak, 4.01)
+        let bytes = try XCTUnwrap(PhotoEncoder.encodeImageData(matched, fileExtension: "heic",
+                                                               hdr: true, sdrBase: base, context: context))
+        let file = try XCTUnwrap(CGImageSourceCreateWithData(bytes as CFData, nil))
+        HDRImageAssertions.assertNativeISOGainMap(file)
+        let decoded = try XCTUnwrap(CIImage(data: bytes, options: [.expandToHDR: true]))
+        let decodedBase = try XCTUnwrap(CIImage(data: bytes, options: [.expandToHDR: false]))
+        for x in [80, 240, 400, 560, 720] {
+            XCTAssertEqual(rgb(decodedBase, x: x, y: 100)[0], rgb(base, x: x, y: 100)[0], accuracy: 0.035)
+        }
+        XCTAssertGreaterThan(rgb(decoded, x: 560, y: 100)[0], 1)
+        print("MATCHED-HDR screen=\(screen) peak=\(peak) headroom=\(decoded.contentHeadroom)")
+    }
+
     func testLinearHighlightShadowColorAndPerformance() throws {
         let input = chart([0,0.002,0.02,0.08,0.18,0.65,2,8])
         let sdr = AdaptiveDynamicRenderer.apply(input,hdr:false,context:context)
@@ -266,10 +313,9 @@ final class AdaptiveDynamicPhysicalTests:XCTestCase {
         let a = rgb(sdr,x:650,y:100), b = rgb(sdr,x:750,y:100)
         XCTAssertLessThan(b[0],1.3); XCTAssertGreaterThan(b[0],a[0])
         XCTAssertGreaterThan(rgb(hdr,x:750,y:100)[0],1)
-        XCTAssertEqual(rgb(hdr,x:250,y:100)[0],rgb(input,x:250,y:100)[0],accuracy:0.001,
-                       "PQ HDR只处理参考白以上高光，不能抬高RAW基准暗部")
-        XCTAssertEqual(rgb(hdr,x:450,y:100)[0],rgb(input,x:450,y:100)[0],accuracy:0.001,
-                       "PQ HDR应保留RAW中灰层次")
+        XCTAssertGreaterThan(rgb(hdr,x:250,y:100)[0],rgb(input,x:250,y:100)[0])
+        XCTAssertEqual(rgb(hdr,x:250,y:100)[0],rgb(sdr,x:250,y:100)[0],accuracy:0.001)
+        XCTAssertEqual(rgb(hdr,x:450,y:100)[0],rgb(sdr,x:450,y:100)[0],accuracy:0.001)
         XCTAssertEqual(a[0]/a[1],1.25,accuracy:0.015)
         for style in [FilmStyle.leicaM9,.fujiNC,.fujiCC,.mono] {
             let filtered = AdaptiveDynamicRenderer.filtered(input,look:CaptureLook(style:style),hdr:true)
@@ -300,6 +346,71 @@ final class AdaptiveDynamicPhysicalTests:XCTestCase {
         print("ADAPTIVE-GPU pixels=2880000 samples=6 seconds=\(times) analysis=\(AdaptiveDynamicRenderer.analyze(input,context:context))")
     }
     #if !targetEnvironment(simulator)
+    @MainActor func testSameDeviceRAWKeepsSDRBaseWithHDRAndAdaptiveRecovery() async throws {
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        let camera = model.camera
+        let oldIdle = UIApplication.shared.isIdleTimerDisabled
+        let oldCompletion = camera.onCaptureCompleted
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer {
+            camera.onCaptureCompleted = oldCompletion
+            model.setCameraActive(false)
+            UIApplication.shared.isIdleTimerDisabled = oldIdle
+        }
+        model.metering = .system
+        model.photoFormat = .raw
+        for _ in 0..<400 {
+            if camera.ready && camera.availablePhotoFormats.contains(.raw) { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertTrue(camera.ready && camera.availablePhotoFormats.contains(.raw))
+        let completion = expectation(description: "one RAW for all renditions")
+        var capture: CapturedPhoto?
+        camera.onCaptureCompleted = { capture = $0; completion.fulfill() }
+        camera.capture(flashMode: .off, options: model.photoOptions)
+        await fulfillment(of: [completion], timeout: 30)
+        let raw = try XCTUnwrap(capture?.resources.first?.data, camera.message ?? "")
+
+        func lumas(_ data: Data, hdr: Bool) throws -> [Float] {
+            let image = try XCTUnwrap(CIImage(data: data, options: [.expandToHDR: hdr]))
+            let extent = image.extent
+            let small = image.transformed(by: CGAffineTransform(translationX: -extent.minX, y: -extent.minY))
+                .transformed(by: CGAffineTransform(scaleX: 64 / extent.width, y: 64 / extent.height))
+            var values = [Float](repeating: 0, count: 64 * 64 * 4)
+            values.withUnsafeMutableBytes {
+                context.render(small, toBitmap: $0.baseAddress!, rowBytes: 64 * 16,
+                    bounds: CGRect(x: 0, y: 0, width: 64, height: 64), format: .RGBAf,
+                    colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!)
+            }
+            return stride(from: 0, to: values.count, by: 4).map {
+                0.2126 * values[$0] + 0.7152 * values[$0 + 1] + 0.0722 * values[$0 + 2]
+            }
+        }
+
+        for adaptive in [false, true] {
+            var sdr: [Float] = []
+            for hdr in [false, true] {
+                let filter = try XCTUnwrap(CIRAWFilter(imageData: raw, identifierHint: nil))
+                AdaptiveRAWDeveloper.configure(filter, adaptive: adaptive, hdr: hdr, adjustments: FilterAdjustments())
+                let source = try XCTUnwrap(filter.outputImage)
+                let start = CACurrentMediaTime()
+                let photo = try PhotoEncoder.encode(source: source, raw: raw, look: CaptureLook(),
+                    options: PhotoOptions(format: .heifPro, hdr: hdr, adaptiveHighDynamic: adaptive), context: context)
+                let data = try XCTUnwrap(photo.resources.first?.data)
+                let base = try lumas(data, hdr: false)
+                if !hdr { sdr = base }
+                let expanded = try lumas(data, hdr: true)
+                let baseError = zip(base, sdr).reduce(Float(0)) { $0 + abs($1.0 - $1.1) } / Float(base.count)
+                let bySDR = base.indices.sorted { base[$0] < base[$1] }
+                let q10 = bySDR[base.count / 10], q80 = bySDR[base.count * 8 / 10]
+                XCTAssertLessThan(baseError, 0.025)
+                if hdr { XCTAssertEqual(expanded[q10], base[q10], accuracy: 0.025) }
+                if adaptive { XCTAssertEqual(photo.resources.first(where: { $0.alternate })?.data, raw) }
+                print("RAW-MATCH adaptive=\(adaptive) hdr=\(hdr) baseMAE=\(baseError) p10=\(base[q10])/\(expanded[q10]) p80=\(base[q80])/\(expanded[q80]) peak=\(expanded.max() ?? 0) seconds=\(CACurrentMediaTime() - start)")
+            }
+        }
+    }
+
     @MainActor func testCaptureRAWRecipeRedevelopmentAndExposure() async throws {
         let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
         let callback = camera.onCaptureCompleted, idle = UIApplication.shared.isIdleTimerDisabled, audit = SessionRuntimeErrorAudit()
@@ -371,7 +482,11 @@ final class AdaptiveDynamicPhysicalTests:XCTestCase {
                 let error = sqrt(zip(a,b).reduce(0) { $0+Double(($1.0-$1.1)*($1.0-$1.1)) } / Double(a.count))
                 XCTAssertLessThan(error,0.025); print("ADAPTIVE-HDR-RECIPE rmse=\(error) toneAndRAWControls=true")
                 XCTAssertEqual(try developer.preview(recipe).cgImage?.bitsPerComponent,16)
-                XCTAssertTrue((rp[kCGImagePropertyProfileName as String] as? String ?? "").contains("PQ"))
+                if HDRImageAssertions.hasGainMap(rs) {
+                    HDRImageAssertions.assertNativeISOGainMap(rs)
+                } else {
+                    XCTAssertTrue((rp[kCGImagePropertyProfileName as String] as? String ?? "").contains("PQ"))
+                }
             }
             if pass == 0 {
                 let a = try smallPixels(heif.data), b = try smallPixels(rendered.resource.data)

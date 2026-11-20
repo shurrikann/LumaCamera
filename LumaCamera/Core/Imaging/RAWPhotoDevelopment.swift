@@ -18,6 +18,10 @@ final class RAWPhotoDevelopment {
         self.raw = raw; self.initial = initial; self.metadata = metadata
     }
     func source(_ adjustments:PhotoAdjustments,preview:Bool) throws -> CIImage {
+        try developedSource(adjustments, preview: preview)
+    }
+    private func developedSource(_ adjustments: PhotoAdjustments, preview: Bool,
+                                 limitHighlights: Bool = true) throws -> CIImage {
         lock.lock(); defer { lock.unlock() }
         guard let recipe = adjustments.rawDevelopment, recipe.version == 1 else { throw PhotoEncodingError.missingRAW }
         let filter:CIRAWFilter
@@ -37,22 +41,39 @@ final class RAWPhotoDevelopment {
         }
         AdaptiveRAWDeveloper.configure(filter,adaptive:recipe.adaptive,hdr:recipe.hdr,adjustments:adjustments.filterAdjustments)
         guard let image = filter.outputImage else { throw PhotoEncodingError.missingRAW }
-        return recipe.adaptive ? AdaptiveDynamicRenderer.apply(image,hdr:recipe.hdr,context:context) : image
+        return recipe.adaptive ? AdaptiveDynamicRenderer.apply(image, hdr: recipe.hdr, context: context,
+                                                                limitHighlights: limitHighlights) : image
+    }
+    private func adjustedImages(_ adjustments: PhotoAdjustments, preview: Bool) throws -> (image: CIImage, base: CIImage?) {
+        let matchesSDR = adjustments.rawDevelopment?.hdr == true && adjustments.watermark == nil
+        let source = try developedSource(adjustments, preview: preview, limitHighlights: !matchesSDR)
+        let maximum = adjustments.rawDevelopment?.maximumPixels ?? source.extent.width * source.extent.height
+        let scale = preview ? 1 : min(1, sqrt(max(1, maximum) / (source.extent.width * source.extent.height)))
+        let sizing = CGAffineTransform(scaleX: scale, y: scale)
+        let adjusted = adjustments.apply(to: source.transformed(by: sizing), rawControlsApplied: true)
+        guard matchesSDR else { return (adjusted, nil) }
+
+        var baseAdjustments = adjustments
+        baseAdjustments.rawDevelopment?.hdr = false
+        let developedBase = try developedSource(baseAdjustments, preview: preview)
+        let base = baseAdjustments.apply(to: developedBase.transformed(by: sizing), rawControlsApplied: true)
+        guard let matched = AdaptiveDynamicRenderer.matchingHDR(adjusted, to: base) else { return (adjusted, nil) }
+        return (matched, base)
     }
     func preview(_ adjustments:PhotoAdjustments) throws -> UIImage {
-        let image = adjustments.apply(to:try source(adjustments,preview:true),rawControlsApplied:true)
+        let image = try adjustedImages(adjustments, preview: true).image
         let hdr = adjustments.rawDevelopment?.hdr == true
         guard let cg = Imaging.ownedCGImage(image,from:image.extent,context:context,format:hdr ? .RGBAh : .RGBA8,
             colorSpace:CGColorSpace(name:hdr ? CGColorSpace.extendedLinearDisplayP3 : CGColorSpace.sRGB)!) else { throw PhotoEncodingError.encoding }
         return UIImage(cgImage:cg)
     }
     func render(_ adjustments:PhotoAdjustments) throws -> PhotoEditResult {
-        let developed = try source(adjustments,preview:false)
-        let maximum = max(1,adjustments.rawDevelopment?.maximumPixels ?? developed.extent.width*developed.extent.height)
-        let scale = min(1,sqrt(maximum/(developed.extent.width*developed.extent.height)))
-        let adjusted = adjustments.apply(to:developed.transformed(by:CGAffineTransform(scaleX:scale,y:scale)),rawControlsApplied:true)
-        // HEIF输出采用整像素尺寸，避免自由裁切产生的小数边界与EXIF尺寸不一致。
-        let image = adjusted.cropped(to:CGRect(x:0,y:0,width:max(2,floor(adjusted.extent.width/2)*2),height:max(2,floor(adjusted.extent.height/2)*2)))
+        let adjusted = try adjustedImages(adjustments, preview: false)
+        // HEIF output uses even pixel dimensions for both renditions.
+        let extent = adjusted.image.extent
+        let bounds = CGRect(x: 0, y: 0, width: max(2, floor(extent.width / 2) * 2),
+                            height: max(2, floor(extent.height / 2) * 2))
+        let image = adjusted.image.cropped(to: bounds)
         var properties = image.properties.merging(metadata) { _,original in original }
         // 拍摄事实保留，但裁切/旋转后的尺寸和输出色彩空间必须描述新文件。
         for key in [kCGImagePropertyPixelWidth,kCGImagePropertyPixelHeight,kCGImagePropertyDepth,kCGImagePropertyColorModel,kCGImagePropertyProfileName] {
@@ -68,8 +89,15 @@ final class RAWPhotoDevelopment {
         let described = try RAWDevelopmentRecipe.applying(adjustments,to:CaptureOrientation.normalizedPhotoMetadata(image.settingProperties(properties)))
         let hdr = adjustments.rawDevelopment?.hdr == true
         let space = CGColorSpace(name:hdr ? CGColorSpace.itur_2100_PQ : CGColorSpace.sRGB)!
-        let data = try hdr ? context.heif10Representation(of:described,colorSpace:space,options:[:])
-            : context.heifRepresentation(of:described,format:.RGBA8,colorSpace:space,options:[:])
+        let data: Data?
+        if let base = adjusted.base {
+            data = try PhotoEncoder.encodeImageData(described, fileExtension: "heic", hdr: true,
+                sdrBase: base.cropped(to: bounds).settingProperties(described.properties), context: context)
+        } else if hdr {
+            data = try context.heif10Representation(of: described, colorSpace: space, options: [:])
+        } else {
+            data = context.heifRepresentation(of: described, format: .RGBA8, colorSpace: space, options: [:])
+        }
         guard let data else { throw PhotoEncodingError.encoding }
         return PhotoEditResult(preview:try preview(adjustments),resource:PhotoResource(data:data,filename:"Luma-Developed-"+UUID().uuidString+".heic"),filterApplied:adjustments.usesFilter)
     }

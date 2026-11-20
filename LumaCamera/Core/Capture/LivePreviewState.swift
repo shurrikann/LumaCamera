@@ -58,6 +58,7 @@ final class LivePreviewState {
         var portraitPreviewGeneration: UInt64 = 0
         var portraitBlurStrength = 0.5
         var metering = CameraMetering.system
+        var meteringSelectionRevision = UUID()
         var mirrorFrontPreview = true
         var device: AVCaptureDevice?
         var extent = CGRect(x: 0, y: 0, width: 3, height: 4)

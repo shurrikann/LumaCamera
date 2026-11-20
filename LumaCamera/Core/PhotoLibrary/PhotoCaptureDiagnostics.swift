@@ -25,8 +25,10 @@ struct PhotoCaptureParameters: Codable, Equatable {
     var sampledISO: Double?
     var sampledExposureSeconds: Double?
     var requestedExposureBiasEV: Double?
-    // 全局测光单独记录用户/应用/设备三种值；实际成片EXIF仍由系统提供。
+    // 旧照片保留原有全局测光数据。
     var globalMeteringBiasEV: Double?
+    var meteringMode: String?
+    var meteringCorrectionEV: Double?
     var deviceExposureBiasEV: Double?
     var whiteBalanceKelvin: Double?
     var whiteBalanceTint: Double?
@@ -74,6 +76,10 @@ struct PhotoCaptureParameters: Codable, Equatable {
         if let adaptiveHighDynamic { result.append(.init(title:"高动态显影",value:adaptiveHighDynamic ? "开启" : "关闭")) }
         if let ev = exifExposureBiasEV { result.append(.init(title: "成片曝光补偿", value: String(format: "%+.1f EV", ev))) }
         if let ev = globalMeteringBiasEV { result.append(.init(title: "全局测光补偿", value: String(format: "%+.1f EV", ev))) }
+        if let meteringMode {
+            result.append(.init(title: "测光方式", value: CameraMetering(storedValue: meteringMode)?.rawValue ?? meteringMode))
+        }
+        if let ev = meteringCorrectionEV { result.append(.init(title: "测光补偿", value: String(format: "%+.1f EV", ev))) }
         if let ev = deviceExposureBiasEV { result.append(.init(title: "设备曝光补偿", value: String(format: "%+.1f EV", ev))) }
         if let ev = requestedExposureBiasEV { result.append(.init(title: "设置曝光补偿", value: String(format: "%+.1f EV", ev))) }
         if let kelvin = whiteBalanceKelvin { result.append(.init(title: "快门时白平衡", value: String(format: "%.0f K", kelvin))) }
@@ -122,6 +128,13 @@ struct PhotoCaptureDiagnostics: Codable, Equatable {
         return PhotoFilterRecord(id: style.rawValue, name: name, intensity: amount.flatMap(Double.init).map { $0 / 100 } ?? 1)
     }
     var currentFilter: PhotoFilterRecord? { editedFilter ?? bakedFilter ?? legacyEditedFilter ?? captureFilter }
+    static func isAstroShootingType(_ value: String?) -> Bool {
+        value == "星空照片" || value == "星轨" || value == "星空延时"
+    }
+    var isAstroCapture: Bool {
+        Self.isAstroShootingType(parameters?.shootingType)
+            || rows.contains { $0.title == "拍摄类型" && Self.isAstroShootingType($0.value) }
+    }
     var isNightComposite: Bool {
         rows.contains {
             guard $0.title == "夜景曝光合成", let count = Int($0.value.split(separator: " ").first ?? "") else { return false }
@@ -215,6 +228,7 @@ final class PhotoCaptureDiagnosticsStore {
     private let lock = NSLock()
     private var filterCache: [String: Bool] = [:]
     private var nightCache: [String: Bool] = [:]
+    private var astroCache: [String: Bool] = [:]
     private var filterOverrides: [String: Bool]?
     func filterApplied(assetID: String) -> Bool {
         lock.lock(); defer { lock.unlock() }
@@ -233,6 +247,15 @@ final class PhotoCaptureDiagnosticsStore {
         let value = diagnostics?.isNightComposite ?? false
         if nightCache.count >= 5000 { nightCache.removeAll(keepingCapacity: true) }
         nightCache[assetID] = value
+        return value
+    }
+    func isAstroCapture(assetID: String) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        if let value = astroCache[assetID] { return value }
+        let diagnostics = (try? Data(contentsOf: url(assetID))).flatMap { try? JSONDecoder().decode(PhotoCaptureDiagnostics.self, from: $0) }
+        let value = diagnostics?.isAstroCapture ?? false
+        if astroCache.count >= 5000 { astroCache.removeAll(keepingCapacity: true) }
+        astroCache[assetID] = value
         return value
     }
     @discardableResult func setFilterApplied(_ value: Bool, assetID: String) -> Bool {
@@ -256,6 +279,7 @@ final class PhotoCaptureDiagnosticsStore {
             try JSONEncoder().encode(diagnostics).write(to: url(assetID), options: .atomic)
             filterCache.removeValue(forKey: assetID)
             nightCache.removeValue(forKey: assetID)
+            astroCache.removeValue(forKey: assetID)
             return true
         } catch { return false }
     }

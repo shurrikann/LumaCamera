@@ -4,6 +4,29 @@ import ImageIO
 @testable import LumaCamera
 
 final class PhotoCaptureDiagnosticsTests: XCTestCase {
+    func testAstroBadgeSurvivesSaveAndDistinguishesOrdinaryNight() {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = PhotoCaptureDiagnosticsStore(directory: directory)
+        for (kind, expected) in [("星空照片", true), ("星轨", true), ("星空延时", true),
+                                 ("夜景", false), ("星芒", false), ("延时摄影", false)] {
+            XCTAssertFalse(store.isAstroCapture(assetID: kind))
+            let rows = [PhotoInfoRow(title: "拍摄类型", value: kind)]
+            var parameters = PhotoCaptureParameters()
+            parameters.shootingType = kind
+            XCTAssertEqual(PhotoCaptureDiagnostics(parameters: parameters).isAstroCapture, expected)
+            XCTAssertEqual(PhotoDetails(rows: rows).isAstroCapture, expected)
+            XCTAssertTrue(store.save(PhotoCaptureDiagnostics(rows: rows), assetID: kind))
+            XCTAssertEqual(store.isAstroCapture(assetID: kind), expected)
+            XCTAssertEqual(PhotoCaptureDiagnosticsStore(directory: directory).isAstroCapture(assetID: kind), expected)
+        }
+        XCTAssertTrue(SystemPhotoLibraryService.isLegacyAstroVideoFilename("Luma-capture.mov"))
+        XCTAssertTrue(SystemPhotoLibraryService.isLegacyAstroVideoFilename("Luma-recovered-\(UUID().uuidString).mov"))
+        XCTAssertFalse(SystemPhotoLibraryService.isLegacyAstroVideoFilename("Luma-capture.jpg"))
+        XCTAssertFalse(SystemPhotoLibraryService.isLegacyAstroVideoFilename("capture.mov"))
+        XCTAssertFalse(SystemPhotoLibraryService.isLegacyAstroVideoFilename("Luma-recovered-unrelated.mov"))
+    }
+
     func testOriginalEXIFProvidesLensAndExposureWithoutInferringLensFromZoom() {
         let properties: [CFString: Any] = [kCGImagePropertyTIFFDictionary: [kCGImagePropertyTIFFModel: "iPhone 17 Pro"],
             kCGImagePropertyExifDictionary: [kCGImagePropertyExifLensModel: "back triple camera 16.38mm f/2.8",

@@ -9,14 +9,14 @@ struct PhotoFilterBadge: View {
     }
 }
 
-struct PhotoNightBadge: View {
+struct PhotoAstroBadge: View {
     var body: some View {
-        Image(systemName: "moon.stars.fill")
+        Image(systemName: "sparkles")
             .font(.system(size: 10, weight: .semibold))
             .foregroundStyle(.white)
             .frame(width: 22, height: 19)
             .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 5))
-            .accessibilityLabel("夜景多帧合成")
+            .accessibilityLabel("星空模式拍摄")
             .allowsHitTesting(false)
     }
 }

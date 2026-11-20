@@ -12,12 +12,31 @@ struct VideoEditorView: View {
     @State private var filesExport: VideoFileExport?
     @State private var dismissAfterFilesExport = false
 
-    init(asset: AVAsset, photo: LibraryPhoto, library: PhotoLibraryViewModel) {
+    private let onClose: (() -> Void)?
+
+    init(asset: AVAsset, photo: LibraryPhoto, library: PhotoLibraryViewModel, onClose: (() -> Void)? = nil) {
+        self.onClose = onClose
         _model = StateObject(wrappedValue: VideoEditorViewModel(asset: asset, photo: photo, library: library))
     }
 
-    init(model: VideoEditorViewModel) {
+    init(model: VideoEditorViewModel, initialSaveChoicePresented: Bool = false) {
+        onClose = nil
         _model = StateObject(wrappedValue: model)
+        _saveChoicePresented = State(initialValue: initialSaveChoicePresented)
+    }
+
+    private var bottomPopupCornerRadius: CGFloat {
+        let bottom = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first(where: { $0.activationState == .foregroundActive })?
+            .keyWindow?.safeAreaInsets.bottom ?? 0
+        return bottom > 0 ? 55 : 0
+    }
+    private var sdrFilterPopupVisible: Bool {
+        model.tool == .filters && model.isToolPanelPresented && !model.isLogVideo
+    }
+    private var logFilterPopupVisible: Bool {
+        model.tool == .filters && model.isToolPanelPresented && model.isLogVideo
     }
 
     var body: some View {
@@ -26,33 +45,86 @@ struct VideoEditorView: View {
             preview
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
-            if model.isToolPanelPresented {
-                editorPanel
-                    .frame(height: VideoEditorPanelMetrics.height(for: model.tool))
-                    .padding(.horizontal, 12)
-                    .padding(.top, 8)
-                    .transition(.opacity)
-                    .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: model.tool)
-            }
+                .recordEditorFrame("preview", model: model)
             toolBar
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
                 .padding(.bottom, 10)
+                .opacity(logFilterPopupVisible || sdrFilterPopupVisible || saveChoicePresented ? 0 : 1)
+                .allowsHitTesting(!(logFilterPopupVisible || sdrFilterPopupVisible || saveChoicePresented))
+                .accessibilityHidden(logFilterPopupVisible || sdrFilterPopupVisible || saveChoicePresented)
         }
         .background(Color.black.ignoresSafeArea())
         .preferredColorScheme(.dark)
         .toolbar(.hidden, for: .navigationBar)
         .interactiveDismissDisabled(model.saving)
         .allowsHitTesting(!model.saving)
-        .overlay {
-            if saveChoicePresented {
-                saveChoiceOverlay
+        .overlayPreferenceValue(VideoPopupAnchorKey.self) { anchors in
+            GeometryReader { geometry in
+                if model.isToolPanelPresented, !sdrFilterPopupVisible, !logFilterPopupVisible,
+                          let anchor = anchors[.tool(model.tool)] {
+                    let height = VideoEditorPanelMetrics.height(for: model.tool)
+                    VideoAnchoredPopup(
+                        anchor: geometry[anchor], container: geometry.size,
+                        width: 420, height: height
+                    ) {
+                        editorPanel.frame(height: height).recordEditorFrame("panel", model: model)
+                    }
+                    .id(model.tool)
                     .transition(.opacity)
-                    .zIndex(10)
+                }
+            }
+            .animation(popupAnimation, value: saveChoicePresented)
+        }
+        .overlay(alignment: .bottom) {
+            if sdrFilterPopupVisible {
+                VideoFilterPopup(model: model, filters: filters) {
+                    filters.showStrength = false
+                    model.closeToolPanel()
+                }
+                .padding(.horizontal, 10).padding(.bottom, 10)
+                .ignoresSafeArea(edges: .bottom)
+                .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: saveChoicePresented)
+        .animation(popupAnimation, value: sdrFilterPopupVisible)
+        .overlay(alignment: .bottom) {
+            if logFilterPopupVisible {
+                VideoLogFilterPopup(model: model) {
+                    model.closeToolPanel()
+                }
+                .padding(.horizontal, 10).padding(.bottom, 10)
+                .ignoresSafeArea(edges: .bottom)
+                .transition(.opacity)
+            }
+        }
+        .animation(popupAnimation, value: logFilterPopupVisible)
+        .overlay(alignment: .bottom) {
+            if saveChoicePresented {
+                saveChoiceCard
+                    .padding(.horizontal, 10).padding(.bottom, 10)
+                    .ignoresSafeArea(edges: .bottom)
+                    .transition(.opacity)
+                    .accessibilityIdentifier("video.save.popup")
+                    #if DEBUG
+                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                        model.captureButtonFramesForTesting["video.save.popup"] = $0
+                    }
+                    #endif
+            }
+        }
+        .animation(popupAnimation, value: saveChoicePresented)
+        .overlay {
+            if model.filterNumericParameter != nil {
+                FilterNumericInputDialog(model: model).transition(.opacity)
+            }
+        }
+        .environment(\.captureControlAngle, 0)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear { filters.prepareThumbnails() }
+        .onChange(of: sdrFilterPopupVisible) { _, visible in
+            if !visible { filters.showStrength = false }
+        }
         .onDisappear { model.cancel() }
         .alert("视频编辑", isPresented: Binding(get: { model.message != nil }, set: { if !$0 { model.dismissMessage() } })) {
             Button("好", role: .cancel) { model.dismissMessage() }
@@ -60,7 +132,7 @@ struct VideoEditorView: View {
         .sheet(item: $filesExport, onDismiss: {
             if dismissAfterFilesExport {
                 dismissAfterFilesExport = false
-                dismiss()
+                closeEditor()
             }
         }) { session in
             VideoFileExportPicker(url: session.url) { didExport in
@@ -73,7 +145,7 @@ struct VideoEditorView: View {
 
     private var header: some View {
         HStack {
-            Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); dismiss() } label: {
+            Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); closeEditor() } label: {
                 Image(systemName: "arrow.left").font(.system(size: 18, weight: .medium))
                     .frame(width: 44, height: 44).modifier(PopupSurface(radius: 22, glass: true))
             }.accessibilityLabel("取消视频编辑")
@@ -98,10 +170,14 @@ struct VideoEditorView: View {
     private var preview: some View {
         ZStack {
             VideoEditorPlayerLayer(player: model.player)
-                .contentShape(Rectangle())
-                .onTapGesture { model.togglePlayback() }
+            if let live = model.liveFilterPreview {
+                Image(uiImage: live).resizable().scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
             if model.loading { ProgressView().tint(AppTheme.accent) }
-            else if model.player.timeControlStatus != .playing {
+            else if model.liveFilterPreview == nil, model.player.timeControlStatus != .playing {
                 Image(systemName: "play.fill").font(.system(size: 25, weight: .semibold))
                     .foregroundStyle(.white).padding(15).background(.black.opacity(0.52), in: Circle())
                     .allowsHitTesting(false)
@@ -111,7 +187,30 @@ struct VideoEditorView: View {
                     .padding(18).background(.black.opacity(0.66), in: RoundedRectangle(cornerRadius: 16))
             }
         }
+        .contentShape(Rectangle())
+        .onTapGesture { handlePreviewTap() }
         .accessibilityLabel("视频编辑预览，点按播放或暂停")
+    }
+
+    private var hasActivePopup: Bool {
+        saveChoicePresented || model.isToolPanelPresented || model.filterNumericParameter != nil
+    }
+
+    private func handlePreviewTap() {
+        guard hasActivePopup else {
+            model.togglePlayback()
+            return
+        }
+        if model.filterNumericParameter != nil {
+            model.dismissFilterNumericInput()
+        }
+        if saveChoicePresented {
+            saveChoicePresented = false
+        }
+        if model.isToolPanelPresented {
+            filters.showStrength = false
+            model.closeToolPanel()
+        }
     }
 
     @ViewBuilder private var editorPanel: some View {
@@ -253,64 +352,40 @@ struct VideoEditorView: View {
         .modifier(PopupSurface(radius: 22, glass: true))
     }
 
+    private var popupAnimation: Animation {
+        .easeInOut(duration: reduceMotion ? 0.1 : 0.18)
+    }
+
+    private func closeEditor() {
+        if let onClose { onClose() } else { dismiss() }
+    }
+
     private var adjustmentPanel: some View {
         VStack(spacing: 8) {
-            HStack(spacing: 6) {
-                ForEach(FilterEditorTab.allCases) { tab in
-                    Button {
-                        model.filterTab = tab
-                        model.selectedParameter = tab.parameters.first(where: { $0 != .strength }) ?? .temperature
-                    } label: {
-                        RoundTextControlLabel(title: tab.rawValue, highlighted: model.filterTab == tab, diameter: 42)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.plain).accessibilityAddTraits(model.filterTab == tab ? .isSelected : [])
-                }
-            }
-            HStack(spacing: 6) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(model.filterTab.parameters) { parameter in
-                            Button { model.selectedParameter = parameter } label: {
-                                Image(systemName: parameter.icon).font(.system(size: 18))
-                                    .foregroundStyle(model.selectedParameter == parameter ? .black : .white)
-                                    .frame(width: 42, height: 42)
-                                    .background(model.selectedParameter == parameter ? AppTheme.accent : .white.opacity(0.06), in: Circle())
-                            }.buttonStyle(.plain).accessibilityLabel(parameter.title)
-                        }
-                    }
-                }.scrollIndicators(.hidden)
-                Text(RoundTextControlLabel.lines(model.selectedParameter.title))
-                    .font(.system(size: 10, weight: .medium)).multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.7)
-                    .foregroundStyle(.white.opacity(0.8)).frame(width: 42, height: 42).allowsHitTesting(false)
-            }
-            VStack(spacing: 3) {
-                Text(model.selectedParameter.text(model.value(for: model.selectedParameter)))
-                    .font(.system(size: 11, design: .monospaced)).foregroundStyle(AppTheme.accent)
-                CameraRuler(
-                    value: Binding(get: { model.value(for: model.selectedParameter) }, set: { model.setValue($0, for: model.selectedParameter) }),
-                    range: model.selectedParameter.range,
-                    tint: AppTheme.accent,
-                    temperature: model.selectedParameter == .temperature,
-                    tintAdjustment: model.selectedParameter == .tint
-                ).accessibilityLabel("视频滤镜" + model.selectedParameter.title)
-            }.padding(.horizontal, 4)
+            FilterAdjustmentTabs(model: model, onClose: {
+                withAnimation(popupAnimation) { model.closeToolPanel() }
+            })
+            FilterDialEditor(model: model, tab: model.filterEditorTab)
         }
         .padding(10).frame(maxWidth: .infinity, maxHeight: .infinity)
         .modifier(PopupSurface(radius: 22, glass: true))
+        .accessibilityIdentifier("video.editor.sharedFilterControls")
     }
 
     private var toolBar: some View {
         HStack(spacing: 0) {
-            ForEach(model.availableTools) { tool in
+            ForEach(model.availableTools.filter { $0 != .adjustments }) { tool in
                 Button {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    withAnimation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18)) { model.selectTool(tool) }
+                    if tool == .filters, !sdrFilterPopupVisible { filters.showStrength = false }
+                    withAnimation(popupAnimation) { model.selectTool(tool) }
                 } label: {
                     Image(systemName: tool.icon).font(.system(size: 20))
                         .foregroundStyle(model.tool == tool && model.isToolPanelPresented ? AppTheme.accent : .white.opacity(0.82))
                         .frame(width: 44, height: 44).modifier(PopupSurface(radius: 22, glass: true))
                         .overlay(Circle().stroke(model.tool == tool && model.isToolPanelPresented ? AppTheme.accent.opacity(0.65) : .clear, lineWidth: 1))
+                        .videoPopupAnchor(.tool(tool))
+                        .recordEditorFrame("tool." + tool.title, model: model)
                         .frame(maxWidth: .infinity)
                         .contentShape(Rectangle())
                 }
@@ -326,61 +401,71 @@ struct VideoEditorView: View {
                     if model.saving || model.isSavingLibrary { ProgressView().tint(.black) }
                     else { Text("保存").font(.system(size: 12, weight: .semibold)).foregroundStyle(.black) }
                 }
-                .frame(width: 44, height: 44).frame(maxWidth: .infinity).contentShape(Rectangle())
+                .frame(width: 44, height: 44)
+                .frame(maxWidth: .infinity).contentShape(Rectangle())
             }
             .buttonStyle(.plain).disabled(model.loading || model.saving || model.isSavingLibrary)
             .accessibilityLabel("保存编辑结果")
         }
     }
 
-    private var saveChoiceOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.56).ignoresSafeArea()
-                .contentShape(Rectangle())
-                .onTapGesture { saveChoicePresented = false }
-            VStack(spacing: 13) {
+    private var saveChoiceCard: some View {
+        VStack(spacing: 13) {
+            HStack(spacing: 8) {
                 Text("保存编辑结果").font(.system(size: 15, weight: .semibold))
-                Text("Live Photo 最长 3 秒，以当前预览位置作为封面。原视频会保留。")
-                    .font(.system(size: 11)).foregroundStyle(.white.opacity(0.65)).multilineTextAlignment(.center)
-                HStack(spacing: 10) {
-                    Button("另存为视频") {
-                        saveChoicePresented = false
-                        model.save { dismiss() }
-                    }
-                    .buttonStyle(.plain).foregroundStyle(.white)
-                    .frame(maxWidth: .infinity).frame(height: 42)
-                    .background(.white.opacity(0.08), in: Capsule())
-                    Button("另存为 Live") {
-                        saveChoicePresented = false
-                        model.saveAsLivePhoto { dismiss() }
-                    }
-                    .buttonStyle(.plain).foregroundStyle(AppTheme.accentForeground)
-                    .frame(maxWidth: .infinity).frame(height: 42)
-                    .background(AppTheme.accent, in: Capsule())
-                }
-                Button {
-                    saveChoicePresented = false
-                    model.exportToFiles { url in
-                        guard let url else { return }
-                        filesExport = VideoFileExport(url: url)
-                    }
-                } label: {
-                    Label("存储到文件…", systemImage: "folder")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity).frame(height: 42)
-                        .background(.white.opacity(0.08), in: Capsule())
+                Spacer(minLength: 0)
+                Button { saveChoicePresented = false } label: {
+                    Image(systemName: "xmark").font(.system(size: 13, weight: .semibold))
+                        .frame(width: 30, height: 30)
+                        .background(.white.opacity(0.10), in: Circle())
+                        .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
-                Button("取消") { saveChoicePresented = false }
-                    .font(.system(size: 12, weight: .medium)).foregroundStyle(.white.opacity(0.72)).padding(.top, 2)
+                .accessibilityLabel("取消保存")
             }
-            .padding(18).frame(maxWidth: 330)
-            .modifier(PopupSurface(radius: 24, glass: true))
-            .padding(.horizontal, 20)
+            Text("Live Photo 最长 3 秒，以当前预览位置作为封面。原视频会保留。")
+                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.65)).multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 10) {
+                Button("另存为视频") {
+                    saveChoicePresented = false
+                    model.save { closeEditor() }
+                }
+                .buttonStyle(.plain).foregroundStyle(.white)
+                .frame(maxWidth: .infinity).frame(height: 42)
+                .background(.white.opacity(0.08), in: Capsule())
+                Button("另存为 Live") {
+                    saveChoicePresented = false
+                    model.saveAsLivePhoto { closeEditor() }
+                }
+                .buttonStyle(.plain).foregroundStyle(AppTheme.accentForeground)
+                .frame(maxWidth: .infinity).frame(height: 42)
+                .background(AppTheme.accent, in: Capsule())
+            }
+            Button {
+                saveChoicePresented = false
+                model.exportToFiles { url in
+                    guard let url else { return }
+                    filesExport = VideoFileExport(url: url)
+                }
+            } label: {
+                Label("存储到文件…", systemImage: "folder")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity).frame(height: 42)
+                    .background(.white.opacity(0.08), in: Capsule())
+            }
+            .buttonStyle(.plain)
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("选择保存格式")
+        .padding(18)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: bottomPopupCornerRadius, style: .continuous))
+        .background {
+            PopupGlassBackground(
+                shape: RoundedRectangle(cornerRadius: bottomPopupCornerRadius, style: .continuous),
+                materialOpacity: AppTheme.cameraPopupMaterialOpacity
+            )
+        }
     }
 
     private func timeText(_ value: Double) -> String {
@@ -397,7 +482,70 @@ enum VideoEditorPanelMetrics {
     static let standardHeight: CGFloat = 186
 
     static func height(for tool: VideoEditorTool) -> CGFloat {
-        tool == .trim ? trimHeight : standardHeight
+        switch tool {
+        case .trim: trimHeight
+        case .filters: standardHeight
+        case .adjustments: 308
+        }
+    }
+}
+
+enum VideoPopupAnchor: Hashable {
+    case info, save, tool(VideoEditorTool)
+}
+
+struct VideoPopupAnchorKey: PreferenceKey {
+    static let defaultValue: [VideoPopupAnchor: Anchor<CGRect>] = [:]
+
+    static func reduce(value: inout [VideoPopupAnchor: Anchor<CGRect>], nextValue: () -> [VideoPopupAnchor: Anchor<CGRect>]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
+    }
+}
+
+struct VideoAnchoredPopup<Content: View>: View {
+    let anchor: CGRect
+    let container: CGSize
+    let width: CGFloat
+    let height: CGFloat
+    var scrollsWhenCompact = true
+    @ViewBuilder let content: () -> Content
+
+    static func placement(anchor: CGRect, container: CGSize, width: CGFloat, height: CGFloat) -> CGRect {
+        let margin: CGFloat = 8
+        let width = min(width, max(0, container.width - 2 * margin))
+        let bottom = min(container.height, max(0, anchor.minY - margin))
+        let height = min(height, max(0, bottom - margin))
+        let left = min(max(margin, anchor.midX - width / 2), max(margin, container.width - margin - width))
+        return CGRect(x: left, y: bottom - height, width: width, height: height)
+    }
+
+    var body: some View {
+        let frame = Self.placement(anchor: anchor, container: container, width: width, height: height)
+        Group {
+            if scrollsWhenCompact && frame.height < height {
+                ScrollView { content() }.scrollIndicators(.hidden)
+            } else {
+                content()
+            }
+        }
+        .frame(width: frame.width, height: frame.height, alignment: .bottom)
+        .position(x: frame.midX, y: frame.midY)
+    }
+}
+
+extension View {
+    func videoPopupAnchor(_ anchor: VideoPopupAnchor) -> some View {
+        anchorPreference(key: VideoPopupAnchorKey.self, value: .bounds) { [anchor: $0] }
+    }
+
+    @ViewBuilder fileprivate func recordEditorFrame(_ key: String, model: VideoEditorViewModel) -> some View {
+        #if DEBUG
+        onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+            model.captureButtonFramesForTesting[key] = $0
+        }
+        #else
+        self
+        #endif
     }
 }
 

@@ -43,7 +43,8 @@ struct WatermarkStyleThumbnail: View {
                 let h = max(layout.decoration!.height,layout.photo.height*0.14)
                 let bar = CGRect(x:layout.photo.width*0.04,y:layout.photo.maxY-h-layout.photo.height*0.035,
                                  width:layout.photo.width*0.92,height:h)
-                context.fill(Path(roundedRect:bar,cornerRadius:h*0.18),with:.color(ink))
+                let radius = PhotoWatermarkLayout.glassCornerRadius(photoSize:layout.photo.size,card:bar)
+                context.fill(Path(roundedRect:bar,cornerRadius:radius),with:.color(ink))
             case .blurredPhoto:
                 fill(canvas,Color(white:0.48)); stroke(canvas)
                 fill(layout.photo,photoColor); stroke(layout.photo)

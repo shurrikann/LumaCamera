@@ -18,6 +18,17 @@ final class GlassWatermarkLayoutTests: XCTestCase {
                 XCTAssertTrue(CGRect(origin:.zero,size:size).contains(layout.decoration!))
                 XCTAssertEqual(layout.decoration!.minX,min(size.width,size.height)*0.018,accuracy:0.001)
                 XCTAssertGreaterThanOrEqual(layout.decoration!.height,max(type.left.height,type.right.height))
+                if let card = layout.decoration {
+                    let radius = PhotoWatermarkLayout.glassCornerRadius(photoSize: size, card: card)
+                    XCTAssertGreaterThan(radius, 0)
+                    XCTAssertGreaterThanOrEqual((card.height - 2 * radius) / card.height, 0.36 - 0.0001)
+                    let outline = UIBezierPath(roundedRect: card, cornerRadius: radius)
+                    for x in [card.minX + 0.5, card.maxX - 0.5] {
+                        XCTAssertTrue(outline.contains(CGPoint(x: x, y: card.minY + radius)))
+                        XCTAssertTrue(outline.contains(CGPoint(x: x, y: card.maxY - radius)))
+                        XCTAssertFalse(outline.contains(CGPoint(x: x, y: card.minY + 0.5)))
+                    }
+                }
                 layouts.append(layout); types.append(type)
                 if flags == 0 || flags == 3 {
                     let format = UIGraphicsImageRendererFormat(); format.scale = 1

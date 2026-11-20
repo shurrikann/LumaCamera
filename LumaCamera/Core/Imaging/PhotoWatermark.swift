@@ -52,8 +52,8 @@ struct PhotoWatermarkContent: Equatable, Codable {
 
 struct PhotoWatermarkLayout {
     static func glassCornerRadius(photoSize: CGSize, card: CGRect) -> CGFloat {
-        // Round both ends more deeply while keeping the existing text inset safe.
-        min(min(card.width,card.height)*0.45,min(photoSize.width,photoSize.height)*0.05)
+        // Keep at least 36% of each vertical edge straight.
+        min(min(card.width, card.height) * 0.32, min(photoSize.width, photoSize.height) * 0.035)
     }
     let size: CGSize
     let photo: CGRect

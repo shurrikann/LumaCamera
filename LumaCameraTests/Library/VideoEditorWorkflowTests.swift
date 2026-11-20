@@ -1,5 +1,6 @@
 import AVFoundation
 import CoreMedia
+import SwiftUI
 import XCTest
 @testable import LumaCamera
 
@@ -19,7 +20,20 @@ final class VideoEditorWorkflowTests: XCTestCase {
     func testTrimPanelUsesCompactHeightWithoutMovingToolPanelForOtherModes() {
         XCTAssertEqual(VideoEditorPanelMetrics.height(for: .trim), 99)
         XCTAssertEqual(VideoEditorPanelMetrics.height(for: .filters), 186)
-        XCTAssertEqual(VideoEditorPanelMetrics.height(for: .adjustments), 186)
+        XCTAssertEqual(VideoEditorPanelMetrics.height(for: .adjustments), 308)
+    }
+
+    func testPopupPlacementKeepsButtonGapAndClampsToViewport() {
+        for size in [CGSize(width: 320, height: 550), CGSize(width: 402, height: 800), CGSize(width: 720, height: 250)] {
+            for x in [12.0, size.width / 2 - 22, size.width - 56] {
+                let button = CGRect(x: x, y: size.height - 54, width: 44, height: 44)
+                let popup = VideoAnchoredPopup<EmptyView>.placement(anchor: button, container: size, width: 420, height: 308)
+                XCTAssertEqual(popup.maxY, button.minY - 8, accuracy: 0.01)
+                XCTAssertGreaterThanOrEqual(popup.minY, 8)
+                XCTAssertGreaterThanOrEqual(popup.minX, 8)
+                XCTAssertLessThanOrEqual(popup.maxX, size.width - 8)
+            }
+        }
     }
 
     func testVideoTransferMetadataMapsLogHDRP3AndSDR() {
@@ -29,6 +43,14 @@ final class VideoEditorWorkflowTests: XCTestCase {
         XCTAssertEqual(VideoColorSpaceDetector.detect(transferFunction: kCMFormatDescriptionTransferFunction_ITU_R_709_2 as String, logTransferFunction: nil, colorPrimaries: kCMFormatDescriptionColorPrimaries_P3_D65 as String), .p3)
         XCTAssertEqual(VideoColorSpaceDetector.detect(transferFunction: kCMFormatDescriptionTransferFunction_ITU_R_709_2 as String, logTransferFunction: nil, colorPrimaries: nil), .sdr)
         XCTAssertNil(VideoColorSpaceDetector.detect(transferFunction: nil, logTransferFunction: nil, colorPrimaries: nil), "Unknown color metadata must not enable a possibly incompatible filter")
+    }
+
+    func testVideoGrainPhaseMatchesCameraFrameCounterSequence() {
+        XCTAssertEqual(VideoGrainPhase.phase(seconds: 0, frameRate: 30), 0)
+        XCTAssertEqual(VideoGrainPhase.phase(seconds: 1.0 / 30.0, frameRate: 30), 73)
+        XCTAssertEqual(VideoGrainPhase.phase(seconds: 2.0 / 30.0, frameRate: 30), 146)
+        XCTAssertEqual(VideoGrainPhase.phase(seconds: 1, frameRate: 30), Double((30 * 73) % 4093))
+        XCTAssertEqual(VideoGrainPhase.phase(seconds: 1, frameRate: 0), 0)
     }
 
     func testTrimSelectionClampsToVideoAndKeepsMinimumDuration() {

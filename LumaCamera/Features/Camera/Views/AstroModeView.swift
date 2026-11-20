@@ -1310,14 +1310,10 @@ struct AstroModeView: View {
                         .accessibilityAddTraits(showWatermark && watermarkSettings.style == style ? .isSelected : [])
                 }
             }
-            HStack(spacing: 18) {
-                Toggle(isOn: Binding(get: { watermarkSettings.showsLocation }, set: { watermarkSettings.showsLocation = $0 })) {
-                    Text("地理位置").font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
-                }.tint(AppTheme.accent)
-                Toggle(isOn: Binding(get: { watermarkSettings.showsParameters }, set: { watermarkSettings.showsParameters = $0 })) {
-                    Text("参数信息").font(.system(size: 11, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
-                }.tint(AppTheme.accent)
-            }
+            WatermarkInfoToggles(
+                showsLocation: $watermarkSettings.showsLocation,
+                showsParameters: $watermarkSettings.showsParameters
+            )
         }
         .padding(16)
         .modifier(PopupSurface(radius: starPopupBottomRadius, glass: true,
@@ -1558,8 +1554,9 @@ private final class StarLevelObserver: ObservableObject {
 
     func start() {
         hapticGate = LevelHapticGate()
-        monitor.start { [weak self] value in
+        monitor.start { [weak self] sample in
             guard let self else { return }
+            let value = sample.roll
             self.roll = value
             let tilt = CameraLevelReading(roll: value).tilt
             if self.hapticGate.update(roll: tilt, time: CACurrentMediaTime(), enabled: true) {

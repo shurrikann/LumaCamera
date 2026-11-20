@@ -7,7 +7,7 @@ struct PhotoPageAnimation: Identifiable {
     var outgoingRAW = false
     var outgoingLive = false
     var outgoingFilter = false
-    var outgoingNight = false
+    var outgoingAstro = false
 }
 
 /// Only the bounded image viewport moves; viewer controls remain outside it.
@@ -16,7 +16,7 @@ struct PhotoPageViewport: View {
     var isRAW = false
     var isLive = false
     var hasFilter = false
-    var isNightComposite = false
+    var isAstroCapture = false
     var liveSource: LivePhotoPlaybackSource? = nil
     @StateObject private var playback = LivePhotoPlayback()
     var onSwipe: ((Int) -> Void)?
@@ -32,7 +32,7 @@ struct PhotoPageViewport: View {
                     LibraryMediaCanvas(angle: photoAngle) { size in
                         Image(uiImage: outgoing).resizable().scaledToFit().allowedDynamicRange(.high)
                             .frame(width: size.width, height: size.height)
-                            .overlay { if motion.outgoingRAW || motion.outgoingLive || motion.outgoingFilter || motion.outgoingNight { badge(in: size, image: outgoing, raw: motion.outgoingRAW, live: motion.outgoingLive, filter: motion.outgoingFilter, night: motion.outgoingNight) } }
+                            .overlay { if motion.outgoingRAW || motion.outgoingLive || motion.outgoingFilter || motion.outgoingAstro { badge(in: size, image: outgoing, raw: motion.outgoingRAW, live: motion.outgoingLive, filter: motion.outgoingFilter, astro: motion.outgoingAstro) } }
                     }
                         .offset(x: GalleryPageTransition.horizontalOffset(direction: motion.direction, extent: geometry.size.width, progress: progress, incoming: false, reduceMotion: reduceMotion))
                         .opacity(GalleryPageTransition.opacity(progress: progress, incoming: false, reduceMotion: reduceMotion))
@@ -47,7 +47,7 @@ struct PhotoPageViewport: View {
                         if playback.holding, let live = playback.photo { LivePhotoPlaybackView(photo: live).allowsHitTesting(false) }
                         else if playback.loading { ProgressView().tint(.white).allowsHitTesting(false) }
                     }
-                    .overlay { if isRAW || isLive || hasFilter || isNightComposite { badge(in: size, image: image, raw: isRAW, live: isLive, filter: hasFilter, night: isNightComposite) } }
+                    .overlay { if isRAW || isLive || hasFilter || isAstroCapture { badge(in: size, image: image, raw: isRAW, live: isLive, filter: hasFilter, astro: isAstroCapture) } }
                 }
                     .offset(x: motion.map { GalleryPageTransition.horizontalOffset(direction: $0.direction, extent: geometry.size.width, progress: progress, incoming: true, reduceMotion: reduceMotion) } ?? 0)
                     .opacity(motion.map { _ in GalleryPageTransition.opacity(progress: progress, incoming: true, reduceMotion: reduceMotion) } ?? 1)
@@ -73,12 +73,12 @@ struct PhotoPageViewport: View {
             } completion: { onFinished?() }
         }
     }
-    private func badge(in viewport: CGSize, image: UIImage, raw: Bool, live: Bool, filter: Bool, night: Bool) -> some View {
+    private func badge(in viewport: CGSize, image: UIImage, raw: Bool, live: Bool, filter: Bool, astro: Bool) -> some View {
         let fit = PhotoRAWBadgeLayout.fit(image: image.size, viewport: viewport)
         return Color.clear.frame(width: fit.width, height: fit.height)
-            .overlay(alignment: .bottomLeading) { if filter { PhotoFilterBadge().padding(10) } }
-            .overlay(alignment: .bottomTrailing) {
+            .overlay(alignment: .topLeading) {
                 HStack(spacing: 5) {
+                    if filter { PhotoFilterBadge() }
                     if raw || live {
                         Text([raw ? "RAW" : nil, live ? "LIVE" : nil].compactMap { $0 }.joined(separator: " · "))
                             .font(.system(size: 10, weight: .semibold, design: .rounded))
@@ -86,7 +86,7 @@ struct PhotoPageViewport: View {
                             .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 5))
                             .accessibilityLabel(live ? "Live 实况照片" : "RAW 格式照片")
                     }
-                    if night { PhotoNightBadge() }
+                    if astro { PhotoAstroBadge() }
                 }.padding(10)
             }.frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
     }

@@ -17,10 +17,10 @@ struct SystemVideoView: View {
     #if DEBUG
     var playbackAssetForTesting: AVAsset?
     var onLayoutForTesting: (([String: CGRect]) -> Void)?
+    var infoVisibleForTesting: Bool?
     #endif
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.captureControlsLandscape) private var landscape
     @Environment(\.videoPlaybackAngle) private var playbackAngle
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var player: AVPlayer?
@@ -45,6 +45,7 @@ struct SystemVideoView: View {
     @State private var editorPresented = false
     @State private var pageProgress: CGFloat = 0
     @State private var pageSwipeCapturing = false
+    @State private var overflowVisible = false
 
     var body: some View {
         ZStack {
@@ -52,25 +53,41 @@ struct SystemVideoView: View {
             mediaCanvas
         }
         .overlay {
-            GeometryReader { geometry in
-                ZStack(alignment: .bottom) {
-                    if detailsVisible {
-                        Color.black.opacity(0.08).contentShape(Rectangle())
-                            .onTapGesture { closeDetails() }.accessibilityHidden(true)
-                            .transition(.opacity)
-                        PhotoInfoPanel(details: details, loading: detailsBusy, isVideo: true) {
-                            closeDetails()
-                        }
-                        .frame(height: landscape ? min(340, geometry.size.width - 28) : min(540, geometry.size.height * 0.72))
-                        .padding(.horizontal, 8).padding(.bottom, 6)
-                        .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
-                    }
-                }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .animation(.easeInOut(duration: reduceMotion ? 0.15 : 0.25), value: detailsVisible)
+            if detailsVisible {
+                Color.black.opacity(0.08).contentShape(Rectangle())
+                    .onTapGesture { closeDetails() }.accessibilityHidden(true)
+                    .transition(.opacity)
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) { topBar }
         .safeAreaInset(edge: .bottom, spacing: 0) { bottomBar }
+        .overlayPreferenceValue(VideoPopupAnchorKey.self) { anchors in
+            GeometryReader { geometry in
+                if detailsVisible, let anchor = anchors[.info] {
+                    VideoAnchoredPopup(
+                        anchor: geometry[anchor], container: geometry.size,
+                        width: 520, height: min(540, geometry.size.height * 0.72),
+                        scrollsWhenCompact: false
+                    ) {
+                        PhotoInfoPanel(details: details, loading: detailsBusy, isVideo: true) {
+                            closeDetails()
+                        }
+                        .videoDetailFrame("infoPanel")
+                    }
+                    .transition(.opacity)
+                }
+            }
+        }
+        .allowsHitTesting(!editorPresented)
+        .accessibilityHidden(editorPresented)
+        .overlay {
+            if editorPresented, let loadedAsset {
+                VideoEditorView(asset: loadedAsset, photo: photo, library: model.library) {
+                    withAnimation(popupAnimation) { editorPresented = false }
+                }
+                .transition(.opacity)
+            }
+        }
         .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
         .coordinateSpace(name: "videoDetail")
@@ -80,6 +97,16 @@ struct SystemVideoView: View {
             #endif
         }
         .onAppear { active = true; load(); if pageMotion == nil { onPageFinished?() } }
+        #if DEBUG
+        .task(id: infoVisibleForTesting) {
+            guard let infoVisibleForTesting else { return }
+            if infoVisibleForTesting {
+                if !detailsVisible { showDetails() }
+            } else {
+                closeDetails()
+            }
+        }
+        #endif
         .task(id: pageMotion?.id) {
             guard pageMotion != nil else { return }
             pageProgress = 0
@@ -100,16 +127,26 @@ struct SystemVideoView: View {
             shareRequest?.cancel()
             if requestID != PHInvalidImageRequestID { PHImageManager.default().cancelImageRequest(requestID) }
         }
+        .overlay {
+            if overflowVisible {
+                Color.black.opacity(0.001).ignoresSafeArea().contentShape(Rectangle())
+                    .onTapGesture { withAnimation(popupAnimation) { overflowVisible = false } }
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if overflowVisible {
+                DetailOverflowMenu(actions: overflowActions) {
+                    withAnimation(popupAnimation) { overflowVisible = false }
+                }
+                .padding(.top, 56).padding(.trailing, 12)
+                .transition(.opacity)
+                .zIndex(2)
+            }
+        }
+        .animation(popupAnimation, value: overflowVisible)
         // 系统分享面板使用标准 sheet 动画；自定义 presentationBackground 会让
         // UIActivityViewController 的呈现看起来是瞬切，不叠加自定义背景。
         .sheet(item: $shareSession) { FileShareSheet(session: $0) }
-        .fullScreenCover(isPresented: $editorPresented) {
-            if let loadedAsset {
-                VideoEditorView(asset: loadedAsset, photo: photo, library: model.library)
-            } else {
-                Color.black.ignoresSafeArea()
-            }
-        }
         .alert("光屿相机", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
             Button("好", role: .cancel) { message = nil }
         } message: { Text(message ?? "") }
@@ -136,6 +173,14 @@ struct SystemVideoView: View {
             .clipped()
         }
         .clipped().videoDetailFrame("media")
+        .contentShape(Rectangle())
+        .onTapGesture { handleMediaTap() }
+    }
+
+    private func handleMediaTap() {
+        if detailsVisible { closeDetails(); return }
+        guard !editorPresented, !shareBusy else { return }
+        togglePlayback()
     }
 
     @ViewBuilder private func mediaCanvasContent(_ viewport: CGSize) -> some View {
@@ -145,7 +190,6 @@ struct SystemVideoView: View {
                 if let player {
                     PlayerLayerView(player: player)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .contentShape(Rectangle()).onTapGesture { togglePlayback() }
                         .simultaneousGesture(DragGesture(minimumDistance: 24).onEnded { drag in
                             guard !detailsVisible, !editorPresented, !shareBusy, !pageSwipeCapturing else { return }
                             let translation = LibraryMediaRotation.screenTranslation(drag.translation, angle: playbackAngle)
@@ -162,6 +206,7 @@ struct SystemVideoView: View {
                         viewerTextBadge(videoDurationText(photo.duration))
                         if photo.hasFilter { PhotoFilterBadge() }
                         if let logLabel = photo.logLabel { viewerTextBadge(logLabel) }
+                        if photo.isAstroCapture { PhotoAstroBadge() }
                     }
                     .allowsHitTesting(false).videoDetailFrame("badges")
                     playbackBar(width: dockWidth)
@@ -217,7 +262,7 @@ struct SystemVideoView: View {
                 .videoDetailFrame("title")
             }
             Spacer(minLength: 8)
-            Color.clear.frame(width: 48, height: 48)
+            overflowButton
         }.padding(.horizontal, 12).padding(.bottom, 8)
     }
 
@@ -228,29 +273,69 @@ struct SystemVideoView: View {
             Spacer(minLength: 0)
             viewerAction(detailsBusy ? "hourglass" : "info.circle",
                          label: detailsVisible ? "收起视频详情" : "视频详情",
-                         disabled: loadedAsset == nil || detailsBusy) { showDetails() }
+                         disabled: loadedAsset == nil || detailsBusy, anchor: .info) { showDetails() }
             Spacer(minLength: 0)
-            LibraryCameraButton(action: onCamera).disabled(model.library.deleting || model.library.editing)
-            Spacer(minLength: 0)
-            viewerAction("slider.horizontal.3", label: "编辑视频", disabled: loadedAsset == nil || loading) { editorPresented = true }
-            Spacer(minLength: 0)
-            viewerAction("trash", label: "删除视频", disabled: model.library.deleting) {
-                onDeletePrepared?()
-                model.delete(photo) { deleted in
-                    if deleted { if let onDeleted { onDeleted() } else { dismiss() } }
+            viewerAction("slider.horizontal.3", label: "编辑视频", disabled: loadedAsset == nil || loading) {
+                player?.pause()
+                detailsTask?.cancel()
+                withAnimation(popupAnimation) {
+                    detailsVisible = false
+                    editorPresented = true
                 }
             }
+            Spacer(minLength: 0)
+            viewerAction("trash", label: "删除视频", disabled: model.library.deleting) { deleteVideo() }
+            Spacer(minLength: 0)
+            LibraryCameraButton(action: onCamera).disabled(model.library.deleting || model.library.editing)
             }.videoDetailFrame("actions").padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 12)
         }
         .padding(.top, 10)
         .background(Color.black.ignoresSafeArea(edges: .bottom))
     }
 
-    private func viewerAction(_ icon: String, label: String, disabled: Bool = false, action: @escaping () -> Void) -> some View {
+    private var overflowButton: some View {
+        Button {
+            withAnimation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18)) {
+                overflowVisible.toggle()
+            }
+        } label: {
+            Image(systemName: "ellipsis").rotatingCaptureContent()
+                .font(.system(size: 21, weight: .regular))
+                .foregroundStyle(.white)
+                .frame(width: 48, height: 48).modifier(PopupSurface(radius: 24))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("更多操作")
+    }
+
+    private var overflowActions: [DetailOverflowAction] {
+        [
+            DetailOverflowAction(id: "share", title: shareBusy ? "正在准备分享" : "分享",
+                                 icon: "square.and.arrow.up", disabled: shareBusy, action: prepareShare),
+            DetailOverflowAction(id: "info", title: detailsVisible ? "收起视频详情" : "视频详情",
+                                 icon: "info.circle", disabled: loadedAsset == nil || detailsBusy, action: showDetails),
+            DetailOverflowAction(id: "delete", title: "删除", icon: "trash",
+                                 disabled: model.library.deleting, destructive: true, action: deleteVideo)
+        ]
+    }
+
+    private func deleteVideo() {
+        onDeletePrepared?()
+        model.delete(photo) { deleted in
+            if deleted { if let onDeleted { onDeleted() } else { dismiss() } }
+        }
+    }
+
+    private func viewerAction(_ icon: String, label: String, disabled: Bool = false, anchor: VideoPopupAnchor? = nil, action: @escaping () -> Void) -> some View {
         Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); action() } label: {
-            Image(systemName: icon).font(.system(size: 21, weight: .regular))
+            let content = Image(systemName: icon).font(.system(size: 21, weight: .regular))
                 .foregroundStyle(.white.opacity(disabled ? AppTheme.disabledControlOpacity : 1))
                 .frame(width: 48, height: 48).modifier(PopupSurface(radius: 24))
+            if let anchor {
+                content.videoPopupAnchor(anchor).videoDetailFrame("info")
+            } else {
+                content
+            }
         }.disabled(disabled).accessibilityLabel(label)
     }
 
@@ -430,13 +515,17 @@ struct SystemVideoView: View {
         return hours > 0 ? String(format: "%d:%02d:%02d", hours, minutes, rest) : String(format: "%d:%02d", minutes, rest)
     }
 
+    private var popupAnimation: Animation {
+        .easeInOut(duration: reduceMotion ? 0.1 : 0.18)
+    }
+
     private func closeDetails() {
-        withAnimation(AppTheme.popupAnimation) { detailsVisible = false }
+        withAnimation(popupAnimation) { detailsVisible = false }
     }
 
     private func showDetails() {
-        if detailsVisible { withAnimation(AppTheme.popupAnimation) { detailsVisible = false }; return }
-        if details != nil { withAnimation(AppTheme.popupAnimation) { detailsVisible = true }; return }
+        if detailsVisible { withAnimation(popupAnimation) { detailsVisible = false }; return }
+        if details != nil { withAnimation(popupAnimation) { detailsVisible = true }; return }
         guard let asset = loadedAsset, !detailsBusy else { return }
         let resource = PHAsset.fetchAssets(withLocalIdentifiers: [photo.id], options: nil).firstObject
             .flatMap { PHAssetResource.assetResources(for: $0).first { $0.type == .video || $0.type == .fullSizeVideo } }
@@ -449,7 +538,7 @@ struct SystemVideoView: View {
                                                               badges: VideoCaptureBadgeStore.shared.badges(assetID: photo.id))
                 guard !Task.isCancelled, active else { return }
                 details = value
-                withAnimation(AppTheme.popupAnimation) { detailsVisible = true }
+                withAnimation(popupAnimation) { detailsVisible = true }
             } catch {
                 if !Task.isCancelled, active { message = "无法读取视频详情：\(error.localizedDescription)" }
             }

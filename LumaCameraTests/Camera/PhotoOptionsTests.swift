@@ -331,7 +331,7 @@ final class PhotoOptionsTests: XCTestCase {
                                                 options: PhotoOptions(format: .heifPro, hdr: true), context: context)
             return try XCTUnwrap(photo.resources.first?.data)
         }
-        for tone in [PhotoTone.natural, .contrast] {
+        for tone in [PhotoTone.natural, .contrast, .cinematic] {
             let data = try encoded(tone)
             let src = try XCTUnwrap(CGImageSourceCreateWithData(data as CFData, nil))
             XCTAssertNotNil(CGImageSourceCopyAuxiliaryDataInfoAtIndex(src, 0, kCGImageAuxiliaryDataTypeISOGainMap), "\(tone) HDR必须带ISO增益图")
@@ -447,6 +447,68 @@ final class PhotoOptionsTests: XCTestCase {
             XCTAssertNotEqual(actual, natural)
         }
     }
+    func testCinematicToneKeepsNeutralRampAndSoftensHighlights() {
+        let cs = CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
+        let values: [Float] = [0.015, 0.050, 0.18, 0.32, 0.67, 0.82, 1]
+        let colors = values.map { [$0, $0, $0] } + [[0.53, 0.29, 0.18], [1.20, 0.80, 0.18]]
+        let pixels: [Float] = colors.flatMap { $0 + [1] }
+        let data = pixels.withUnsafeBufferPointer { Data(buffer: $0) }
+        let image = CIImage(bitmapData: data, bytesPerRow: colors.count * 16,
+            size: CGSize(width: colors.count, height: 1), format: .RGBAf, colorSpace: cs)
+        let graded = PhotoTone.cinematic.apply(to: image)
+        var samples = [Float](repeating: 0, count: pixels.count)
+        samples.withUnsafeMutableBytes {
+            context.render(graded, toBitmap: $0.baseAddress!, rowBytes: colors.count * 16,
+                           bounds: image.extent, format: .RGBAf, colorSpace: cs)
+        }
+        let neutral = values.indices.map { samples[$0 * 4] }
+        for index in values.indices {
+            let offset = index * 4
+            XCTAssertEqual(samples[offset], samples[offset + 1], accuracy: 0.001)
+            XCTAssertEqual(samples[offset], samples[offset + 2], accuracy: 0.001)
+        }
+        XCTAssertTrue(zip(neutral, neutral.dropFirst()).allSatisfy { $0.0 < $0.1 })
+        XCTAssertGreaterThan(neutral[0], 0.005, "暗部保持层次")
+        XCTAssertLessThan(neutral.last! - neutral[5], 1 - values[5], "近白段应柔和压缩")
+        let warm = Array(samples[(values.count * 4)..<(values.count * 4 + 3)])
+        let sourceHue = (colors[values.count][1] - colors[values.count][2]) / (colors[values.count][0] - colors[values.count][2])
+        XCTAssertGreaterThan(warm[0], warm[1])
+        XCTAssertGreaterThan(warm[1], warm[2])
+        XCTAssertEqual((warm[1] - warm[2]) / (warm[0] - warm[2]), sourceHue, accuracy: 0.05)
+        let bright = Array(samples.suffix(4).prefix(3))
+        XCTAssertTrue(bright.allSatisfy { $0 >= -0.001 && $0 <= 1.001 })
+        XCTAssertGreaterThan(bright[0], bright[1])
+        XCTAssertGreaterThan(bright[1], bright[2])
+        print("CINEMATIC-TONE neutral=\(neutral) warm=\(warm) bright=\(bright)")
+    }
+
+    func testCinematicToneRepeatedRenderCost() throws {
+        let image = CIImage(color: CIColor(red: 0.78, green: 0.43, blue: 0.22))
+            .cropped(to: CGRect(x: 0, y: 0, width: 900, height: 675))
+        var times = [Double]()
+        for _ in 0..<12 {
+            let start = CACurrentMediaTime()
+            let result = PhotoTone.cinematic.apply(to: image)
+            let rendered = try XCTUnwrap(context.createCGImage(result, from: result.extent,
+                format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!, deferred: false))
+            times.append((CACurrentMediaTime() - start) * 1000)
+            XCTAssertEqual(rendered.width, 900)
+        }
+        print("CINEMATIC-TONE renderSamples=12 medianMS=\(times.sorted()[6]) maxMS=\(times.max() ?? 0)")
+    }
+
+    func testCinematicHDRPreservesExtendedHighlights() {
+        let image = PhotoTone.cinematic.apply(to: hdrSource([3, 3, 3]), hdr: true)
+        var pixel = [Float](repeating: 0, count: 4)
+        pixel.withUnsafeMutableBytes {
+            context.render(image, toBitmap: $0.baseAddress!, rowBytes: 16,
+                bounds: CGRect(x: 60, y: 80, width: 1, height: 1), format: .RGBAf,
+                colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearDisplayP3))
+        }
+        XCTAssertGreaterThan(pixel[0], 2, "电影质感不能把HDR高光压回SDR")
+        XCTAssertTrue(pixel[0].isFinite)
+    }
+
     @MainActor
     func testToolbarPanelCoexistsWithFiltersAndReplacesManualPanel() {
         let model = AppDependencies.makeCameraModel(automaticallySave: false)

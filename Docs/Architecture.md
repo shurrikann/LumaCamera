@@ -1,3 +1,77 @@
+## 2026-11-20 详情右上角菜单
+
+`PhotoViewerLayout` 顶部右侧的占位视图替换为 `overflowButton`，点击显示共享的 `DetailOverflowMenu`；`SystemVideoView` 同样新增，并把删除逻辑抽为 `deleteVideo()` 供底栏和菜单复用。自定义卡片用 `fixedSize` + 142pt 最小行宽自适应内容，不再受系统 Menu 最小宽度影响；透明全屏遮罩点击关闭，菜单项沿用既有 disabled/shareBusy/detailsBusy 条件和破坏性删除角色，底部操作栏不变。
+
+## 2026-11-20 详情底栏与弹窗关闭按钮
+
+`PhotoViewerLayout` 和 `SystemVideoView.bottomBar` 把 `LibraryCameraButton` 放在操作栏最后一项；其他按钮顺序和 48pt 槽位不变。`PhotoFilterPopup`、`VideoFilterPopup` 的列表/参数页关闭按钮统一为 28pt 白色 10% 圆形背景，外层 32pt 点击区；保存和水印弹窗继续使用既有 30pt 圆形背景。
+
+## 2026-11-20 视频编辑颗粒相位
+
+视频编辑继续调用与相机相同的 `FilterAdjustmentRenderer.apply`，颗粒大小按源图长边/1200缩放。新增 `VideoGrainPhase`：根据视频轨道 nominalFrameRate 和当前时间计算相机录制的 `(frame * 73) % 4093` 相位，预览合成、暂停实时预览帧和导出共用；不再使用 `seconds * 127.7` 的连续相位。轨道帧率读取失败时回退 30fps。暂停编辑颗粒时，`liveFilterPreview` 以 33ms 间隔推进合成帧相位并重绘；颗粒大小为 0 时停止动画，避免把固定噪声贴图当成静态蒙版。
+
+## 2026-11-20 视频编辑实时滤镜
+
+`VideoEditorViewModel` 使用 `VideoEditorPreviewState` 保存当前 `CaptureLook` 和 Log LUT，`AVMutableVideoComposition` 的 CI handler 每帧读取这份状态。参数变化只更新状态并刷新暂停帧，不再重复调用 `VideoFilterComposition.make`；测试通过 `previewCompositionBuildCount` 约束一次编辑会话只创建一次合成。暂停拖动参数时，`liveFilterPreview` 用预先抓取的 900px 当前帧在后台跑 `Imaging.filtered`，覆盖播放器显示；松手后短暂保留再清除，避免等待 AVPlayer seek。播放中不使用该覆盖层。LUT 载入和暂停帧刷新仍异步，首帧/首张预览可能有短暂延迟。
+
+## 2026-11-20 视频详情与编辑点按
+
+`SystemVideoView` 把播放/暂停手势从 `PlayerLayerView` 提升到整个媒体画布；信息弹窗存在时由原遮罩拦截并关闭，不存在时切换播放。`VideoEditorView` 的预览画布统一处理点按：`saveChoicePresented`、`isToolPanelPresented` 或数值输入弹窗存在时关闭对应弹窗，否则调用 `togglePlayback()`；工具栏和弹窗自身仍保留独立点击。
+
+## 2026-11-20 视频详情 SDR 滤镜弹窗
+
+`VideoEditorView` 在 SDR/P3 且 filter 工具展开时不走 `VideoAnchoredPopup`，改为底部全宽的 `VideoFilterPopup` 覆盖层，复用 `PopupGlassBackground` 和相机视频模式的分类、缩略图、收藏、说明；参数页使用共享 `FilterAdjustmentTabs` + `FilterDialEditor` 调色盘，而非纵向滑条。Log 视频也使用底部 `VideoLogFilterPopup`，复用 Log LUT 分类、LUT 缩略图、卡片、收藏和说明；`burnLogLUT` 与相机 Log 面板语义一致，关闭时只预览 LUT，导出不写入 LUT，也不把 LUT 记入编辑后视频徽标。`VideoEditorViewModel.filterDialControlsEnabled` 允许在 `.filters` 工具下编辑滤镜参数；底部弹窗出现时工具栏透明且不接收点击。视频保存选择不再使用按钮锚点卡片，改为同一底部 `PopupGlassBackground` 覆盖层，保存时隐藏工具栏。标题在卡片左上，右上角为关闭/取消按钮，不再保留底部取消文字。
+
+## 2026-11-20 照片详情滤镜弹窗
+
+照片编辑底栏保留裁剪、滤镜、水印和保存；独立调整入口已移除，曝光/对比度/色彩等参数统一通过滤镜弹窗的参数按钮进入。水印面板同样使用底部 `PopupGlassBackground` 覆盖层，`watermarkPopupVisible` 由“水印工具且编辑控件可见”决定，不再占用编辑器中部的行内高度。视频编辑底栏只渲染裁剪、滤镜和保存；`.adjustments` 仍保留为内部工具和测试路径，但不再提供独立按钮。底栏按钮使用固定 20pt 间距并居中；相机、照片编辑和星空模式共用 `WatermarkInfoToggles`，两个开关各自与标签组成固定尺寸半区，避免 Toggle 自动扩张把标签和开关拉开。`PhotoEditorView` 的滤镜入口不再占用编辑器中部的行内高度，而是通过底部 `PhotoFilterPopup` 覆盖层显示。弹窗复用 `PopupGlassBackground`、滤镜分类、缩略图卡、收藏、参数入口、`FilterAdjustmentTabs` 和 `FilterDialEditor`，因此与拍照模式的滤镜面板视觉和参数交互一致。`editorControlsHeight(.filters)` 为 0，照片预览获得完整空间；弹窗出现时底部工具栏透明且不接收点击，关闭后恢复。滤镜列表和参数状态属于当前照片的 `PhotoEditorViewModel`/本地 `FilterPickerViewModel`，不写回相机配方。
+
+## 2026-11-20 视频详情调色盘与按钮定位
+
+`VideoEditorViewModel` 接入 `FilterEditingControls`，与相册照片编辑共用调色盘、分类和数值输入。视频保留独立滤镜配方，两轴手势一起提交，预览继续合并连续参数更新，松手后应用末值。切换分类、滤镜和面板会使旧手势绑定失效。
+
+`VideoPopupAnchorKey` 记录真实按钮边界，`VideoAnchoredPopup` 在相册视频详情和编辑页共用定位。弹窗底边距触发按钮 8 点，左右和高度按可用空间限制，内容空间不足时内部可滚动。工具使用预览上的覆盖层，进入全屏编辑时暂停详情播放器并淡入编辑页。两处淡入淡出都读取系统“减弱动态效果”。
+
+## 2026-11-20 相册的照片标识与星空标识
+
+`PhotoPageViewport` 把滤镜、RAW／Live 和星空标识锚在适配后照片的左上角，按一行布局。进入和退出翻页的画面共用这个定位，标识随照片画布处理方向。相册列表以相同的星空符号替代夜景标识，视频详情在播放条上方的现有标识行显示星空符号。
+
+用保存时记录的拍摄类型识别星空照片、星轨和星空延时，普通夜景的合成诊断仍可在照片信息中查看。历史星空照片在读取文件拍摄信息时可以补录本机标记，历史星空延时兼容原本的应用文件名。列表读取按资产标识缓存的记录，进入星空恢复导入时也记录拍摄类型。
+
+## 2026-11-20 液态玻璃水印圆角
+
+`PhotoWatermarkLayout.glassCornerRadius` 取玻璃条短边的 32% 与照片短边的 3.5% 中较小值，使左右各留至少约 36% 条高的直边。拍摄合成、照片编辑遮罩和缩略图共用圆角规则。原生玻璃使用 UIKit 的固定圆角配置，同步材质本身的反光轮廓。[Apple UIKit 液态玻璃自定义形状](https://developer.apple.com/videos/play/wwdc2025/284/?time=1246)
+
+## 2026-11-20 电影质感参考 ALEXA 35 REVEAL
+
+`PhotoTone.cinematic` 使用五节点曲线 `[0.004, 0.205, 0.482, 0.785, 0.975]`。HDR 白位节点为 1，参考白以上沿用扩展亮度。之后的 `cinematicGrade` 按亮度和色度分离处理，灰阶保持中性，暖色亮部少量偏琥珀，饱和高光沿恒亮度方向向灰轴轻柔压缩。SDR 在单通道接近越界时按比例压缩色度，HDR 分支保留扩展色域亮度。预览、编码和 RAW 重新显影共用这组函数。参数是光屿针对 iPhone 输入的自定义配方。[ARRI REVEAL Color Science](https://www.arri.com/en/learn/camera-systems/image-science/reveal-color-science)
+
+## 2026-11-20 HEIF Pro 中央重点与高光保护
+
+Pro 影调的测光选项为系统、中央重点、点测光、高光保护。旧「高光加权」保存值与拍摄信息兼容新名称，旧「全局测光」保存值走系统默认回退。只有 HEIF Pro 照片使用选中的方式，其他照片和视频走系统测光。格式切换清空应用补偿，选项保留供回到 Pro 时恢复。取景器移除独立 EV 窗口，主 EV 控件继续使用设备回读值。
+
+`PhotoMeteringPolicy` 接收滤镜前按当前画幅裁切的 32×32 线性取景网格。中心模式按画幅短边计算半径，以 smoothstep 衰减权重，再用中心亮度/全画面平均亮度的对数比计算相对修正：中心较暗时增加曝光，较亮时减少曝光，系数 0.5、限制 ±1 EV；不追固定 18% 灰。用户 EV 和系统 AE 基线独立，修正只作为附加全局补偿。高光模式先从 32×32 网格移除设备总 EV，再过滤不超过 4 个像素的孤立高亮连通块。同一个亮区掩膜用于面积和峰值查询。面积采用 2% 进入、1.5% 退出滞回；4%–8% 区间将分位秩从 P99 平滑移向 P95，只在有效亮区内插值。参考阈值在 SDR 为 0.90，HDR 按预览实际 `contentHeadroom` 缩放；采用 0.15 EV 余量，用户 EV 最后叠加，不参与保护量计算。两个模式共享 ISO×快门/光圈² 的场景归一化、0.1 EV 死区、最多 ±2 EV 应用补偿、稳定驻留、冷却和半步趋近。选择代次在会话队列验证，用于丢弃快速切换期间的旧帧。锁定和拍摄期间暂停写曝光，全手动保留只读建议。
+
+拍照取景是 SDR，HEIF Pro HDR 同样从 SDR 亮度估计采集曝光。RAW 显影及 HDR 编码处理成片峰值和暗部，参考白以上的成片亮度不能由预览分位数判定。[Apple 目标曝光补偿](https://developer.apple.com/documentation/avfoundation/avcapturedevice/setexposuretargetbias(_:completionhandler:))
+
+## 2026-11-20 环境地图定位标记
+
+`AstroMapViewport` 在 MapKit 视图上方保留一个固定大小的定位标记。弹窗改变高度或地图移动时，使用 MapKit 坐标转换更新标记中心。标记独立于地图标注的重用和层级，只在坐标不可用或移出地图范围时隐藏。正常罗盘回调只旋转白色箭头，短时缺失保留最近方向。标记不接收触摸事件。[Apple 坐标转换](https://developer.apple.com/documentation/mapkit/mkmapview/convert(_:topointto:)) [Apple 地图可见区域回调](https://developer.apple.com/documentation/mapkit/mkmapviewdelegate/mapviewdidchangevisibleregion(_:))
+
+## 2026-11-20 环境地图日月升落
+
+环境地图以选中机位或地图中心为锚点，沿用预报坐标和时间轴日期。已知机位使用预报时区，当前位置在预报未到时使用设备时区，其他地点暂以标出的 GMT 显示。计算任务按坐标、日期和时区更新，在后台求解，画面仅采用与当前请求匹配的结果。
+
+`AstroHorizonRequest` 复用 SunCalc 太阳和月球位置模型，对标准地平线的升落穿越求根。太阳阈值包含视半径与标准折射，月球同时计入近地平线视差。方位以真北为零，顺时针递增。MapKit 使用同一个无触控标注视图锚定四个方向，日月分别用金色和浅蓝色，升落实虚线区分。时间卡与方向随图层保留。计算未计入地形、遮挡、海拔或当天的折射差异。[美国海军天文台日月升落定义](https://aa.usno.navy.mil/faq/RST_defs) [Apple MapKit 标注坐标对齐](https://developer.apple.com/documentation/mapkit/mkannotationview/centeroffset)
+
+## 2026-11-20 HEIF Pro 的 SDR 基底与 HDR 高光
+
+高动态缩图分析增加 4×4 区块均值，逐像素亮度钳在 SDR 白位，限制点光源对区块判断的影响。左右或上下的半区各有至少三个对应亮块和暗块时，参考暗块中位数，在原有全局与深暗部曲线之后补偿最多 1.25 EV。该附加曲线只作用于线性亮度低于 0.18 的像素。
+
+HEIF Pro HDR 从同一 RAW 分别得到 SDR 和扩展范围显影。普通 SDR 显影使用 EDR 0。高动态的 SDR 显影复用已有的 EDR 1 解码和 SDR 色调压缩，因此开启 HDR 不会改写高动态的 SDR 风格。高动态同时允许暗部和深暗区补偿，HDR 合成以对应 SDR 的黑位和中间调为基准，亮区平滑扩展，参考白以上再用连续肩部保色压峰。亮区起点与约四倍峰值上限为光屿自己的显影参数。
+
+PhotoEncoder 将独立 SDR 基底与 HDR 图层交给现有增益图编码。DNG 重新显影对两层应用同样的调整和几何裁切，并复用增益图写入。带编辑水印的 RAW 继续使用原来的水印合成与 HDR 输出规则。普通 HEIF 使用系统照片资源及其既有回退路径。[Apple Adaptive HDR 编码](https://developer.apple.com/videos/play/wwdc2024/10177/?time=1930)
+
 ## 2026-11-19 双拍到电影模式的会话交接
 
 双拍释放硬件后，单摄会话保持停止。电影入口从设备能力表选择目标，用同一配置提交目标输入、格式、录制输出和电影元数据，再启动最终会话。普通视频切入电影也复用此路径。同规格重复提交无需重启已激活的电影会话。启动后核对会话和电影输入状态，起不来时以同一规格重试一次。最终失败转为普通视频，取消交接时由最新请求接管。视频运行错误按相机会话队列上的实际运行状态和规格版本处理，避免旧图的通知取消新请求。[Apple 电影采集示例](https://developer.apple.com/documentation/avfoundation/capturing-cinematic-video) [Apple 电影输入配置](https://developer.apple.com/documentation/avfoundation/avcapturedeviceinput/iscinematicvideocaptureenabled)
@@ -1354,7 +1428,7 @@ M挡手动WB/焦点保留，否则拍前锁定读数；结束、失败、取消�
 
 `AdaptiveRAWDeveloper.configure` 在底片支持时同时将 `CIRAWFilter.sharpnessAmount` 和 `detailAmount` 设为 0。前者是边缘锐化，后者是独立的边缘细节增强；两项都归零后才构成 HEIF Pro 的无锐化 RAW 基准。`localToneMapAmount` 继续使用每张 DNG 的系统默认值，白平衡/曝光调整仍在 RAW 阶段执行；用户编辑器的“模糊／锐化”位于解码之后，不受此基准限制。非自适应 HEIF Pro 捕获分支使用相同两项归零策略。
 
-`AdaptiveDynamicRenderer.apply` 将 SDR 逆光恢复与 PQ HDR 分开。SDR 保留基于 p02/p10/p50/p90/p99.8 的 `shadowEV` 与 `deepShadowEV`；HDR 将两项置零，使 0...1 的黑位和中灰保持底片显影，只让 `adaptiveDynamic` 的连续肩部处理参考白以上的亮度并限制到内容上限。这样 HDR 是高光维度的扩展，不再承担全画面提亮。
+2026-10-29 时，`AdaptiveDynamicRenderer.apply` 将 SDR 逆光恢复与 PQ HDR 分开。SDR 保留基于 p02/p10/p50/p90/p99.8 的 `shadowEV` 与 `deepShadowEV`；HDR 将两项置零，使 0...1 的黑位和中灰保持底片显影，只让 `adaptiveDynamic` 的连续肩部处理参考白以上的亮度并限制到内容上限。这样 HDR 是高光维度的扩展，不再承担全画面提亮。
 
 `Imaging.filtered` 接受 HDR 上下文，并交给 `PhotoTone` 选择输出曲线。只有“清新明亮”分离 HDR 配方：保持零黑点、轻抬中间调并减少去饱和；SDR 参考曲线以及自然/电影/高对比的既有创作方向不变。滤镜仍先在 0...1 基础层处理，再由 `adaptiveHDRRestore` 按原像素余量恢复大于参考白的亮度，避免普通 LUT 截断 PQ 高光。
 

@@ -35,7 +35,7 @@ struct PhotoReview: View {
     @State private var request: PhotoImageRequest?
     @State private var requestToken = UUID()
     var body: some View {
-        PhotoViewerLayout(image: displayedImage, date: model.lastPhotoDate, location: model.captureLocation, isRAW: model.hasRAWResource, isLive: model.hasLiveResource, hasFilter: model.hasFilterResource, isNightComposite: model.hasNightCompositeResource, liveSource: liveSource, busy: model.isBusy || preparingEdit || preparingShare, pagingBusy: pagingBusy, destructiveBusy: model.deleting || model.editing, shareBusy: preparingShare, infoVisible: info, details: captureDetails,
+        PhotoViewerLayout(image: displayedImage, date: model.lastPhotoDate, location: model.captureLocation, isRAW: model.hasRAWResource, isLive: model.hasLiveResource, hasFilter: model.hasFilterResource, isAstroCapture: model.hasAstroCaptureResource, liveSource: liveSource, busy: model.isBusy || preparingEdit || preparingShare, pagingBusy: pagingBusy, destructiveBusy: model.deleting || model.editing, shareBusy: preparingShare, infoVisible: info, details: captureDetails,
                           onBack: { dismiss() }, onCamera: onCamera, onShare: prepareShare, onInfo: { info.toggle() },
                           onEdit: { openEditor() }, onDelete: {
                               onDeletePrepared?()

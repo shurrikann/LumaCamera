@@ -56,13 +56,24 @@ final class SystemPhotoLibraryService: NSObject, PhotoLibraryService, PhotoBrows
             rawCache[asset.localIdentifier] = (asset.modificationDate, raw)
             metadataLock.unlock()
         }
-        let badges = asset.mediaType == .video ? VideoCaptureBadgeStore.shared.badges(assetID: asset.localIdentifier) : nil
+        let isVideo = asset.mediaType == .video
+        let badges = isVideo ? VideoCaptureBadgeStore.shared.badges(assetID: asset.localIdentifier) : nil
+        let isAstro = PhotoCaptureDiagnosticsStore.shared.isAstroCapture(assetID: asset.localIdentifier)
+            || (isVideo && PHAssetResource.assetResources(for: asset).contains {
+                Self.isLegacyAstroVideoFilename($0.originalFilename)
+            })
         return LibraryPhoto(id: asset.localIdentifier, date: asset.creationDate, isRAW: raw,
             location: asset.location.flatMap(PhotoLocation.recorded), isLive: asset.mediaSubtypes.contains(.photoLive),
-            isNightComposite: asset.mediaType == .image && PhotoCaptureDiagnosticsStore.shared.isNightComposite(assetID: asset.localIdentifier),
+            isAstroCapture: isAstro,
             hasFilter: badges?.hasFilter ?? PhotoCaptureDiagnosticsStore.shared.filterApplied(assetID: asset.localIdentifier),
             isVideo: asset.mediaType == .video,
             duration: asset.mediaType == .video ? asset.duration : nil, logLabel: badges?.logLabel, videoBadges: badges)
+    }
+
+    static func isLegacyAstroVideoFilename(_ filename: String) -> Bool {
+        if filename.lowercased() == "luma-capture.mov" { return true }
+        guard filename.lowercased().hasPrefix("luma-recovered-"), filename.lowercased().hasSuffix(".mov") else { return false }
+        return UUID(uuidString: String(filename.dropFirst("Luma-recovered-".count).dropLast(".mov".count))) != nil
     }
 
     func fetchPhoto(id: String, completion: @escaping (LibraryPhoto?) -> Void) {
