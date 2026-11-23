@@ -4,7 +4,10 @@ import MapKit
 import Observation
 
 struct AstroCloudRegion: Hashable, Sendable {
-    static let sampleWidth = 13
+    // Keep the multi-location request small enough to stay responsive on
+    // cellular networks; 9x9 still gives a smooth regional raster after
+    // bicubic interpolation.
+    static let sampleWidth = 9
     static let sampleCount = sampleWidth * sampleWidth
     private let x: Int
     private let y: Int
@@ -171,7 +174,7 @@ struct OpenMeteoAstroCloudProvider: AstroCloudProvider {
             URLQueryItem(name: "cell_selection", value: "nearest")
         ]
         guard let url = components.url else { throw AstroForecastError.serviceUnavailable }
-        return try await Self.decode(AstroWeatherRequest.data(from: url), for: region)
+        return try await Self.decode(AstroWeatherRequest.data(from: url, timeout: 25), for: region)
         #else
         throw AstroForecastError.providerUnconfigured
         #endif
@@ -250,10 +253,19 @@ final class AstroCloudForecastStore {
     func refresh(_ region: AstroCloudRegion) async {
         do {
             if grid(for: region) == nil { try await Task.sleep(for: .milliseconds(300)) }
+            var failureDelay = 5.0
             while !Task.isCancelled {
                 await load(region)
-                let elapsed = failedRegion == region ? 0 : entries[region].map { Date().timeIntervalSince($0.loadedAt) } ?? 0
-                try await Task.sleep(for: .seconds(max(1, refreshInterval - elapsed)))
+                if failedRegion == region {
+                    // Automatic backoff keeps a transient network or server
+                    // failure from requiring a manual retry, without polling.
+                    try await Task.sleep(for: .seconds(failureDelay))
+                    failureDelay = min(300, failureDelay * 2)
+                } else {
+                    failureDelay = 5
+                    let elapsed = entries[region].map { Date().timeIntervalSince($0.loadedAt) } ?? 0
+                    try await Task.sleep(for: .seconds(max(1, refreshInterval - elapsed)))
+                }
             }
         } catch {
             // Viewport, layer or visibility changed.

@@ -1,3 +1,33 @@
+# 2026-11-23 HDR/高动态自动取消水印
+
+- 新增 `testHDRAndHighDynamicCancelWatermark`：水印开启后打开 HDR 会取消水印并保留 HDR；打开高动态会取消水印并保留高动态；反向开启水印仍关闭 HDR/高动态，测试通过。
+- HDR/高动态按钮不再因水印禁用；编码器仍不会遇到同时开启的组合。
+- 已安装最新版到 iPhone 17 Pro；水印与 HDR/高动态的 UI 点击顺序尚未单独截图。
+
+# 2026-11-23 HEIF Pro 水印能力核对
+
+- `PhotoEncoder` 的 HEIF Pro + border 路径支持水印；新增 `testHEIFProWatermarkProducesBorderedHEIC`，合成 120×90 输入编码 HEIF Pro 水印，输出图片尺寸大于原图，测试通过。
+- 水印开启时 HDR 和高动态会被关闭，输出是 SDR HEIC；这是当前格式兼容限制，不是水印编码失败。
+- 未用真实 DNG 在真机核对 HEIF Pro 水印文件的 DNG/资源组合；代码未改动。
+
+# 2026-11-23 滤镜按钮隐藏 SDR 来源
+
+- `FilmStyle.filterButtonEquipment` 过滤 SDR 来源标签；5213胶片及全部 709 条目不再在拍摄页按钮上显示 SDR，列表和详情保留原始来源。
+- iPhone 18 Pro 模拟器 / iOS 27.0：`FilmNegativeFilterTests` 通过，包含 5213胶片、柯达标签保留及全部 SDR 条目按钮隐藏断言。
+- 已安装到 iPhone 17 Pro；未新增按钮截图断言。
+
+# 2026-11-23 云层接口稳定性
+
+- 将区域云量请求从 13×13 降到 9×9（81 点），请求超时提高到 25 秒；HTTP 429 读取 Retry-After 并重试一次。
+- 云量刷新失败后由原来的 30 分钟等待改为 5/10/20/40/80/160/300 秒退避自动重试，仍保留手动“重试云量”。
+- iPhone 18 Pro 模拟器 / iOS 27.0：`AstroCloudForecastTests` 和 `AstroEnvironmentForecastTests` 通过，栅格尺寸按新采样数断言；在线上海请求未重复执行。构建使用 `-skipMacroValidation`。
+- 尚未在真实弱网、HTTP 429 和连续移动地图条件下复测；已安装最新版到 iPhone 17 Pro。
+
+# 2026-11-23 快门液态玻璃
+
+- 快门外圈增加 `GlassSurface` 液态玻璃底，内部白色/红色填充和录像停止、加载、倒计时状态未改。
+- App 构建通过；未做真机快门玻璃边界截图验收。
+
 # 2026-11-23 RAW 裁剪实时预览
 
 - RAW 裁剪每次拖动校正/透视原先会重复运行 `CIRAWFilter`，造成明显延迟；改为进入裁剪时缓存一次颜色底图，之后只执行几何变换。

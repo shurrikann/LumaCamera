@@ -116,19 +116,23 @@ enum AstroForecastError: Error {
     case transientFailure
     case invalidForecast
     case providerUnconfigured
+    case rateLimited(retryAfter: TimeInterval?)
 }
 
 enum AstroWeatherRequest {
     static let cacheLifetime: TimeInterval = 1800
 
-    static func data(from url: URL) async throws -> Data {
-        let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url, timeoutInterval: 12))
-        guard let status = (response as? HTTPURLResponse)?.statusCode else {
+    static func data(from url: URL, timeout: TimeInterval = 12) async throws -> Data {
+        let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url, timeoutInterval: timeout))
+        guard let http = response as? HTTPURLResponse else {
             throw AstroForecastError.serviceUnavailable
         }
-        switch status {
+        switch http.statusCode {
         case 200: return data
         case 408, 500...599: throw AstroForecastError.transientFailure
+        case 429:
+            let retryAfter = http.value(forHTTPHeaderField: "Retry-After").flatMap(TimeInterval.init)
+            throw AstroForecastError.rateLimited(retryAfter: retryAfter)
         default: throw AstroForecastError.serviceUnavailable
         }
     }
@@ -142,6 +146,9 @@ enum AstroWeatherRequest {
             switch error {
             case AstroForecastError.transientFailure:
                 break
+            case AstroForecastError.rateLimited(let retryAfter):
+                try await Task.sleep(for: .seconds(max(1, retryAfter ?? 2)))
+                return try await operation()
             case let error as URLError where [.timedOut, .networkConnectionLost, .cannotConnectToHost].contains(error.code):
                 break
             default:

@@ -20,6 +20,12 @@ struct CaptureShutterFace: View {
 
     var body: some View {
         ZStack {
+            // Liquid-glass halo behind the shutter face; the face colors,
+            // recording fill and loading/stop symbols stay unchanged.
+            Circle().fill(Color.clear)
+                .frame(width: 76, height: 76)
+                .modifier(GlassSurface(radius: 38))
+                .allowsHitTesting(false)
             Circle().stroke(.white.opacity(0.85), lineWidth: 3)
                 .frame(width: 76, height: 76)
             Circle().fill(ready || kind == .video ? kind.fill : .gray)

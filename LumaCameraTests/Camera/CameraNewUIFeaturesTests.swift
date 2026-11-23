@@ -648,6 +648,25 @@ final class CameraNewUIFeaturesTests: XCTestCase {
         XCTAssertEqual(model.effectiveCaptureLook.tone, .natural, "非HEIF Pro不保留影调")
     }
 
+    func testHDRAndHighDynamicCancelWatermark() {
+        let model = AppDependencies.makeCameraModel(automaticallySave: false)
+        model.setCaptureKind(.photo)
+        model.photoFormat = .heifPro
+        model.border = true
+        XCTAssertTrue(model.border)
+        model.hdr = true
+        XCTAssertFalse(model.border, "开启 HDR 应自动取消水印")
+        XCTAssertTrue(model.hdr)
+        model.border = true
+        XCTAssertTrue(model.border)
+        model.adaptiveHighDynamic = true
+        XCTAssertFalse(model.border, "开启高动态应自动取消水印")
+        XCTAssertTrue(model.adaptiveHighDynamic)
+        model.border = true
+        XCTAssertFalse(model.hdr, "开启水印仍应关闭 HDR")
+        XCTAssertFalse(model.adaptiveHighDynamic, "开启水印仍应关闭高动态")
+    }
+
     func testHDRSuppressesFilterTemporarilyAndRestoresIt() async throws {
         let model = try await FullDeviceRegressionFixture.makeIsolatedModel(), camera = model.camera
         model.setCameraActive(true)

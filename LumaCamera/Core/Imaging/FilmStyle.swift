@@ -27,7 +27,11 @@ enum FilmStyle: String, CaseIterable, Identifiable {
         }
     }
     var filterButtonEquipment: String? {
-        ImportedFilterCatalog.definition(for: self)?.equipment
+        let value = ImportedFilterCatalog.definition(for: self)?.equipment
+        // The capture-row filter button only needs the filter name; the SDR
+        // source tag remains in the filter list/selection details.
+        if value?.caseInsensitiveCompare("SDR") == .orderedSame { return nil }
+        return value
     }
     var filterButtonName: String {
         ImportedFilterCatalog.definition(for: self)?.buttonName ?? title

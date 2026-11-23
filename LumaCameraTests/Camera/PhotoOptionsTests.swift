@@ -387,6 +387,23 @@ final class PhotoOptionsTests: XCTestCase {
         HDRImageAssertions.assertNativeISOGainMap(decoded)
         XCTAssertEqual(properties[kCGImagePropertyDepth] as? Int, 8, "增益图路径应以 SDR 基底作为主图")
     }
+    func testHEIFProWatermarkProducesBorderedHEIC() throws {
+        let image = CIImage(color: CIColor(red: 0.35, green: 0.45, blue: 0.55))
+            .cropped(to: CGRect(x: 0, y: 0, width: 120, height: 90))
+        var settings = PhotoWatermarkSettings()
+        settings.style = .glassStrip
+        settings.showsParameters = true
+        let look = CaptureLook(border: true, watermark: settings)
+        let photo = try PhotoEncoder.encode(source: image, raw: nil, look: look,
+                                            options: PhotoOptions(format: .heifPro), context: context)
+        XCTAssertEqual(photo.resources.count, 1)
+        let decoded = try XCTUnwrap(CGImageSourceCreateWithData(photo.resources[0].data as CFData, nil))
+        let saved = try XCTUnwrap(CGImageSourceCreateImageAtIndex(decoded, 0, nil))
+        XCTAssertGreaterThan(saved.width, 120, "HEIF Pro 水印应输出带边框的成片")
+        XCTAssertGreaterThan(saved.height, 90, "HEIF Pro 水印应输出带边框的成片")
+        XCTAssertGreaterThan(photo.preview.size.width, 120)
+    }
+
     func testMeanMeteringMeasuresEntireFrameInLinearLight() {
         let black = CIImage(color: .black).cropped(to: CGRect(x: 0, y: 0, width: 64, height: 64))
         let white = CIImage(color: .white).cropped(to: CGRect(x: 32, y: 0, width: 32, height: 64))

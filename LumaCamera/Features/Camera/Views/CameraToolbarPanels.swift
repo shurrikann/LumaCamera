@@ -133,7 +133,7 @@ extension CameraView {
             }
             HStack(spacing: 12) {
                 HStack(spacing: 6) {
-                    let hdrDisabled = camera.hdrPreviewConfiguring || model.isPreparingSubmode || model.burstModeEnabled || model.nightModeEnabled || model.portraitModeEnabled || (model.photoFormat != .heifPro && model.photoFormat != .heif) || model.border || (model.photoFormat == .heif && !model.hdr && !camera.supportsHEIFHDR)
+                    let hdrDisabled = camera.hdrPreviewConfiguring || model.isPreparingSubmode || model.burstModeEnabled || model.nightModeEnabled || model.portraitModeEnabled || (model.photoFormat != .heifPro && model.photoFormat != .heif) || (model.photoFormat == .heif && !model.hdr && !camera.supportsHEIFHDR)
                     Button {
                         CameraHaptics.impact(.light)
                         let reduceMotion = UIAccessibility.isReduceMotionEnabled

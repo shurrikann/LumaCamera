@@ -132,7 +132,7 @@ final class AstroCloudForecastTests: XCTestCase {
 
     func testBatchedHoursAndRasterUseViewportOrder() throws {
         let region = try sampleRegion()
-        XCTAssertEqual(region.samples.count, 169)
+        XCTAssertEqual(region.samples.count, AstroCloudRegion.sampleCount)
         let last = region.samples.count - 1
         XCTAssertGreaterThan(region.samples[0].latitude, region.samples[last].latitude)
         XCTAssertLessThan(region.samples[0].longitude, region.samples[last].longitude)
@@ -153,7 +153,7 @@ final class AstroCloudForecastTests: XCTestCase {
         XCTAssertNil(grid.frame(at: start.addingTimeInterval(10_800)))
 
         let image = try XCTUnwrap(next.makeImage())
-        XCTAssertEqual(image.width, 193)
+        XCTAssertEqual(image.width, (AstroCloudRegion.sampleWidth - 1) * 16 + 1)
         let bytes = try XCTUnwrap(image.dataProvider?.data) as Data
         XCTAssertEqual(bytes[3], 255)
         XCTAssertEqual(bytes.last, 0)
@@ -270,7 +270,7 @@ final class AstroCloudForecastTests: XCTestCase {
         XCTAssertEqual(grid.hours.count, 49)
         let first = try XCTUnwrap(grid.firstForecastHour)
         let frame = try XCTUnwrap(grid.frame(at: first))
-        XCTAssertEqual(frame.values.compactMap { $0 }.count, 169)
+        XCTAssertEqual(frame.values.compactMap { $0 }.count, AstroCloudRegion.sampleCount)
         print("ASTRO-CLOUD livePublicRegion=Shanghai samples=\(AstroCloudRegion.sampleCount) hours=\(grid.hours.count) elapsedMS=\((CACurrentMediaTime() - start) * 1000)")
     }
     #endif

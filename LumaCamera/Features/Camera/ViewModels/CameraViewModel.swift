@@ -1434,7 +1434,10 @@ final class CameraViewModel: ObservableObject {
     }
     @Published var border = false {
         didSet {
-            if border { adaptiveHighDynamic = false }
+            // Watermark and HDR/high-dynamic remain mutually exclusive. If the
+            // watermark is the newly enabled feature it wins; enabling HDR or
+            // high dynamic below clears the watermark instead.
+            if border { adaptiveHighDynamic = false; hdr = false }
             updateLook(); synchronizeHDRPreview()
             locationService.setActive(cameraActiveRequested && wantsCaptureLocation)
             persistAuxiliaryPreferences()
@@ -1664,10 +1667,15 @@ final class CameraViewModel: ObservableObject {
         synchronizeHighResolutionPhotoRoute()
     } }
     /// 首版复用普通HEIF Pro的RAW管线；不干预手动曝光，也不混入其他合成子模式。
-    @Published var adaptiveHighDynamic = false { didSet { scheduleCaptureStateSave() } }
+    @Published var adaptiveHighDynamic = false {
+        didSet {
+            if adaptiveHighDynamic && border { border = false }
+            scheduleCaptureStateSave()
+        }
+    }
     var adaptiveHighDynamicAvailable: Bool {
         captureKind == .photo && photoFormat == .heifPro && activePhotoSubmode == nil
-            && !border && camera.availablePhotoFormats.contains(.heifPro) && !isPreparingSubmode
+            && camera.availablePhotoFormats.contains(.heifPro) && !isPreparingSubmode
     }
     func setAdaptiveHighDynamic(_ enabled:Bool) {
         guard !enabled || adaptiveHighDynamicAvailable else { return }
@@ -1676,6 +1684,7 @@ final class CameraViewModel: ObservableObject {
     }
     @Published var hdr = false { didSet {
         if hdr && (nightModeEnabled || burstModeEnabled || portraitModeEnabled) { hdr = false; return }
+        if hdr && border { border = false }
         if hdr && photoFormat == .heif && !camera.supportsHighResolutionHEIFHDR { photoResolution = .standard }
         if hdr != oldValue { beginHDRPreviewTransition() }
         synchronizeHDRPreview(); synchronizeLiveAudio()

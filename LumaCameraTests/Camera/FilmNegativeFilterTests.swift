@@ -41,6 +41,16 @@ final class FilmNegativeFilterTests: XCTestCase {
         XCTAssertGreaterThan(high.0, 0.78 * 255, "高光仍需保留层次")
     }
 
+    func testFilterButtonHidesSDRSourceTag() {
+        XCTAssertEqual(FilmStyle.lib709_c2bb6a9a85d8.filterButtonName, "5213胶片")
+        XCTAssertNil(FilmStyle.lib709_c2bb6a9a85d8.filterButtonEquipment)
+        XCTAssertEqual(FilmStyle.lut4680f1508c.filterButtonEquipment, "柯达")
+        for style in FilmStyle.availableStyles where
+            ImportedFilterCatalog.definition(for: style)?.equipment?.caseInsensitiveCompare("SDR") == .orderedSame {
+            XCTAssertNil(style.filterButtonEquipment, "滤镜按钮不应显示 SDR 来源标签：\(style.rawValue)")
+        }
+    }
+
     func testUseCaseCategoriesCoverEveryVisibleFilter() {
         let styles = FilmStyle.availableStyles
         let grouped = Dictionary(grouping: styles, by: \.filterCategory)
