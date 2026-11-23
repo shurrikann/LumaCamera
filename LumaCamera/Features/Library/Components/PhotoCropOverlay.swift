@@ -8,10 +8,11 @@ struct PhotoCropOverlay: View {
     var body: some View {
         GeometryReader { geometry in
             let value = crop.clamped
-            let rect = CGRect(x: value.x*geometry.size.width, y: value.y*geometry.size.height, width: value.width*geometry.size.width, height: value.height*geometry.size.height)
+            let rect = CGRect(x: value.x*geometry.size.width, y: value.y*geometry.size.height,
+                              width: value.width*geometry.size.width, height: value.height*geometry.size.height)
             ZStack(alignment: .topLeading) {
                 Path { path in path.addRect(CGRect(origin: .zero, size: geometry.size)); path.addRect(rect) }
-                    .fill(.black.opacity(0.48), style: FillStyle(eoFill: true)).allowsHitTesting(false)
+                    .fill(.black.opacity(0.10), style: FillStyle(eoFill: true)).allowsHitTesting(false)
                 Rectangle().fill(.clear).overlay(Rectangle().stroke(.white, lineWidth: 1.5))
                     .overlay {
                         Path { path in

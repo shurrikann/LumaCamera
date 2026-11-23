@@ -26,6 +26,37 @@ final class PhotoCropTests: XCTestCase {
         let legacy = try JSONDecoder().decode(PhotoAdjustments.self, from: Data("{}".utf8))
         XCTAssertEqual(legacy.crop, .full); XCTAssertFalse(legacy.flipHorizontal); XCTAssertEqual(legacy.filterIntensity, 0.8)
     }
+    @MainActor func testCropPreviewUpdatesForStraightenAndPerspective() async throws {
+        let extent = CGRect(x: 0, y: 0, width: 320, height: 240)
+        var source = CIImage(color: .black).cropped(to: extent)
+        for (index, color) in [UIColor.red, .green, .blue, .yellow].enumerated() {
+            let rect = CGRect(x: CGFloat(index % 2) * 160, y: CGFloat(index / 2) * 120, width: 160, height: 120)
+            source = CIImage(color: CIColor(color: color)).cropped(to: rect).composited(over: source)
+        }
+        let model = PhotoEditorViewModel(session: PhotoEditSession(source: source) { _, _ in },
+                                         library: PhotoLibraryViewModel(service: CropLibraryStub()))
+        defer { model.cancelPreview() }
+        model.enterCrop()
+        for _ in 0..<150 { if model.preview != nil { break }; try await Task.sleep(for: .milliseconds(20)) }
+        let initial = try XCTUnwrap(model.preview?.pngData())
+
+        model.adjustments.straightenAngle = 22
+        var afterRotation: Data?
+        for _ in 0..<150 {
+            try await Task.sleep(for: .milliseconds(20))
+            if let data = model.preview?.pngData(), data != initial { afterRotation = data; break }
+        }
+        XCTAssertNotNil(afterRotation, "校正角度必须实时更新裁剪预览")
+
+        model.adjustments.stretch.horizontal = 0.45
+        var afterPerspective: Data?
+        for _ in 0..<150 {
+            try await Task.sleep(for: .milliseconds(20))
+            if let data = model.preview?.pngData(), data != afterRotation { afterPerspective = data; break }
+        }
+        XCTAssertNotNil(afterPerspective, "透视参数必须实时更新裁剪预览")
+    }
+
     func testCropUsesDisplayedTopLeftAndHandlesInvalidOrExcessiveGestures() {
         let extent = CGRect(x: 10, y: 20, width: 100, height: 200)
         let rect = PhotoCropRectangle(x: 0.1, y: 0.2, width: 0.3, height: 0.4)
@@ -63,6 +94,27 @@ final class PhotoCropTests: XCTestCase {
         let verticalPixel = pixel(vertical, x: 0, y: 0)
         XCTAssertGreaterThan(verticalPixel[0], 250); XCTAssertLessThan(verticalPixel[1], 5); XCTAssertLessThan(verticalPixel[2], 5)
     }
+    func testStretchRoundTripsAndKeepsCropExtent() throws {
+        var adjustments = PhotoAdjustments()
+        XCTAssertTrue(adjustments.stretch.isIdentity)
+        adjustments.stretch.horizontal = 0.25
+        adjustments.stretch.vertical = 0.15
+        let encoded = try JSONEncoder().encode(adjustments)
+        let decoded = try JSONDecoder().decode(PhotoAdjustments.self, from: encoded)
+        XCTAssertEqual(decoded.stretch, adjustments.stretch)
+
+        let source = CIImage(color: CIColor(red: 0.5, green: 0.3, blue: 0.2))
+            .cropped(to: CGRect(x: 0, y: 0, width: 120, height: 90))
+        let output = adjustments.stretch.apply(to: source)
+        XCTAssertEqual(output.extent, source.extent)
+        XCTAssertFalse(adjustments.stretch.isIdentity)
+
+        var clamped = PhotoStretch(horizontal: -2, vertical: 2)
+        clamped = clamped.clamped
+        XCTAssertEqual(clamped.horizontal, -0.5)
+        XCTAssertEqual(clamped.vertical, 0.5)
+    }
+
     func testStraighteningMaintainsExtentAndDoesNotExposeBlackCorners() throws {
         let source = CIImage(color: .white).cropped(to: CGRect(x: 0, y: 0, width: 64, height: 96))
         let context = CIContext()

@@ -40,6 +40,8 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         didSet { if filterEditorTab != oldValue { dismissFilterNumericInput() } }
     }
     @Published private(set) var preview: UIImage?
+    private var cropGeometryBase: UIImage?
+    private var cropBaseRevision: UInt64 = 0
     @Published private(set) var saving = false
     @Published var message: String?
     @Published private(set) var saveOptionsVisible = false
@@ -51,13 +53,24 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
     private let queue = DispatchQueue(label: "photos.edit-preview", qos: .userInitiated)
     private let context = CIContext(options: [.cacheIntermediates: false])
     private let previewGate = PreviewRevision()
-    private struct Request { let adjustments: PhotoAdjustments; let revision: UInt64 }
+    private struct Request {
+        let adjustments: PhotoAdjustments
+        let revision: UInt64
+        var cropBase: UIImage? = nil
+    }
     private lazy var renderer = LatestValueThrottle<Request>(queue: queue, interval: 1.0 / 60) { [weak self, source = session.source, raw = session.rawDevelopment, context, gate = previewGate] request in
         guard gate.canRender(request.revision) else { return }
         let image:UIImage?
         do {
-            image = try raw.map { try $0.preview(request.adjustments) }
-                ?? PhotoEditRenderer.preview(source:source,adjustments:request.adjustments,context:context)
+            if let base = request.cropBase, let baseImage = CIImage(image: base) {
+                let geometry = request.adjustments.applyGeometry(to: baseImage)
+                image = Imaging.ownedCGImage(geometry, from: geometry.extent, context: context,
+                                             format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+                    .map(UIImage.init(cgImage:))
+            } else {
+                image = try raw.map { try $0.preview(request.adjustments) }
+                    ?? PhotoEditRenderer.preview(source:source,adjustments:request.adjustments,context:context)
+            }
         } catch {
             DispatchQueue.main.async {
                 guard let self, !self.cancelled, gate.acceptsPublication(request.revision) else { return }
@@ -208,15 +221,51 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         // 裁剪与滤镜调节互斥；完成或取消裁剪后也不自动重新展开旧面板。
         closeEditorControls()
         toolBeforeCrop = tool; cropEntry = adjustments; tool = .crop
+        prepareCropGeometryBase()
     }
     func finishCrop(commit: Bool) {
         guard !saving else { return }
         if !commit, let cropEntry { adjustments = cropEntry }
         cropEntry = nil; tool = toolBeforeCrop
+        clearCropGeometryBase()
     }
+    /// One color/filter render per crop entry. RAW decode is expensive, so
+    /// rotation/perspective ticks then apply geometry to this cached image.
+    private func prepareCropGeometryBase() {
+        cropBaseRevision &+= 1
+        let revision = cropBaseRevision
+        var base = adjustments
+        base.crop = .full
+        base.quarterTurns = 0
+        base.flipHorizontal = false
+        base.flipVertical = false
+        base.straightenAngle = 0
+        base.stretch = PhotoStretch()
+        base.watermark = nil
+        let source = session.source
+        let raw = session.rawDevelopment
+        let context = context
+        queue.async { [weak self] in
+            let image: UIImage?
+            if let raw { image = try? raw.preview(base) }
+            else { image = PhotoEditRenderer.preview(source: source, adjustments: base, context: context) }
+            DispatchQueue.main.async {
+                guard let self, self.tool == .crop, revision == self.cropBaseRevision else { return }
+                self.cropGeometryBase = image
+                if image != nil { self.renderPreview() }
+            }
+        }
+    }
+
+    private func clearCropGeometryBase() {
+        cropBaseRevision &+= 1
+        cropGeometryBase = nil
+    }
+
     func resetGeometry() {
         var next = adjustments
-        next.crop = .full; next.quarterTurns = 0; next.flipHorizontal = false; next.flipVertical = false; next.straightenAngle = 0
+        next.crop = .full; next.quarterTurns = 0; next.flipHorizontal = false; next.flipVertical = false
+        next.straightenAngle = 0; next.stretch = PhotoStretch()
         adjustments = next
     }
     func rotate() {
@@ -248,7 +297,8 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         let revision = previewGate.advance(resetInteractiveFloor: structural)
         var rendered = adjustments
         if tool == .crop { rendered.crop = .full; rendered.watermark = nil }
-        renderer.submit(Request(adjustments: rendered, revision: revision))
+        let base = tool == .crop ? cropGeometryBase : nil
+        renderer.submit(Request(adjustments: rendered, revision: revision, cropBase: base))
     }
     func presentSaveOptions() { guard !saving else { return }; dismissFilterNumericInput(); setParameterEditing(false); dismissReset(); saveOptionsVisible = true }
     func dismissSaveOptions() { saveOptionsVisible = false }
@@ -267,5 +317,8 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         else { session.save(adjustments, completion: finish) }
     }
         
-    func cancelPreview() { dismissFilterNumericInput(); editingParameter = false; cancelled = true; previewGate.setInteractive(false); _ = previewGate.advance(); renderer.cancel() }
+    func cancelPreview() {
+        clearCropGeometryBase()
+        dismissFilterNumericInput(); editingParameter = false; cancelled = true; previewGate.setInteractive(false); _ = previewGate.advance(); renderer.cancel()
+    }
 }

@@ -25,13 +25,14 @@ struct PhotoAdjustments: Codable, Equatable {
     var flipHorizontal = false
     var flipVertical = false
     var straightenAngle = 0.0
+    var stretch = PhotoStretch()
     var filterID = FilmStyle.original.rawValue
     var filterIntensity = 0.8
     var filterAdjustments = FilterAdjustments()
     var rawDevelopment: RAWDevelopmentSettings? = nil
     var watermark: PhotoEditWatermark? = nil
     init() {}
-    private enum CodingKeys: String, CodingKey { case exposure, contrast, saturation, quarterTurns, filterID, filterIntensity, filterAdjustments, crop, flipHorizontal, flipVertical, straightenAngle, rawDevelopment, watermark }
+    private enum CodingKeys: String, CodingKey { case exposure, contrast, saturation, quarterTurns, filterID, filterIntensity, filterAdjustments, crop, flipHorizontal, flipVertical, straightenAngle, stretch, rawDevelopment, watermark }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         exposure = try c.decodeIfPresent(Double.self, forKey: .exposure) ?? 0
@@ -43,6 +44,7 @@ struct PhotoAdjustments: Codable, Equatable {
         flipVertical = try c.decodeIfPresent(Bool.self, forKey: .flipVertical) ?? false
         let angle = try c.decodeIfPresent(Double.self, forKey: .straightenAngle) ?? 0
         straightenAngle = angle.isFinite ? min(max(angle, -45), 45) : 0
+        stretch = (try c.decodeIfPresent(PhotoStretch.self, forKey: .stretch) ?? PhotoStretch()).clamped
         filterID = try c.decodeIfPresent(String.self, forKey: .filterID) ?? FilmStyle.original.rawValue
         filterIntensity = try c.decodeIfPresent(Double.self, forKey: .filterIntensity) ?? 0.8
         filterAdjustments = try c.decodeIfPresent(FilterAdjustments.self, forKey: .filterAdjustments) ?? FilterAdjustments()
@@ -60,6 +62,15 @@ struct PhotoAdjustments: Codable, Equatable {
         let styled = rawControlsApplied ? AdaptiveDynamicRenderer.filtered(source,look:look,hdr:rawDevelopment?.hdr == true) : Imaging.filtered(source,look:look)
         var image = styled.applyingFilter("CIExposureAdjust", parameters: [kCIInputEVKey: exposure])
             .applyingFilter("CIColorControls", parameters: [kCIInputContrastKey: contrast, kCIInputSaturationKey: saturation])
+        let upright = applyGeometry(to: image)
+        return includesWatermark ? (watermark?.apply(to: upright, filterID: filterID, intensity: filterIntensity) ?? upright) : upright
+    }
+
+    /// Geometry-only pass used by the live crop preview. The image is expected
+    /// to already contain the color/filter recipe, so RAW development does not
+    /// need to run again for every rotation or perspective tick.
+    func applyGeometry(to source: CIImage) -> CIImage {
+        var image = source
         switch ((quarterTurns % 4) + 4) % 4 {
         case 1: image = image.oriented(.right)
         case 2: image = image.oriented(.down)
@@ -76,8 +87,8 @@ struct PhotoAdjustments: Codable, Equatable {
                 .transformed(by: CGAffineTransform(translationX: extent.midX, y: extent.midY)).cropped(to: extent)
         }
         image = image.cropped(to: crop.imageRect(in: image.extent))
-        let upright = image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
-        return includesWatermark ? (watermark?.apply(to: upright, filterID: filterID, intensity: filterIntensity) ?? upright) : upright
+        if !stretch.isIdentity { image = stretch.apply(to: image) }
+        return image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
     }
 }
 struct PhotoEditResult {

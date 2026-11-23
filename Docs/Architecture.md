@@ -1,10 +1,14 @@
-## 2026-11-20 详情右上角菜单
+## 2026-11-23 RAW 裁剪几何快路径
 
-`PhotoViewerLayout` 顶部右侧的占位视图替换为 `overflowButton`，点击显示共享的 `DetailOverflowMenu`；`SystemVideoView` 同样新增，并把删除逻辑抽为 `deleteVideo()` 供底栏和菜单复用。自定义卡片用 `fixedSize` + 142pt 最小行宽自适应内容，不再受系统 Menu 最小宽度影响；透明全屏遮罩点击关闭，菜单项沿用既有 disabled/shareBusy/detailsBusy 条件和破坏性删除角色，底部操作栏不变。
+`PhotoAdjustments.applyGeometry(to:)` 拆出方向、校正角度、裁剪和透视几何。`PhotoEditorViewModel.enterCrop()` 先用当前颜色配方生成一次 `cropGeometryBase`，裁剪模式下的 `Request` 带该底图；renderer 直接对底图执行几何变换，不再调用 `CIRAWFilter`。底图由 RAW 的 `RAWPhotoDevelopment.preview` 或普通 `PhotoEditRenderer.preview` 生成，失败时 `cropBase` 为空并回退原路径；退出裁剪或取消时释放。
 
-## 2026-11-20 详情底栏与弹窗关闭按钮
+## 2026-11-23 照片裁剪左右/上下拉伸
 
-`PhotoViewerLayout` 和 `SystemVideoView.bottomBar` 把 `LibraryCameraButton` 放在操作栏最后一项；其他按钮顺序和 48pt 槽位不变。`PhotoFilterPopup`、`VideoFilterPopup` 的列表/参数页关闭按钮统一为 28pt 白色 10% 圆形背景，外层 32pt 点击区；保存和水印弹窗继续使用既有 30pt 圆形背景。
+`PhotoAdjustments` 新增 `PhotoStretch`（horizontal/vertical 各 -0.5–0.5，默认 0）。水平正值收窄上边、负值收窄下边；垂直正值收窄左边、负值收窄右边；生成梯形后用 `CIPerspectiveCorrection` 映射回裁切框并缩放回原尺寸，两者为 0 时跳过。`PhotoEditorView` 的裁剪底栏在取消/完成之间提供四个按钮：校正角度、上下透视拉伸、左右透视拉伸、还原图标；前三个按钮切换 `CropRulerControl`，共用同一条 `CameraRuler`，分别为 -45–45° 和 -50–50% 映射，不增加二级界面。按钮背景使用 `GlassSurface` 液态玻璃，尺寸 44pt，选中态为低透明度 accent 玻璃；图标复用录屏中的 `rotate.right` 和 `perspective`，上下透视将透视符号旋转 90°，还原使用 `arrow.counterclockwise` 图标。透视最大边缩进为 0.5×绝对值，50% 刻度对应明显的梯形拉伸。`PhotoEditorView` 恢复通过 `.sheet` 呈现。裁剪时内容层只绘制 22% 黑色半透明层且不创建照片副本；系统 sheet 仍保留黑色承载层，因此底层照片详情不会透过裁剪背景显示。`PhotoCropOverlay` 的选区外遮罩为 10% 黑色；旋转、上下/左右透视的实际照片边缘只在当前预览图范围内显示。上下透视按钮映射 `stretch.horizontal`，左右透视按钮映射 `stretch.vertical`，与两种透视效果的方向一致。旋转 90° 保留在顶部更多菜单；`PhotoCropOverlay` 仍只负责裁剪框。
+
+## 2026-11-23 详情底栏恢复
+
+`PhotoViewerLayout` 和 `SystemVideoView.bottomBar` 恢复分享、详情、相机、编辑、删除的中间相机布局；顶部右侧恢复 48pt 占位，不再挂 `DetailOverflowMenu`。`PhotoFilterPopup`、`VideoFilterPopup` 的列表/参数页关闭按钮仍保持 28pt 圆形背景，保存和水印弹窗继续使用既有 30pt 圆形背景。
 
 ## 2026-11-20 视频编辑颗粒相位
 

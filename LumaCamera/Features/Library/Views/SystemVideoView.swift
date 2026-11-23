@@ -45,7 +45,6 @@ struct SystemVideoView: View {
     @State private var editorPresented = false
     @State private var pageProgress: CGFloat = 0
     @State private var pageSwipeCapturing = false
-    @State private var overflowVisible = false
 
     var body: some View {
         ZStack {
@@ -127,23 +126,6 @@ struct SystemVideoView: View {
             shareRequest?.cancel()
             if requestID != PHInvalidImageRequestID { PHImageManager.default().cancelImageRequest(requestID) }
         }
-        .overlay {
-            if overflowVisible {
-                Color.black.opacity(0.001).ignoresSafeArea().contentShape(Rectangle())
-                    .onTapGesture { withAnimation(popupAnimation) { overflowVisible = false } }
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            if overflowVisible {
-                DetailOverflowMenu(actions: overflowActions) {
-                    withAnimation(popupAnimation) { overflowVisible = false }
-                }
-                .padding(.top, 56).padding(.trailing, 12)
-                .transition(.opacity)
-                .zIndex(2)
-            }
-        }
-        .animation(popupAnimation, value: overflowVisible)
         // 系统分享面板使用标准 sheet 动画；自定义 presentationBackground 会让
         // UIActivityViewController 的呈现看起来是瞬切，不叠加自定义背景。
         .sheet(item: $shareSession) { FileShareSheet(session: $0) }
@@ -262,7 +244,7 @@ struct SystemVideoView: View {
                 .videoDetailFrame("title")
             }
             Spacer(minLength: 8)
-            overflowButton
+            Color.clear.frame(width: 48, height: 48)
         }.padding(.horizontal, 12).padding(.bottom, 8)
     }
 
@@ -275,6 +257,8 @@ struct SystemVideoView: View {
                          label: detailsVisible ? "收起视频详情" : "视频详情",
                          disabled: loadedAsset == nil || detailsBusy, anchor: .info) { showDetails() }
             Spacer(minLength: 0)
+            LibraryCameraButton(action: onCamera).disabled(model.library.deleting || model.library.editing)
+            Spacer(minLength: 0)
             viewerAction("slider.horizontal.3", label: "编辑视频", disabled: loadedAsset == nil || loading) {
                 player?.pause()
                 detailsTask?.cancel()
@@ -285,38 +269,10 @@ struct SystemVideoView: View {
             }
             Spacer(minLength: 0)
             viewerAction("trash", label: "删除视频", disabled: model.library.deleting) { deleteVideo() }
-            Spacer(minLength: 0)
-            LibraryCameraButton(action: onCamera).disabled(model.library.deleting || model.library.editing)
             }.videoDetailFrame("actions").padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 12)
         }
         .padding(.top, 10)
         .background(Color.black.ignoresSafeArea(edges: .bottom))
-    }
-
-    private var overflowButton: some View {
-        Button {
-            withAnimation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18)) {
-                overflowVisible.toggle()
-            }
-        } label: {
-            Image(systemName: "ellipsis").rotatingCaptureContent()
-                .font(.system(size: 21, weight: .regular))
-                .foregroundStyle(.white)
-                .frame(width: 48, height: 48).modifier(PopupSurface(radius: 24))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("更多操作")
-    }
-
-    private var overflowActions: [DetailOverflowAction] {
-        [
-            DetailOverflowAction(id: "share", title: shareBusy ? "正在准备分享" : "分享",
-                                 icon: "square.and.arrow.up", disabled: shareBusy, action: prepareShare),
-            DetailOverflowAction(id: "info", title: detailsVisible ? "收起视频详情" : "视频详情",
-                                 icon: "info.circle", disabled: loadedAsset == nil || detailsBusy, action: showDetails),
-            DetailOverflowAction(id: "delete", title: "删除", icon: "trash",
-                                 disabled: model.library.deleting, destructive: true, action: deleteVideo)
-        ]
     }
 
     private func deleteVideo() {

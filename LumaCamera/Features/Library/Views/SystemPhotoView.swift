@@ -40,7 +40,9 @@ struct SystemPhotoView: View {
                 #endif
             }.onDisappear { detail.cancelLoading() }
             .sheet(isPresented: $share) { if let image = detail.image { ShareSheet(image: image, resources: detail.resources) } }
-            .sheet(item: $editor) { session in PhotoEditorView(session: session, library: model.library) { detail.edited($0); if info { detail.loadDetails() } } }
+            .sheet(item: $editor) { session in
+                PhotoEditorView(session: session, library: model.library) { detail.edited($0); if info { detail.loadDetails() } }
+            }
             .alert("光屿相机", isPresented: Binding(get: { detail.message != nil }, set: { if !$0 { detail.message = nil } })) {
                 Button("好", role: .cancel) { detail.message = nil }
             } message: { Text(detail.message ?? "") }

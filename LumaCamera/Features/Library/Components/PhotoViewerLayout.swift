@@ -36,7 +36,6 @@ struct PhotoViewerLayout: View {
     var onPageFinished: (() -> Void)? = nil
     @Environment(\.captureControlsLandscape) private var landscape
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var overflowVisible = false
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -76,7 +75,7 @@ struct PhotoViewerLayout: View {
                     .padding(.horizontal, 12).padding(.vertical, 7).modifier(PopupSurface(radius: 24))
                 }
                 Spacer(minLength: 8)
-                overflowButton
+                Color.clear.frame(width: 48, height: 48)
             }.padding(.horizontal, 12).padding(.bottom, 8)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -85,57 +84,15 @@ struct PhotoViewerLayout: View {
                 Spacer(minLength: 0)
                 action("info.circle", label: infoVisible ? "收起图片详情" : "图片详情", disabled: busy, action: onInfo)
                 Spacer(minLength: 0)
+                LibraryCameraButton(action: onCamera).disabled(destructiveBusy)
+                Spacer(minLength: 0)
                 action("slider.horizontal.3", label: "图片编辑", disabled: busy || image == nil, action: onEdit)
                 Spacer(minLength: 0)
                 action("trash", label: "删除", disabled: busy, action: onDelete)
-                Spacer(minLength: 0)
-                LibraryCameraButton(action: onCamera).disabled(destructiveBusy)
             }.padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 12)
                 .background(Color.black.ignoresSafeArea(edges: .bottom))
         }
-        .overlay {
-            if overflowVisible {
-                Color.black.opacity(0.001).ignoresSafeArea().contentShape(Rectangle())
-                    .onTapGesture { withAnimation(AppTheme.popupAnimation) { overflowVisible = false } }
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            if overflowVisible {
-                DetailOverflowMenu(actions: overflowActions) {
-                    withAnimation(AppTheme.popupAnimation) { overflowVisible = false }
-                }
-                .padding(.top, 56).padding(.trailing, 12)
-                .transition(.opacity)
-                .zIndex(2)
-            }
-        }
-        .animation(AppTheme.popupAnimation, value: overflowVisible)
         .toolbar(.hidden, for: .navigationBar)
-    }
-    private var overflowButton: some View {
-        Button {
-            withAnimation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18)) {
-                overflowVisible.toggle()
-            }
-        } label: {
-            Image(systemName: "ellipsis").rotatingCaptureContent()
-                .font(.system(size: 21, weight: .regular))
-                .foregroundStyle(.white)
-                .frame(width: 48, height: 48).modifier(PopupSurface(radius: 24))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("更多操作")
-    }
-
-    private var overflowActions: [DetailOverflowAction] {
-        [
-            DetailOverflowAction(id: "share", title: "分享", icon: "square.and.arrow.up",
-                                 disabled: busy || shareBusy || image == nil, action: onShare),
-            DetailOverflowAction(id: "info", title: infoVisible ? "收起图片详情" : "图片详情", icon: "info.circle",
-                                 disabled: busy, action: onInfo),
-            DetailOverflowAction(id: "delete", title: "删除", icon: "trash",
-                                 disabled: busy || destructiveBusy, destructive: true, action: onDelete)
-        ]
     }
     private func action(_ icon: String, label: String, disabled: Bool, action: @escaping () -> Void) -> some View {
         Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); action() } label: {

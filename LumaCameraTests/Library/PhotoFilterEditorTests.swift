@@ -42,6 +42,31 @@ final class PhotoFilterEditorTests: XCTestCase {
             model.cancelPreview()
         }
     }
+    @MainActor func testCropUIUpdatesWhenStraightenChanges() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let old = scene.windows.first(where: \.isKeyWindow)
+        let window = UIWindow(windowScene: scene)
+        let host = UIHostingController(rootView: AnyView(EmptyView()))
+        window.rootViewController = host; window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; old?.makeKey() }
+        let input = source.transformed(by: CGAffineTransform(scaleX: 500 / source.extent.width, y: 500 / source.extent.height))
+        let session = PhotoEditSession(source: input) { _, _ in }
+        let model = PhotoEditorViewModel(session: session, library: PhotoLibraryViewModel(service: FilterEditLibraryStub()))
+        defer { model.cancelPreview() }
+        host.rootView = AnyView(PhotoEditorView(model: model).id(session.id))
+        for _ in 0..<150 { if model.preview != nil { break }; try await Task.sleep(for: .milliseconds(20)) }
+        model.enterCrop()
+        try await Task.sleep(for: .milliseconds(350))
+        let before = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+        model.adjustments.straightenAngle = 25
+        var after = before
+        for _ in 0..<100 {
+            try await Task.sleep(for: .milliseconds(20))
+            after = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+            if after.pngData() != before.pngData() { break }
+        }
+        XCTAssertNotEqual(after.pngData(), before.pngData(), "裁剪界面必须随校正角度实时变化")
+    }
     @MainActor private func scrolls(_ view: UIView) -> [UIScrollView] { (view as? UIScrollView).map { [$0] } ?? view.subviews.flatMap { scrolls($0) } }
     #endif
     @MainActor func testSharedPhotoControlsKeepDraftAndResetLocal() throws {

@@ -1,5 +1,11 @@
 import SwiftUI
 
+private enum CropRulerControl: String {
+    case straighten
+    case verticalPerspective
+    case horizontalPerspective
+}
+
 struct PhotoEditorView: View {
     @StateObject private var model: PhotoEditorViewModel
     @StateObject private var filters = FilterPickerViewModel()
@@ -8,6 +14,7 @@ struct PhotoEditorView: View {
     @Environment(\.captureControlAngle) private var controlAngle
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var cropRulerControl: CropRulerControl = .straighten
     init(session: PhotoEditSession, library: PhotoLibraryViewModel, onSaved: @escaping (PhotoEditResult) -> Void) {
         _model = StateObject(wrappedValue: PhotoEditorViewModel(session: session, library: library)); self.onSaved = onSaved
     }
@@ -43,7 +50,7 @@ struct PhotoEditorView: View {
                         }
                         #endif
                 }
-            }.padding(.bottom, 10).background(AppTheme.popupColor)
+                }.padding(.bottom, 10)
                 .overlay(alignment: .top) { if model.tool != .crop { editorHeader.transition(.opacity) } }
                 .overlay(alignment: .bottom) {
                     if model.filterPopupVisible {
@@ -89,9 +96,24 @@ struct PhotoEditorView: View {
                 .alert("图片编辑", isPresented: Binding(get: { model.message != nil }, set: { if !$0 { model.message = nil } })) {
                     Button("好", role: .cancel) { model.message = nil }
                 } message: { Text(model.message ?? "") }
-        }.environment(\.captureControlAngle, 0)
+            .animation(AppTheme.popupAnimation, value: model.tool == .crop)
+        }
+        .background {
+            Group {
+                if model.tool == .crop {
+                    Color.clear
+                } else {
+                    AppTheme.popupColor
+                }
+            }
+            .ignoresSafeArea()
+        }
+        .environment(\.captureControlAngle, 0)
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .tint(AppTheme.accent).preferredColorScheme(.dark)
+            // Keep the sheet clear from the start; the content paints an opaque
+            // background outside crop so crop mode can reveal the photo behind.
+            .presentationBackground(Color.clear)
             .presentationCornerRadius(0)
     }
     private var editorHeader: some View {
@@ -144,7 +166,7 @@ struct PhotoEditorView: View {
     }
     private var toolBar: some View {
         HStack(spacing: 20) {
-            toolButton(.crop, icon: "crop") { model.enterCrop() }
+            toolButton(.crop, icon: "crop") { cropRulerControl = .straighten; model.enterCrop() }
             toolButton(.filters, icon: "camera.filters") {
                 if !model.filterPopupVisible { filters.showStrength = false }
                 model.toggleEditorControls(.filters)
@@ -237,8 +259,10 @@ struct PhotoEditorView: View {
     private var cropHeader: some View {
         HStack(spacing: 22) {
             Button { model.flip(horizontal: true) } label: { Image(systemName: "arrow.left.and.right.righttriangle.left.righttriangle.right").rotatingCaptureContent() }.accessibilityLabel("水平翻转")
-            Button { model.rotate() } label: { Image(systemName: "rotate.right").rotatingCaptureContent() }.accessibilityLabel("旋转90度")
-            Menu { Button("垂直翻转") { model.flip(horizontal: false) }; Button("还原构图") { model.resetGeometry() } } label: { Image(systemName: "ellipsis").rotatingCaptureContent() }
+            Menu {
+                Button("旋转90°") { model.rotate() }
+                Button("垂直翻转") { model.flip(horizontal: false) }
+            } label: { Image(systemName: "ellipsis").rotatingCaptureContent() }
             Spacer()
             Menu {
                 Button("原始比例") { model.setCropAspect(nil) }
@@ -246,21 +270,123 @@ struct PhotoEditorView: View {
             } label: { Image(systemName: "aspectratio").rotatingCaptureContent() }.accessibilityLabel("裁剪比例")
         }.font(.system(size: 21)).buttonStyle(.plain).padding(.horizontal, 22).frame(height: 56)
     }
+    private func cropActionButton(_ icon: String, label: String, active: Bool = false,
+                                  rotation: Angle = .zero,
+                                  action: @escaping () -> Void) -> some View {
+        Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); action() } label: {
+            Image(systemName: icon).rotatingCaptureContent()
+                .rotationEffect(rotation)
+                .font(.system(size: 21, weight: .regular))
+                .foregroundStyle(active ? AppTheme.accentForeground : .white.opacity(0.9))
+                .frame(width: 44, height: 44)
+                .background {
+                    if active { Circle().fill(AppTheme.accent.opacity(0.36)) }
+                }
+                .modifier(GlassSurface(radius: 22))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(active ? .isSelected : [])
+    }
+
+    private var resetCropButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            cropRulerControl = .straighten
+            model.resetGeometry()
+        } label: {
+            Image(systemName: "arrow.counterclockwise").rotatingCaptureContent()
+                .font(.system(size: 21, weight: .regular))
+                .foregroundStyle(.white.opacity(0.9))
+                .frame(width: 44, height: 44)
+                .modifier(GlassSurface(radius: 22))
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("还原构图")
+    }
     private var cropFooter: some View {
         VStack(spacing: 14) {
-            Text(String(format: "%.1f°", model.adjustments.straightenAngle)).rotatingCaptureContent().font(.system(size: 13, design: .monospaced)).foregroundStyle(AppTheme.accent)
-            CameraRuler(value: $model.adjustments.straightenAngle, range: -45...45, tint: AppTheme.accent)
-                .id(landscape)
+            Text(cropRulerText).rotatingCaptureContent()
+                .font(.system(size: 13, design: .monospaced))
+                .foregroundStyle(AppTheme.accent)
+            CameraRuler(value: cropRulerValue, range: cropRulerRange, tint: AppTheme.accent)
+                .id("\(cropRulerControl.rawValue)-\(landscape)")
                 #if DEBUG
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.editingRulerFrameForTesting = $0 }
                 #endif
-                .padding(.horizontal, 18).accessibilityLabel("照片校正角度")
+                .padding(.horizontal, 18)
+                .accessibilityLabel(cropRulerAccessibilityLabel)
             HStack {
-                Button { model.finishCrop(commit: false) } label: { Text("取消").rotatingCaptureContent() }
+                Button { model.finishCrop(commit: false) } label: {
+                    Text("取消").rotatingCaptureContent()
+                }
                 Spacer()
-                Button { model.finishCrop(commit: true) } label: { Text("完成").rotatingCaptureContent() }.foregroundStyle(AppTheme.accent)
+                HStack(spacing: 12) {
+                    cropActionButton("rotate.right", label: "校正角度",
+                                     active: cropRulerControl == .straighten) {
+                        cropRulerControl = .straighten
+                    }
+                    cropActionButton("perspective", label: "上下透视拉伸",
+                                     active: cropRulerControl == .verticalPerspective,
+                                     rotation: .degrees(90)) {
+                        cropRulerControl = .verticalPerspective
+                    }
+                    cropActionButton("perspective", label: "左右透视拉伸",
+                                     active: cropRulerControl == .horizontalPerspective) {
+                        cropRulerControl = .horizontalPerspective
+                    }
+                    resetCropButton
+                }
+                Spacer()
+                Button { model.finishCrop(commit: true) } label: {
+                    Text("完成").rotatingCaptureContent()
+                }.foregroundStyle(AppTheme.accent)
             }.font(.system(size: 16)).buttonStyle(.plain).padding(.horizontal, 24).frame(height: 48)
         }.padding(.top, 10)
+    }
+
+    private var cropRulerRange: ClosedRange<Double> {
+        cropRulerControl == .straighten ? -45...45 : -50...50
+    }
+
+    private var cropRulerValue: Binding<Double> {
+        switch cropRulerControl {
+        case .straighten:
+            return $model.adjustments.straightenAngle
+        case .verticalPerspective:
+            // Top/bottom convergence is driven by the horizontal-edge inset.
+            return Binding(
+                get: { model.adjustments.stretch.horizontal * 100 },
+                set: { model.adjustments.stretch.horizontal = min(max($0 / 100, -0.5), 0.5) }
+            )
+        case .horizontalPerspective:
+            // Left/right convergence is driven by the vertical-edge inset.
+            return Binding(
+                get: { model.adjustments.stretch.vertical * 100 },
+                set: { model.adjustments.stretch.vertical = min(max($0 / 100, -0.5), 0.5) }
+            )
+        }
+    }
+
+    private var cropRulerText: String {
+        switch cropRulerControl {
+        case .straighten:
+            return String(format: "%.1f°", model.adjustments.straightenAngle)
+        case .verticalPerspective:
+            return String(format: "%+.0f%%", model.adjustments.stretch.horizontal * 100)
+        case .horizontalPerspective:
+            return String(format: "%+.0f%%", model.adjustments.stretch.vertical * 100)
+        }
+    }
+
+    private var cropRulerAccessibilityLabel: String {
+        switch cropRulerControl {
+        case .straighten: return "照片校正角度"
+        case .verticalPerspective: return "上下透视拉伸"
+        case .horizontalPerspective: return "左右透视拉伸"
+        }
     }
     private var saveDialog: some View {
         ZStack {
