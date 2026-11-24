@@ -92,7 +92,9 @@ struct AstroEnvironmentSheet: View {
                                 } label: {
                                     Image(systemName: "location.fill")
                                         .font(.system(size: 17, weight: .semibold))
-                                        .foregroundStyle(location == nil ? .white.opacity(0.45) : .white)
+                                        // Keep the glyph identical while location is
+                                        // pending; only hit testing/accessibility is disabled.
+                                        .foregroundStyle(.white)
                                         .frame(width: 44, height: 44)
                                         .background(.black.opacity(0.70), in: Circle())
                                         .overlay(Circle().stroke(.white.opacity(0.18), lineWidth: 0.7))
@@ -1081,14 +1083,30 @@ final class AstroMapViewport: UIView {
 }
 
 final class AstroLocationMarker: UIView {
-    let arrow = UIImageView(image: UIImage(systemName: "location.north.fill",
-                                          withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold))?
-        .withRenderingMode(.alwaysTemplate))
+    /// Fixed raster rather than an SF Symbol: the location marker must look
+    /// identical at every sheet detent and in every rendering state.
+    private static let arrowImage: UIImage = {
+        let size = CGSize(width: 16, height: 16)
+        return UIGraphicsImageRenderer(size: size).image { _ in
+            let path = UIBezierPath()
+            path.move(to: CGPoint(x: 8, y: 1))
+            path.addLine(to: CGPoint(x: 2, y: 15))
+            path.addLine(to: CGPoint(x: 8, y: 11.5))
+            path.addLine(to: CGPoint(x: 14, y: 15))
+            path.close()
+            UIColor.white.setFill()
+            path.fill()
+        }
+    }()
+    let arrow = UIImageView(image: AstroLocationMarker.arrowImage)
     private var heading: CLLocationDirection?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = .systemBlue
+        backgroundColor = UIColor(red: 0, green: 122.0 / 255.0, blue: 1, alpha: 1)
+        isOpaque = true
+        alpha = 1
+        layer.opacity = 1
         layer.cornerRadius = 14
         layer.borderWidth = 1.5
         layer.borderColor = UIColor.white.cgColor
@@ -1097,7 +1115,6 @@ final class AstroLocationMarker: UIView {
         accessibilityLabel = "当前位置"
         arrow.frame = bounds.insetBy(dx: 6, dy: 6)
         arrow.contentMode = .scaleAspectFit
-        arrow.tintColor = .white
         addSubview(arrow)
     }
 

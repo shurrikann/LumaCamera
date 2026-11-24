@@ -6175,9 +6175,12 @@ final class CameraViewModel: ObservableObject {
         slowShutterEnabled = captureKind == .photo && (state.slowShutter ?? false)
         selectedSlowShutterPreset = slowShutterEnabled
             ? state.slowShutterPreset.flatMap(SlowShutterPreset.init(rawValue:))
+                .flatMap { SlowShutterPreset.selectableCases.contains($0) ? $0 : nil }
             : nil
         slowShutterAutomaticPreset = slowShutterEnabled
-            ? (state.slowShutterAutomaticPreset ?? state.slowShutterPreset).flatMap(SlowShutterPreset.init(rawValue:)) : nil
+            ? (state.slowShutterAutomaticPreset ?? state.slowShutterPreset)
+                .flatMap(SlowShutterPreset.init(rawValue:))
+                .flatMap { SlowShutterPreset.selectableCases.contains($0) ? $0 : nil } : nil
         slowShutterAutomaticDuration = (state.slowShutterAutomaticDuration ?? state.slowShutterDuration)
             .flatMap(SlowShutterDuration.init(rawValue:)) ?? slowShutterAutomaticPreset?.defaultCaptureDuration ?? .s1
         if mode == .manual { selectedSlowShutterPreset = nil }
@@ -6190,7 +6193,9 @@ final class CameraViewModel: ObservableObject {
         }
         if restoringPortrait { slowShutterEnabled = false; selectedSlowShutterPreset = nil }
         timeLapseEnabled = captureKind == .video && (state.timeLapseEnabled ?? false) && !rawVideoSelected
-        selectedTimeLapsePreset = state.timeLapsePreset.flatMap(TimeLapsePreset.init(rawValue:))
+        selectedTimeLapsePreset = state.timeLapsePreset
+            .flatMap(TimeLapsePreset.init(rawValue:))
+            .flatMap { TimeLapsePreset.selectableCases.contains($0) ? $0 : nil }
         let restoredInterval = state.timeLapseInterval.flatMap(TimeLapseInterval.init(rawValue:))
         let restoredFrames = state.timeLapseFrameCount.flatMap(TimeLapseFrameCount.init(rawValue:))
         timeLapseInterval = restoredInterval ?? selectedTimeLapsePreset?.recommendedInterval ?? .s1

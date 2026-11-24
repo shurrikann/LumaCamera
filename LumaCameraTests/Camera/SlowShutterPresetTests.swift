@@ -199,6 +199,12 @@ final class SlowShutterPresetTests: XCTestCase {
             slowShutterEnabled: true, requestedExposureSeconds: 1.0 / 8.0))
     }
 
+    func testRemovedStarTrailsPresetIsNotExposedInSlowShutterUI() {
+        XCTAssertEqual(SlowShutterPreset.selectableCases,
+                       [.lightTrails, .silkyWater, .motionBlur, .panning])
+        XCTAssertFalse(SlowShutterPreset.selectableCases.contains(.starTrails))
+    }
+
     func testLongPresetNamesUseTwoLinesAndShortNamesRemainSingleLine() {
         XCTAssertEqual(SlowShutterPreset.motionBlur.title.split(separator: "\n").count, 2)
         XCTAssertEqual(SlowShutterPreset.panning.title.split(separator: "\n").count, 2)

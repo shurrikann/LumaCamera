@@ -345,7 +345,7 @@ extension CameraView {
             if model.timeLapseEnabled {
                 panelHeading("延时预设")
                 HStack(spacing: 8) {
-                    ForEach(TimeLapsePreset.allCases) { preset in
+                    ForEach(TimeLapsePreset.selectableCases) { preset in
                         choicePill(preset.title, selected: model.selectedTimeLapsePreset == preset,
                                    enabled: !camera.videoBusy, feedback: false) { model.selectTimeLapsePreset(preset) }
                             .frame(width: (contentWidth - 32) / 5)
@@ -391,7 +391,7 @@ extension CameraView {
             if model.mode == .auto {
                 panelHeading("慢门预设")
                 HStack(spacing: 8) {
-                    ForEach(SlowShutterPreset.allCases) { preset in
+                    ForEach(SlowShutterPreset.selectableCases) { preset in
                         choicePill(preset.title, selected: model.selectedSlowShutterPreset == preset,
                                    enabled: model.canEditSlowShutterDuration && model.isSlowShutterPresetSupported(preset),
                                    lines: 2, feedback: false) { model.selectSlowShutterPreset(preset) }

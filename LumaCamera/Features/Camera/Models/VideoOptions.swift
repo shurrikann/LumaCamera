@@ -50,6 +50,9 @@ enum TimeLapsePreset: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    /// Night-sky timelapse is an Astro workflow, not a regular video preset.
+    static var selectableCases: [Self] { allCases.filter { $0 != .nightSky } }
+
     var title: String {
         switch self {
         case .people: return "人流"

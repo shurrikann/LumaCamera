@@ -10,6 +10,10 @@ enum SlowShutterPreset: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    /// Star trails now lives in Astro mode; keep the stored case for older
+    /// diagnostics but do not expose it as a slow-shutter preset.
+    static var selectableCases: [Self] { allCases.filter { $0 != .starTrails } }
+
     var title: String {
         switch self {
         case .lightTrails: return "光轨"

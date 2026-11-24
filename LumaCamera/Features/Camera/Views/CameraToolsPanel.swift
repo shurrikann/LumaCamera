@@ -67,7 +67,7 @@ extension CameraView {
                         .disabled(!enabled)
                         .accessibilityLabel("慢门模式")
                         .accessibilityValue(selected ? "已开启" : "关闭")
-                        .accessibilityHint("开启后选择光轨、流水、动态模糊、摇拍追焦或星轨。自动曝光按环境计算单帧参数并多帧合成，M挡手动设置会保留。再次点快门可提前结束。")
+                        .accessibilityHint("开启后选择光轨、流水、动态模糊或摇拍追焦。自动曝光按环境计算单帧参数并多帧合成，M挡手动设置会保留。再次点快门可提前结束。")
                     } else if isBurst {
                         Button { model.toggleBurstMode() } label: {
                             shootingModeOption(option, selected: selected, enabled: enabled)

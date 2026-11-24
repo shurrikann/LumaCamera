@@ -1,3 +1,15 @@
+# 2026-11-24 星空环境地图定位标记稳定
+
+- `AstroLocationMarker` 改为固定蓝色圆底 + 自绘白色箭头；`testSolidLocationMarkerTracksRegionAcrossResizeAndMissingHeading` 增加 alpha、layer opacity、固定背景色和 16×16 箭头断言，测试通过。
+- 回中按钮不再因定位未到达显示灰色图标。
+- 已用 `-skipMacroValidation SWIFT_ENABLE_EXPLICIT_MODULES=NO` 构建并安装到 iPhone 17 Pro；未重新截取中等/完全展开对比图。
+
+# 2026-11-24 移除慢门星轨与视频星夜预设
+
+- 慢门预设 UI 只显示光轨、流水、动态模糊、摇拍追焦；延时预设 UI 只显示人流、车流、云层、日落。两个预设行保持原五列单元宽度，前四个按钮尺寸和位置不变。
+- `testRemovedStarTrailsPresetIsNotExposedInSlowShutterUI` 和更新后的预设工具栏/延时测试通过；旧存档中的已移除预设恢复为 nil。
+- 星空模式自身的星轨/星空延时继续保留。已用 `-skipMacroValidation SWIFT_ENABLE_EXPLICIT_MODULES=NO` 构建并安装到 iPhone 17 Pro；未新增预设行截图断言。
+
 # 2026-11-23 HDR/高动态自动取消水印
 
 - 新增 `testHDRAndHighDynamicCancelWatermark`：水印开启后打开 HDR 会取消水印并保留 HDR；打开高动态会取消水印并保留高动态；反向开启水印仍关闭 HDR/高动态，测试通过。
@@ -18,7 +30,7 @@
 
 # 2026-11-23 云层接口稳定性
 
-- 将区域云量请求从 13×13 降到 9×9（81 点），请求超时提高到 25 秒；HTTP 429 读取 Retry-After 并重试一次。
+- 将区域云量请求从 13×13 调整为 11×11（121 点），请求超时提高到 25 秒；HTTP 429 读取 Retry-After 并重试一次。
 - 云量刷新失败后由原来的 30 分钟等待改为 5/10/20/40/80/160/300 秒退避自动重试，仍保留手动“重试云量”。
 - iPhone 18 Pro 模拟器 / iOS 27.0：`AstroCloudForecastTests` 和 `AstroEnvironmentForecastTests` 通过，栅格尺寸按新采样数断言；在线上海请求未重复执行。构建使用 `-skipMacroValidation`。
 - 尚未在真实弱网、HTTP 429 和连续移动地图条件下复测；已安装最新版到 iPhone 17 Pro。

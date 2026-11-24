@@ -298,8 +298,8 @@ final class VideoWorkflowTests: XCTestCase {
         model.toggleTimeLapseMode()
         XCTAssertTrue(model.timeLapseEnabled)
         XCTAssertEqual(model.selectedTimeLapsePreset, .traffic)
-        model.selectTimeLapsePreset(.nightSky)
-        XCTAssertEqual(model.selectedTimeLapsePreset, .nightSky)
+        XCTAssertFalse(TimeLapsePreset.selectableCases.contains(.nightSky),
+                       "星夜延时已移至星空模式，普通视频延时不再显示")
 
         // 重复开关后模式状态必须与最后一次操作一致，且切回照片会退出延时模式。
         for _ in 0..<20 { model.toggleTimeLapseMode() }

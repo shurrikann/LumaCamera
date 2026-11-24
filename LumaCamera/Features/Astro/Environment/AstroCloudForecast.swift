@@ -4,10 +4,10 @@ import MapKit
 import Observation
 
 struct AstroCloudRegion: Hashable, Sendable {
-    // Keep the multi-location request small enough to stay responsive on
-    // cellular networks; 9x9 still gives a smooth regional raster after
-    // bicubic interpolation.
-    static let sampleWidth = 9
+    // 11x11 balances regional cloud detail against the multi-location URL
+    // size and cellular response time. The raster is still bicubically
+    // interpolated, so the display remains continuous.
+    static let sampleWidth = 11
     static let sampleCount = sampleWidth * sampleWidth
     private let x: Int
     private let y: Int

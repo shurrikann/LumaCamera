@@ -100,7 +100,7 @@ private struct PresetToolbarHost: View {
                 try await Task.sleep(for:.milliseconds(230))
                 XCTAssertNil(model.captureButtonFramesForTesting["slowShutterBarBackground"])
                 let row=try frame("slowShutterPresetRow",model)
-                let cells=try SlowShutterPreset.allCases.map{try frame("slowShutterPreset.\($0.rawValue)",model)}
+                let cells=try SlowShutterPreset.selectableCases.map{try frame("slowShutterPreset.\($0.rawValue)",model)}
                 for cell in cells {
                     XCTAssertEqual(cell.width,cells[0].width,accuracy:0.5);XCTAssertEqual(cell.height,32,accuracy:0.5)
                     XCTAssertEqual(cell.midY,cells[0].midY,accuracy:0.5)
@@ -124,7 +124,7 @@ private struct PresetToolbarHost: View {
         model.toggleToolbarPanel(.slowShutterDuration)
         let previewStart=CACurrentMediaTime()
         camera.resetPreviewPublicationTimesForTesting()
-        for preset in SlowShutterPreset.allCases {
+        for preset in SlowShutterPreset.selectableCases {
             let began=CACurrentMediaTime();model.selectSlowShutterPreset(preset)
             try await Task.sleep(for:.milliseconds(240))
             selectionTimes.append(CACurrentMediaTime()-began)
@@ -142,7 +142,7 @@ private struct PresetToolbarHost: View {
         XCTAssertGreaterThan(published.count,5)
         print("PRESET-TOOLBAR-SLOW-PREVIEW published=\(published.count) intervalSeconds=\(CACurrentMediaTime()-previewStart) notFPS=true")
         _=shot(window,"Slow-selected-preset-and-durations",test)
-        model.selectSlowShutterPreset(.starTrails)
+        model.selectSlowShutterPreset(.panning)
         XCTAssertNil(model.selectedSlowShutterPreset)
         for _ in 0..<10 {model.toggleToolbarPanel(.slowShutterDuration);model.toggleToolbarPanel(.slowShutterDuration)}
         XCTAssertEqual(model.toolbarPanel,.slowShutterDuration)
@@ -156,7 +156,7 @@ private struct PresetToolbarHost: View {
         model.setCameraActive(false);await Task.yield();XCTAssertNil(model.toolbarPanel)
         model.setCameraActive(true);try await wait("返回"){camera.ready}
         XCTAssertNil(model.toolbarPanel)
-        print("PRESET-TOOLBAR-SLOW layouts=\(layouts) presets=5 selectionObservationSeconds=\(selectionTimes) snapshots=\(draw.count) drawMS=\(draw) openClosePairs=10 noPhotosWrites=true notFPS=true")
+        print("PRESET-TOOLBAR-SLOW layouts=\(layouts) presets=4 selectionObservationSeconds=\(selectionTimes) snapshots=\(draw.count) drawMS=\(draw) openClosePairs=10 noPhotosWrites=true notFPS=true")
         #endif
     }
 
@@ -187,7 +187,7 @@ private struct PresetToolbarHost: View {
                 host.rootView=PresetToolbarHost(model:model,width:width,angle:angle,reduced:angle == 180)
                 try await Task.sleep(for:.milliseconds(230))
                 XCTAssertNil(model.captureButtonFramesForTesting["timeLapseBarBackground"])
-                let cells=try TimeLapsePreset.allCases.map{try frame("timeLapsePreset.\($0.rawValue)",model)}
+                let cells=try TimeLapsePreset.selectableCases.map{try frame("timeLapsePreset.\($0.rawValue)",model)}
                 let colors=try model.videoColorSpaceOptions.map{try frame("videoColor.\($0.rawValue)",model)}
                 for cell in cells+colors {
                     XCTAssertEqual(cell.width,cells[0].width,accuracy:0.5);XCTAssertEqual(cell.height,32,accuracy:0.5)
@@ -220,7 +220,7 @@ private struct PresetToolbarHost: View {
         }
         model.toggleToolbarPanel(.videoColor)
         let color=model.videoColorSpace
-        for preset in TimeLapsePreset.allCases {
+        for preset in TimeLapsePreset.selectableCases {
             model.selectTimeLapsePreset(preset)
             XCTAssertEqual(model.selectedTimeLapsePreset,preset)
             XCTAssertEqual(model.timeLapseInterval,preset.recommendedInterval)
@@ -228,13 +228,12 @@ private struct PresetToolbarHost: View {
             XCTAssertEqual(model.videoColorSpace,color);XCTAssertEqual(model.toolbarPanel,.videoColor)
             try await Task.sleep(for:.milliseconds(120))
         }
-        model.selectTimeLapsePreset(.nightSky);XCTAssertNil(model.selectedTimeLapsePreset)
         for _ in 0..<10 {model.toggleToolbarPanel(.videoColor);model.toggleToolbarPanel(.videoColor)}
         _=shot(window,"Timelapse-five-fixed-preset-cells",test)
         model.setCameraActive(false);await Task.yield();XCTAssertNil(model.toolbarPanel)
         model.setCameraActive(true);try await wait("返回"){camera.ready}
         XCTAssertNil(model.toolbarPanel)
-        print("PRESET-TOOLBAR-TIMELAPSE layouts=\(layouts) presetChanges=5 snapshots=\(draw.count) drawMS=\(draw) openClosePairs=10 colorPreserved=true sparseColorCount=\(sparseColors) notFPS=true noPhotosWrites=true")
+        print("PRESET-TOOLBAR-TIMELAPSE layouts=\(layouts) presetChanges=4 snapshots=\(draw.count) drawMS=\(draw) openClosePairs=10 colorPreserved=true sparseColorCount=\(sparseColors) notFPS=true noPhotosWrites=true")
         #endif
     }
 }
@@ -291,7 +290,7 @@ final class PresetToolbarPhysicalTests:XCTestCase {
                     try await check(selected:false)
                 }
             }
-            for preset in SlowShutterPreset.allCases {
+            for preset in SlowShutterPreset.selectableCases {
                 model.selectSlowShutterPreset(preset)
                 for open in [false,true] {
                     model.closePopups()
