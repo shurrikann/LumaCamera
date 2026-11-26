@@ -65,3 +65,34 @@ struct CaptureAlbumThumbnail: View {
         LibraryMediaThumbnail(image: image).environment(\.libraryMediaAngle, angle)
     }
 }
+
+
+/// A clear lens keeps the album photo visible beneath the reflective surface.
+struct CaptureAlbumGlassSurface: ViewModifier {
+    var interactive = true
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    func body(content: Content) -> some View {
+        lens(content)
+            .overlay {
+                Circle().fill(LinearGradient(
+                    colors: [.white.opacity(0.10), .clear, .black.opacity(0.04)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .allowsHitTesting(false)
+            }
+            .overlay {
+                Circle().strokeBorder(LinearGradient(
+                    colors: [.white.opacity(0.65), .white.opacity(0.10), .white.opacity(0.35)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 0.8)
+                    .allowsHitTesting(false)
+            }
+    }
+
+    @ViewBuilder private func lens(_ content: Content) -> some View {
+        if #available(iOS 26.0, *), !reduceTransparency {
+            content.glassEffect(interactive ? .clear.interactive() : .clear, in: Circle())
+        } else {
+            content.background(Circle().fill(Color(white: 0.12)))
+        }
+    }
+}

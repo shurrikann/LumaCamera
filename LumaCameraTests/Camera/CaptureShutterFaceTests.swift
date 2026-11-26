@@ -1,5 +1,6 @@
 import SwiftUI
 import XCTest
+import UIKit
 @testable import LumaCamera
 
 final class CaptureShutterFaceTests: XCTestCase {
@@ -21,6 +22,52 @@ final class CaptureShutterFaceTests: XCTestCase {
             }
         }
         print("SHUTTER-FACE samples=\(samples) elapsed=\(ContinuousClock.now - start)")
+    }
+
+    @MainActor func testGlassShutterStatesOnDarkAndPhotoBackgrounds() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let host = UIHostingController(rootView: AnyView(Color.black))
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        let centers: [CaptureShutterFace.Center] = [.none, .countdown, .stop, .loading]
+        var timings: [Double] = []
+        for photoBackground in [false, true] {
+            host.rootView = AnyView(ZStack {
+                Color.black
+                if photoBackground {
+                    Image(uiImage: DemoImageFactory.make()).resizable().scaledToFill()
+                }
+                VStack(spacing: 28) {
+                    ForEach(0..<3) { row in
+                        HStack(spacing: 12) {
+                            ForEach(centers.indices, id: \.self) { column in
+                                CaptureShutterFace(kind: row == 1 ? .video : .photo,
+                                                   center: centers[column], ready: row != 2)
+                                    .frame(width: 76, height: 76)
+                            }
+                        }
+                    }
+                }
+            }.preferredColorScheme(.dark))
+            try await Task.sleep(for: .milliseconds(250))
+            for iteration in 0..<3 {
+                let begin = CACurrentMediaTime()
+                let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                    window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+                }
+                timings.append((CACurrentMediaTime() - begin) * 1000)
+                if iteration == 0 {
+                    let attachment = XCTAttachment(image: image)
+                    attachment.name = "Shutter-Glass-PhotoBackdrop-\(photoBackground)"
+                    attachment.lifetime = .keepAlways
+                    add(attachment)
+                }
+            }
+        }
+        print("SHUTTER-GLASS states=24 snapshots=\(timings.count) snapshotMs=\(timings)")
     }
 
     private func pixel(in image: CGImage, x: Int, y: Int) throws -> [UInt8] {

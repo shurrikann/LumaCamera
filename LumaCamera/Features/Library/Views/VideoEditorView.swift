@@ -40,16 +40,21 @@ struct VideoEditorView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            preview
+        preview
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
+                .ignoresSafeArea()
                 .recordEditorFrame("preview", model: model)
+        .overlay(alignment: .top) { header }
+        .overlay(alignment: .bottom) {
             toolBar
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-                .padding(.bottom, 10)
+                .frame(width: 216, height: 60)
+                .background {
+                    Color.clear.frame(height: 50)
+                        .modifier(PreviewSurface(radius: 25, opacity: AppTheme.popupOpacity, interactive: false))
+                }
+                .recordEditorFrame("toolbar", model: model)
+                .padding(.bottom, 12)
                 .opacity(logFilterPopupVisible || sdrFilterPopupVisible || saveChoicePresented ? 0 : 1)
                 .allowsHitTesting(!(logFilterPopupVisible || sdrFilterPopupVisible || saveChoicePresented))
                 .accessibilityHidden(logFilterPopupVisible || sdrFilterPopupVisible || saveChoicePresented)
@@ -382,8 +387,7 @@ struct VideoEditorView: View {
                 } label: {
                     Image(systemName: tool.icon).font(.system(size: 20))
                         .foregroundStyle(model.tool == tool && model.isToolPanelPresented ? AppTheme.accent : .white.opacity(0.82))
-                        .frame(width: 44, height: 44).modifier(PopupSurface(radius: 22, glass: true))
-                        .overlay(Circle().stroke(model.tool == tool && model.isToolPanelPresented ? AppTheme.accent.opacity(0.65) : .clear, lineWidth: 1))
+                        .frame(width: 44, height: 44)
                         .videoPopupAnchor(.tool(tool))
                         .recordEditorFrame("tool." + tool.title, model: model)
                         .frame(maxWidth: .infinity)
@@ -397,9 +401,8 @@ struct VideoEditorView: View {
                 saveChoicePresented = true
             } label: {
                 ZStack {
-                    Circle().fill(AppTheme.accent)
-                    if model.saving || model.isSavingLibrary { ProgressView().tint(.black) }
-                    else { Text("保存").font(.system(size: 12, weight: .semibold)).foregroundStyle(.black) }
+                    if model.saving || model.isSavingLibrary { ProgressView().tint(.white) }
+                    else { Image(systemName: "square.and.arrow.down").font(.system(size: 20)).foregroundStyle(.white.opacity(0.82)) }
                 }
                 .frame(width: 44, height: 44)
                 .frame(maxWidth: .infinity).contentShape(Rectangle())

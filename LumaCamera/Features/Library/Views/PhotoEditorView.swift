@@ -23,34 +23,50 @@ struct PhotoEditorView: View {
     }
     var body: some View {
         NavigationStack {
-            VStack(spacing: 10) {
-                if model.tool == .crop { cropHeader.transition(.opacity) }
-                photoPreview.frame(maxWidth: .infinity, maxHeight: .infinity)
-                    #if DEBUG
-                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.photoViewportFrameForTesting = $0 }
-                    #endif
-                    .animation(AppTheme.frameAnimation, value: landscape)
-                if model.tool == .crop { cropFooter.transition(.opacity) }
-                else {
-                    ZStack {
-                        if model.editorControlsVisible, model.tool == .adjustments {
-                            adjustmentPanel.transition(.opacity)
-                        }
+            editorContent
+                .overlay {
+                    if controlsPopupVisible {
+                        Color.black.opacity(0.001).contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(AppTheme.popupAnimation) {
+                                    filters.showStrength = false
+                                    model.closeEditorControls()
+                                }
+                            }
+                            .accessibilityLabel("收起编辑面板")
                     }
-                    .frame(height: model.editorControlsHeight).padding(.horizontal, 10)
-                    .animation(AppTheme.popupAnimation, value: model.editorControlsVisible)
-                    .animation(AppTheme.popupAnimation, value: model.tool)
-                    toolBar.padding(.horizontal, 12).transition(.opacity)
-                        .opacity(bottomPopupVisible ? 0 : 1)
-                        .allowsHitTesting(!bottomPopupVisible)
-                        .accessibilityHidden(bottomPopupVisible)
-                        #if DEBUG
-                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
-                            model.captureButtonFramesForTesting["photo.editor.toolbar"] = $0
-                        }
-                        #endif
                 }
-                }.padding(.bottom, 10)
+                .overlay(alignment: .bottom) {
+                    if model.tool != .crop {
+                        toolBar
+                            .frame(width: 264, height: 60)
+                            .background {
+                                Color.clear.frame(height: 50)
+                                    .modifier(PreviewSurface(radius: 25, opacity: AppTheme.popupOpacity, interactive: false))
+                            }
+                            .padding(.bottom, 12)
+                            .opacity(bottomPopupVisible ? 0 : 1)
+                            .allowsHitTesting(!bottomPopupVisible).accessibilityHidden(bottomPopupVisible)
+                            #if DEBUG
+                            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                                model.captureButtonFramesForTesting["photo.editor.toolbar"] = $0
+                            }
+                            #endif
+                    }
+                }
+                .overlay(alignment: .bottom) {
+                    if model.editorControlsVisible, model.tool == .adjustments {
+                        adjustmentPanel
+                            .padding(10)
+                            .frame(height: model.editorControlsHeight)
+                            .modifier(PopupSurface(radius: 24, glass: true))
+                            .background { Color.black.opacity(0.001).onTapGesture {} }
+                            .padding(.horizontal, 10).padding(.bottom, 84)
+                            .transition(.opacity)
+                    }
+                }
+                .animation(AppTheme.popupAnimation, value: model.editorControlsVisible)
+                .animation(AppTheme.popupAnimation, value: model.tool)
                 .overlay(alignment: .top) { if model.tool != .crop { editorHeader.transition(.opacity) } }
                 .overlay(alignment: .bottom) {
                     if model.filterPopupVisible {
@@ -58,6 +74,7 @@ struct PhotoEditorView: View {
                             filters.showStrength = false
                             model.closeEditorControls()
                         }
+                        .background { Color.black.opacity(0.001).onTapGesture {} }
                         .padding(.horizontal, 10).padding(.bottom, 10)
                         .ignoresSafeArea(edges: .bottom)
                         .transition(.opacity)
@@ -68,6 +85,7 @@ struct PhotoEditorView: View {
                 .overlay(alignment: .bottom) {
                     if watermarkPopupVisible {
                         watermarkPanel
+                            .background { Color.black.opacity(0.001).onTapGesture {} }
                             .padding(.horizontal, 10).padding(.bottom, 10)
                             .ignoresSafeArea(edges: .bottom)
                             .transition(.opacity)
@@ -101,7 +119,7 @@ struct PhotoEditorView: View {
         .background {
             Group {
                 if model.tool == .crop {
-                    Color.clear
+                    Color.black
                 } else {
                     AppTheme.popupColor
                 }
@@ -111,11 +129,31 @@ struct PhotoEditorView: View {
         .environment(\.captureControlAngle, 0)
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .tint(AppTheme.accent).preferredColorScheme(.dark)
-            // Keep the sheet clear from the start; the content paints an opaque
-            // background outside crop so crop mode can reveal the photo behind.
+            // The crop preview paints its own transformed overflow over a dark canvas.
             .presentationBackground(Color.clear)
             .presentationCornerRadius(0)
     }
+    @ViewBuilder private var editorContent: some View {
+        if model.tool == .crop {
+            VStack(spacing: 10) {
+                cropHeader
+                photoPreview
+                cropFooter
+            }.padding(.bottom, 10)
+        } else {
+            VStack(spacing: 10) {
+                photoPreview.frame(maxWidth: .infinity, maxHeight: .infinity)
+                Color.clear.frame(height: model.editorControlsHeight)
+                Color.clear.frame(height: 60)
+            }
+            .padding(.bottom, 12)
+        }
+    }
+
+    private var controlsPopupVisible: Bool {
+        bottomPopupVisible || (model.tool == .adjustments && model.editorControlsVisible)
+    }
+
     private var editorHeader: some View {
         HStack {
             Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); dismiss() } label: { Image(systemName: "arrow.left").rotatingCaptureContent().frame(width: 44, height: 44).modifier(PopupSurface(radius: 22, glass: true)) }.accessibilityLabel("取消编辑")
@@ -139,10 +177,22 @@ struct PhotoEditorView: View {
                 if model.tool == .crop {
                     let scale = min(geometry.size.width/max(1,image.size.width), geometry.size.height/max(1,image.size.height))
                     let size = CGSize(width: image.size.width*scale, height: image.size.height*scale)
-                    ZStack {
-                        Image(uiImage: image).resizable().scaledToFit()
+                    ZStack(alignment: .topLeading) {
+                        if let outside = model.cropOverflowPreview {
+                            let extent = model.cropOverflowExtent
+                            Image(uiImage: outside).resizable()
+                                .frame(width: extent.width * scale, height: extent.height * scale)
+                                .position(x: extent.midX * scale,
+                                          y: size.height - extent.midY * scale)
+                                .opacity(0.45)
+                                .allowsHitTesting(false)
+                        }
+                        Image(uiImage: image).resizable()
+                            .frame(width: size.width, height: size.height)
                         PhotoCropOverlay(crop: $model.adjustments.crop)
-                    }.frame(width: size.width, height: size.height).position(x: geometry.size.width/2, y: geometry.size.height/2)
+                    }
+                    .frame(width: size.width, height: size.height)
+                    .position(x: geometry.size.width/2, y: geometry.size.height/2)
                 } else {
                     ZoomablePhotoView(image: image, preservesViewportOnImageUpdates: true)
                         .frame(width: geometry.size.width, height: geometry.size.height).clipped()
@@ -150,6 +200,11 @@ struct PhotoEditorView: View {
                 }
             } else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
         }
+        #if DEBUG
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+            model.photoViewportFrameForTesting = $0
+        }
+        #endif
     }
     private var watermarkPopupVisible: Bool {
         model.tool == .watermark && model.editorControlsVisible
@@ -165,7 +220,7 @@ struct PhotoEditorView: View {
         return bottom > 0 ? 55 : 0
     }
     private var toolBar: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 0) {
             toolButton(.crop, icon: "crop") { cropRulerControl = .straighten; model.enterCrop() }
             toolButton(.filters, icon: "camera.filters") {
                 if !model.filterPopupVisible { filters.showStrength = false }
@@ -174,10 +229,9 @@ struct PhotoEditorView: View {
             toolButton(.watermark, icon: "photo.artframe") { model.toggleEditorControls(.watermark) }
             Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); model.presentSaveOptions() } label: {
                 ZStack {
-                    Circle().fill(AppTheme.accent)
-                    if model.saving { ProgressView().tint(.black) }
-                    else { Text("保存").rotatingCaptureContent().font(.system(size: 12, weight: .semibold)).foregroundStyle(.black) }
-                }.frame(width: 44, height: 44)
+                    if model.saving { ProgressView().tint(.white) }
+                    else { Image(systemName: "square.and.arrow.down").font(.system(size: 20)).foregroundStyle(.white.opacity(0.8)) }
+                }.frame(width: 44, height: 44).frame(maxWidth: .infinity).contentShape(Rectangle())
             }.disabled(model.preview == nil || model.saving).accessibilityLabel("保存编辑")
         }.frame(maxWidth: .infinity).buttonStyle(.plain)
     }
@@ -185,8 +239,7 @@ struct PhotoEditorView: View {
         Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); action() } label: {
             let active = tool == .filters ? model.filterPopupVisible : (model.tool == tool && model.editorControlsVisible)
             Image(systemName: icon).rotatingCaptureContent().font(.system(size: 20)).foregroundStyle(active ? AppTheme.accent : .white.opacity(0.8))
-                .frame(width: 44, height: 44).modifier(PopupSurface(radius: 22, glass: true))
-                .overlay(Circle().stroke(active ? AppTheme.accent.opacity(0.65) : .clear, lineWidth: 1))
+                .frame(width: 44, height: 44).frame(maxWidth: .infinity)
                 .contentShape(Circle())
                 .animation(.easeInOut(duration: reduceMotion ? 0.1 : 0.18), value: model.tool)
         }.accessibilityLabel("照片编辑" + tool.rawValue).accessibilityAddTraits(
@@ -389,10 +442,19 @@ struct PhotoEditorView: View {
         }
     }
     private var saveDialog: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Color.black.opacity(0.3).ignoresSafeArea().contentShape(Rectangle()).onTapGesture { model.dismissSaveOptions() }
             VStack(spacing: 16) {
-                Text("保存编辑后的照片").font(.system(size: 17, weight: .semibold))
+                HStack {
+                    Text("保存编辑后的照片").font(.system(size: 15, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                    Spacer(minLength: 8)
+                    Button { model.dismissSaveOptions() } label: {
+                        Image(systemName: "xmark").font(.system(size: 13, weight: .semibold))
+                            .frame(width: 30, height: 30)
+                            .background(.white.opacity(0.10), in: Circle())
+                            .contentShape(Circle())
+                    }.buttonStyle(.plain).accessibilityLabel("关闭保存选项")
+                }
                 if model.session.supportsLiveEditing {
                     HStack(spacing: 8) {
                         liveSaveMode("保留 Live", icon: "livephoto", live: true)
@@ -402,14 +464,23 @@ struct PhotoEditorView: View {
                 if model.session.supportsLiveEditing && !model.preservesLive {
                     saveChoice("另存静态照片", subtitle: "仅保存编辑后的照片，原 Live 保留", asCopy: true)
                 } else {
-                    if model.session.supportsSaveCopy {
-                        saveChoice("另存一张", subtitle: model.session.supportsLiveEditing ? "照片与动态片段同步编辑，保留声音" : "保留原照片，保存一张编辑后的副本", asCopy: true)
+                    HStack(spacing: 10) {
+                        if model.session.supportsSaveCopy {
+                            saveChoice("另存一张", subtitle: model.session.supportsLiveEditing ? "照片与动态片段同步编辑，保留声音" : "保留原照片，保存编辑副本", asCopy: true)
+                        }
+                        saveChoice(model.session.supportsSaveCopy ? "覆盖原图" : "保存照片", subtitle: model.session.supportsLiveEditing ? "更新完整 Live，可在系统照片中还原" : (model.session.supportsSaveCopy ? "更新当前照片，可在系统照片中还原" : "保存当前编辑结果"), asCopy: false)
                     }
-                    saveChoice(model.session.supportsSaveCopy ? "覆盖原片" : "保存照片", subtitle: model.session.supportsLiveEditing ? "更新完整 Live，可在系统照片中还原" : (model.session.supportsSaveCopy ? "更新当前照片，可在系统照片中还原" : "保存当前编辑结果"), asCopy: false)
                 }
-                Button("取消") { model.dismissSaveOptions() }.font(.system(size: 14)).frame(height: 36)
-            }.padding(22).frame(maxWidth: 320).modifier(PopupSurface(radius: 28, glass: true)).orientedPopup(maximumWidth: 320)
-        }
+            }
+            .padding(16).frame(maxWidth: .infinity)
+            .modifier(PopupSurface(radius: 28, glass: true))
+            #if DEBUG
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                model.captureButtonFramesForTesting["photo.save.popup"] = $0
+            }
+            #endif
+            .padding(.horizontal, 10).padding(.bottom, 10)
+        }.ignoresSafeArea(edges: .bottom)
     }
     private func liveSaveMode(_ title: String, icon: String, live: Bool) -> some View {
         Button {
@@ -425,8 +496,8 @@ struct PhotoEditorView: View {
         Button { model.save(asCopy: asCopy) { result in onSaved(result); dismiss() } } label: {
             VStack(spacing: 5) {
                 Text(title).font(.system(size: 15, weight: .semibold)).foregroundStyle(AppTheme.accent)
-                Text(subtitle).font(.system(size: 11)).foregroundStyle(.white.opacity(0.65))
-            }.frame(maxWidth: .infinity).padding(.vertical, 14).background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+                Text(subtitle).font(.system(size: 11)).foregroundStyle(.white.opacity(0.65)).multilineTextAlignment(.center).lineLimit(3).minimumScaleFactor(0.85)
+            }.padding(.horizontal, 8).frame(maxWidth: .infinity).frame(height: 90).background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
         }.buttonStyle(.plain)
     }
     private var resetDialog: some View {

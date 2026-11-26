@@ -50,7 +50,7 @@ struct GalleryStableActionStyle: ButtonStyle {
     }
 }
 
-private struct GalleryActivityRing: View {
+struct GalleryActivityRing: View {
     let tint: Color
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0/30)) { timeline in

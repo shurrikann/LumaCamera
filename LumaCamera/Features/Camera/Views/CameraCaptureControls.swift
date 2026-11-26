@@ -20,6 +20,7 @@ struct ShootingModeButtonSymbol: View {
 struct CaptureParameterReadout: View {
     let label: String
     let value: String
+    let isAutomatic: Bool
 
     var body: some View {
         VStack(spacing: 3) {
@@ -28,9 +29,9 @@ struct CaptureParameterReadout: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
         }
-        .foregroundStyle(AppTheme.accent)
+        .foregroundStyle(isAutomatic ? .white : AppTheme.accent)
         .rotatingCaptureContent()
-        .previewControlContrast(accent: true)
+        .previewControlContrast(accent: !isAutomatic)
         .frame(width: 42, height: 42)
         .contentShape(Rectangle())
     }
@@ -130,7 +131,8 @@ extension CameraView {
                             CameraHaptics.impact(.light)
                             model.openParameter(item)
                         } label: {
-                            CaptureParameterReadout(label: item.readoutLabel, value: model.parameterReadout(item))
+                            CaptureParameterReadout(label: item.readoutLabel, value: model.parameterReadout(item),
+                                                    isAutomatic: model.isParameterAutomatic(item))
                                 .frame(maxWidth: .infinity)
                                 .contentShape(Rectangle())
                         }
@@ -425,7 +427,7 @@ extension CameraView {
                         } else { Image(systemName: "photo").foregroundStyle(.gray).rotatingCaptureContent() }
                     }
                     .frame(width: size, height: size)
-                }.frame(width: size, height: size).clipShape(Circle()).modifier(GlassSurface(radius: size / 2))
+                }.frame(width: size, height: size).clipShape(Circle()).modifier(CaptureAlbumGlassSurface())
                 .overlay {
                     if albumPendingCount > 0 {
                         ProgressView().controlSize(.small).tint(.white)

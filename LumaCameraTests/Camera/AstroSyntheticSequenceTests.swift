@@ -6,6 +6,61 @@ import XCTest
 @testable import LumaCamera
 
 final class AstroSyntheticSequenceTests: XCTestCase {
+    func testEffectiveFrameBudgetAllowsBoundedReplacement() {
+        for target in [2, 10, 30, 60] {
+            let budget = AstroPhotoFrameBudget(target: target)
+            XCTAssertTrue(budget.shouldContinue(accepted: target - 1, attempted: target))
+            XCTAssertFalse(budget.shouldContinue(accepted: target, attempted: target))
+            XCTAssertFalse(budget.shouldContinue(accepted: 0, attempted: budget.maximumAttempts))
+            XCTAssertLessThanOrEqual(budget.maximumAttempts, target * 2 + 3)
+        }
+    }
+
+    func testFailedStarMatchDoesNotEnterStackAndFollowingFrameRecovers() throws {
+        var scene = AstroSyntheticScene(); scene.readNoise = 0; scene.shotNoise = 0
+        let reference = scene.frame(0)
+        let registration = AstroSceneRegistration(reference: reference, context: context)
+        let blank = CIImage(color: CIColor(red: 0.03, green: 0.03, blue: 0.03)).cropped(to: scene.extent)
+        _ = registration.align(blank)
+        XCTAssertEqual(registration.lastStarAlignmentSucceeded, false)
+        var stack = AstroPhotoStackProcessor(context: context, linearSpace: AstroSyntheticScene.colorSpace)
+        XCTAssertTrue(stack.append(reference))
+        XCTAssertTrue(stack.append(blank))
+        XCTAssertEqual(stack.acceptedFrames, 1)
+        XCTAssertTrue(stack.append(scene.frame(1, motion: scene.motion(dx: 2, dy: -1, rotation: 0.01))))
+        XCTAssertEqual(stack.acceptedFrames, 2)
+    }
+
+    func testStackWorkerRunsOffMainAndIsolatesCancelledCaptures() async throws {
+        var scene = AstroSyntheticScene(); scene.readNoise = 0; scene.shotNoise = 0
+        let data = try XCTUnwrap(context.tiffRepresentation(of: scene.frame(0), format: .RGBAh, colorSpace: AstroSyntheticScene.colorSpace))
+        let worker = AstroPhotoStackWorker()
+        let began = CACurrentMediaTime()
+        for _ in 0..<3 {
+            let old = UUID(), current = UUID()
+            worker.begin(old); worker.cancel(old); worker.begin(current)
+            let stale: AstroPhotoStackWorker.Snapshot? = await withCheckedContinuation { continuation in
+                worker.append(data, id: old) { snapshot in continuation.resume(returning: snapshot) }
+            }
+            XCTAssertNil(stale)
+            let output: AstroPhotoStackWorker.Snapshot? = await withCheckedContinuation { continuation in
+                worker.append(data, id: current) { snapshot in
+                    XCTAssertFalse(Thread.isMainThread)
+                    continuation.resume(returning: snapshot)
+                }
+            }
+            XCTAssertEqual(output?.acceptedFrames, 1)
+            let finished: AstroPhotoStackWorker.Snapshot? = await withCheckedContinuation { continuation in
+                worker.finish(id: current, iso: 800) { snapshot in
+                    XCTAssertFalse(Thread.isMainThread)
+                    continuation.resume(returning: snapshot)
+                }
+            }
+            XCTAssertEqual(finished?.rendered?.width, scene.width)
+            XCTAssertEqual(finished?.acceptedFrames, 1)
+        }
+        print("ASTRO-WORKER cycles=3 pixels=512x512 elapsedSeconds=\(CACurrentMediaTime() - began) staleCallbacksRejected=3")
+    }
     private let context = CIContext(options: [
         .workingColorSpace: AstroSyntheticScene.colorSpace,
         .workingFormat: CIFormat.RGBAh

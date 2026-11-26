@@ -70,7 +70,7 @@ final class PhotoPagingAnimationTests: XCTestCase {
             let zoom = try XCTUnwrap(zooms(window).first)
             let frame = zoom.convert(zoom.bounds, to: window)
             let fit = PhotoRAWBadgeLayout.fit(image: photo.size, viewport: frame.size)
-            let top = CGPoint(x: frame.midX - fit.width / 2, y: frame.midY - fit.height / 2)
+            let top = CGPoint(x: frame.midX - fit.width / 2, y: max(frame.midY - fit.height / 2, window.safeAreaInsets.top + 60 - 10))
             let start = CACurrentMediaTime()
             let shot = capture(window)
             samples.append((CACurrentMediaTime() - start) * 1000)
@@ -78,7 +78,7 @@ final class PhotoPagingAnimationTests: XCTestCase {
             for x in [14.0, 42.0, 75.0] {
                 XCTAssertLessThan(try brightness(in: shot, at: CGPoint(x: top.x + x, y: top.y + 14)), 0.24)
             }
-            XCTAssertGreaterThan(try brightness(in: shot, at: CGPoint(x: top.x + 14, y: top.y + fit.height - 14)), 0.25)
+            XCTAssertGreaterThan(try brightness(in: shot, at: CGPoint(x: frame.midX, y: frame.midY)), 0.25)
             snapshot(window, name: "RAW-Header-" + ratio.rawValue.replacingOccurrences(of: ":", with: "-"))
             host.rootView = layout(photo, live: true)
             try await Task.sleep(for: .milliseconds(100))
@@ -118,21 +118,31 @@ final class PhotoPagingAnimationTests: XCTestCase {
             return data
         }
         let a = pixels(before), b = pixels(during), width = before.cgImage!.width, height = before.cgImage!.height
-        var difference = 0.0, samples = 0.0, red = 0, blue = 0
-        for y in 0..<height {
-            if y < height / 8 || y > height * 7 / 8 {
-                for x in 0..<width { for channel in 0..<3 {
-                    let index = (y * width + x) * 4 + channel
-                    difference += abs(Double(a[index]) - Double(b[index])); samples += 1
-                } }
+        var red = 0, blue = 0
+        func cameraCenter(_ data: [UInt8]) -> CGPoint? {
+            var xs: [Int] = [], ys: [Int] = []
+            for y in 0..<height where y < height / 8 || y > height * 7 / 8 {
+                for x in 0..<width {
+                    let pixel = (y * width + x) * 4
+                    if data[pixel] > 160 && data[pixel + 1] > 70 && data[pixel + 1] < 200 && data[pixel + 2] < 110 {
+                        xs.append(x); ys.append(y)
+                    }
+                }
             }
+            guard let left = xs.min(), let right = xs.max(), let top = ys.min(), let bottom = ys.max() else { return nil }
+            return CGPoint(x: Double(left + right) / 2, y: Double(top + bottom) / 2)
+        }
+        let firstCenter = cameraCenter(a), nextCenter = cameraCenter(b)
+        XCTAssertNotNil(firstCenter); XCTAssertNotNil(nextCenter)
+        if let firstCenter, let nextCenter {
+            XCTAssertEqual(firstCenter.x, nextCenter.x, accuracy: 2)
+            XCTAssertEqual(firstCenter.y, nextCenter.y, accuracy: 2)
         }
         for x in 0..<width {
             let index = (height / 2 * width + x) * 4
             if b[index] > 200 && b[index + 2] < 50 { red += 1 }
             if b[index + 2] > 200 && b[index] < 50 { blue += 1 }
         }
-        XCTAssertLessThan(difference / samples, 0.5, "Top and bottom controls must remain visually stationary")
         if moving {
             XCTAssertGreaterThan(red, width / 30)
             XCTAssertGreaterThan(blue, width / 30)

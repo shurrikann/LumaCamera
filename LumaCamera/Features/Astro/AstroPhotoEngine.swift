@@ -78,18 +78,16 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
     nonisolated let previewFrames = AstroPreviewFrameStore()
     private let previewQueue = DispatchQueue(label: "camera.star-photo.preview")
     private let sessionQueue: DispatchQueue
-    private let linearSpace = CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
-    private let context = CIContext(options: [
-        .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!,
-        .workingFormat: CIFormat.RGBAh,
-        .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
-    ])
     nonisolated private let deviceSlot = LockedCaptureValue<AVCaptureDevice?>(nil)
     nonisolated private var device: AVCaptureDevice? {
         get { deviceSlot.value }
         set { deviceSlot.value = newValue }
     }
-    private lazy var stack = AstroPhotoStackProcessor(context: context, linearSpace: linearSpace)
+    private let stackWorker = AstroPhotoStackWorker()
+    private var frameBudget = AstroPhotoFrameBudget(target: 10)
+    private var attemptedFrames = 0
+    private var deadlineTask: Task<Void, Never>?
+    private var forceSaveOnFinish = false
     private let previewExposureGate = AstroPreviewExposureGate()
     nonisolated private let recoveryIDSlot = LockedCaptureValue<UUID?>(nil)
     nonisolated private var recoveryID: UUID? {
@@ -287,7 +285,11 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         isCapturing = true
         result = nil
         capturedFrames = 0
-        stack.reset()
+        stackWorker.begin(recovery)
+        frameBudget = AstroPhotoFrameBudget(target: frameCount)
+        attemptedFrames = 0
+        forceSaveOnFinish = false
+        deadlineTask?.cancel(); deadlineTask = nil
         framePTS = []
         lastExposureReading = nil
         info = ""
@@ -311,6 +313,12 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
                         self.capturing = true
                         self.status = "正在拍摄 RAW 星空照片 0/\(target)"
                         self.acceptedAt = CACurrentMediaTime()
+                        let limit = max(45, Double(self.frameBudget.maximumAttempts) * (reading.sensorSeconds + 2))
+                        self.deadlineTask = Task { @MainActor [weak self = self] in
+                            try? await Task.sleep(for: .seconds(limit))
+                            guard !Task.isCancelled, let self, self.recoveryID == recovery, self.capturing else { return }
+                            self.finish()
+                        }
                         self.captureNext(rawType: rawType)
                     }
                 case .failure(let error):
@@ -354,29 +362,24 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
                     if let aperture = rawFrame.aperture, aperture.isFinite, aperture > 0 {
                         self.captureOptions.parameters?.aperture = aperture
                     }
-                    guard let image = CIImage(data: rawFrame.data) else {
-                        self.fail("DNG 解码失败")
-                        return
-                    }
-                    guard self.stack.append(image) else {
-                        self.fail("RAW 累积失败")
-                        return
-                    }
-                    self.framePTS.append(CACurrentMediaTime())
-                    self.capturedFrames += 1
-                    if let id = self.recoveryID,
-                       let image = self.stack.stackedImage() {
-                        self.captureOptions.frameCount = self.stack.acceptedFrames
-                        AstroRecoveryStore.shared.checkpoint(id: id, image: image, options: self.captureOptions)
-                    }
-                    self.status = "正在拍摄 RAW 星空照片 \(self.capturedFrames)/\(self.frameCount)"
-                    if self.capturedFrames >= self.frameCount {
-                        self.finish()
-                    } else {
+                    self.attemptedFrames += 1
+                    guard let captureID else { return }
+                    self.stackWorker.append(rawFrame.data, id: captureID) { [weak self] snapshot in
                         Task { @MainActor [weak self] in
-                            try? await Task.sleep(for: .milliseconds(60))
                             guard let self, self.capturing, self.recoveryID == captureID else { return }
-                            self.captureNext(rawType: rawType)
+                            guard let snapshot else { self.fail("RAW 累积失败"); return }
+                            self.capturedFrames = snapshot.acceptedFrames
+                            self.framePTS.append(CACurrentMediaTime())
+                            if let image = snapshot.image {
+                                self.captureOptions.frameCount = snapshot.acceptedFrames
+                                AstroRecoveryStore.shared.checkpoint(id: captureID, image: image, options: self.captureOptions)
+                            }
+                            self.status = "正在拍摄 RAW 星空照片 \(self.capturedFrames)/\(self.frameBudget.target)"
+                            if self.frameBudget.shouldContinue(accepted: self.capturedFrames, attempted: self.attemptedFrames) {
+                                self.captureNext(rawType: rawType)
+                            } else {
+                                self.finish()
+                            }
                         }
                     }
                 case .failure(let error):
@@ -389,7 +392,8 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
     }
 
     private func fail(_ message: String) {
-        if let id = recoveryID { AstroRecoveryStore.shared.keep(id) }
+        if let id = recoveryID { AstroRecoveryStore.shared.keep(id); stackWorker.cancel(id) }
+        deadlineTask?.cancel(); deadlineTask = nil
         capturing = false
         isCapturing = false
         error = message
@@ -399,12 +403,12 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
 
     func cancel() {
         guard !isSaving else { return }
-        if let id = recoveryID { AstroRecoveryStore.shared.discard(id); recoveryID = nil }
+        if let id = recoveryID { AstroRecoveryStore.shared.discard(id); stackWorker.cancel(id); recoveryID = nil }
+        deadlineTask?.cancel(); deadlineTask = nil
 
         capturing = false
         isCapturing = false
         rawDelegates.removeAll()
-        stack.releaseFrames()
         result = nil
         capturedFrames = 0
         status = "已取消"
@@ -422,24 +426,28 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
     }
 
     private func finish() {
-        guard capturing else { return }
+        guard capturing, let id = recoveryID else { return }
         capturing = false
-        isCapturing = false
+        deadlineTask?.cancel(); deadlineTask = nil
         status = "正在合成 RAW 堆栈"
-        guard let finished = stack.finishedImage(iso: captureOptions.iso) else {
-            fail("没有可合成帧"); return
+        let iso = captureOptions.iso
+        stackWorker.finish(id: id, iso: iso) { [weak self] snapshot in
+            Task { @MainActor [weak self] in
+                guard let self, self.recoveryID == id, self.isCapturing else { return }
+                guard let snapshot, let cg = snapshot.rendered else { self.fail("没有可合成帧"); return }
+                self.result = UIImage(cgImage: cg)
+                self.capturedFrames = snapshot.acceptedFrames
+                self.captureOptions.frameCount = snapshot.acceptedFrames
+                if !self.autoSaveOnFinish, !self.forceSaveOnFinish, let image = snapshot.image {
+                    AstroRecoveryStore.shared.checkpoint(id: id, image: image, options: self.captureOptions, final: true)
+                }
+                self.info = "\(cg.width)x\(cg.height) · \(snapshot.acceptedFrames) 帧有效 RAW · 3 组中值"
+                self.status = "RAW 星空照片完成"
+                self.isCapturing = false
+                self.restoreAfterCapture()
+                if self.autoSaveOnFinish || self.forceSaveOnFinish { self.save() }
+            }
         }
-        guard let cg = context.createCGImage(finished, from: stack.extent) else { fail("合成失败"); return }
-        result = UIImage(cgImage: cg)
-        captureOptions.frameCount = stack.acceptedFrames
-        if !autoSaveOnFinish, let id = recoveryID {
-            AstroRecoveryStore.shared.checkpoint(id: id, image: finished, options: captureOptions, final: true)
-        }
-        stack.releaseFrames()
-        info = "\(cg.width)x\(cg.height) · \(stack.acceptedFrames) 帧有效 RAW · 3 组中值"
-        status = "RAW 星空照片完成"
-        restoreAfterCapture()
-        if autoSaveOnFinish { save() }
     }
 
     func keepResultForRecovery() {
@@ -450,8 +458,8 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         guard isCapturing || capturing else { return }
         guard capturedFrames > 0 else { cancel(); return }
         if let id = recoveryID { AstroRecoveryStore.shared.protect(id) }
+        forceSaveOnFinish = true
         finish()
-        if !autoSaveOnFinish, result != nil { save() }
     }
 
     func save() {
@@ -496,6 +504,9 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
     func stop() {
         switchingLens = false
         startRevision = UUID()
+        deadlineTask?.cancel(); deadlineTask = nil
+        if let id = recoveryID { stackWorker.cancel(id) }
+        isCapturing = false
         guard started else { return }
         capturing = false
         started = false

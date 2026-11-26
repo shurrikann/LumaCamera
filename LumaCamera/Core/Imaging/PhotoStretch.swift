@@ -17,10 +17,10 @@ struct PhotoStretch: Codable, Equatable {
              vertical: vertical.isFinite ? min(max(vertical, -0.5), 0.5) : 0)
     }
 
-    func apply(to image: CIImage) -> CIImage {
+    func apply(to image: CIImage, referenceExtent: CGRect? = nil, preservesOutside: Bool = false) -> CIImage {
         let value = clamped
         guard !value.isIdentity else { return image }
-        let extent = image.extent
+        let extent = referenceExtent ?? image.extent
         guard extent.width > 1, extent.height > 1 else { return image }
 
         // 0.5 at the ±50% detent gives a strongly visible keystone while
@@ -37,21 +37,24 @@ struct PhotoStretch: Codable, Equatable {
                                   y: extent.minY + rightInset * extent.height)
         let bottomLeft = CGPoint(x: extent.minX + bottomInset * extent.width,
                                  y: extent.minY + leftInset * extent.height)
-        guard let output = CIFilter(name: "CIPerspectiveCorrection", parameters: [
+        var parameters: [String: Any] = [
             kCIInputImageKey: image,
             "inputTopLeft": CIVector(cgPoint: topLeft),
             "inputTopRight": CIVector(cgPoint: topRight),
             "inputBottomRight": CIVector(cgPoint: bottomRight),
             "inputBottomLeft": CIVector(cgPoint: bottomLeft),
             "inputCrop": true
-        ])?.outputImage else { return image }
-        let outputExtent = output.extent
+        ]
+        guard let cropped = CIFilter(name: "CIPerspectiveCorrection", parameters: parameters)?.outputImage else { return image }
+        parameters["inputCrop"] = !preservesOutside
+        guard let output = preservesOutside ? CIFilter(name: "CIPerspectiveCorrection", parameters: parameters)?.outputImage : cropped else { return image }
+        let outputExtent = cropped.extent
         guard outputExtent.width > 1, outputExtent.height > 1 else { return image }
-        return output
+        let transformed = output
             .transformed(by: CGAffineTransform(translationX: -outputExtent.minX, y: -outputExtent.minY))
             .transformed(by: CGAffineTransform(scaleX: extent.width / outputExtent.width,
                                                y: extent.height / outputExtent.height))
             .transformed(by: CGAffineTransform(translationX: extent.minX, y: extent.minY))
-            .cropped(to: extent)
+        return preservesOutside ? transformed : transformed.cropped(to: extent)
     }
 }

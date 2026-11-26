@@ -3,6 +3,33 @@ import XCTest
 @testable import LumaCamera
 
 final class CaptureStatePersistenceTests: XCTestCase {
+    @MainActor func testManualEVAtZeroPersistsAndAutoClearsIt() throws {
+        let name = "ManualEV-" + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
+        defer { defaults.removePersistentDomain(forName: name) }
+        let store = CapturePreferencesStore(defaults: defaults)
+        let model = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
+        model.mode = .manual
+        model.parameter = .ev
+        model.ev = 0
+        model.manualEV = true
+        XCTAssertFalse(model.parameterAutomatic)
+        model.flushCaptureSettings()
+        XCTAssertEqual(store.loadCaptureState()?.manual.exposureBiasManual, true)
+        let restored = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
+        XCTAssertFalse(restored.isParameterAutomatic(.ev))
+        model.activateParameterAuto()
+        XCTAssertTrue(model.parameterAutomatic)
+        model.flushCaptureSettings()
+        XCTAssertEqual(store.loadCaptureState()?.manual.exposureBiasManual, false)
+        var state = try XCTUnwrap(store.loadCaptureState())
+        state.manual.ev = 1.1
+        state.manual.exposureBiasManual = nil
+        store.saveCaptureState(state)
+        let legacy = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
+        XCTAssertFalse(legacy.isParameterAutomatic(.ev))
+    }
+
     @MainActor func testFourReportedCaptureSettingsAfterRealModeTransitions() async throws {
         let visible = try XCTUnwrap(AppDependencies.runningAppCameraModel)
         let name = "CapturePersistencePhysical-" + UUID().uuidString

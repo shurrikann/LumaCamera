@@ -577,6 +577,7 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
         case .accept: break
         }
         var frame = groupScene?.align(stable, ground: false) ?? stable
+        guard groupScene?.lastStarAlignmentSucceeded != false else { return nil }
         if let reference = fusionAccumulator, let sky = movieScene?.matte.image {
             frame = AstroTransientTracks.clean(frame,previous:reference,sky:sky,context:renderContext)
             frame = AstroSignalProtection.temporalClean(frame,reference:reference,noise:statistics.noise,sky:sky)

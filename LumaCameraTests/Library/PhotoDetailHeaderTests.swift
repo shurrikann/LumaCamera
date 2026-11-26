@@ -23,6 +23,91 @@ final class PhotoDetailHeaderTests: XCTestCase {
         XCTAssertEqual(PhotoRAWBadgeLayout.fit(image: CGSize(width: CGFloat.nan, height: 10), viewport: viewport), .zero)
     }
 
+    @MainActor func testFullscreenPhotoAndFloatingControls() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let host = UIHostingController(rootView: AnyView(Color.black))
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = host; window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        func zoom(in view: UIView) -> PhotoZoomScrollView? {
+            if let photo = view as? PhotoZoomScrollView { return photo }
+            return view.subviews.lazy.compactMap { zoom(in: $0) }.first
+        }
+        var costs: [Double] = []
+        for width in [CGFloat(320), scene.screen.bounds.width] {
+            for size in [CGSize(width: 300, height: 400), CGSize(width: 400, height: 300), CGSize(width: 300, height: 300)] {
+                let source = UIGraphicsImageRenderer(size: size).image { context in
+                    DemoImageFactory.make().draw(in: CGRect(origin: .zero, size: size))
+                }
+                host.rootView = AnyView(PhotoViewerLayout(
+                    image: source, date: Date(), hasFilter: true,
+                    onBack: {}, onCamera: {}, onShare: {}, onInfo: {}, onEdit: {}, onDelete: {}
+                ).frame(width: width).frame(maxWidth: .infinity).preferredColorScheme(.dark))
+                try await Task.sleep(for: .milliseconds(200))
+                let scroll = try XCTUnwrap(zoom(in: window))
+                scroll.layoutIfNeeded()
+                XCTAssertEqual(scroll.bounds.width, width, accuracy: 1)
+                XCTAssertGreaterThanOrEqual(scroll.bounds.height, window.bounds.height - 1)
+                let displayed = scroll.photoView.convert(scroll.photoView.bounds, to: scroll)
+                XCTAssertTrue(scroll.bounds.insetBy(dx: -1, dy: -1).contains(displayed))
+                XCTAssertEqual(displayed.width / displayed.height, size.width / size.height, accuracy: 0.01)
+                XCTAssertTrue(abs(displayed.width - scroll.bounds.width) < 1 || abs(displayed.height - scroll.bounds.height) < 1)
+                let start = CACurrentMediaTime()
+                let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                    window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+                }
+                costs.append((CACurrentMediaTime() - start) * 1000)
+                let attachment = XCTAttachment(image: image)
+                attachment.name = "Floating-Photo-\(Int(width))-\(Int(size.width))x\(Int(size.height))"
+                attachment.lifetime = .keepAlways; add(attachment)
+            }
+        }
+        print("FLOATING-PHOTO samples=\(costs.count) snapshotMs=\(costs)")
+    }
+
+    @MainActor func testSharePreparationKeepsDetailActionIconsFixed() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let host = UIHostingController(rootView: AnyView(Color.black))
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        let source = DemoImageFactory.make()
+        var frames: [String: CGRect] = [:]
+        var baseline: [String: CGRect] = [:]
+        var times: [Double] = []
+        for cycle in 0..<4 {
+            for busy in [false, true, false] {
+                host.rootView = AnyView(PhotoViewerLayout(
+                    image: source, date: nil, busy: busy, shareBusy: busy,
+                    onBack: {}, onCamera: {}, onShare: {}, onInfo: {}, onEdit: {}, onDelete: {},
+                    onActionFrameForTesting: { frames[$0] = $1 }
+                ).environment(\.captureControlAngle, 0).preferredColorScheme(.dark))
+                try await Task.sleep(for: .milliseconds(90))
+                for name in ["分享", "图片详情", "图片编辑", "删除"] {
+                    let frame = try XCTUnwrap(frames[name])
+                    XCTAssertGreaterThan(frame.width, 0)
+                    if let original = baseline[name] { XCTAssertEqual(frame, original, "状态变化不能移动图标") }
+                    else { baseline[name] = frame }
+                }
+                let start = CACurrentMediaTime()
+                let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                    window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+                }
+                times.append((CACurrentMediaTime() - start) * 1000)
+                if cycle == 0 {
+                    let attachment = XCTAttachment(image: shot)
+                    attachment.name = "Detail-Share-Stable-\(busy)"
+                    attachment.lifetime = .keepAlways
+                    add(attachment)
+                }
+            }
+        }
+        print("DETAIL-SHARE-STABLE transitions=12 snapshotMs=\(times)")
+    }
+
     @MainActor
     func testPhotoInfoParameterGridLayoutAndRepeatedDrawCost() async throws {
         #if targetEnvironment(simulator)

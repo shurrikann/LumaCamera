@@ -171,6 +171,46 @@ import XCTest
         #endif
     }
 
+    func testPhotoWorkerCancellationRestartAndMainActorResponsiveness() async throws {
+        #if targetEnvironment(simulator)
+        throw XCTSkip("Requires physical RAW")
+        #else
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        let engine = AstroPhotoEngine()
+        defer { engine.stop(); model.setCameraActive(false) }
+        engine.autoSaveOnFinish = false
+        engine.frameCount = 2
+        engine.manualSettings.isoAutomatic = true
+        engine.manualSettings.photoShutterSeconds = 1.0 / 15
+        engine.start(); try await wait { engine.session.isRunning }
+        for _ in 0..<3 {
+            engine.begin(); engine.cancel()
+            try await Task.sleep(for: .milliseconds(180))
+            XCTAssertFalse(engine.isCapturing); XCTAssertNil(engine.result)
+        }
+        var gaps: [Double] = []
+        let heartbeat = Task { @MainActor in
+            var previous = CACurrentMediaTime()
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(20))
+                if Task.isCancelled { break }
+                let now = CACurrentMediaTime(); gaps.append((now - previous) * 1000); previous = now
+            }
+        }
+        defer { heartbeat.cancel() }
+        let began = CACurrentMediaTime()
+        engine.begin()
+        try await wait(timeout: 60) { engine.result != nil || engine.error != nil }
+        heartbeat.cancel()
+        XCTAssertNil(engine.error); XCTAssertNotNil(engine.result)
+        XCTAssertFalse(engine.isCapturing)
+        XCTAssertGreaterThanOrEqual(engine.capturedFrames, 1)
+        XCTAssertGreaterThan(gaps.count, 10)
+        print("ASTRO-PHOTO-WORKER nativePixels=\(engine.result?.size ?? .zero) accepted=\(engine.capturedFrames) wallSeconds=\(CACurrentMediaTime() - began) heartbeatSamples=\(gaps.count) maxMainActorGapMs=\(gaps.max() ?? 0) cancelRestart=3 PhotosWrites=0; heartbeat is not FPS")
+        engine.cancel()
+        #endif
+    }
+
     func testRealTimelapseDurableFileCanBeLoadedByColdRecoveryStore() async throws {
         #if targetEnvironment(simulator)
         throw XCTSkip("Requires physical video")

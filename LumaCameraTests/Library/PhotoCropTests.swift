@@ -1,6 +1,7 @@
 import XCTest
 import CoreImage
 import UIKit
+import SwiftUI
 @testable import LumaCamera
 
 final class PhotoCropTests: XCTestCase {
@@ -55,6 +56,83 @@ final class PhotoCropTests: XCTestCase {
             if let data = model.preview?.pngData(), data != afterRotation { afterPerspective = data; break }
         }
         XCTAssertNotNil(afterPerspective, "透视参数必须实时更新裁剪预览")
+    }
+
+    func testCropOverflowRetainsTransformedPixelsAndMatchesSavedViewport() throws {
+        let source = CIImage(color: CIColor(red: 0.8, green: 0.4, blue: 0.2))
+            .cropped(to: CGRect(x: 0, y: 0, width: 320, height: 240))
+        let context = CIContext(options: [.useSoftwareRenderer: true])
+        for angle in [-22.0, 0, 22] {
+            for horizontal in [-0.35, 0, 0.35] {
+                for vertical in [-0.35, 0, 0.35] {
+                    var recipe = PhotoAdjustments()
+                    recipe.straightenAngle = angle
+                    recipe.stretch = PhotoStretch(horizontal: horizontal, vertical: vertical)
+                    let final = recipe.applyGeometry(to: source)
+                    let outside = recipe.applyGeometry(to: source, preservesOutside: true)
+                    XCTAssertTrue(outside.extent.insetBy(dx: -1, dy: -1).contains(final.extent))
+                    var normal = [Float](repeating: 0, count: 4)
+                    var overflow = normal
+                    let pixel = CGRect(x: 159, y: 119, width: 1, height: 1)
+                    context.render(final, toBitmap: &normal, rowBytes: 16, bounds: pixel,
+                                   format: .RGBAf, colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB))
+                    context.render(outside, toBitmap: &overflow, rowBytes: 16, bounds: pixel,
+                                   format: .RGBAf, colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB))
+                    for channel in 0..<4 { XCTAssertEqual(normal[channel], overflow[channel], accuracy: 0.01) }
+                    if angle != 0 { XCTAssertGreaterThan(outside.extent.width, final.extent.width) }
+                }
+            }
+        }
+    }
+
+    @MainActor func testCropOverflowPreviewRepeatedCorrectionsAndCancel() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let model = PhotoEditorViewModel(session: PhotoEditSession(source: CIImage(image: DemoImageFactory.make())!) { _, _ in },
+                                        library: PhotoLibraryViewModel(service: CropLibraryStub()))
+        let host = UIHostingController(rootView: PhotoEditorView(model: model))
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { model.cancelPreview(); window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        var samples: [Double] = []
+        for iteration in 0..<3 {
+            model.enterCrop()
+            for _ in 0..<100 {
+                if model.cropOverflowPreview != nil { break }
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            XCTAssertNotNil(model.cropOverflowPreview)
+            for angle in [-20.0, 20, 0] {
+                let old = model.cropOverflowPreview
+                let start = CACurrentMediaTime()
+                model.adjustments.straightenAngle = angle
+                model.adjustments.stretch.horizontal = angle == 0 ? 0 : 0.3
+                model.adjustments.stretch.vertical = angle == 0 ? 0 : -0.3
+                for _ in 0..<150 {
+                    if model.cropOverflowPreview !== old { break }
+                    try await Task.sleep(for: .milliseconds(10))
+                }
+                samples.append((CACurrentMediaTime() - start) * 1000)
+                XCTAssertNotNil(model.cropOverflowPreview)
+                if iteration == 0 {
+                    try await Task.sleep(for: .milliseconds(100))
+                    let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                        window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+                    }
+                    let attachment = XCTAttachment(image: image)
+                    attachment.name = "Crop-Overflow-\(Int(angle))"
+                    attachment.lifetime = .keepAlways
+                    add(attachment)
+                }
+            }
+            model.finishCrop(commit: false)
+            XCTAssertNil(model.cropOverflowPreview)
+            XCTAssertEqual(model.adjustments.straightenAngle, 0)
+            XCTAssertTrue(model.adjustments.stretch.isIdentity)
+        }
+        print("CROP-OVERFLOW samples=\(samples.count) publicationMs=\(samples)")
+        XCTAssertLessThan(samples.max() ?? .infinity, 1500)
     }
 
     func testCropUsesDisplayedTopLeftAndHandlesInvalidOrExcessiveGestures() {

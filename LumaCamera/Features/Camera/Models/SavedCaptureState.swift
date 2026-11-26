@@ -77,4 +77,6 @@ struct SavedManualCaptureState: Codable, Equatable {
     var tint = 0.0
     var focus = 0.5
     var ev = 0.0
+    // Optional for files saved before EV acquired its own automatic/manual state.
+    var exposureBiasManual: Bool? = nil
 }

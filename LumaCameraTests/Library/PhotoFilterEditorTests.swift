@@ -207,10 +207,12 @@ final class PhotoFilterEditorTests: XCTestCase {
                 }
                 let frame = model.photoViewportFrameForTesting
                 let toolbar = try XCTUnwrap(model.captureButtonFramesForTesting["photo.editor.toolbar"])
+                XCTAssertEqual(toolbar.width, 264, accuracy: 1)
+                XCTAssertEqual(toolbar.midX, width / 2, accuracy: 1)
                 model.toggleEditorControls(.filters)
                 try await Task.sleep(for: .milliseconds(260))
                 XCTAssertTrue(model.filterPopupVisible)
-                XCTAssertGreaterThan(model.photoViewportFrameForTesting.height, frame.height, "滤镜选择页应把空白还给照片")
+                XCTAssertGreaterThan(model.photoViewportFrameForTesting.height, frame.height, "收起调节区后恢复原有照片预览空间")
                 XCTAssertEqual(model.captureButtonFramesForTesting["photo.editor.toolbar"]?.minY ?? -1, toolbar.minY, accuracy: 1)
                 model.closeEditorControls()
                 try await Task.sleep(for: .milliseconds(260))
@@ -279,6 +281,44 @@ final class PhotoFilterEditorTests: XCTestCase {
         model.save { _ in }
         XCTAssertEqual(saved, model.adjustments); XCTAssertFalse(library.editing)
         model.cancelPreview()
+    }
+    @MainActor func testPhotoSavePopupUsesBottomLayoutAndKeepsDraftOnDismiss() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let window = UIWindow(windowScene: scene)
+        let host = UIHostingController(rootView: AnyView(Color.black))
+        window.rootViewController = host; window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        let model = PhotoEditorViewModel(session: PhotoEditSession(source: source, copy: { _, _ in }) { _, _ in },
+                                        library: PhotoLibraryViewModel(service: FilterEditLibraryStub()))
+        defer { model.cancelPreview() }
+        model.selectFilter(.fujiNC)
+        let draft = model.adjustments
+        var costs: [Double] = []
+        for width: CGFloat in [320, 402] {
+            window.frame = CGRect(x: 0, y: 0, width: width, height: 844)
+            host.rootView = AnyView(PhotoEditorView(model: model))
+            for _ in 0..<3 {
+                model.presentSaveOptions()
+                try await Task.sleep(for: .milliseconds(250))
+                let popup = try XCTUnwrap(model.captureButtonFramesForTesting["photo.save.popup"])
+                XCTAssertEqual(popup.width, width - 20, accuracy: 1)
+                XCTAssertEqual(popup.maxY, window.bounds.maxY - 10, accuracy: 1)
+                XCTAssertEqual(popup.midX, width / 2, accuracy: 1)
+                let start = CACurrentMediaTime()
+                let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                    window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+                }
+                costs.append((CACurrentMediaTime() - start) * 1000)
+                let attachment = XCTAttachment(image: shot); attachment.name = "Photo-Save-Bottom-\(Int(width))"
+                attachment.lifetime = .keepAlways; add(attachment)
+                model.dismissSaveOptions()
+                XCTAssertFalse(model.saveOptionsVisible)
+                XCTAssertEqual(model.adjustments, draft)
+                try await Task.sleep(for: .milliseconds(100))
+            }
+        }
+        print("PHOTO-SAVE-BOTTOM samples=\(costs.count) snapshotMs=\(costs); not FPS")
     }
     @MainActor func testSaveChoicesPreserveRecipeRouteAndRejectRepeatedSave() throws {
         let library = PhotoLibraryViewModel(service: FilterEditLibraryStub())

@@ -18,6 +18,8 @@ struct SystemVideoView: View {
     var playbackAssetForTesting: AVAsset?
     var onLayoutForTesting: (([String: CGRect]) -> Void)?
     var infoVisibleForTesting: Bool?
+    var playingForTesting: Bool?
+    var onPlaybackVisibilityForTesting: ((Bool) -> Void)?
     #endif
 
     @Environment(\.dismiss) private var dismiss
@@ -47,9 +49,15 @@ struct SystemVideoView: View {
     @State private var pageSwipeCapturing = false
 
     var body: some View {
+        GeometryReader { geometry in
+            detail(bottomInset: geometry.safeAreaInsets.bottom)
+        }
+    }
+
+    private func detail(bottomInset: CGFloat) -> some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            mediaCanvas
+            mediaCanvas(bottomInset: bottomInset).ignoresSafeArea()
         }
         .overlay {
             if detailsVisible {
@@ -58,8 +66,22 @@ struct SystemVideoView: View {
                     .transition(.opacity)
             }
         }
-        .safeAreaInset(edge: .top, spacing: 0) { topBar }
-        .safeAreaInset(edge: .bottom, spacing: 0) { bottomBar }
+        .overlay(alignment: .top) {
+            topBar.opacity(isPlaying ? 0 : 1).allowsHitTesting(!isPlaying).accessibilityHidden(isPlaying)
+                .animation(popupAnimation, value: isPlaying)
+        }
+        .overlay(alignment: .bottom) {
+            bottomBar
+                .frame(width: 300)
+                .background {
+                    Color.clear.frame(height: 50)
+                        .modifier(PreviewSurface(radius: 25, opacity: AppTheme.popupOpacity, interactive: false))
+                }
+                .padding(.bottom, 12)
+                .opacity(isPlaying ? 0 : 1)
+                .allowsHitTesting(!isPlaying).accessibilityHidden(isPlaying)
+                .animation(popupAnimation, value: isPlaying)
+        }
         .overlayPreferenceValue(VideoPopupAnchorKey.self) { anchors in
             GeometryReader { geometry in
                 if detailsVisible, let anchor = anchors[.info] {
@@ -96,7 +118,20 @@ struct SystemVideoView: View {
             #endif
         }
         .onAppear { active = true; load(); if pageMotion == nil { onPageFinished?() } }
+        .onChange(of: isPlaying) { _, playing in
+            if playing {
+                detailsTask?.cancel()
+                closeDetails()
+            }
+            #if DEBUG
+            onPlaybackVisibilityForTesting?(playing)
+            #endif
+        }
         #if DEBUG
+        .task(id: playingForTesting) {
+            if let playingForTesting, let player,
+               (player.timeControlStatus != .paused) != playingForTesting { togglePlayback() }
+        }
         .task(id: infoVisibleForTesting) {
             guard let infoVisibleForTesting else { return }
             if infoVisibleForTesting {
@@ -134,7 +169,7 @@ struct SystemVideoView: View {
         } message: { Text(message ?? "") }
     }
 
-    private var mediaCanvas: some View {
+    private func mediaCanvas(bottomInset: CGFloat) -> some View {
         GeometryReader { geometry in
             ZStack {
                 if let pageMotion, let outgoing = pageMotion.outgoing {
@@ -147,7 +182,7 @@ struct SystemVideoView: View {
                         .accessibilityIdentifier("VideoPagingOutgoingImage")
                         .allowsHitTesting(false)
                 }
-                mediaCanvasContent(geometry.size)
+                mediaCanvasContent(geometry.size, bottomInset: bottomInset)
                     .offset(x: pageMotion.map { GalleryPageTransition.horizontalOffset(direction: $0.direction, extent: geometry.size.width, progress: pageProgress, incoming: true, reduceMotion: reduceMotion) } ?? 0)
                     .opacity(pageMotion.map { _ in GalleryPageTransition.opacity(progress: pageProgress, incoming: true, reduceMotion: reduceMotion) } ?? 1)
             }
@@ -157,6 +192,46 @@ struct SystemVideoView: View {
         .clipped().videoDetailFrame("media")
         .contentShape(Rectangle())
         .onTapGesture { handleMediaTap() }
+        .overlay {
+            GeometryReader { geometry in
+                LibraryMediaCanvas(angle: playbackAngle) { size in
+                    VStack {
+                        Spacer(minLength: 0)
+                        playbackBar(width: max(1, size.width * 2 / 3))
+                            .videoDetailFrame("playback")
+                            .frame(height: 72)
+                            .background {
+                                Color.clear.frame(height: 50)
+                                    .modifier(PreviewSurface(radius: 25, opacity: AppTheme.popupOpacity, interactive: false))
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, abs(sin(playbackAngle * .pi / 180)) > 0.5 ? 16 : bottomInset + 12)
+                    }
+                }
+            }
+            .opacity(isPlaying ? 1 : 0)
+            .allowsHitTesting(isPlaying && player != nil).accessibilityHidden(!isPlaying)
+            .animation(popupAnimation, value: isPlaying)
+        }
+        .overlay {
+            if !isPlaying {
+                Button { handleMediaTap() } label: {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 20, weight: .semibold)).foregroundStyle(.white)
+                        .offset(x: 1)
+                        .frame(width: 52, height: 52)
+                        .modifier(PreviewSurface(radius: 26, opacity: AppTheme.popupOpacity, interactive: false))
+                }
+                .rotationEffect(.degrees(playbackAngle))
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: playbackAngle)
+                .buttonStyle(GalleryStableActionStyle())
+                .disabled(player == nil || editorPresented || shareBusy)
+                .accessibilityLabel("播放视频")
+                .videoDetailFrame("centerPlay")
+                .transition(.opacity)
+            }
+        }
+        .animation(popupAnimation, value: isPlaying)
     }
 
     private func handleMediaTap() {
@@ -165,7 +240,7 @@ struct SystemVideoView: View {
         togglePlayback()
     }
 
-    @ViewBuilder private func mediaCanvasContent(_ viewport: CGSize) -> some View {
+    @ViewBuilder private func mediaCanvasContent(_ viewport: CGSize, bottomInset: CGFloat) -> some View {
             let size = LibraryMediaRotation.canvasSize(viewport, angle: playbackAngle)
             let dockWidth = min(340, max(1, size.width - 24))
             ZStack(alignment: .bottom) {
@@ -191,11 +266,11 @@ struct SystemVideoView: View {
                         if photo.isAstroCapture { PhotoAstroBadge() }
                     }
                     .allowsHitTesting(false).videoDetailFrame("badges")
-                    playbackBar(width: dockWidth)
-                        .allowsHitTesting(player != nil).accessibilityHidden(player == nil)
-                        .videoDetailFrame("playback")
+                    .opacity(isPlaying ? 0 : 1).accessibilityHidden(isPlaying)
+                    .animation(popupAnimation, value: isPlaying)
                 }
-                .frame(width: dockWidth).padding(.bottom, 8)
+                .frame(width: dockWidth)
+                .padding(.bottom, abs(sin(playbackAngle * .pi / 180)) > 0.5 ? 16 : bottomInset + 96)
             }
             .frame(width: size.width, height: size.height)
             // rotationEffect does not change layout dimensions: swap them explicitly at 90°.
@@ -240,7 +315,8 @@ struct SystemVideoView: View {
                     }
                 }
                 .frame(height: 30)
-                .padding(.horizontal, 12).padding(.vertical, 7).modifier(PopupSurface(radius: 24))
+                .padding(.horizontal, 12).padding(.vertical, 7)
+                .modifier(PreviewSurface(radius: 24, opacity: AppTheme.popupOpacity, interactive: false))
                 .videoDetailFrame("title")
             }
             Spacer(minLength: 8)
@@ -249,16 +325,15 @@ struct SystemVideoView: View {
     }
 
     private var bottomBar: some View {
-        VStack(spacing: 8) {
             HStack(spacing: 0) {
             viewerAction(shareBusy ? "hourglass" : "square.and.arrow.up", label: "分享视频", disabled: shareBusy) { prepareShare() }
-            Spacer(minLength: 0)
+                .frame(maxWidth: .infinity)
             viewerAction(detailsBusy ? "hourglass" : "info.circle",
                          label: detailsVisible ? "收起视频详情" : "视频详情",
                          disabled: loadedAsset == nil || detailsBusy, anchor: .info) { showDetails() }
-            Spacer(minLength: 0)
+                .frame(maxWidth: .infinity)
             LibraryCameraButton(action: onCamera).disabled(model.library.deleting || model.library.editing)
-            Spacer(minLength: 0)
+                .frame(maxWidth: .infinity)
             viewerAction("slider.horizontal.3", label: "编辑视频", disabled: loadedAsset == nil || loading) {
                 player?.pause()
                 detailsTask?.cancel()
@@ -267,12 +342,13 @@ struct SystemVideoView: View {
                     editorPresented = true
                 }
             }
-            Spacer(minLength: 0)
+                .frame(maxWidth: .infinity)
             viewerAction("trash", label: "删除视频", disabled: model.library.deleting) { deleteVideo() }
-            }.videoDetailFrame("actions").padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 12)
-        }
-        .padding(.top, 10)
-        .background(Color.black.ignoresSafeArea(edges: .bottom))
+                .frame(maxWidth: .infinity)
+            }
+            .videoDetailFrame("actions")
+            .padding(.horizontal, 6)
+            .frame(height: 72)
     }
 
     private func deleteVideo() {
@@ -286,13 +362,18 @@ struct SystemVideoView: View {
         Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); action() } label: {
             let content = Image(systemName: icon).font(.system(size: 21, weight: .regular))
                 .foregroundStyle(.white.opacity(disabled ? AppTheme.disabledControlOpacity : 1))
-                .frame(width: 48, height: 48).modifier(PopupSurface(radius: 24))
+                .frame(width: 48, height: 48)
+                .background {
+                    if icon == "chevron.left" {
+                        Color.clear.modifier(PreviewSurface(radius: 24, opacity: AppTheme.popupOpacity, interactive: false))
+                    }
+                }
             if let anchor {
                 content.videoPopupAnchor(anchor).videoDetailFrame("info")
             } else {
                 content
             }
-        }.disabled(disabled).accessibilityLabel(label)
+        }.buttonStyle(GalleryStableActionStyle()).disabled(disabled).accessibilityLabel(label)
     }
 
     private func viewerTextBadge(_ text: String) -> some View {
@@ -341,11 +422,12 @@ struct SystemVideoView: View {
     }
 
     private func playbackBar(width: CGFloat) -> some View {
-        HStack(spacing: 9) {
+        let compact = width < 300
+        return HStack(spacing: compact ? 5 : 9) {
             Button { togglePlayback() } label: {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
-                    .frame(width: 30, height: 30)
+                    .frame(width: compact ? 26 : 30, height: 30)
                     .background(.white.opacity(0.12), in: Circle())
             }.accessibilityLabel(isPlaying ? "暂停视频" : "播放视频")
 
@@ -381,16 +463,16 @@ struct SystemVideoView: View {
                     currentTime = target
                     seek(to: target)
                 }
-            }.frame(height: 20)
+            }.frame(minWidth: 28).frame(height: 20)
 
             Text(timeText(currentTime) + " / " + timeText(duration))
                 .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.78)).lineLimit(1)
+                .foregroundStyle(.white.opacity(0.78)).lineLimit(1).minimumScaleFactor(0.7)
 
             Button { toggleMute() } label: {
                 Image(systemName: volumeIcon)
                     .font(.system(size: 12, weight: .semibold)).foregroundStyle(.white)
-                    .frame(width: 24, height: 26)
+                    .frame(width: compact ? 22 : 24, height: 26)
             }.accessibilityLabel(volume > 0.001 ? "静音" : "取消静音")
 
             GeometryReader { geometry in
@@ -412,12 +494,10 @@ struct SystemVideoView: View {
                     let step = 0.1
                     setVolume(direction == .increment ? min(1, volume + step) : max(0, volume - step))
                 }
-            }.frame(width: 42, height: 20)
+            }.frame(width: compact ? 32 : 42, height: 20)
         }
-        .padding(.horizontal, 10).padding(.vertical, 7)
-        .frame(width: width)
-        .background(.black.opacity(0.62), in: Capsule())
-        .overlay(Capsule().stroke(.white.opacity(0.08), lineWidth: 1))
+        .padding(.horizontal, compact ? 8 : 10).padding(.vertical, 7)
+        .frame(width: width, height: 50)
     }
 
     private var volumeIcon: String {
@@ -441,7 +521,7 @@ struct SystemVideoView: View {
 
     private func togglePlayback() {
         guard let player else { return }
-        if player.timeControlStatus == .playing { player.pause() }
+        if player.timeControlStatus != .paused { player.pause() }
         else {
             if duration > 0, currentTime >= duration - 0.1 { player.seek(to: .zero) }
             player.play()
@@ -456,7 +536,7 @@ struct SystemVideoView: View {
 
     private func syncPlayback() {
         guard let player else { return }
-        isPlaying = player.timeControlStatus == .playing
+        isPlaying = player.timeControlStatus != .paused
         if !scrubbing {
             let seconds = player.currentTime().seconds
             if seconds.isFinite { currentTime = seconds }

@@ -168,6 +168,10 @@ final class VideoDetailLayoutTests: XCTestCase {
         }
         XCTAssertFalse(editor.loading)
         let preview = try XCTUnwrap(editor.captureButtonFramesForTesting["preview"])
+        let toolbar = try XCTUnwrap(editor.captureButtonFramesForTesting["toolbar"])
+        XCTAssertEqual(toolbar.width, 216, accuracy: 1)
+        XCTAssertEqual(toolbar.midX, preview.midX, accuracy: 1)
+        XCTAssertGreaterThan(preview.maxY, toolbar.maxY)
         var timings: [Double] = []
         for _ in 0..<3 {
             for tool in editor.availableTools.filter({ $0 != .adjustments }) {
@@ -562,19 +566,24 @@ final class VideoDetailLayoutTests: XCTestCase {
                 let back = try XCTUnwrap(frames["back"]), title = try XCTUnwrap(frames["title"])
                 let actions = try XCTUnwrap(frames["actions"]), media = try XCTUnwrap(frames["media"])
                 let bar = try XCTUnwrap(frames["playback"]), badges = try XCTUnwrap(frames["badges"])
+                XCTAssertEqual(actions.width, 288, accuracy: 1)
+                XCTAssertEqual(actions.midX, media.midX, accuracy: 1)
                 XCTAssertEqual(back.midY, title.midY, accuracy: 1)
-                XCTAssertGreaterThanOrEqual(media.minY, back.maxY)
-                XCTAssertLessThanOrEqual(media.maxY, actions.minY)
+                XCTAssertLessThanOrEqual(media.minY, back.minY)
+                XCTAssertGreaterThanOrEqual(media.maxY, actions.maxY)
                 XCTAssertTrue(media.insetBy(dx: -1, dy: -1).contains(bar), "\(angle) \(media) \(bar)")
                 XCTAssertTrue(media.insetBy(dx: -1, dy: -1).contains(badges))
-                let r = angle * .pi / 180
-                let dx = badges.midX - bar.midX, dy = badges.midY - bar.midY
-                let localX = dx * cos(r) + dy * sin(r)
-                let localY = -dx * sin(r) + dy * cos(r)
-                let barWidth = abs(cos(r)) * bar.width + abs(sin(r)) * bar.height
-                let badgeWidth = abs(cos(r)) * badges.width + abs(sin(r)) * badges.height
-                XCTAssertLessThan(localY, -10, "Badges must stay above the bar in its own orientation")
-                XCTAssertEqual(localX + badgeWidth / 2, barWidth / 2, accuracy: 1)
+                if abs(sin(angle * .pi / 180)) > 0.5 {
+                    XCTAssertEqual(bar.width, 50, accuracy: 1)
+                    XCTAssertEqual(bar.height, media.height * 2 / 3, accuracy: 1)
+                } else {
+                    XCTAssertEqual(bar.width, media.width * 2 / 3, accuracy: 1)
+                    XCTAssertEqual(bar.height, 50, accuracy: 1)
+                    if angle == 0 { XCTAssertEqual(bar.midY, actions.midY, accuracy: 1) }
+                }
+                let centerPlay = try XCTUnwrap(frames["centerPlay"])
+                XCTAssertEqual(centerPlay.midX, media.midX, accuracy: 1)
+                XCTAssertEqual(centerPlay.midY, media.midY, accuracy: 1)
                 if baseline.isEmpty { baseline = frames }
                 for key in ["back", "title", "actions"] {
                     XCTAssertEqual(frames[key], baseline[key], "Fixed control moved at \(angle): \(key)")
@@ -639,6 +648,52 @@ final class VideoDetailLayoutTests: XCTestCase {
                     XCTAssertNil(frames["infoPanel"])
                 }
             }
+        }
+    }
+
+    @MainActor func testPlaybackHidesChromeAndPauseRestoresIt() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let app = AppDependencies.makeCameraModel(automaticallySave: false)
+        let url = try await makeVideo(seconds: 3)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let asset = AVURLAsset(url: url)
+        let photo = LibraryPhoto(id: "playing-chrome", date: Date(), hasFilter: true, isVideo: true, duration: 3)
+        let host = UIHostingController(rootView: AnyView(Color.black))
+        let window = UIWindow(windowScene: scene); window.rootViewController = host; window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        var observedPlaying = false
+        var frames: [String: CGRect] = [:]
+        var playbackFrame: CGRect?
+        for playing in [false, true, false, true, false] {
+            host.rootView = AnyView(SystemVideoView(
+                model: app.gallery, photo: photo, onCamera: {},
+                playbackAssetForTesting: asset, onLayoutForTesting: { frames = $0 },
+                playingForTesting: playing, onPlaybackVisibilityForTesting: { observedPlaying = $0 }
+            ))
+            for _ in 0..<100 {
+                if observedPlaying == playing, frames["playback"] != nil { break }
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            XCTAssertEqual(observedPlaying, playing)
+            try await Task.sleep(for: .milliseconds(250))
+            if playing {
+                XCTAssertNil(frames["centerPlay"])
+            } else {
+                let center = try XCTUnwrap(frames["centerPlay"])
+                XCTAssertEqual(center.width, 52, accuracy: 1)
+                XCTAssertEqual(center.height, 52, accuracy: 1)
+                let media = try XCTUnwrap(frames["media"])
+                XCTAssertEqual(center.midX, media.midX, accuracy: 1)
+                XCTAssertEqual(center.midY, media.midY, accuracy: 1)
+            }
+            let frame = try XCTUnwrap(frames["playback"])
+            if let playbackFrame { XCTAssertEqual(frame, playbackFrame) } else { playbackFrame = frame }
+            let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+                window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+            }
+            let shot = XCTAttachment(image: image); shot.name = "Video-Chrome-Playing-\(playing)"
+            shot.lifetime = .keepAlways; add(shot)
         }
     }
 

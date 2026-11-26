@@ -3311,6 +3311,7 @@ final class CameraViewModel: ObservableObject {
             photoResolution = .standard
         }
     } }
+    @Published var manualEV = false
     @Published var manualWB = false
     @Published var manualFocus = false
     @Published var iso = 100.0
@@ -4419,7 +4420,7 @@ final class CameraViewModel: ObservableObject {
         endZoomDial()
         if mode == .manual && next == .auto {
             savedManualSettings = ManualSettings(exposure: manualExposure, whiteBalance: manualWB, focusLocked: manualFocus,
-                                                 iso: iso, shutter: shutter, wb: wb, tint: whiteBalanceTint, focus: focus, ev: ev)
+                                                 iso: iso, shutter: shutter, wb: wb, tint: whiteBalanceTint, focus: focus, ev: ev, exposureBiasManual: manualEV)
         } else if mode == .auto && next == .manual {
             automaticEV = ev
         }
@@ -4446,7 +4447,7 @@ final class CameraViewModel: ObservableObject {
         }
         refreshSubmodeLensCompatibility()
         if next == .auto {
-            manualExposure = false; manualWB = false; manualFocus = false
+            manualExposure = false; manualEV = false; manualWB = false; manualFocus = false
             ev = automaticEV
             applyExposure(); camera.setWhiteBalance(kelvin: nil); camera.setFocus(position: nil)
         } else {
@@ -4456,6 +4457,7 @@ final class CameraViewModel: ObservableObject {
                 iso = saved.iso
                 shutter = saved.shutter
                 wb = saved.wb; whiteBalanceTint = saved.tint; focus = saved.focus; ev = saved.ev
+                manualEV = saved.exposureBiasManual ?? (abs(saved.ev) > 0.0001)
                 manualExposure = saved.exposure && !fixedHighResolutionFocalsOnly; manualWB = saved.whiteBalance; manualFocus = saved.focusLocked
             }
             if slowShutterEnabled, let preset = selectedSlowShutterPreset {
@@ -4532,7 +4534,7 @@ final class CameraViewModel: ObservableObject {
                 if !manualWB { synchronizeWhiteBalanceValues() }
                 manualWB = true
             case .focus: manualFocus = true
-            case .ev: manualExposure = false
+            case .ev: manualExposure = false; manualEV = true
             }
             let range = parameterRange
             let boundedValue = min(max(value, range.lowerBound), range.upperBound)
@@ -4549,7 +4551,7 @@ final class CameraViewModel: ObservableObject {
         case .iso, .shutter: manualExposure = false; applyExposure()
         case .wb, .tint: manualWB = false; camera.setWhiteBalance(kelvin: nil)
         case .focus: manualFocus = false; camera.setFocus(position: nil)
-        case .ev: manualExposure = false; ev = 0; applyExposure()
+        case .ev: manualExposure = false; manualEV = false; ev = 0; applyExposure()
         }
     }
 
@@ -4849,7 +4851,7 @@ final class CameraViewModel: ObservableObject {
             photoModeBeforeVideo = mode
             photoManualSettingsBeforeVideo = mode == .manual
                 ? SavedManualCaptureState(exposure: manualExposure, whiteBalance: manualWB, focusLocked: manualFocus,
-                    iso: iso, shutter: shutter, wb: wb, tint: whiteBalanceTint, focus: focus, ev: ev)
+                    iso: iso, shutter: shutter, wb: wb, tint: whiteBalanceTint, focus: focus, ev: ev, exposureBiasManual: manualEV)
                 : nil
             photoRatioBeforeVideo = FrameRatio.photoOptions.contains(ratio) ? ratio : .standard
             photoFormatBeforeVideo = photoFormat
@@ -4901,6 +4903,7 @@ final class CameraViewModel: ObservableObject {
             if mode == .manual, let saved = photoManualSettingsBeforeVideo {
                 iso = saved.iso; shutter = saved.shutter
                 wb = saved.wb; whiteBalanceTint = saved.tint; focus = saved.focus; ev = saved.ev
+                manualEV = saved.exposureBiasManual ?? (abs(saved.ev) > 0.0001)
                 manualExposure = saved.exposure; manualWB = saved.whiteBalance; manualFocus = saved.focusLocked
                 restoreDeviceParameters()
             }
@@ -5787,13 +5790,15 @@ final class CameraViewModel: ObservableObject {
         case .shutter, .iso: return manualExposure
         case .wb, .tint: return manualWB
         case .focus: return manualFocus
-        case .ev: return false // Compensation applies to automatic exposure; it has no manual switch.
+        case .ev: return manualEV
         }
     }
 
-    var parameterAutomatic: Bool {
-        switch parameter {
-        case .ev: return !manualExposure
+    var parameterAutomatic: Bool { isParameterAutomatic(parameter) }
+
+    func isParameterAutomatic(_ item: CameraParameter) -> Bool {
+        switch item {
+        case .ev: return !manualEV
         case .iso, .shutter: return !manualExposure
         case .wb, .tint: return !manualWB
         case .focus: return !manualFocus
@@ -5913,7 +5918,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     func resetParameters() {
-        manualExposure = false; manualWB = false; manualFocus = false; ev = 0
+        manualExposure = false; manualEV = false; manualWB = false; manualFocus = false; ev = 0
         iso = min(max(100, slowShutterISORange.lowerBound), slowShutterISORange.upperBound)
         shutter = min(max(log2(1.0 / 125), slowShutterShutterRange.lowerBound), slowShutterShutterRange.upperBound)
         applyExposure(); camera.setWhiteBalance(kelvin: nil); camera.setFocus(position: nil)
@@ -6065,7 +6070,7 @@ final class CameraViewModel: ObservableObject {
         state.tone = tone.rawValue; state.metering = metering.rawValue
         state.style = style.rawValue; state.intensity = intensity; state.adjustments = filterAdjustments
         state.manual = SavedManualCaptureState(exposure: manualExposure, whiteBalance: manualWB, focusLocked: manualFocus,
-            iso: iso, shutter: shutter, wb: wb, tint: whiteBalanceTint, focus: focus, ev: ev)
+            iso: iso, shutter: shutter, wb: wb, tint: whiteBalanceTint, focus: focus, ev: ev, exposureBiasManual: manualEV)
         state.previousManual = savedManualSettings; state.automaticEV = automaticEV
         state.photoManualBeforeVideo = captureKind == .video ? photoManualSettingsBeforeVideo : nil
         // 双拍属于本次手动开启的会话状态，不随“保存拍摄设置”在下次冷启动自动进入。
@@ -6219,6 +6224,7 @@ final class CameraViewModel: ObservableObject {
         iso = number(manual.iso, 1...128000, 100); shutter = number(manual.shutter, -24...5, log2(1.0 / 125))
         wb = number(manual.wb, 2500...9000, 5500); whiteBalanceTint = number(manual.tint, -150...150, 0)
         focus = number(manual.focus, 0...1, 0.5); ev = number(manual.ev, -5...5, 0)
+        manualEV = manual.exposureBiasManual ?? (abs(ev) > 0.0001)
         savedManualSettings = state.previousManual; automaticEV = number(state.automaticEV, -5...5, 0)
         selectedLogLUTID = state.logLUT ?? LogLUTPreset.originalID
         burnLogLUT = state.burnLogLUT && selectedLogLUTID != LogLUTPreset.originalID

@@ -4,7 +4,6 @@ import UIKit
 @testable import LumaCamera
 
 final class GallerySharingAppearanceTests: XCTestCase {
-    #if targetEnvironment(simulator)
     @MainActor func testWholeGalleryStaysStableWhileSharingAndDeletingPrepare() async throws {
         let service = StableGalleryService(), library = PhotoLibraryViewModel(service:StableGalleryService())
         let model = GalleryViewModel(browser:service,library:library), batch = BatchPhotoShareModel()
@@ -16,14 +15,24 @@ final class GallerySharingAppearanceTests: XCTestCase {
         window.rootViewController = host; window.makeKeyAndVisible()
         defer { batch.cancelPreparation(); window.isHidden = true; window.rootViewController = nil; old?.makeKey() }
         try await Task.sleep(for:.milliseconds(250))
+        var costs: [Double] = []
         func capture() throws -> [UInt8] {
+            let start = CACurrentMediaTime()
             let format = UIGraphicsImageRendererFormat(); format.scale = 1
             let image = UIGraphicsImageRenderer(bounds:window.bounds,format:format).image { _ in window.drawHierarchy(in:window.bounds,afterScreenUpdates:true) }
+            costs.append((CACurrentMediaTime() - start) * 1000)
             let cg = try XCTUnwrap(image.cgImage?.cropping(to:CGRect(x:0,y:0,width:393,height:650)))
             var bytes = [UInt8](repeating:0,count:393*650*4)
             let context = CGContext(data:&bytes,width:393,height:650,bitsPerComponent:8,bytesPerRow:393*4,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue)!
             context.draw(cg,in:CGRect(x:0,y:0,width:393,height:650)); return bytes
         }
+        let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+        let attachment = XCTAttachment(image: shot)
+        attachment.name = "Gallery-No-Scope-Glass-Camera"
+        attachment.lifetime = .keepAlways
+        add(attachment)
         let before = try capture(), requests = service.imageRequests
         batch.prepare(photos:model.photos,service:service)
         for _ in 0..<3 {
@@ -34,8 +43,8 @@ final class GallerySharingAppearanceTests: XCTestCase {
         }
         XCTAssertEqual(service.imageRequests,requests,"Share progress must not reload visible thumbnails")
         batch.cancelPreparation()
+        print("GALLERY-CAMERA-GLASS snapshots=\(costs.count) snapshotMs=\(costs)")
     }
-    #endif
 }
 private final class StableGalleryService: PhotoBrowserService, PhotoLibraryService, PhotoFileExportService {
     var onLibraryChange:(()->Void)?

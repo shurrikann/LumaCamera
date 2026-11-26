@@ -69,7 +69,7 @@ struct PhotoAdjustments: Codable, Equatable {
     /// Geometry-only pass used by the live crop preview. The image is expected
     /// to already contain the color/filter recipe, so RAW development does not
     /// need to run again for every rotation or perspective tick.
-    func applyGeometry(to source: CIImage) -> CIImage {
+    func applyGeometry(to source: CIImage, preservesOutside: Bool = false) -> CIImage {
         var image = source
         switch ((quarterTurns % 4) + 4) % 4 {
         case 1: image = image.oriented(.right)
@@ -79,16 +79,22 @@ struct PhotoAdjustments: Codable, Equatable {
         }
         if flipHorizontal { image = image.oriented(.upMirrored) }
         if flipVertical { image = image.oriented(.downMirrored) }
+        let referenceExtent = image.extent
         if straightenAngle.isFinite, abs(straightenAngle) > 0.0001 {
             let extent = image.extent, angle = min(max(straightenAngle, -45), 45) * .pi / 180
             let scale = max(abs(cos(angle)) + extent.height/extent.width*abs(sin(angle)), abs(cos(angle)) + extent.width/extent.height*abs(sin(angle)))
             image = image.transformed(by: CGAffineTransform(translationX: -extent.midX, y: -extent.midY))
                 .transformed(by: CGAffineTransform(rotationAngle: -angle).scaledBy(x: scale, y: scale))
-                .transformed(by: CGAffineTransform(translationX: extent.midX, y: extent.midY)).cropped(to: extent)
+                .transformed(by: CGAffineTransform(translationX: extent.midX, y: extent.midY))
+            if !preservesOutside { image = image.cropped(to: extent) }
         }
-        image = image.cropped(to: crop.imageRect(in: image.extent))
-        if !stretch.isIdentity { image = stretch.apply(to: image) }
-        return image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
+        if !preservesOutside { image = image.cropped(to: crop.imageRect(in: image.extent)) }
+        if !stretch.isIdentity {
+            image = stretch.apply(to: image, referenceExtent: preservesOutside ? referenceExtent : nil,
+                                  preservesOutside: preservesOutside)
+        }
+        let origin = preservesOutside ? referenceExtent.origin : image.extent.origin
+        return image.transformed(by: CGAffineTransform(translationX: -origin.x, y: -origin.y))
     }
 }
 struct PhotoEditResult {

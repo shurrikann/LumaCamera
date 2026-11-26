@@ -227,7 +227,7 @@ final class CaptureControlRotationTests: XCTestCase {
             }
         }
     }
-    @MainActor func testRoundTextLabelsAndGalleryScopeFitInPortraitAndLandscape() async throws {
+    @MainActor func testRoundTextLabelsFitInPortraitAndLandscape() async throws {
         XCTAssertEqual(RoundTextControlLabel.lines("曝光补偿"), "曝光\n补偿")
         XCTAssertEqual(RoundTextControlLabel.lines("颗粒大小"), "颗粒\n大小")
         XCTAssertEqual(RoundTextControlLabel.lines("颗粒饱和度"), "颗粒\n饱和度")
@@ -238,7 +238,6 @@ final class CaptureControlRotationTests: XCTestCase {
         defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
         for angle in [0.0, 90.0, -90.0] {
             host.rootView = AnyView(VStack(spacing: 36) {
-                HStack { GalleryScopeLabel(recentOnly: false); GalleryScopeLabel(recentOnly: true) }
                 HStack(spacing: 18) { ForEach(["色彩", "明暗", "效果"], id: \.self) { RoundTextControlLabel(title: $0, highlighted: true) } }
                 HStack(spacing: 18) { ForEach(["曝光补偿", "颗粒大小", "颗粒饱和度", "模糊／锐化"], id: \.self) { RoundTextControlLabel(title: $0) } }
             }.frame(maxWidth: .infinity, maxHeight: .infinity).background(AppTheme.popupColor).environment(\.captureControlAngle, angle))

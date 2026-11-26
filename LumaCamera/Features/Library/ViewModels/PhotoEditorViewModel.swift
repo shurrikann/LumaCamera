@@ -40,6 +40,8 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         didSet { if filterEditorTab != oldValue { dismissFilterNumericInput() } }
     }
     @Published private(set) var preview: UIImage?
+    @Published private(set) var cropOverflowPreview: UIImage?
+    private(set) var cropOverflowExtent: CGRect = .zero
     private var cropGeometryBase: UIImage?
     private var cropBaseRevision: UInt64 = 0
     @Published private(set) var saving = false
@@ -61,8 +63,15 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
     private lazy var renderer = LatestValueThrottle<Request>(queue: queue, interval: 1.0 / 60) { [weak self, source = session.source, raw = session.rawDevelopment, context, gate = previewGate] request in
         guard gate.canRender(request.revision) else { return }
         let image:UIImage?
+        var overflow: UIImage?
+        var overflowExtent = CGRect.zero
         do {
             if let base = request.cropBase, let baseImage = CIImage(image: base) {
+                let outside = request.adjustments.applyGeometry(to: baseImage, preservesOutside: true)
+                overflowExtent = outside.extent
+                overflow = Imaging.ownedCGImage(outside, from: outside.extent, context: context,
+                                                format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+                    .map(UIImage.init(cgImage:))
                 let geometry = request.adjustments.applyGeometry(to: baseImage)
                 image = Imaging.ownedCGImage(geometry, from: geometry.extent, context: context,
                                              format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
@@ -80,6 +89,8 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
         }
         DispatchQueue.main.async {
             guard let self, !self.cancelled, gate.acceptsPublication(request.revision) else { return }
+            self.cropOverflowExtent = overflowExtent
+            self.cropOverflowPreview = overflow
             self.preview = image
         }
     }
@@ -260,6 +271,8 @@ final class PhotoEditorViewModel: ObservableObject, FilterEditingControls {
     private func clearCropGeometryBase() {
         cropBaseRevision &+= 1
         cropGeometryBase = nil
+        cropOverflowPreview = nil
+        cropOverflowExtent = .zero
     }
 
     func resetGeometry() {

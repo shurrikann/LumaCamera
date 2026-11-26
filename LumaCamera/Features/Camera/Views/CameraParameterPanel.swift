@@ -11,12 +11,13 @@ extension CameraView {
                 Spacer()
                 Text(model.parameterTitle(model.parameter)).rotatingCaptureContent().font(.system(size: 15, weight: .medium))
                 Spacer()
-                Button { model.toggleAutomatic() } label: {
-                    Text(model.parameterAutomatic ? "A" : "M").rotatingCaptureContent().font(.system(size: 19, weight: .medium))
-                        .foregroundStyle(AppTheme.accent).frame(width: 36, height: 36)
-                }.disabled(!model.parameterCanEdit).accessibilityLabel("切换参数自动与手动")
+                Button { model.activateParameterAuto() } label: {
+                    Text("Auto").rotatingCaptureContent().font(.system(size: 14, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+                        .foregroundStyle(model.parameterAutomatic ? .white : AppTheme.accent).frame(width: 36, height: 36)
+                }.disabled(!model.parameterCanEdit).accessibilityLabel("恢复自动" + model.parameterTitle(model.parameter))
             }
-            Text(model.parameterDisplay).font(.system(size: 34, weight: .light, design: .rounded)).monospacedDigit()
+            Text(model.parameterDisplay)
+                .foregroundStyle(model.parameterAutomatic ? .white : AppTheme.accent).font(.system(size: 34, weight: .light, design: .rounded)).monospacedDigit()
                 .lineLimit(1).minimumScaleFactor(0.45)
                 .contentTransition(.numericText()).frame(height: 42)
             CameraRuler(value: model.editableParameterBinding, range: model.parameterRange, tint: AppTheme.accent,

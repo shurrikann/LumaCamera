@@ -110,6 +110,9 @@ final class AstroSceneRegistration {
     let matte: AstroSkyMatte
     private let context: CIContext
     private(set) var registrationDiagnostic = "unattempted"
+    // nil means the reference has too few stars to require stellar registration.
+    private(set) var lastStarAlignmentSucceeded: Bool?
+    private var referenceSkyStarCount: Int?
     init(reference: CIImage, context: CIContext, matte: AstroSkyMatte? = nil) {
         self.context = context
         self.matte = matte ?? .estimate(reference, context:context)
@@ -205,7 +208,13 @@ final class AstroSceneRegistration {
             .applyingFilter("CIMorphologyMinimum",parameters:[kCIInputRadiusKey:max(3,reference.extent.width/256)]).cropped(to:reference.extent)
         let a = reference.applyingFilter("CIBlendWithMask", parameters:[kCIInputBackgroundImageKey:black,kCIInputMaskImageKey:interior])
         let b = stable.applyingFilter("CIBlendWithMask", parameters:[kCIInputBackgroundImageKey:black,kCIInputMaskImageKey:interior])
-        guard let t = AstroStarRegistration.rigidTransform(reference:a, frame:b, context:context) else { registrationDiagnostic += " stars=unmatched"; return stable }
+        if referenceSkyStarCount == nil { referenceSkyStarCount = AstroStarRegistration.stars(a, context: context).count }
+        guard let t = AstroStarRegistration.rigidTransform(reference:a, frame:b, context:context) else {
+            lastStarAlignmentSucceeded = (referenceSkyStarCount ?? 0) >= 4 ? false : nil
+            registrationDiagnostic += " stars=unmatched"
+            return stable
+        }
+        lastStarAlignmentSucceeded = true
         registrationDiagnostic += " starTransform=\(t)"
         let sky = stable.clampedToExtent().transformed(by:t).cropped(to:reference.extent)
         return sky.applyingFilter("CIBlendWithMask", parameters:[kCIInputBackgroundImageKey:stable,kCIInputMaskImageKey:matte.image]).cropped(to:reference.extent)

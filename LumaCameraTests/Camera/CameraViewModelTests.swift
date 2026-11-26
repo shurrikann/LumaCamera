@@ -1,8 +1,110 @@
 import XCTest
 import Combine
+import SwiftUI
+import UIKit
 @testable import LumaCamera
 
 final class CameraViewModelTests: XCTestCase {
+    @MainActor func testParameterAutomaticReadoutsMatchPanelStateAndTint() throws {
+        let model = AppDependencies.makeCameraModel(automaticallySave: false)
+        model.mode = .manual
+        for exposure in [false, true] {
+            for whiteBalance in [false, true] {
+                for focus in [false, true] {
+                    model.manualExposure = exposure
+                    model.manualWB = whiteBalance
+                    model.manualFocus = focus
+                    for item in CameraParameter.allCases {
+                        model.parameter = item
+                        XCTAssertEqual(model.isParameterAutomatic(item), model.parameterAutomatic)
+                        let expected = switch item {
+                        case .shutter, .iso: !exposure
+                        case .ev: !model.manualEV
+                        case .wb, .tint: !whiteBalance
+                        case .focus: !focus
+                        }
+                        XCTAssertEqual(model.isParameterAutomatic(item), expected)
+                    }
+                }
+            }
+        }
+        for item in CameraParameter.allCases {
+            for automatic in [false, true] {
+                let renderer = ImageRenderer(content: CaptureParameterReadout(
+                    label: item.readoutLabel, value: "125", isAutomatic: automatic
+                ).background(.black).environment(\.captureControlAngle, 0))
+                renderer.scale = 1
+                let image = try XCTUnwrap(renderer.cgImage)
+                XCTAssertEqual(image.width, 42)
+                XCTAssertEqual(image.height, 42)
+                var bytes = [UInt8](repeating: 0, count: 42 * 42 * 4)
+                let context = try XCTUnwrap(CGContext(data: &bytes, width: 42, height: 42, bitsPerComponent: 8,
+                    bytesPerRow: 42 * 4, space: CGColorSpaceCreateDeviceRGB(),
+                    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+                context.draw(image, in: CGRect(x: 0, y: 0, width: 42, height: 42))
+                for half in 0..<2 {
+                    let matches = (half * 21..<(half + 1) * 21).reduce(0) { count, y in
+                        count + (0..<42).filter { x in
+                            let pixel = (y * 42 + x) * 4
+                            let r = Int(bytes[pixel]), g = Int(bytes[pixel + 1]), b = Int(bytes[pixel + 2])
+                            return automatic ? min(r, g, b) > 200 : r > 150 && r > b + 60 && r > g + 20
+                        }.count
+                    }
+                    XCTAssertGreaterThan(matches, 2, "标签与数值都应使用对应状态颜色")
+                }
+            }
+        }
+    }
+
+    @MainActor func testEditingParametersSetsManualAndAutoRestoresIt() async throws {
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        model.setCameraActive(true)
+        defer { model.closePopups(); model.setCameraActive(false) }
+        for _ in 0..<400 {
+            if model.camera.ready { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertTrue(model.camera.ready)
+        model.setMode(.manual)
+        for _ in 0..<150 {
+            if model.mode == .manual, model.camera.ready { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        let main = try XCTUnwrap(model.camera.lenses.first {
+            $0.device.position == .back && $0.device.deviceType == .builtInWideAngleCamera
+                && abs($0.displayZoom - 1) < 0.01
+        })
+        model.selectFocalLength(main)
+        for _ in 0..<400 {
+            if model.camera.ready && model.camera.supportsExposure && model.camera.supportsFocus && model.camera.supportsWB { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertTrue(model.camera.supportsExposure)
+        XCTAssertTrue(model.camera.supportsFocus)
+        XCTAssertTrue(model.camera.supportsWB)
+        for _ in 0..<3 {
+            for item in CameraParameter.allCases {
+                model.parameter = item
+                XCTAssertTrue(model.parameterCanEdit, item.rawValue)
+                model.activateParameterAuto()
+                XCTAssertTrue(model.parameterAutomatic)
+                let value = item == .ev ? 0 : (model.parameterRange.lowerBound + model.parameterRange.upperBound) / 2
+                model.editableParameterBinding.wrappedValue = value
+                XCTAssertFalse(model.parameterAutomatic, item.rawValue)
+                model.activateParameterAuto()
+                XCTAssertTrue(model.parameterAutomatic, item.rawValue)
+                if item == .ev { XCTAssertEqual(model.ev, 0) }
+            }
+        }
+        let stored = SavedManualCaptureState(ev: 0, exposureBiasManual: true)
+        let restored = try JSONDecoder().decode(SavedManualCaptureState.self, from: JSONEncoder().encode(stored))
+        XCTAssertEqual(restored.exposureBiasManual, true)
+        var legacy = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(stored)) as? [String: Any])
+        legacy.removeValue(forKey: "exposureBiasManual")
+        XCTAssertNil(try JSONDecoder().decode(SavedManualCaptureState.self,
+            from: JSONSerialization.data(withJSONObject: legacy)).exposureBiasManual)
+    }
+
     @MainActor
     func testVideoModeReturnsToPhotoRatioAndRememberedManualSettings() {
         let model = AppDependencies.makeCameraModel(automaticallySave: false)

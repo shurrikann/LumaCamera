@@ -13,6 +13,7 @@ struct PhotoPageAnimation: Identifiable {
 /// Only the bounded image viewport moves; viewer controls remain outside it.
 struct PhotoPageViewport: View {
     let image: UIImage
+    var topOverlayInset: CGFloat = 0
     var isRAW = false
     var isLive = false
     var hasFilter = false
@@ -59,7 +60,7 @@ struct PhotoPageViewport: View {
             if isLive && !playback.holding {
                 Text("长按播放 Live").font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.white.opacity(0.85)).padding(.horizontal, 10).padding(.vertical, 5)
-                    .background(.black.opacity(0.4), in: Capsule()).padding(.top, 12).allowsHitTesting(false)
+                    .background(.black.opacity(0.4), in: Capsule()).padding(.top, max(12, topOverlayInset + 36)).allowsHitTesting(false)
             }
         }
         .onDisappear { playback.cancel() }
@@ -88,6 +89,7 @@ struct PhotoPageViewport: View {
                     }
                     if astro { PhotoAstroBadge() }
                 }.padding(10)
+                    .padding(.top, max(0, topOverlayInset - (viewport.height - fit.height) / 2 - 10))
             }.frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
     }
 }

@@ -1076,8 +1076,8 @@ struct AstroModeView: View {
                 Spacer()
                 if item != .shutter {
                     Button { restoreAuto(item) } label: {
-                        Text("A").font(.system(size: 19, weight: .medium))
-                            .foregroundStyle(isAutomatic(item) ? AppTheme.accent : .white.opacity(0.75))
+                        Text("Auto").font(.system(size: 14, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+                            .foregroundStyle(isAutomatic(item) ? .white : AppTheme.accent)
                             .frame(width: 36, height: 36)
                             .contentShape(Rectangle())
                     }
@@ -1092,6 +1092,7 @@ struct AstroModeView: View {
                 }
             }
             Text(parameterReadout(item))
+                .foregroundStyle(isAutomatic(item) ? .white : AppTheme.accent)
                 .font(.system(size: 34, weight: .light, design: .rounded)).monospacedDigit()
                 .lineLimit(1).minimumScaleFactor(0.45)
                 .frame(height: 42)
@@ -1145,7 +1146,7 @@ struct AstroModeView: View {
                             CameraHaptics.impact(.light)
                             withAnimation(AppTheme.popupAnimation) { activeParameter = item }
                         } label: {
-                            CaptureParameterReadout(label: item.readoutLabel, value: value)
+                            CaptureParameterReadout(label: item.readoutLabel, value: value, isAutomatic: isAutomatic(item))
                                 .frame(maxWidth: .infinity)
                                 .contentShape(Rectangle())
                         }
@@ -1188,7 +1189,7 @@ struct AstroModeView: View {
                     }
                     .frame(width: 52, height: 52)
                     .clipShape(Circle())
-                    .modifier(GlassSurface(radius: 26))
+                    .modifier(CaptureAlbumGlassSurface())
                     .overlay {
                         if albumPendingCount > 0 {
                             ProgressView().controlSize(.small).tint(.white)

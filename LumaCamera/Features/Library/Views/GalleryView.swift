@@ -15,7 +15,6 @@ struct GalleryView: View {
     @State private var path: [GalleryRoute] = []
     @State private var previewOpened = false
     @State private var openingRequestedAsset = false
-    @State private var recentOnly = false
     @StateObject private var batchShare: BatchPhotoShareModel
     @StateObject private var mediaOrientation: CaptureControlOrientation
     init(model: GalleryViewModel, library: PhotoLibraryViewModel, isDemo: Bool, openLatestCapture: Bool = false, openAssetID: String? = nil, batchShare: BatchPhotoShareModel? = nil, mediaOrientation: CaptureControlOrientation? = nil, onCamera: @escaping () -> Void) {
@@ -23,11 +22,8 @@ struct GalleryView: View {
         _batchShare = StateObject(wrappedValue: batchShare ?? BatchPhotoShareModel())
         _mediaOrientation = StateObject(wrappedValue: mediaOrientation ?? CaptureControlOrientation())
     }
-    private var displayedPhotos: [LibraryPhoto] {
-        recentOnly ? model.photos.filter { $0.id == library.savedPhotoID } : model.photos
-    }
     private var showCurrentCapture: Bool {
-        library.lastPhoto != nil && !library.photoSaved && !displayedPhotos.contains(where: { $0.id == library.savedPhotoID })
+        library.lastPhoto != nil && !library.photoSaved && !model.photos.contains(where: { $0.id == library.savedPhotoID })
     }
     var body: some View {
         NavigationStack(path: $path) {
@@ -38,19 +34,11 @@ struct GalleryView: View {
                         if model.selecting { model.endSelection() } else { model.beginSelection() }
                     } label: { Text(model.selecting ? "取消" : "选择").rotatingCaptureContent() }.disabled(library.isBusy || library.captureInProgress || batchShare.preparing)
                     Spacer()
-                    Menu {
-                        Button("所有内容") { model.endSelection(); recentOnly = false }
-                        Button("本次拍摄") { model.endSelection(); recentOnly = true }
-                    } label: {
-                        GalleryScopeLabel(recentOnly: recentOnly).environment(\.isEnabled, true)
-                    }
-                    .disabled(model.selecting || library.isBusy || batchShare.preparing)
-                    Spacer()
                     if model.selecting {
-                        Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); model.selectAll(displayedPhotos.map(\.id)) } label: { Text("全选").rotatingCaptureContent() }
+                        Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); model.selectAll(model.photos.map(\.id)) } label: { Text("全选").rotatingCaptureContent() }
                             .accessibilityLabel("全选已加载照片").disabled(library.isBusy || batchShare.preparing)
                     }
-                }.padding(.horizontal, 16).padding(.top, 8)
+                }.frame(height: 44).padding(.horizontal, 16).padding(.top, 8)
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         if model.access == .limited {
@@ -78,7 +66,7 @@ struct GalleryView: View {
                                         .clipped().contentShape(Rectangle())
                                 }.buttonStyle(GalleryStableActionStyle()).disabled(model.selecting).accessibilityLabel("刚刚拍摄的照片")
                             }
-                            ForEach(displayedPhotos) { photo in
+                            ForEach(model.photos) { photo in
                                 if model.selecting {
                                     Button { model.toggleSelection(photo.id) } label: { photoTile(photo).overlay(alignment: .topTrailing) { selectionBadge(photo.id) } }
                                         .buttonStyle(GalleryStableActionStyle()).disabled(library.isBusy || batchShare.preparing).accessibilityLabel("选择照片")
@@ -95,10 +83,10 @@ struct GalleryView: View {
                             } description: { Text("请在系统设置中允许访问照片，以浏览、编辑和删除。") } actions: {
                                 Button("前往设置") { openSettings() }.buttonStyle(.borderedProminent)
                             }
-                        } else if !model.loading && displayedPhotos.isEmpty && !showCurrentCapture {
+                        } else if !model.loading && model.photos.isEmpty && !showCurrentCapture {
                             ContentUnavailableView("暂无照片或视频", systemImage: "photo", description: Text("拍摄后会自动保存到系统相册。"))
                         }
-                        if model.hasMore && !model.loading && !recentOnly {
+                        if model.hasMore && !model.loading {
                             Button("加载更多") { model.loadMore() }
                                 .task { await Task.yield(); if !Task.isCancelled { model.loadMore() } }.padding()
                         }
@@ -111,13 +99,13 @@ struct GalleryView: View {
                                  destructiveBusy: library.deleting || library.editing,
                                  onShare: {
                     guard let service = model.browser as? PhotoFileExportService else { model.message = "暂时无法分享这些照片。"; return }
-                    batchShare.prepare(photos: displayedPhotos.filter { model.selectedIDs.contains($0.id) }, service: service)
+                    batchShare.prepare(photos: model.photos.filter { model.selectedIDs.contains($0.id) }, service: service)
                 }, onCamera: onCamera, onDelete: { model.deleteSelected() }, onCancelShare: { batchShare.cancelPreparation() })
 
             }
             .navigationDestination(for: GalleryRoute.self) { route in
-                PhotoPagingView(model: model, library: library, initial: route, photos: displayedPhotos,
-                                isDemo: isDemo, canLoadMore: !recentOnly, onCamera: onCamera)
+                PhotoPagingView(model: model, library: library, initial: route, photos: model.photos,
+                                isDemo: isDemo, canLoadMore: true, onCamera: onCamera)
             }
             .task(id: model.access) {
                 openRequestedAssetIfAvailable()

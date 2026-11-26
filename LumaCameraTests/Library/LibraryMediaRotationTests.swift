@@ -94,10 +94,11 @@ final class LibraryMediaRotationTests: XCTestCase {
         for isVideo in [false, true] {
         for angle in [0.0, 90, -90, 180, 0, 90, 0, -90, 0] {
             host.rootView = AnyView(VStack {
-                LibraryMediaThumbnail(image: service.image).frame(width: 52, height: 52).clipShape(Circle())
+                CaptureAlbumThumbnail(image: service.image).frame(width: 52, height: 52).clipShape(Circle())
+                    .modifier(CaptureAlbumGlassSurface())
                 LibraryImageView(photo: LibraryPhoto(id: isVideo ? "video" : "photo", date: nil, isVideo: isVideo), browser: service, size: CGSize(width: 360, height: 360))
                     .frame(width: 130, height: 130)
-            }.environment(\.libraryMediaAngle, angle))
+            }.environment(\.libraryMediaAngle, angle).environment(\.captureControlAngle, angle))
             try await Task.sleep(for: .milliseconds(260))
             let began = CACurrentMediaTime(), shot = snapshot(window)
             costs.append((CACurrentMediaTime() - began) * 1000)
