@@ -1,0 +1,47 @@
+[
+  {
+    "file": "Quality-indoor-metrics.txt",
+    "sha256": "0f870069c2fb28dd18820167043cf40158ccf82d028e8c582c3d1ac96e868ed2",
+    "bytes": 2669
+  },
+  {
+    "file": "Quality-indoor-pro-cinematic-hdr-adaptive.heic",
+    "sha256": "9e380dcdc1adb3bcfe13203834804948010806c48eedc663799b1bdf0fc131d4",
+    "bytes": 1081518
+  },
+  {
+    "file": "Quality-indoor-pro-hdr-adaptive.heic",
+    "sha256": "441ccc23b7d9bc7243ed7bf943f5067b01952b4b116b40c7a43c6892949a647b",
+    "bytes": 1122248
+  },
+  {
+    "file": "Quality-indoor-baseline.dng",
+    "sha256": "0db224f6affe4d11b4703c7b641792806a3a3095af65fe5b3698de6149c45337",
+    "bytes": 14233314
+  },
+  {
+    "file": "Quality-indoor-pro-adaptive.heic",
+    "sha256": "9c5529fce5581e699ae1555f0ae3ba49cea9b85477842a7d0de1d91e926533cf",
+    "bytes": 685572
+  },
+  {
+    "file": "Quality-indoor-pro-hdr.heic",
+    "sha256": "113fbe948f510d73cc831169f9157f5819d14ed58d524a00236ac2dae605deb9",
+    "bytes": 1096308
+  },
+  {
+    "file": "Quality-indoor-pro.heic",
+    "sha256": "d2584e60c77761aaf1246c088b64f92fd95093c843b56f661718f4c69c5dcef1",
+    "bytes": 580353
+  },
+  {
+    "file": "Quality-indoor-heif-hdr.heic",
+    "sha256": "cf1d07dd3e763241433dedca87affbc1d695b9d82514f81a14fef4ca00569ddc",
+    "bytes": 1116499
+  },
+  {
+    "file": "Quality-indoor-heif.heic",
+    "sha256": "cb367a6e30c29f10de80fb343aaae49372ade02e1225a99aa07db6cc23e5c16e",
+    "bytes": 588125
+  }
+]

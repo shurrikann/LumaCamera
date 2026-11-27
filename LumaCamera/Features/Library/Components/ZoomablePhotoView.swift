@@ -38,6 +38,14 @@ final class PhotoZoomScrollView: UIScrollView, UIScrollViewDelegate {
         minimumZoomScale = 1; maximumZoomScale = 6
         showsHorizontalScrollIndicator = false; showsVerticalScrollIndicator = false
         contentInsetAdjustmentBehavior = .never
+        if #available(iOS 26.0, *) {
+            // The photo is a media canvas, not scrolling content behind a bar.
+            // Disable every edge because this view rotates inside portrait chrome.
+            topEdgeEffect.isHidden = true
+            bottomEdgeEffect.isHidden = true
+            leftEdgeEffect.isHidden = true
+            rightEdgeEffect.isHidden = true
+        }
         backgroundColor = .clear
         photoView.contentMode = .scaleAspectFit
         photoView.preferredImageDynamicRange = .high

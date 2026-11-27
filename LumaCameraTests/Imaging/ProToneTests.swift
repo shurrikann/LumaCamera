@@ -32,7 +32,9 @@ final class ProToneTests: XCTestCase {
     }
     func testReferenceDirectionsAndNaturalBaseline() {
         let black = source(0), mid = source(0.18)
-        XCTAssertGreaterThan(sample(PhotoTone.cinematic.apply(to: black))[0], 0.002)
+        let cinemaBlack = sample(PhotoTone.cinematic.apply(to: black))[0]
+        XCTAssertGreaterThan(cinemaBlack, 0)
+        XCTAssertLessThan(cinemaBlack, 0.001, "电影影调保留轻微黑位，不恢复旧版明显抬黑")
         XCTAssertLessThan(sample(PhotoTone.contrast.apply(to: mid))[0], 0.15)
         XCTAssertGreaterThan(sample(PhotoTone.bright.apply(to: mid))[0], 0.25)
         XCTAssertEqual(sample(PhotoTone.natural.apply(to: mid))[0], 0.18, accuracy: 0.001)
@@ -65,16 +67,25 @@ final class ProToneTests: XCTestCase {
                 XCTAssertEqual(output, Float(input), accuracy: 0.002)
             }
             let black = try XCTUnwrap(Imaging.filteredHDR(source(0), look: look))
-            if tone == .cinematic || tone == .bright {
+            if tone == .bright {
                 XCTAssertLessThan(sample(black.hdr)[0], sample(black.sdr)[0])
+            } else if tone == .cinematic {
+                XCTAssertEqual(sample(black.hdr)[0], sample(black.sdr)[0], accuracy: 0.00001)
             }
 
-            // 彩色灯光高光保留 RGB 比例，避免全局饱和度作用到参考白以上。
+            // 电影影调保留高光亮度并收敛色度；其他影调保持参考白以上 RGB。
             let lamp = CIImage(color: CIColor(red: 4, green: 2, blue: 0.6, colorSpace: space)!)
                 .cropped(to: CGRect(x: 0, y: 0, width: 64, height: 64))
             let hdrLamp = try XCTUnwrap(Imaging.filteredHDR(lamp, look: look)).hdr
-            for (actual, expected) in zip(sample(hdrLamp), sample(lamp)) {
-                XCTAssertEqual(actual, expected, accuracy: 0.002)
+            let actual = sample(hdrLamp), expected = sample(lamp)
+            if tone == .cinematic {
+                func luma(_ p: [Float]) -> Float { p[0]*0.2126+p[1]*0.7152+p[2]*0.0722 }
+                XCTAssertEqual(luma(actual), luma(expected), accuracy: 0.002)
+                XCTAssertGreaterThan(actual[0], actual[1]); XCTAssertGreaterThan(actual[1], actual[2])
+                XCTAssertLessThan(actual[0]-actual[2], expected[0]-expected[2])
+                XCTAssertTrue(actual.allSatisfy { $0.isFinite && $0 >= 0 })
+            } else {
+                for (value, reference) in zip(actual, expected) { XCTAssertEqual(value, reference, accuracy: 0.002) }
             }
         }
     }

@@ -6,6 +6,70 @@ import UIKit
 
 final class ProToneCapturePhysicalTests: XCTestCase {
     #if !targetEnvironment(simulator)
+    @MainActor func testFixedScenePhotoFormatMatrixWithoutSaving() async throws {
+        guard let scene = ProcessInfo.processInfo.environment["LUMA_QUALITY_SCENE"], ["indoor", "backlit"].contains(scene) else {
+            throw XCTSkip("Requires coordinated fixed scene")
+        }
+        let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
+        let callback = camera.onCaptureCompleted, idle = UIApplication.shared.isIdleTimerDisabled
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer { camera.onCaptureCompleted = callback; model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle }
+        model.setCameraActive(true); model.setMode(.auto)
+        model.photoResolution = .standard; model.style = .original; model.metering = .system; model.ev = 0; model.border = false; model.ratio = .standard
+        for _ in 0..<400 { if camera.ready && camera.preview != nil { break }; try await Task.sleep(for: .milliseconds(25)) }
+        let lens = try XCTUnwrap(camera.lenses.first { $0.device.position == .back && abs($0.displayZoom-1) < 0.001 })
+        camera.selectLens(lens)
+        let matrix: [(String, PhotoFileFormat, Bool, Bool, PhotoTone)] = [
+            ("heif", .heif, false, false, .natural), ("heif-hdr", .heif, true, false, .natural),
+            ("pro", .heifPro, false, false, .natural), ("pro-hdr", .heifPro, true, false, .natural),
+            ("pro-adaptive", .heifPro, false, true, .natural), ("pro-hdr-adaptive", .heifPro, true, true, .natural),
+            ("pro-cinematic-hdr-adaptive", .heifPro, true, true, .cinematic)
+        ]
+        let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!])
+        var records: [String] = [], times: [Double] = []
+        for (index, item) in (matrix + matrix.reversed()).enumerated() {
+            model.hdr = false; model.adaptiveHighDynamic = false; model.photoFormat = item.1
+            model.tone = item.4; model.adaptiveHighDynamic = item.3; model.hdr = item.2
+            await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
+            for _ in 0..<300 { if camera.ready && camera.pendingPhotoCount == 0 { break }; try await Task.sleep(for: .milliseconds(20)) }
+            try await Task.sleep(for: .milliseconds(350))
+            let options = model.photoOptions
+            XCTAssertEqual(options.hdr, item.2); XCTAssertEqual(options.adaptiveHighDynamic, item.3)
+            let done = expectation(description: "fixed scene \(scene) \(item.0)")
+            var captured: CapturedPhoto?
+            camera.onCaptureCompleted = { captured = $0; done.fulfill() }
+            let began = CACurrentMediaTime(); camera.capture(flashMode: .off, options: options)
+            await fulfillment(of: [done], timeout: 40)
+            let photo = try XCTUnwrap(captured, camera.message ?? "No fixed scene photo")
+            times.append(CACurrentMediaTime()-began)
+            let resource = try XCTUnwrap(photo.resources.first { !$0.alternate && !$0.pairedVideo })
+            let source = try XCTUnwrap(CGImageSourceCreateWithData(resource.data as CFData, nil))
+            let props = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any])
+            let exif = props[kCGImagePropertyExifDictionary as String] as? [String: Any]
+            let image = try XCTUnwrap(CIImage(data: resource.data, options: [.expandToHDR: false, .applyOrientationProperty: true]))
+            let reduced = image.transformed(by: CGAffineTransform(scaleX: 64/image.extent.width, y: 64/image.extent.height))
+            var rgba = [Float](repeating: 0, count: 64*64*4)
+            context.render(reduced, toBitmap: &rgba, rowBytes: 64*16, bounds: CGRect(x:0,y:0,width:64,height:64), format: .RGBAf,
+                           colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!)
+            let luma = (0..<4096).map { max(0, Double(rgba[$0*4]*0.2126+rgba[$0*4+1]*0.7152+rgba[$0*4+2]*0.0722)) }.sorted()
+            let record = "scene=\(scene) pass=\(index/matrix.count) kind=\(item.0) seconds=\(times.last ?? 0) p10=\(luma[409]) p50=\(luma[2048]) p90=\(luma[3686]) gainMap=\(HDRImageAssertions.hasGainMap(source)) shutter=\(exif?[kCGImagePropertyExifExposureTime as String] ?? "missing") ISO=\(exif?[kCGImagePropertyExifISOSpeedRatings as String] ?? "missing") orientation=\(props[kCGImagePropertyOrientation as String] ?? "missing")"
+            records.append(record); print("FIXED-QUALITY \(record)")
+            XCTAssertNotNil(exif?[kCGImagePropertyExifExposureTime as String]); XCTAssertNotNil(exif?[kCGImagePropertyExifISOSpeedRatings as String])
+            let orientation = try XCTUnwrap((props[kCGImagePropertyOrientation as String] as? NSNumber)?.intValue)
+            XCTAssertTrue((1...8).contains(orientation))
+            if index < matrix.count {
+                let attachment = XCTAttachment(data: resource.data, uniformTypeIdentifier: "public.heic")
+                attachment.name = "Quality-\(scene)-\(item.0).heic"; attachment.lifetime = .keepAlways; add(attachment)
+                if item.0 == "pro-adaptive", let raw = photo.resources.first(where: { $0.filename.lowercased().hasSuffix(".dng") }) {
+                    let baseline = XCTAttachment(data: raw.data, uniformTypeIdentifier: "com.adobe.raw-image")
+                    baseline.name = "Quality-\(scene)-baseline.dng"; baseline.lifetime = .keepAlways; add(baseline)
+                }
+            }
+        }
+        let attachment = XCTAttachment(string: records.joined(separator: "\n")); attachment.name = "Quality-\(scene)-metrics"
+        attachment.lifetime = .keepAlways; add(attachment)
+        print("FIXED-QUALITY-SUMMARY scene=\(scene) samples=\(times.count) meanSeconds=\(times.reduce(0,+)/Double(times.count)) PhotosWrites=0; brightness statistics are SDR linear luminance, not a quality score")
+    }
     @MainActor func testAllProTonesAreUsedByActualHDRHEIFProCaptureWithoutSaving() async throws {
         let model = try await FullDeviceRegressionFixture.makeFreshModel(), camera = model.camera
         let format = model.photoFormat, hdr = model.hdr, tone = model.tone, style = model.style, mode = model.mode

@@ -53,7 +53,7 @@ struct PhotoReview: View {
             .sheet(isPresented: $share, onDismiss: { savedShareResources = [] }) {
                 if let image = displayedImage { ShareSheet(image: image, resources: savedShareResources.isEmpty ? model.shareResources : savedShareResources) }
             }
-            .sheet(item: $editor) { session in
+            .fullScreenCover(item: $editor) { session in
                 PhotoEditorView(session: session, library: model) { result in
                     if result.copiedAssetID != nil { return }
                     retainedImage = result.preview
@@ -138,7 +138,7 @@ struct PhotoReview: View {
             request = service.openEditor(id: id) { result in
                 guard requestToken == token else { return }
                 preparingEdit = false
-                switch result { case .success(let session): editor = session; case .failure(let error): model.message = error.localizedDescription }
+                switch result { case .success(let session): PhotoEditorView.present(session, selection: $editor); case .failure(let error): model.message = error.localizedDescription }
             }
         } else if let raw = model.shareResources.first(where:{ $0.filename.lowercased().hasSuffix(".dng") }),
                   let processed = model.shareResources.first(where:{ !$0.alternate && !$0.pairedVideo }),
@@ -157,16 +157,17 @@ struct PhotoReview: View {
                             DispatchQueue.main.async { completion(result) }
                         }
                     }
-                    DispatchQueue.main.async { guard requestToken == token else { return }; preparingEdit = false; editor = session }
+                    DispatchQueue.main.async { guard requestToken == token else { return }; preparingEdit = false; PhotoEditorView.present(session, selection: $editor) }
                 } catch { DispatchQueue.main.async { guard requestToken == token else { return }; preparingEdit = false; model.message = error.localizedDescription } }
             }
         } else if let image = model.lastPhoto, let source = CIImage(image: image) {
-            editor = PhotoEditSession(source: source) { adjustments, completion in
+            let session = PhotoEditSession(source: source) { adjustments, completion in
                 DispatchQueue.global(qos: .userInitiated).async {
                     let result = Result { try PhotoEditRenderer.render(source: source, adjustments: adjustments) }
                     DispatchQueue.main.async { completion(result) }
                 }
             }
+            PhotoEditorView.present(session, selection: $editor)
         }
     }
 }

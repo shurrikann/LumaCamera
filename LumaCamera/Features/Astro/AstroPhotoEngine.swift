@@ -94,6 +94,7 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         get { recoveryIDSlot.value }
         set { recoveryIDSlot.value = newValue }
     }
+    private var finishingCapture = false
     private var capturing = false
     nonisolated private let startedSlot = LockedCaptureValue<Bool>(false)
     nonisolated private var started: Bool {
@@ -160,7 +161,8 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
                     device.unlockForConfiguration()
                 }
                 self.session.commitConfiguration()
-                self.previewFrames.reset(forDeviceID:device.uniqueID, fastStart:reuseGraph)
+                // Collect the first two route-matched frames promptly; steady-state snapshots stay at 4 Hz.
+                self.previewFrames.reset(forDeviceID:device.uniqueID, fastStart:true)
                 self.device = device
                 DispatchQueue.main.async {
                     guard self.started, self.startRevision == startID else { return }
@@ -283,6 +285,7 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         recoveryID = recovery
         previewExposureGate.setCaptureActive(true)
         isCapturing = true
+        finishingCapture = false
         result = nil
         capturedFrames = 0
         stackWorker.begin(recovery)
@@ -396,6 +399,7 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         deadlineTask?.cancel(); deadlineTask = nil
         capturing = false
         isCapturing = false
+        finishingCapture = false
         error = message
         status = "拍摄失败"
         restoreAfterCapture()
@@ -408,6 +412,7 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
 
         capturing = false
         isCapturing = false
+        finishingCapture = false
         rawDelegates.removeAll()
         result = nil
         capturedFrames = 0
@@ -428,6 +433,7 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
     private func finish() {
         guard capturing, let id = recoveryID else { return }
         capturing = false
+        finishingCapture = true
         deadlineTask?.cancel(); deadlineTask = nil
         status = "正在合成 RAW 堆栈"
         let iso = captureOptions.iso
@@ -444,6 +450,7 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
                 self.info = "\(cg.width)x\(cg.height) · \(snapshot.acceptedFrames) 帧有效 RAW · 3 组中值"
                 self.status = "RAW 星空照片完成"
                 self.isCapturing = false
+                self.finishingCapture = false
                 self.restoreAfterCapture()
                 if self.autoSaveOnFinish || self.forceSaveOnFinish { self.save() }
             }
@@ -505,8 +512,10 @@ final class AstroPhotoEngine: NSObject, ObservableObject {
         switchingLens = false
         startRevision = UUID()
         deadlineTask?.cancel(); deadlineTask = nil
-        if let id = recoveryID { stackWorker.cancel(id) }
-        isCapturing = false
+        if !finishingCapture {
+            if let id = recoveryID { stackWorker.cancel(id) }
+            isCapturing = false
+        }
         guard started else { return }
         capturing = false
         started = false

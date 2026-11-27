@@ -27,7 +27,7 @@ struct SystemPhotoView: View {
                           onBack: { dismiss() }, onCamera: onCamera,
                           onShare: { detail.prepareShare { share = $0 } },
                           onInfo: { info.toggle(); if info { detail.loadDetails() } },
-                          onEdit: { detail.prepareEditor { editor = $0 } },
+                          onEdit: { detail.prepareEditor { PhotoEditorView.present($0, selection: $editor) } },
                           onDelete: { onDeletePrepared?(); model.delete(photo) { deleted in if deleted { if let onDeleted { onDeleted() } else { dismiss() } } } },
                           onSwipe: share || editor != nil ? nil : onSwipe, pageMotion: pageMotion, onPageFinished: onPageFinished)
             .onAppear { onImageDisplayed?(detail.image) }
@@ -36,11 +36,11 @@ struct SystemPhotoView: View {
                 detail.load()
                 #if DEBUG && targetEnvironment(simulator)
                 if ProcessInfo.processInfo.arguments.contains("--preview-photo-info") { detail.loadDetails(); info = true }
-                if ProcessInfo.processInfo.arguments.contains("--preview-editor") { detail.prepareEditor { editor = $0 } }
+                if ProcessInfo.processInfo.arguments.contains("--preview-editor") { detail.prepareEditor { PhotoEditorView.present($0, selection: $editor) } }
                 #endif
             }.onDisappear { detail.cancelLoading() }
             .sheet(isPresented: $share) { if let image = detail.image { ShareSheet(image: image, resources: detail.resources) } }
-            .sheet(item: $editor) { session in
+            .fullScreenCover(item: $editor) { session in
                 PhotoEditorView(session: session, library: model.library) { detail.edited($0); if info { detail.loadDetails() } }
             }
             .alert("光屿相机", isPresented: Binding(get: { detail.message != nil }, set: { if !$0 { detail.message = nil } })) {

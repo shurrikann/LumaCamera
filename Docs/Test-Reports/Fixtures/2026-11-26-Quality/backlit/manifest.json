@@ -1,0 +1,47 @@
+[
+  {
+    "file": "Quality-backlit-metrics.txt",
+    "sha256": "f13e87a41db31db8e3cb21f4671495d6d3c82651607bf10dbd94717ffe42667f",
+    "bytes": 2889
+  },
+  {
+    "file": "Quality-backlit-pro-cinematic-hdr-adaptive.heic",
+    "sha256": "5c406e2aa15b423de69a345794405d393fd5a6d3dc9e5e4c6e5c7f1e25d01871",
+    "bytes": 726296
+  },
+  {
+    "file": "Quality-backlit-pro-hdr-adaptive.heic",
+    "sha256": "5dd18619664b7c36f469da534ddba651c9adf72809df904334dc7304b003a74e",
+    "bytes": 735872
+  },
+  {
+    "file": "Quality-backlit-baseline.dng",
+    "sha256": "ec521b64124da28353d2bcc6eb2d7618955f87b053f005ed419bbbc7b723fe49",
+    "bytes": 15201456
+  },
+  {
+    "file": "Quality-backlit-pro-adaptive.heic",
+    "sha256": "ee4febff89bb11708babd51ade8e444489856ed2cdc6bf3774a3effe37562de2",
+    "bytes": 472587
+  },
+  {
+    "file": "Quality-backlit-pro-hdr.heic",
+    "sha256": "fbba0cfad4d6a1db4508174eafffbcddb09f8a9ee2caaf4abd7686157d68e7e6",
+    "bytes": 703387
+  },
+  {
+    "file": "Quality-backlit-pro.heic",
+    "sha256": "155f255cf4babf07e41575d28a6e6764961806bf4fd0cd7efba3a39741fdf78d",
+    "bytes": 448386
+  },
+  {
+    "file": "Quality-backlit-heif-hdr.heic",
+    "sha256": "e18310a26e7a4d5b0405656333efa6032bd13fa91ff9ef15fe12a420e7151c47",
+    "bytes": 1494882
+  },
+  {
+    "file": "Quality-backlit-heif.heic",
+    "sha256": "aa1c95150ac1856e7a22d6bdd7913a117fe0d2243be9cd27091a485d398ee5b8",
+    "bytes": 887794
+  }
+]

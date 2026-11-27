@@ -15,6 +15,13 @@ struct PhotoEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var cropRulerControl: CropRulerControl = .straighten
+    @State private var presentationVisible = false
+    @State private var closing = false
+    static func present(_ session: PhotoEditSession, selection: Binding<PhotoEditSession?>) {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { selection.wrappedValue = session }
+    }
     init(session: PhotoEditSession, library: PhotoLibraryViewModel, onSaved: @escaping (PhotoEditResult) -> Void) {
         _model = StateObject(wrappedValue: PhotoEditorViewModel(session: session, library: library)); self.onSaved = onSaved
     }
@@ -132,6 +139,23 @@ struct PhotoEditorView: View {
             // The crop preview paints its own transformed overflow over a dark canvas.
             .presentationBackground(Color.clear)
             .presentationCornerRadius(0)
+            .opacity(presentationVisible ? 1 : 0)
+            .allowsHitTesting(!closing)
+            .onAppear {
+                withAnimation(.easeOut(duration: reduceMotion ? 0.08 : 0.18)) { presentationVisible = true }
+            }
+    }
+    private func closeEditor() {
+        guard !closing else { return }
+        closing = true
+        let duration = reduceMotion ? 0.08 : 0.18
+        withAnimation(.easeOut(duration: duration)) { presentationVisible = false }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(duration))
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) { dismiss() }
+        }
     }
     @ViewBuilder private var editorContent: some View {
         if model.tool == .crop {
@@ -141,12 +165,7 @@ struct PhotoEditorView: View {
                 cropFooter
             }.padding(.bottom, 10)
         } else {
-            VStack(spacing: 10) {
-                photoPreview.frame(maxWidth: .infinity, maxHeight: .infinity)
-                Color.clear.frame(height: model.editorControlsHeight)
-                Color.clear.frame(height: 60)
-            }
-            .padding(.bottom, 12)
+            photoPreview.ignoresSafeArea()
         }
     }
 
@@ -156,7 +175,7 @@ struct PhotoEditorView: View {
 
     private var editorHeader: some View {
         HStack {
-            Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); dismiss() } label: { Image(systemName: "arrow.left").rotatingCaptureContent().frame(width: 44, height: 44).modifier(PopupSurface(radius: 22, glass: true)) }.accessibilityLabel("取消编辑")
+            Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); closeEditor() } label: { Image(systemName: "arrow.left").rotatingCaptureContent().frame(width: 44, height: 44).modifier(PopupSurface(radius: 22, glass: true)) }.accessibilityLabel("取消编辑")
             Spacer()
             Menu {
                 if model.session.rawDevelopment != nil {
@@ -493,7 +512,7 @@ struct PhotoEditorView: View {
         }.buttonStyle(.plain).accessibilityAddTraits(model.preservesLive == live ? .isSelected : [])
     }
     private func saveChoice(_ title: String, subtitle: String, asCopy: Bool) -> some View {
-        Button { model.save(asCopy: asCopy) { result in onSaved(result); dismiss() } } label: {
+        Button { model.save(asCopy: asCopy) { result in onSaved(result); closeEditor() } } label: {
             VStack(spacing: 5) {
                 Text(title).font(.system(size: 15, weight: .semibold)).foregroundStyle(AppTheme.accent)
                 Text(subtitle).font(.system(size: 11)).foregroundStyle(.white.opacity(0.65)).multilineTextAlignment(.center).lineLimit(3).minimumScaleFactor(0.85)

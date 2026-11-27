@@ -4,7 +4,7 @@ import ImageIO
 
 /// 每个编辑会话持有底片；预览复用缩放后的RAW解码器，最终保存另建全尺寸解码器。
 /// 两者均串行保护，防止连续拖动与保存同时修改CIRAWFilter。
-final class RAWPhotoDevelopment {
+final class RAWPhotoDevelopment: @unchecked Sendable {
     let raw: Data
     let initial: PhotoAdjustments
     let metadata: [String:Any]

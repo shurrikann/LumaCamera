@@ -57,11 +57,6 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
     nonisolated private let frameAdmission = AstroFrameAdmission()
     private let sessionQueue: DispatchQueue
     private let videoQueue = DispatchQueue(label: "camera.astro-timelapse.video", qos: .userInitiated)
-    private let renderContext = CIContext(options: [
-        .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!,
-        .workingFormat: CIFormat.RGBAh,
-        .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
-    ])
     nonisolated private let deviceSlot = LockedCaptureValue<AVCaptureDevice?>(nil)
     nonisolated private var device: AVCaptureDevice? {
         get { deviceSlot.value }
@@ -75,7 +70,6 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
     private var activeFusionFrames = 1
     private var fusionCount = 0
     private var fusionAccumulator: CIImage?
-    private var fusionExtent: CGRect = .zero
     private(set) var samplingStartedAt: CFTimeInterval?
     private(set) var samplingEndedAt: CFTimeInterval?
     private var timeline = AstroCaptureTimeline(interval: 10, fusion: 1, duration: nil)
@@ -84,16 +78,14 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
     private var pendingOutput: CIImage?
     private var pendingWindow = 0
     private var currentWindow = -1
-    private var movieScene: AstroSceneRegistration?
-    private var groupScene: AstroSceneRegistration?
-    private var groupQuality = AstroFrameQualityGate()
-    private var tone = AstroTemporalTone()
     private let previewExposureGate = AstroPreviewExposureGate()
     nonisolated private let recoveryIDSlot = LockedCaptureValue<UUID?>(nil)
     nonisolated private var recoveryID: UUID? {
         get { recoveryIDSlot.value }
         set { recoveryIDSlot.value = newValue }
     }
+    private let processingWorker = AstroSerialImageWorker<AstroTimelapseFrameProcessor>()
+    private var renderingOutput = false
     private var capturing = false
     private var acceptedAt: CFTimeInterval = 0
     nonisolated private let startedSlot = LockedCaptureValue<Bool>(false)
@@ -168,7 +160,8 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
                     device.unlockForConfiguration()
                 }
                 self.session.commitConfiguration()
-                self.previewFrames.reset(forDeviceID:device.uniqueID, fastStart:reuseGraph)
+                // Collect the first two route-matched frames promptly; steady-state snapshots stay at 4 Hz.
+                self.previewFrames.reset(forDeviceID:device.uniqueID, fastStart:true)
                 self.device = device
                 DispatchQueue.main.async {
                     guard self.started, self.startRevision == startID else { return }
@@ -290,11 +283,11 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
             duration: durationMinutes.map { Double($0) * 60 })
         currentWindow = -1; pendingOutput = nil
         samplingStartedAt = nil; samplingEndedAt = nil
-        movieScene = nil; groupScene = nil; tone = AstroTemporalTone(); groupQuality = AstroFrameQualityGate()
+        processingWorker.begin(recovery) { AstroTimelapseFrameProcessor() }
+        renderingOutput = false
         deadlineTask?.cancel(); deadlineTask = nil
         fusionCount = 0
         fusionAccumulator = nil
-        fusionExtent = .zero
         var settings = manualSettings
         settings.fusionExposureSeconds = activeFusionFrames
         status = "正在拍摄星空延时 · 融合 \(activeFusionFrames) 秒/帧"
@@ -403,7 +396,7 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
             let deadline = ProcessInfo.processInfo.systemUptime + 2
             while let self, self.recoveryID == id, !Task.isCancelled {
                 self.flushPendingOutput()
-                if self.pendingOutput == nil || ProcessInfo.processInfo.systemUptime >= deadline {
+                if !self.renderingOutput && (self.pendingOutput == nil || ProcessInfo.processInfo.systemUptime >= deadline) {
                     self.finishSavingAfterDrain(manual: manual)
                     return
                 }
@@ -476,7 +469,8 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
     func cancel() {
         finishTask?.cancel(); finishTask = nil
         deadlineTask?.cancel(); deadlineTask = nil; pendingOutput = nil
-        if let id = recoveryID { AstroRecoveryStore.shared.discard(id); recoveryID = nil }
+        if let id = recoveryID { processingWorker.cancel(id); AstroRecoveryStore.shared.discard(id); recoveryID = nil }
+        renderingOutput = false
 
         capturing = false
         isRecording = false
@@ -499,9 +493,11 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
         let now = CACurrentMediaTime()
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer).seconds
         let admission = frameAdmission
+        let captureID = recoveryID
         Task { @MainActor [weak self] in
-            defer { admission.end() }
-            guard let self, self.capturing else { return }
+            var submitted = false
+            defer { if !submitted { admission.end() } }
+            guard let self, self.capturing, let captureID, self.recoveryID == captureID else { return }
             guard now >= self.acceptedAt else { return }
             self.flushPendingOutput()
             guard self.pendingOutput == nil else { return }
@@ -523,8 +519,6 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
                 }
                 self.fusionCount = 0; self.fusionAccumulator = nil
                 self.currentWindow = tick.window
-                self.groupScene = nil
-                self.groupQuality = AstroFrameQualityGate()
             }
             if tick.complete, !tick.collect, let partial = self.fusionAccumulator, self.fusionCount > 0 {
                 self.pendingOutput = partial; self.pendingWindow = tick.window
@@ -532,86 +526,46 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
                 self.flushPendingOutput()
             }
             guard tick.collect, self.pendingOutput == nil else { return }
-            var image = CIImage(cvPixelBuffer: pixelBuffer)
-            let extent = image.extent
-            let scale = max(2160 / extent.width, 3840 / extent.height)
-            image = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-            let cropX = max(0, (image.extent.width - 2160) / 2)
-            let cropY = max(0, (image.extent.height - 3840) / 2)
-            image = image.cropped(to: CGRect(x: image.extent.minX + cropX, y: image.extent.minY + cropY, width: 2160, height: 3840))
-            guard let fused = self.fuseTimelapseFrame(image) ?? self.fusionAccumulator else { return }
-            self.status = "正在融合 \(self.fusionCount)/\(self.activeFusionFrames) 秒"
-            if tick.complete {
-                self.pendingOutput = fused; self.pendingWindow = tick.window
-                self.fusionCount = 0; self.fusionAccumulator = nil
-                self.flushPendingOutput()
+            let image = CIImage(cvPixelBuffer: pixelBuffer)
+            submitted = true
+            self.processingWorker.perform(id: captureID, operation: { $0.process(image, window: tick.window) }) { [weak self] result in
+                Task { @MainActor [weak self] in
+                    defer { admission.end() }
+                    guard let self, self.capturing, self.recoveryID == captureID, let result else { return }
+                    self.fusionAccumulator = result.image
+                    self.fusionCount = result.count
+                    self.status = "正在融合 \(self.fusionCount)/\(self.activeFusionFrames) 秒"
+                    if tick.complete, let fused = result.image {
+                        self.pendingOutput = fused; self.pendingWindow = tick.window
+                        self.fusionCount = 0; self.fusionAccumulator = nil
+                        self.flushPendingOutput()
+                    }
+                }
             }
         }
     }
 
     private func flushPendingOutput() {
-        guard let fused = pendingOutput, let adaptor, let input = writerInput,
-              input.isReadyForMoreMediaData, let pool = adaptor.pixelBufferPool else { return }
-        var out: CVPixelBuffer?
-        guard CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &out) == kCVReturnSuccess, let out else { return }
-        let stableTone = tone.process(fused,context:renderContext)
-        let rendered = outputOptions.watermark ? AstroWatermarkRenderer.overlay(on: stableTone) : stableTone
-        renderContext.render(rendered, to: out, bounds: CGRect(x: 0, y: 0, width: 2160, height: 3840),
-                             colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-        if adaptor.append(out, withPresentationTime: CMTime(value: Int64(pendingWindow), timescale: 30)) {
-            outputIndex += 1; capturedFrames = outputIndex; pendingOutput = nil
-            status = "正在拍摄星空延时 · \(capturedFrames) 帧"
-        } else if let error = writer?.error { self.error = error.localizedDescription }
-    }
-
-    private func fuseTimelapseFrame(_ source: CIImage) -> CIImage? {
-        if movieScene == nil { movieScene = AstroSceneRegistration(reference: source, context: renderContext) }
-        let stable = movieScene?.stabilizeGround(source) ?? source
-        if groupScene == nil { groupScene = AstroSceneRegistration(reference: stable, context: renderContext, matte: movieScene?.matte) }
-        let statistics = AstroFrameStatistics.measure(stable,context:renderContext)
-        switch groupQuality.consider(statistics) {
-        case .reject: return nil
-        case .replaceReference:
-            groupScene = AstroSceneRegistration(reference:stable,context:renderContext,matte:movieScene?.matte)
-            fusionCount = 0; fusionAccumulator = nil
-        case .accept: break
+        guard !renderingOutput, let fused = pendingOutput, let adaptor, let input = writerInput,
+              input.isReadyForMoreMediaData, let pool = adaptor.pixelBufferPool, let id = recoveryID else { return }
+        renderingOutput = true
+        let watermark = outputOptions.watermark
+        let window = pendingWindow
+        let poolReference = AstroPixelBufferPoolReference(pool: pool)
+        processingWorker.perform(id: id, operation: { $0.render(fused, watermark: watermark, pool: poolReference.pool) }) { [weak self] result in
+            Task { @MainActor [weak self] in
+                guard let self, self.recoveryID == id else { return }
+                self.renderingOutput = false
+                guard let result, let buffer = result.buffer, let activeAdaptor = self.adaptor, self.writer?.status == .writing else {
+                    if let error = result?.error { self.error = error }
+                    return
+                }
+                if activeAdaptor.append(buffer, withPresentationTime: CMTime(value: Int64(window), timescale: 30)) {
+                    self.outputIndex += 1; self.capturedFrames = self.outputIndex; self.pendingOutput = nil
+                    self.status = "正在拍摄星空延时 · \(self.capturedFrames) 帧"
+                } else if let error = self.writer?.error { self.error = error.localizedDescription }
+            }
         }
-        var frame = groupScene?.align(stable, ground: false) ?? stable
-        guard groupScene?.lastStarAlignmentSucceeded != false else { return nil }
-        if let reference = fusionAccumulator, let sky = movieScene?.matte.image {
-            frame = AstroTransientTracks.clean(frame,previous:reference,sky:sky,context:renderContext)
-            frame = AstroSignalProtection.temporalClean(frame,reference:reference,noise:statistics.noise,sky:sky)
-        }
-        if fusionExtent == .zero { fusionExtent = CGRect(x: 0, y: 0, width: 2160, height: 3840) }
-        let count = fusionCount + 1
-        let alpha = 1.0 / Double(count)
-        let combined: CIImage
-        if let fusionAccumulator {
-            let current = frame.applyingFilter("CIColorMatrix", parameters: [
-                "inputRVector": CIVector(x: alpha, y: 0, z: 0, w: 0),
-                "inputGVector": CIVector(x: 0, y: alpha, z: 0, w: 0),
-                "inputBVector": CIVector(x: 0, y: 0, z: alpha, w: 0),
-                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
-            ])
-            let previous = fusionAccumulator.applyingFilter("CIColorMatrix", parameters: [
-                "inputRVector": CIVector(x: 1 - alpha, y: 0, z: 0, w: 0),
-                "inputGVector": CIVector(x: 0, y: 1 - alpha, z: 0, w: 0),
-                "inputBVector": CIVector(x: 0, y: 0, z: 1 - alpha, w: 0),
-                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
-            ])
-            combined = current.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: previous])
-        } else {
-            combined = frame
-        }
-        var buffer: CVPixelBuffer?
-        let attrs: [String: Any] = [kCVPixelBufferIOSurfacePropertiesKey as String: [:]]
-        guard CVPixelBufferCreate(kCFAllocatorDefault, 2160, 3840, kCVPixelFormatType_64RGBAHalf,
-                                  attrs as CFDictionary, &buffer) == kCVReturnSuccess, let buffer else { return nil }
-        renderContext.render(combined, to: buffer, bounds: fusionExtent,
-                             colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!)
-        fusionCount = count
-        fusionAccumulator = CIImage(cvPixelBuffer: buffer)
-        return fusionAccumulator
     }
 
     private func restoreAfterCapture() {
@@ -649,6 +603,10 @@ final class AstroTimelapseEngine: NSObject, ObservableObject, AVCaptureVideoData
     }
 
     func stop() {
+        if !isFinishing {
+            if let id = recoveryID { processingWorker.cancel(id) }
+            renderingOutput = false
+        }
         switchingLens = false
         startRevision = UUID()
         guard started else { return }

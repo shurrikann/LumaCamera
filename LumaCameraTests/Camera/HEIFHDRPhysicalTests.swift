@@ -38,6 +38,7 @@ final class HEIFHDRPhysicalTests: XCTestCase {
 
     @MainActor func testHEIFHDRUsesTenBitLivePreviewAndRestoresRAWPhotoQualityWithoutSaving() async throws {
         let model = try XCTUnwrap(AppDependencies.runningAppCameraModel), camera = model.camera
+        let runtimeAudit = SessionRuntimeErrorAudit()
         let oldFormat = model.photoFormat, oldHDR = model.hdr, oldMode = model.mode, oldResolution = model.photoResolution, oldStyle = model.style
         let oldCapture = camera.onCaptureCompleted, idle = UIApplication.shared.isIdleTimerDisabled
         UIApplication.shared.isIdleTimerDisabled = true
@@ -45,6 +46,7 @@ final class HEIFHDRPhysicalTests: XCTestCase {
             camera.onCaptureCompleted = oldCapture
             model.hdr = false; model.photoFormat = oldFormat; model.photoResolution = oldResolution; model.style = oldStyle
             model.setMode(oldMode); model.hdr = oldHDR; model.setCameraActive(false); UIApplication.shared.isIdleTimerDisabled = idle
+            runtimeAudit.finish()
         }
         model.setCameraActive(true)
         // A preceding test can still have its stop queued while published ready
@@ -97,7 +99,10 @@ final class HEIFHDRPhysicalTests: XCTestCase {
                 guard let lens = camera.lenses.first(where: { $0.device.position == .back && abs(Double($0.displayZoom)-focal)<0.01 }) else { continue }
                 for _ in 0..<200 { if camera.ready && !camera.capturing { break }; try await Task.sleep(for:.milliseconds(20)) }
                 model.selectFocalLength(lens)
-                for _ in 0..<150 { if camera.ready && camera.selectedLens == lens.id { break }; try await Task.sleep(for:.milliseconds(25)) }
+                for _ in 0..<150 {
+                    if camera.ready && camera.selectedLens == lens.id && abs(camera.currentZoom-CGFloat(focal)) < 0.02 { break }
+                    try await Task.sleep(for:.milliseconds(25))
+                }
                 XCTAssertTrue(camera.ready, "HDR lens \(focal) mode \(mode)")
                 XCTAssertFalse(camera.hdrPreviewActive)
                 XCTAssertEqual(camera.currentZoom,CGFloat(focal),accuracy:0.02)

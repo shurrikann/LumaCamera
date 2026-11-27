@@ -4,12 +4,47 @@ import XCTest
 @testable import LumaCamera
 
 @MainActor final class AstroIconRenderTests: XCTestCase {
+    func testShutterCenterAndInteriorDoNotPassTouchesToBackground() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let window = UIWindow(windowScene: scene)
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        var frame = CGRect.zero
+        var checks = 0
+        var hitMilliseconds = [Double]()
+        for kind in [CaptureShutterFace.Kind.photo, .video] {
+            for center in [CaptureShutterFace.Center.none, .loading, .countdown, .stop] {
+                let root = ZStack {
+                    ShutterTouchBackground()
+                    Button {} label: {
+                        CaptureShutterFace(kind: kind, center: center)
+                            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame = $0 }
+                    }.buttonStyle(.plain)
+                }
+                window.rootViewController = UIHostingController(rootView: root)
+                window.makeKeyAndVisible()
+                try await Task.sleep(for: .milliseconds(100))
+                XCTAssertEqual(frame.width, 76, accuracy: 1)
+                for delta in [CGPoint.zero, CGPoint(x: 15,y: 0), CGPoint(x: -15,y: 0), CGPoint(x: 0,y: 15), CGPoint(x: 0,y: -15)] {
+                    let point = CGPoint(x: frame.midX + delta.x, y: frame.midY + delta.y)
+                    let began = CACurrentMediaTime()
+                    let hit = window.hitTest(point, with: nil)
+                    hitMilliseconds.append((CACurrentMediaTime() - began) * 1000)
+                    XCTAssertFalse(hit is ShutterTouchBackgroundView, "shutter interior passed through: \(kind) \(center) \(delta)")
+                    checks += 1
+                }
+            }
+        }
+        print("SHUTTER-HIT-TEST checks=\(checks) kinds=2 centers=4 meanHitMilliseconds=\(hitMilliseconds.reduce(0,+) / Double(hitMilliseconds.count)) maxHitMilliseconds=\(hitMilliseconds.max() ?? 0) PhotosWrites=0; UIKit hit-test cost, not frame rate or finger-to-capture latency")
+    }
+
     func testRecoveryPanelFitsSingleAndMultipleItemsOnDevice() async throws {
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let previous = scene.windows.first(where: \.isKeyWindow)
         let window = UIWindow(windowScene: scene)
         defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
         var timings = [Double]()
+        var scrollOperations = 0
         for count in [1, 6] {
             let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
             defer { try? FileManager.default.removeItem(at: root) }
@@ -35,13 +70,40 @@ import XCTest
                 let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
                 timings.append((CACurrentMediaTime() - start) * 1000)
                 XCTAssertNotNil(shot.cgImage)
+                let scroll = try XCTUnwrap(horizontalScroll(in: window))
+                XCTAssertLessThanOrEqual(scroll.contentSize.height, scroll.bounds.height + 1)
+                let cardWidth = max(64, (window.bounds.width - 96) / 3)
+                if count == 6 {
+                    XCTAssertEqual(scroll.contentSize.width, cardWidth * 6 + 16 * 5 + 40, accuracy: 2)
+                    XCTAssertGreaterThan(scroll.contentSize.width, scroll.bounds.width * 1.5)
+                    for _ in 0..<3 {
+                        scroll.setContentOffset(CGPoint(x: scroll.contentSize.width - scroll.bounds.width, y: 0), animated: false)
+                        try await Task.sleep(for: .milliseconds(20))
+                        XCTAssertGreaterThan(scroll.contentOffset.x, scroll.bounds.width * 0.5)
+                        scroll.setContentOffset(.zero, animated: false)
+                        scrollOperations += 2
+                    }
+                }
                 if angle == 180 {
                     let attachment = XCTAttachment(image: shot)
                     attachment.name = "Astro-Recovery-Panel-\(count)-Items"; attachment.lifetime = .keepAlways; add(attachment)
                 }
             }
+            if count == 6 {
+                let removed = try XCTUnwrap(store.items.first).id
+                store.discard(removed)
+                let deadline = CACurrentMediaTime() + 3
+                while store.items.count != 5, CACurrentMediaTime() < deadline { try await Task.sleep(for: .milliseconds(20)) }
+                XCTAssertEqual(store.items.count, 5)
+                XCTAssertFalse(store.items.contains { $0.id == removed })
+            }
         }
-        print("ASTRO-RECOVERY-UI samples=12 items=1,6 renderMilliseconds=\(timings); snapshot drawing cost, not FPS")
+        print("ASTRO-RECOVERY-UI samples=12 items=1,6 horizontalScrollOperations=\(scrollOperations) discard=1 renderMilliseconds=\(timings); snapshot drawing cost, not FPS; no Photos writes")
+    }
+
+    private func horizontalScroll(in view: UIView) -> UIScrollView? {
+        if let scroll = view as? UIScrollView, scroll.bounds.width > 0 { return scroll }
+        return view.subviews.lazy.compactMap { self.horizontalScroll(in: $0) }.first
     }
 
     func testNewIconFamilyAcrossSizesAndAngles() async throws {
@@ -98,4 +160,10 @@ private struct AstroIconHarness: View {
         }.onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { state.bounds = $0 }
             .frame(maxWidth: .infinity, maxHeight: .infinity).background(.black)
     }
+}
+
+private final class ShutterTouchBackgroundView: UIView {}
+private struct ShutterTouchBackground: UIViewRepresentable {
+    func makeUIView(context: Context) -> ShutterTouchBackgroundView { ShutterTouchBackgroundView() }
+    func updateUIView(_ uiView: ShutterTouchBackgroundView, context: Context) {}
 }

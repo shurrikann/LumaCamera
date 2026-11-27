@@ -43,6 +43,8 @@ struct CaptureShutterFace: View {
                     .transition(.opacity)
             }
         }
+        // Decorative glass layers do not receive touches; the whole visible disc must.
+        .contentShape(Circle())
         .animation(.easeInOut(duration: reduceMotion ? 0.08 : 0.16), value: center)
     }
 

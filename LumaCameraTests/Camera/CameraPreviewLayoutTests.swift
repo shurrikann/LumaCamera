@@ -42,9 +42,6 @@ final class CameraPreviewLayoutTests: XCTestCase {
             let fourThree = CameraPreviewLayout.frame(in: size, ratio: .standard, landscape: true)
             let fixedTop = CameraPreviewLayout.hdrBadgeTop(in: size, landscape: true)
             XCTAssertEqual(fixedTop, fourThree.minY + CameraPreviewLayout.hdrBadgeTopInset, accuracy: 0.01)
-            for ratio in FrameRatio.photoOptions {
-                XCTAssertEqual(CameraPreviewLayout.hdrBadgeTop(in: size, landscape: true), fixedTop, accuracy: 0.01)
-            }
         }
     }
 

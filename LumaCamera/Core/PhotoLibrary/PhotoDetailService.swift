@@ -60,7 +60,7 @@ struct PhotoAdjustments: Codable, Equatable {
             adjustments:rawControlsApplied ? AdaptiveRAWDeveloper.withoutRAWControls(filterAdjustments) : filterAdjustments,
             virtualAperture:rawDevelopment?.virtualAperture)
         let styled = rawControlsApplied ? AdaptiveDynamicRenderer.filtered(source,look:look,hdr:rawDevelopment?.hdr == true) : Imaging.filtered(source,look:look)
-        var image = styled.applyingFilter("CIExposureAdjust", parameters: [kCIInputEVKey: exposure])
+        let image = styled.applyingFilter("CIExposureAdjust", parameters: [kCIInputEVKey: exposure])
             .applyingFilter("CIColorControls", parameters: [kCIInputContrastKey: contrast, kCIInputSaturationKey: saturation])
         let upright = applyGeometry(to: image)
         return includesWatermark ? (watermark?.apply(to: upright, filterID: filterID, intensity: filterIntensity) ?? upright) : upright

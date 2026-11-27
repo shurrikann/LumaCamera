@@ -1,0 +1,42 @@
+scene=indoor pass=0 kind=heif seconds=0.9763595416661701 p10=0.01673812046647072 p50=0.26325324177742004 p90=0.7562539577484131 gainMap=false shutter=0.01 ISO=(
+    160
+) orientation=1
+scene=indoor pass=0 kind=heif-hdr seconds=2.6883419583318755 p10=0.01471739076077938 p50=0.24888330698013306 p90=0.7505047917366028 gainMap=true shutter=0.01 ISO=(
+    250
+) orientation=3
+scene=indoor pass=0 kind=pro seconds=1.9630472083335917 p10=0.020059753209352493 p50=0.2800595462322235 p90=0.7119481563568115 gainMap=false shutter=0.02 ISO=(
+    200
+) orientation=1
+scene=indoor pass=0 kind=pro-hdr seconds=2.361209874998167 p10=0.018533596768975258 p50=0.2757473587989807 p90=0.7231452465057373 gainMap=true shutter=0.01 ISO=(
+    320
+) orientation=1
+scene=indoor pass=0 kind=pro-adaptive seconds=1.084869374997652 p10=0.06220107525587082 p50=0.22872276604175568 p90=0.666856050491333 gainMap=false shutter=0.01 ISO=(
+    320
+) orientation=1
+scene=indoor pass=0 kind=pro-hdr-adaptive seconds=2.4709603333358245 p10=0.061391059309244156 p50=0.22265255451202393 p90=0.6494911313056946 gainMap=true shutter=0.01 ISO=(
+    320
+) orientation=1
+scene=indoor pass=0 kind=pro-cinematic-hdr-adaptive seconds=2.620857416666695 p10=0.04103095829486847 p50=0.2082856446504593 p90=0.6842336654663086 gainMap=true shutter=0.01 ISO=(
+    320
+) orientation=1
+scene=indoor pass=1 kind=pro-cinematic-hdr-adaptive seconds=2.6137282500021684 p10=0.04303831607103348 p50=0.20526224374771118 p90=0.65598464012146 gainMap=true shutter=0.02 ISO=(
+    160
+) orientation=1
+scene=indoor pass=1 kind=pro-hdr-adaptive seconds=2.5536424166675715 p10=0.061387039721012115 p50=0.21856579184532166 p90=0.6120551228523254 gainMap=true shutter=0.02 ISO=(
+    160
+) orientation=1
+scene=indoor pass=1 kind=pro-adaptive seconds=1.1439352500019595 p10=0.062382642179727554 p50=0.22829875349998474 p90=0.6308982372283936 gainMap=false shutter=0.02 ISO=(
+    160
+) orientation=1
+scene=indoor pass=1 kind=pro-hdr seconds=2.413543791666598 p10=0.01857576332986355 p50=0.2718760371208191 p90=0.6960548162460327 gainMap=true shutter=0.02 ISO=(
+    160
+) orientation=1
+scene=indoor pass=1 kind=pro seconds=0.9361960833339253 p10=0.0196805689483881 p50=0.27818194031715393 p90=0.7229173183441162 gainMap=false shutter=0.02 ISO=(
+    160
+) orientation=1
+scene=indoor pass=1 kind=heif-hdr seconds=2.9028616249997867 p10=0.01614515297114849 p50=0.26728057861328125 p90=0.7392364144325256 gainMap=true shutter=0.02 ISO=(
+    160
+) orientation=3
+scene=indoor pass=1 kind=heif seconds=0.6296330000004673 p10=0.0157768577337265 p50=0.27431976795196533 p90=0.7495548129081726 gainMap=false shutter=0.02 ISO=(
+    200
+) orientation=1

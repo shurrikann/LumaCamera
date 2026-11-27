@@ -1,3 +1,34 @@
+## 2026-11-27 玻璃快门命中范围
+
+共用CaptureShutterFace在根ZStack显式声明Circle contentShape。玻璃装饰层保持allowsHitTesting(false)，外层Button据整圆接收点击，避免只有外圈和中央停止块能命中。拍摄状态、内部加载指示器和采集接口不变。
+
+## 2026-11-27 星空待保存结果展示
+
+`AstroRecoveryPanel`沿用原存储与导入流程，布局改为底部玻璃浮层和横向LazyHStack，一屏三项，名称／图片／保存按钮纵向排列，图片右上垃圾桶触发既有确认。缩略图异步解码，视频使用应用轨道方向的AVAssetImageGenerator，最长边900像素；预览正方形中心裁切，28点圆角，垃圾桶覆于等距右上角；取消后不回写旧缩略图。列表仍由AstroRecoveryStore提供，关闭不删除本地文件，正常自动保存路径不变。
+
+## 2026-11-26 星轨／延时后台处理与收尾回归
+
+- `AstroSerialImageWorker` 以独立串行队列和拍摄 ID 独占可变处理状态。`AstroTrailFrameProcessor` 承接地景配准、质量判断、星轨累积、降噪和最终渲染；`AstroTimelapseFrameProcessor` 承接分窗口星点融合、时序色调和输出像素渲染。引擎仍在 MainActor 管理界面、采集时间轴及视频写入顺序；不是把 AVFoundation 会话操作迁到图像队列。
+- 采集入口用 frame admission 限定至多一个待处理帧，回调完成才释放；取消和重开通过 ID 验证丢弃旧结果，防止积压及旧任务改写新拍摄。视频输出池用保留引用跨队列交付，实际像素分配／渲染只在处理队列执行，adaptor append 仍在引擎队列顺序中进行。
+- 短星轨截止时允许等待已提交的首帧。`finishingCapture` 将最终图像输出与相机会话释放分开；延时在后台渲染排空后再封装，不让路由退出取消已有结果。取消仍废弃本次，手动停止保存有效结果。
+- 延时中心裁切后先把图像原点平移回零，再渲染至固定 2160×3840 缓冲；半浮点累积明确标记线性 sRGB，避免重复 gamma 变换或非标准输入比例留下空白。
+- 微距 processed 请求如使用 constituent 交付，指定超广角及另一个组成镜头，delegate 只处理超广角照片；RAW／包围请求保持原路由。官方 SDK `AVCapturePhotoOutput.h` 要求该设备数组至少两个，修复先前一个设备导致的 capturePhoto 异常。
+- 新增受环境变量控制的固定场景诊断：七种格式／HDR／高动态／影调组合正反两轮，保存原件、RAW 和亮度分位统计至 XCTest 附件；不写系统相册。持久化硬件测试使用真实异步切换并等待旧会话停止，使用独立偏好存储，不以同步未启动模型代替实际切换。
+
+## 2026-11-26 照片画布禁用滚动边缘效果
+
+- `PhotoZoomScrollView` 在 iOS 26 及以后显式设置四边 UIScrollEdgeEffect.isHidden=true。画布在固定竖屏控件中旋转，不能把列表滚动边缘模糊应用于照片像素。仅修改媒体滚动视图，保留控件玻璃材质、缩放和滑动逻辑。
+- 官方 API：[UIScrollEdgeEffect](https://developer.apple.com/documentation/uikit/uiscrolledgeeffect)、[isHidden](https://developer.apple.com/documentation/uikit/uiscrolledgeeffect/ishidden)。遮罩覆盖问题由本轮真机前后对照确认，不将旋转异常描述为平台通用保证。
+
+## 2026-11-26 照片编辑外层呈现
+
+- `SystemPhotoView` 与 `PhotoReview` 将编辑入口由 sheet 改为 fullScreenCover，分享入口不变。`PhotoEditorView.present` 在无系统滑动动画的 transaction 中设置会话，编辑内容局部淡入；返回和保存完成通过 closeEditor 淡出后无滑动关闭，支持 Reduce Motion。
+- 先前内部画布的忽略安全区不能扩大外层 sheet 的可用区域；此次以实际呈现层测试完整屏幕范围。编辑依然固定竖屏，保存弹窗、裁剪专用布局、滤镜及水印逻辑不变。
+
+## 2026-11-26 编辑预览恢复完整画布
+
+- `PhotoEditorView.editorContent` 非裁剪模式使用忽略安全区的 `photoPreview`，不再为调节面板和工具条预留高度。沿用 `ZoomablePhotoView` 完整等比适配，编辑流程固定竖屏；所有编辑 overlay 继续使用既有位置和淡入淡出。裁剪专用布局不变。
+
 ## 2026-11-26 星空照片处理队列及有效帧预算
 
 - `AstroSceneRegistration` 暴露本次星点配准结果。参考天空至少四个可检测星点而刚性匹配失败时标记 false，`AstroPhotoStackProcessor` 和延时融合拒绝该帧；参考星点不足时保留原场景回退，不将普通室内误判为星点配准失败。首帧作为参考直接接收。
@@ -422,7 +453,7 @@ PhotoKit编辑配方版本升至7，输入识别保留1—6。覆盖保存从原
 - `AstroSharedCaptureSession`独占owner和保存的普通输入输出图。准备星空/恢复普通图都在外层begin/commit内完成，旧图释放只清所属owner，不单独提交空图；迟到配置、镜头任务和恢复回调按代次/归属忽略。保存/恢复视频设备格式、帧时长、色彩空间、倍率、HDR策略，照片尺寸和视频连接启用/旋转/镜像/防抖；音频设备不设置activeFormat。
 - 主引擎暂停自己的算法/预览时保留星空占用的运行会话；正常模式切换不停止session。背景、隐藏和已有长曝光恢复另行管理停启。已有RAW配准/融合、星轨、延时编码及持久恢复存储继续由原引擎处理。
 - `modeHandoffImage`只覆盖取景；两次显示时机后提交模式，进入另有跨页面短覆盖。星空以原生层previewing和两个新代理帧就绪，普通预览以本次请求后的目标类型、至少三帧跨0.1秒就绪，再短淡出。初始页面构造和模式提交禁用整页动画；弹窗动画限定各浮层。后台/设置/相册/新请求取消旧覆盖和任务。
-- `AstroPreviewFrameStore`生成最多4Hz、最长边960px的过渡代理，不保留捕获池buffer，也不用于成片。原生预览层在星空子模式间复用，并持续观察previewing状态；就绪任务随模式、ready和前后台变化取消重建。
+- `AstroPreviewFrameStore`在启动、子模式切换和切镜时优先渲染前两个匹配目标设备的新代理帧（首帧不节流、第二帧最小间隔1/30秒），之后恢复4Hz、最长边960px的过渡代理。不保留捕获池buffer，也不用于成片；仍需原生预览层previewing和两张新代理均就绪才释放交接覆盖。原生预览层在星空子模式间复用，并持续观察previewing状态；就绪任务随模式、ready和前后台变化取消重建。
 
 ## 2026-11-16 星空曝光准备、配准与持久恢复
 

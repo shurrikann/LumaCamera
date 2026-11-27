@@ -4,6 +4,65 @@ import UIKit
 @testable import LumaCamera
 
 final class PhotoDetailHeaderTests: XCTestCase {
+    @MainActor func testNavigationHostedLandscapePhotoPreservesUpperAndLowerTexture() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let window = UIWindow(windowScene: scene)
+        let host = UIHostingController(rootView: AnyView(Color.black))
+        window.rootViewController = host; window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 600, height: 400)).image { context in
+            UIColor.white.setFill(); context.fill(CGRect(x: 0, y: 0, width: 600, height: 400))
+            UIColor.black.setFill()
+            for y in stride(from: 0, to: 400, by: 8) {
+                for x in stride(from: 0, to: 600, by: 8) where (x/8 + y/8).isMultiple(of: 2) {
+                    context.fill(CGRect(x: x, y: y, width: 8, height: 8))
+                }
+            }
+        }
+        func zooms(_ view: UIView) -> [PhotoZoomScrollView] {
+            (view as? PhotoZoomScrollView).map { [$0] } ?? view.subviews.flatMap { zooms($0) }
+        }
+        func contrast(_ shot: UIImage, at point: CGPoint) throws -> Double {
+            let scale = shot.scale
+            let rect = CGRect(x: point.x - 32, y: point.y - 32, width: 64, height: 64)
+                .applying(CGAffineTransform(scaleX: scale, y: scale)).integral
+            let crop = try XCTUnwrap(shot.cgImage?.cropping(to: rect))
+            var pixels = [UInt8](repeating: 0, count: 64*64)
+            let context = try XCTUnwrap(CGContext(data: &pixels, width: 64, height: 64, bitsPerComponent: 8,
+                bytesPerRow: 64, space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue))
+            context.interpolationQuality = .none
+            context.draw(crop, in: CGRect(x: 0, y: 0, width: 64, height: 64))
+            let mean = pixels.reduce(0.0) { $0 + Double($1) } / Double(pixels.count)
+            return sqrt(pixels.reduce(0.0) { $0 + pow(Double($1)-mean, 2) } / Double(pixels.count))
+        }
+        var samples: [String] = []
+        for angle in [0.0, 90, -90, 0, 90] {
+            host.rootView = AnyView(NavigationStack {
+                PhotoViewerLayout(image: image, date: Date(), onBack: {}, onCamera: {}, onShare: {}, onInfo: {}, onEdit: {}, onDelete: {})
+            }.environment(\.libraryMediaAngle, angle))
+            try await Task.sleep(for: .milliseconds(350))
+            let zoom = try XCTUnwrap(zooms(window).first)
+            if #available(iOS 26.0, *) {
+                XCTAssertTrue(zoom.topEdgeEffect.isHidden)
+                XCTAssertTrue(zoom.bottomEdgeEffect.isHidden)
+                XCTAssertTrue(zoom.leftEdgeEffect.isHidden)
+                XCTAssertTrue(zoom.rightEdgeEffect.isHidden)
+            }
+            let rect = zoom.photoView.convert(zoom.photoView.bounds, to: window)
+            let began = CACurrentMediaTime()
+            let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+            let cost = (CACurrentMediaTime()-began)*1000
+            let upper = try contrast(shot, at: CGPoint(x: rect.midX, y: rect.minY+rect.height*0.28))
+            let lower = try contrast(shot, at: CGPoint(x: rect.midX, y: rect.minY+rect.height*0.72))
+            samples.append("angle=\(angle) upper=\(upper) lower=\(lower) snapshotMs=\(cost)")
+            XCTAssertGreaterThan(upper, 45)
+            XCTAssertGreaterThan(upper, lower*0.85)
+            let attachment = XCTAttachment(image: shot); attachment.name = "Photo-Texture-\(Int(angle))"
+            attachment.lifetime = .keepAlways; add(attachment)
+        }
+        print("PHOTO-LANDSCAPE-TEXTURE samples=\(samples); contrast is grayscale standard deviation, not FPS")
+    }
     func testAddressFormattingDeduplicatesAndHasFallback() {
         XCTAssertEqual(PhotoAddressPresentation.title(locality: "上海市", sublocality: "浦东新区", street: "世纪大道", number: "100号", name: nil), "上海市 · 浦东新区 · 世纪大道 · 100号")
         XCTAssertEqual(PhotoAddressPresentation.title(locality: "同名", sublocality: "同名", street: nil, number: nil, name: nil), "同名")

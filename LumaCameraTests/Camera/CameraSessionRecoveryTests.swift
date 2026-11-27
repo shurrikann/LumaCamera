@@ -174,27 +174,34 @@ final class CameraSessionRecoveryTests: XCTestCase {
     }
 
     @MainActor func testTemporaryInterruptionIsSilentAndEndedCannotRestartStoppedCamera() async throws {
-        let camera = CameraEngine()
         #if !targetEnvironment(simulator)
-        throw XCTSkip("Use the shared visible engine for physical recovery tests")
+        let model = try await FullDeviceRegressionFixture.makeFreshModel()
+        let camera = model.camera
+        model.setCameraActive(true)
+        defer { model.setCameraActive(false) }
         #else
+        let camera = CameraEngine()
         guard UIApplication.shared.applicationState == .active else {
             throw XCTSkip("Session interruption recovery requires the simulator app to be foreground-active")
         }
         camera.start(); defer { camera.stop() }
-        for _ in 0..<100 { if camera.ready { break }; try await Task.sleep(for:.milliseconds(20)) }
+        #endif
+        for _ in 0..<300 { if camera.ready { break }; try await Task.sleep(for:.milliseconds(20)) }
         XCTAssertTrue(camera.ready)
         camera.simulateInterruptionForTesting(ended:false)
         for _ in 0..<50 { if camera.recoveringSession { break }; try await Task.sleep(for:.milliseconds(10)) }
         XCTAssertNil(camera.message); XCTAssertTrue(camera.recoveringSession)
         camera.simulateInterruptionForTesting(ended:true)
-        for _ in 0..<100 { if camera.ready && !camera.recoveringSession { break }; try await Task.sleep(for:.milliseconds(20)) }
+        for _ in 0..<300 { if camera.ready && !camera.recoveringSession { break }; try await Task.sleep(for:.milliseconds(20)) }
         XCTAssertTrue(camera.ready); XCTAssertNil(camera.message)
+        #if !targetEnvironment(simulator)
+        model.setCameraActive(false)
+        #endif
         camera.stop()
+        await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
         camera.simulateInterruptionForTesting(ended:true)
         try await Task.sleep(for:.milliseconds(100))
         XCTAssertFalse(camera.ready); XCTAssertFalse(camera.recoveringSession); XCTAssertNil(camera.message)
-        #endif
     }
 
     // Set TEST_RUNNER_LUMA_VERIFY_COVER_BACKGROUND=1 for xcodebuild and
@@ -229,7 +236,9 @@ final class CameraSessionRecoveryTests: XCTestCase {
         defer { center.removeObserver(background); center.removeObserver(foreground) }
         model.setCameraActive(true)
         try await PresetToolbarChecks.wait("相机就绪") { camera.ready && session.isRunning }
+        let target = ProcessInfo.processInfo.environment["LUMA_COVER_TARGET"]
         let modes: [(String, CameraViewModel.TopLevelMode)] = [("gallery", .photo), ("settings", .video), ("map", .astro)]
+            .filter { target == nil || $0.0 == target }
         for (cover, mode) in modes {
             model.selectTopLevelMode(mode)
             try await PresetToolbarChecks.wait("入口就绪 \(cover)") {
@@ -242,7 +251,9 @@ final class CameraSessionRecoveryTests: XCTestCase {
             else { try XCTUnwrap(AstroModeDiagnostics.environmentSheet).wrappedValue = true }
             try await PresetToolbarChecks.wait("打开后停采 \(cover)") { !session.isRunning }
             let dwellStart = CACurrentMediaTime()
-            for _ in 0..<6 {
+            let requestedDwell = Double(ProcessInfo.processInfo.environment["LUMA_COVER_DWELL_SECONDS"] ?? "30") ?? 30
+            let checks = Int(ceil(min(300, max(30, requestedDwell)) / 5))
+            for _ in 0..<checks {
                 try await Task.sleep(for: .seconds(5))
                 XCTAssertFalse(session.isRunning, cover)
                 XCTAssertNil(camera.message, cover)
@@ -250,12 +261,13 @@ final class CameraSessionRecoveryTests: XCTestCase {
             let dwell = CACurrentMediaTime() - dwellStart
             let entered = events.entered, returned = events.foreground
             FileHandle.standardOutput.write(Data("CAMERA-COVER-BACKGROUND-READY \(cover)\n".utf8))
-            let deadline = CACurrentMediaTime() + 60
+            let deadline = CACurrentMediaTime() + 300
             while (events.entered == entered || events.foreground == returned), CACurrentMediaTime() < deadline {
                 try await Task.sleep(for: .milliseconds(100))
             }
-            XCTAssertGreaterThan(events.entered, entered, cover)
-            XCTAssertGreaterThan(events.foreground, returned, cover)
+            guard events.entered > entered, events.foreground > returned else {
+                throw XCTSkip("未观察到用户完成 \(cover) 的真实后台／前台切换，不能判定恢复结果")
+            }
             XCTAssertEqual(UIApplication.shared.applicationState, .active, cover)
             if cover == "map" {
                 XCTAssertFalse(try XCTUnwrap(AstroModeDiagnostics.environmentSheet).wrappedValue)

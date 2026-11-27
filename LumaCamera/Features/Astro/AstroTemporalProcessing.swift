@@ -1,4 +1,6 @@
 import CoreImage
+import CoreVideo
+import Foundation
 
 /// Slowly follows real lighting changes while damping frame-to-frame exposure/WB steps.
 struct AstroTemporalTone {
@@ -117,4 +119,248 @@ struct AstroTrailMotion {
         for i in -radius...radius { closed = closed.applyingFilter("CIMinimumCompositing",parameters:[kCIInputBackgroundImageKey:shifted(dilated,i)]) }
         return closed.applyingFilter("CIBlendWithMask",parameters:[kCIInputBackgroundImageKey:image,kCIInputMaskImageKey:sky]).cropped(to:image.extent)
     }
+}
+
+// Capture IDs and a serial queue own mutable image state, independently of UI state.
+struct AstroFrameProcessingResult: @unchecked Sendable {
+    var image: CIImage? = nil
+    var rendered: CGImage? = nil
+    var buffer: CVPixelBuffer? = nil
+    var count = 0
+    var error: String? = nil
+}
+/// Retains the pool for one queued render; allocation occurs only on that queue.
+struct AstroPixelBufferPoolReference: @unchecked Sendable {
+    let pool: CVPixelBufferPool
+}
+final class AstroSerialImageWorker<Processor: Sendable>: @unchecked Sendable {
+    private let queue = DispatchQueue(label: "camera.astro.temporal.processing", qos: .userInitiated)
+    private var processor: Processor?
+    private var captureID: UUID?
+    func begin(_ id: UUID, make: @escaping @Sendable () -> Processor) {
+        queue.async { self.processor = make(); self.captureID = id }
+    }
+    func cancel(_ id: UUID) {
+        queue.async { guard self.captureID == id else { return }; self.processor = nil; self.captureID = nil }
+    }
+    func perform(id: UUID, operation: @escaping @Sendable (inout Processor) -> AstroFrameProcessingResult,
+                 completion: @escaping @Sendable (AstroFrameProcessingResult?) -> Void) {
+        queue.async {
+            autoreleasepool {
+                guard self.captureID == id, self.processor != nil else { completion(nil); return }
+                completion(operation(&self.processor!))
+            }
+        }
+    }
+}
+struct AstroTrailFrameProcessor: @unchecked Sendable {
+    private let linearSpace = CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
+    private let context = CIContext(options: [
+        .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!,
+        .workingFormat: CIFormat.RGBAh,
+        .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
+    ])
+    /// Intermediate accumulation must stay linear. Using the display/output
+    /// context here would gamma-encode every accumulated frame.
+    private let accumulatorContext = CIContext(options: [
+        .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!,
+        .workingFormat: CIFormat.RGBAh,
+        .outputColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
+    ])
+    var blend: AstroTrailBlend = .lighten
+    init(blend: AstroTrailBlend = .lighten) { self.blend = blend }
+    private(set) var capturedCount = 0
+    private(set) var accumulator: CIImage?
+    private var accumulatorBuffer: CVPixelBuffer?
+    private var fusionExtent = CGRect.zero
+    private var sceneRegistration: AstroSceneRegistration?
+    private var qualityGate = AstroFrameQualityGate()
+    private var trailMotion = AstroTrailMotion()
+    private var previousTrail: CIImage?
+    mutating func append(_ frame: CIImage, at now: CFTimeInterval) -> Bool {
+        let extent = frame.extent.integral
+        guard extent.width > 0, extent.height > 0 else { return true }
+        if fusionExtent == .zero { fusionExtent = CGRect(origin: .zero, size: extent.size) }
+        let raw = frame
+            .cropped(to: extent)
+            .transformed(by: CGAffineTransform(translationX: -extent.minX, y: -extent.minY))
+            .cropped(to: fusionExtent)
+        let statistics = AstroFrameStatistics.measure(raw,context:accumulatorContext)
+        if qualityGate.consider(statistics) == .reject { return true }
+        if sceneRegistration == nil { sceneRegistration = AstroSceneRegistration(reference: raw, context: accumulatorContext) }
+        // Register the static ground only; stellar motion is the desired trail.
+        var normalized = sceneRegistration?.stabilizeGround(raw) ?? raw
+        if let sky = sceneRegistration?.matte.image {
+            normalized = AstroTransientTracks.clean(normalized,previous:previousTrail,sky:sky,context:accumulatorContext)
+            trailMotion.observe(normalized,sky:sky,time:now,context:accumulatorContext)
+            previousTrail = AstroSceneRegistration(reference:normalized,context:accumulatorContext,matte:sceneRegistration?.matte).reference
+        }
+        let count = capturedCount + 1
+        let combined: CIImage
+        if let accumulator {
+            switch blend {
+            case .lighten:
+                let sky = normalized.applyingFilter("CILightenBlendMode", parameters: [kCIInputBackgroundImageKey: accumulator])
+                if let matte = sceneRegistration?.matte, matte.confidence > 0.01 {
+                    let a = 1.0/Double(count)
+                    let current = normalized.applyingFilter("CIColorMatrix",parameters:["inputRVector":CIVector(x:a,y:0,z:0,w:0),"inputGVector":CIVector(x:0,y:a,z:0,w:0),"inputBVector":CIVector(x:0,y:0,z:a,w:0)])
+                    let old = accumulator.applyingFilter("CIColorMatrix",parameters:["inputRVector":CIVector(x:1-a,y:0,z:0,w:0),"inputGVector":CIVector(x:0,y:1-a,z:0,w:0),"inputBVector":CIVector(x:0,y:0,z:1-a,w:0)])
+                    let average = current.applyingFilter("CIAdditionCompositing",parameters:[kCIInputBackgroundImageKey:old])
+                    combined = sky.applyingFilter("CIBlendWithMask",parameters:[kCIInputBackgroundImageKey:average,kCIInputMaskImageKey:matte.image])
+                } else { combined = sky }
+            case .sum:
+                combined = normalized.applyingFilter("CIAdditionCompositing", parameters: [
+                    kCIInputBackgroundImageKey: accumulator
+                ])
+            case .average:
+                let alpha = 1.0 / Double(count)
+                let current = normalized.applyingFilter("CIColorMatrix", parameters: [
+                    "inputRVector": CIVector(x: alpha, y: 0, z: 0, w: 0),
+                    "inputGVector": CIVector(x: 0, y: alpha, z: 0, w: 0),
+                    "inputBVector": CIVector(x: 0, y: 0, z: alpha, w: 0),
+                    "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+                ])
+                let previous = accumulator.applyingFilter("CIColorMatrix", parameters: [
+                    "inputRVector": CIVector(x: 1 - alpha, y: 0, z: 0, w: 0),
+                    "inputGVector": CIVector(x: 0, y: 1 - alpha, z: 0, w: 0),
+                    "inputBVector": CIVector(x: 0, y: 0, z: 1 - alpha, w: 0),
+                    "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+                ])
+                combined = current.applyingFilter("CIAdditionCompositing", parameters: [
+                    kCIInputBackgroundImageKey: previous
+                ])
+            }
+        } else {
+            combined = normalized
+        }
+        guard let next = materialize(combined) else { return false }
+        accumulator = next.image
+        accumulatorBuffer = next.buffer
+        capturedCount = count
+        return true
+    }
+
+    private func materialize(_ image: CIImage) -> (image: CIImage, buffer: CVPixelBuffer)? {
+        let width = Int(fusionExtent.width.rounded())
+        let height = Int(fusionExtent.height.rounded())
+        guard width > 0, height > 0 else { return nil }
+        var buffer: CVPixelBuffer?
+        let attributes: [String: Any] = [
+            kCVPixelBufferIOSurfacePropertiesKey as String: [:]
+        ]
+        let status = CVPixelBufferCreate(kCFAllocatorDefault, width, height,
+                                         kCVPixelFormatType_64RGBAHalf,
+                                         attributes as CFDictionary, &buffer)
+        guard status == kCVReturnSuccess, let buffer else { return nil }
+        accumulatorContext.render(image, to: buffer,
+                                 bounds: CGRect(x: 0, y: 0, width: width, height: height),
+                                 colorSpace: linearSpace)
+        // The half-float buffer contains linear-light values. Attach the same
+        // color space explicitly; CIImage(cvPixelBuffer:) otherwise has no
+        // reliable linear tag and the next blend treats it as sRGB.
+        let image = CIImage(cvPixelBuffer: buffer, options: [.colorSpace: linearSpace])
+        return (image, buffer)
+    }
+
+    mutating func finish(iso: Double) -> AstroFrameProcessingResult {
+        guard let accumulator else { return .init(error: "没有可合成帧") }
+        var image = AstroPostProcessor.flattenBackground(accumulator, sky: sceneRegistration?.matte.image)
+        image = AstroSignalProtection.denoise(image, iso: iso, context: context, sky: sceneRegistration?.matte.image)
+        if let sky = sceneRegistration?.matte.image { image = trailMotion.fill(image, sky: sky) }
+        image = AstroPostProcessor.enhanceTrails(image)
+        let rendered = context.createCGImage(image, from: fusionExtent)
+        let result = AstroFrameProcessingResult(image: image, rendered: rendered, count: capturedCount,
+            error: rendered == nil ? "合成失败" : nil)
+        self.accumulator = nil; accumulatorBuffer = nil; previousTrail = nil; sceneRegistration = nil
+        return result
+    }
+}
+
+struct AstroTimelapseFrameProcessor: @unchecked Sendable {
+    private let renderContext = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!,
+        .workingFormat: CIFormat.RGBAh, .priorityRequestLow: true])
+    private var movieScene: AstroSceneRegistration?
+    private var groupScene: AstroSceneRegistration?
+    private var groupQuality = AstroFrameQualityGate()
+    private var tone = AstroTemporalTone()
+    private var currentWindow = -1
+    private var fusionExtent = CGRect.zero
+    private(set) var fusionCount = 0
+    private(set) var fusionAccumulator: CIImage?
+    mutating func process(_ image: CIImage, window: Int) -> AstroFrameProcessingResult {
+        if window != currentWindow {
+            currentWindow = window; groupScene = nil; groupQuality = AstroFrameQualityGate()
+            fusionCount = 0; fusionAccumulator = nil
+        }
+        let extent = image.extent
+        let scale = max(2160 / extent.width, 3840 / extent.height)
+        let scaled = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        let x = max(0, (scaled.extent.width - 2160) / 2), y = max(0, (scaled.extent.height - 3840) / 2)
+        let crop = CGRect(x: scaled.extent.minX+x, y: scaled.extent.minY+y, width:2160, height:3840)
+        let frame = scaled.cropped(to: crop)
+            .transformed(by: CGAffineTransform(translationX: -crop.minX, y: -crop.minY))
+        let fused = append(frame) ?? fusionAccumulator
+        return AstroFrameProcessingResult(image: fused, count: fusionCount)
+    }
+    mutating func render(_ image: CIImage, watermark: Bool, pool: CVPixelBufferPool) -> AstroFrameProcessingResult {
+        var buffer: CVPixelBuffer?
+        guard CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &buffer) == kCVReturnSuccess, let buffer else {
+            return .init(error: "无法分配延时输出缓冲")
+        }
+        let stable = tone.process(image, context: renderContext)
+        let output = watermark ? AstroWatermarkRenderer.overlay(on: stable) : stable
+        renderContext.render(output, to: buffer, bounds: CGRect(x:0,y:0,width:2160,height:3840),
+            colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+        return .init(buffer: buffer)
+    }
+    mutating func append(_ source: CIImage) -> CIImage? {
+        if movieScene == nil { movieScene = AstroSceneRegistration(reference: source, context: renderContext) }
+        let stable = movieScene?.stabilizeGround(source) ?? source
+        if groupScene == nil { groupScene = AstroSceneRegistration(reference: stable, context: renderContext, matte: movieScene?.matte) }
+        let statistics = AstroFrameStatistics.measure(stable,context:renderContext)
+        switch groupQuality.consider(statistics) {
+        case .reject: return nil
+        case .replaceReference:
+            groupScene = AstroSceneRegistration(reference:stable,context:renderContext,matte:movieScene?.matte)
+            fusionCount = 0; fusionAccumulator = nil
+        case .accept: break
+        }
+        var frame = groupScene?.align(stable, ground: false) ?? stable
+        guard groupScene?.lastStarAlignmentSucceeded != false else { return nil }
+        if let reference = fusionAccumulator, let sky = movieScene?.matte.image {
+            frame = AstroTransientTracks.clean(frame,previous:reference,sky:sky,context:renderContext)
+            frame = AstroSignalProtection.temporalClean(frame,reference:reference,noise:statistics.noise,sky:sky)
+        }
+        if fusionExtent == .zero { fusionExtent = CGRect(x: 0, y: 0, width: 2160, height: 3840) }
+        let count = fusionCount + 1
+        let alpha = 1.0 / Double(count)
+        let combined: CIImage
+        if let fusionAccumulator {
+            let current = frame.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: alpha, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: alpha, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: alpha, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+            ])
+            let previous = fusionAccumulator.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: 1 - alpha, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: 1 - alpha, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: 1 - alpha, w: 0),
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+            ])
+            combined = current.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: previous])
+        } else {
+            combined = frame
+        }
+        var buffer: CVPixelBuffer?
+        let attrs: [String: Any] = [kCVPixelBufferIOSurfacePropertiesKey as String: [:]]
+        guard CVPixelBufferCreate(kCFAllocatorDefault, 2160, 3840, kCVPixelFormatType_64RGBAHalf,
+                                  attrs as CFDictionary, &buffer) == kCVReturnSuccess, let buffer else { return nil }
+        renderContext.render(combined, to: buffer, bounds: fusionExtent,
+                             colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!)
+        fusionCount = count
+        fusionAccumulator = CIImage(cvPixelBuffer: buffer, options: [.colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!])
+        return fusionAccumulator
+    }
+
 }

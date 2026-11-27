@@ -211,6 +211,78 @@ import XCTest
         #endif
     }
 
+    func testTemporalWorkersKeepUIResponsiveAndStopAfterRepeatedCancel() async throws {
+        #if targetEnvironment(simulator)
+        throw XCTSkip("Requires physical video buffers")
+        #else
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        let trails = AstroTrailsEngine(), time = AstroTimelapseEngine()
+        defer { trails.stop(); time.stop(); model.setCameraActive(false) }
+        var gaps: [Double] = []
+        let heartbeat = Task { @MainActor in
+            var previous = CACurrentMediaTime()
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(20))
+                if Task.isCancelled { break }
+                let now = CACurrentMediaTime(); gaps.append((now-previous)*1000); previous = now
+            }
+        }
+        defer { heartbeat.cancel() }
+        trails.autoSaveOnFinish = false; trails.captureDurationSeconds = 3
+        trails.start(); try await wait { trails.session.isRunning && !trails.switchingLens }
+        for _ in 0..<3 {
+            trails.begin(); trails.cancel(); try await Task.sleep(for: .milliseconds(200))
+            XCTAssertFalse(trails.isCapturing); XCTAssertNil(trails.result)
+        }
+        let began = CACurrentMediaTime()
+        trails.begin(); try await wait(timeout: 40) { trails.result != nil || trails.error != nil }
+        XCTAssertNil(trails.error); XCTAssertNotNil(trails.result); XCTAssertFalse(trails.isCapturing)
+        print("ASTRO-TRAIL-WORKER frames=\(trails.capturedCount) wall=\(CACurrentMediaTime()-began) heartbeatSamples=\(gaps.count) maxMainActorGapMs=\(gaps.max() ?? 0) cancelRestart=3")
+        trails.cancel(); trails.stop(); try await wait { !trails.session.isRunning }
+        gaps = []
+        time.intervalSeconds = 1; time.manualSettings.fusionExposureSeconds = 1; time.durationMinutes = nil
+        time.start(); try await wait { time.session.isRunning && !time.switchingLens }
+        for _ in 0..<3 {
+            time.begin(); time.cancel(); try await Task.sleep(for: .milliseconds(200))
+            XCTAssertFalse(time.isRecording); XCTAssertFalse(time.isFinishing)
+        }
+        time.begin(); try await wait(timeout: 40) { time.capturedFrames >= 3 || time.error != nil }
+        XCTAssertNil(time.error)
+        let stopped = CACurrentMediaTime()
+        time.stopAndSave(); time.stop(); try await wait(timeout: 20) { !time.isFinishing }
+        XCTAssertNil(time.error); XCTAssertGreaterThanOrEqual(time.capturedFrames, 3)
+        XCTAssertGreaterThan(gaps.count, 10)
+        print("ASTRO-TIME-WORKER frames=\(time.capturedFrames) stopSeconds=\(CACurrentMediaTime()-stopped) heartbeatSamples=\(gaps.count) maxMainActorGapMs=\(gaps.max() ?? 0) cancelRestart=3 PhotosWrites=0; heartbeat is not FPS")
+        #endif
+    }
+
+    func testReleasingCameraRouteDoesNotCancelQueuedStillResults() async throws {
+        #if targetEnvironment(simulator)
+        throw XCTSkip("Requires physical RAW and video buffers")
+        #else
+        let model = try await FullDeviceRegressionFixture.makeIsolatedModel()
+        let photo = AstroPhotoEngine(), trails = AstroTrailsEngine()
+        defer { photo.stop(); trails.stop(); model.setCameraActive(false) }
+        photo.autoSaveOnFinish = false; photo.frameCount = 10
+        photo.manualSettings.photoShutterSeconds = 1.0/15
+        photo.start(); try await wait { photo.session.isRunning && !photo.switchingLens }
+        photo.begin(); try await wait(timeout: 30) { photo.capturedFrames >= 1 || photo.error != nil }
+        XCTAssertNil(photo.error)
+        photo.interruptAndSave(); photo.stop()
+        try await wait(timeout: 30) { photo.result != nil && !photo.isSaving || photo.error != nil }
+        XCTAssertNotNil(photo.result); XCTAssertNil(photo.error)
+        try await wait { !photo.session.isRunning }
+        trails.autoSaveOnFinish = false; trails.captureDurationSeconds = 30
+        trails.start(); try await wait { trails.session.isRunning && !trails.switchingLens }
+        trails.begin(); try await wait(timeout: 30) { trails.capturedCount >= 1 || trails.error != nil }
+        XCTAssertNil(trails.error)
+        trails.stopAndSave(); trails.stop()
+        try await wait(timeout: 30) { trails.result != nil || trails.error != nil }
+        XCTAssertNotNil(trails.result); XCTAssertNil(trails.error)
+        print("ASTRO-ROUTE-RELEASE photoAccepted=\(photo.capturedFrames) trailAccepted=\(trails.capturedCount) queuedFinals=2 PhotosWrites=0")
+        #endif
+    }
+
     func testRealTimelapseDurableFileCanBeLoadedByColdRecoveryStore() async throws {
         #if targetEnvironment(simulator)
         throw XCTSkip("Requires physical video")

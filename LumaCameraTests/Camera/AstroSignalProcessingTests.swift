@@ -3,6 +3,33 @@ import XCTest
 @testable import LumaCamera
 
 final class AstroSignalProcessingTests: XCTestCase {
+    func testTemporalWorkerRejectsOldCaptureAndPreservesLinearAverage() async throws {
+        let worker = AstroSerialImageWorker<AstroTimelapseFrameProcessor>()
+        let old = UUID(), current = UUID()
+        worker.begin(old) { AstroTimelapseFrameProcessor() }; worker.cancel(old)
+        worker.begin(current) { AstroTimelapseFrameProcessor() }
+        func linear(_ level: CGFloat) -> CIImage {
+            CIImage(color: CIColor(red: level, green: level, blue: level,
+                colorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!)!).cropped(to: extent)
+        }
+        let source = linear(0.18)
+        let stale: AstroFrameProcessingResult? = await withCheckedContinuation { c in
+            worker.perform(id: old, operation: { $0.process(source, window: 0) }) { c.resume(returning: $0) }
+        }
+        XCTAssertNil(stale)
+        for (index, level) in [CGFloat(0.18), 0.36].enumerated() {
+            let frame = linear(level)
+            let result: AstroFrameProcessingResult? = await withCheckedContinuation { c in
+                worker.perform(id: current, operation: { $0.process(frame, window: 0) }) {
+                    XCTAssertFalse(Thread.isMainThread); c.resume(returning: $0)
+                }
+            }
+            XCTAssertEqual(result?.count, index+1)
+            let fused = try XCTUnwrap(result?.image)
+            XCTAssertEqual(value(fused,x:100,y:100), index == 0 ? 0.18 : 0.27, accuracy: 0.002)
+        }
+        worker.cancel(current)
+    }
     private let context = CIContext(options:[.workingColorSpace:CGColorSpace(name:CGColorSpace.extendedLinearSRGB)!])
     private let extent = CGRect(x:0,y:0,width:256,height:256)
     func testDenoisePreservesCompactHDRStarsAndForeground() {

@@ -75,19 +75,6 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
     nonisolated private let frameAdmission = AstroFrameAdmission()
     private let sessionQueue: DispatchQueue
     private let videoQueue = DispatchQueue(label: "camera.long-exposure.video", qos: .userInitiated)
-    private let linearSpace = CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
-    private let context = CIContext(options: [
-        .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!,
-        .workingFormat: CIFormat.RGBAh,
-        .outputColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
-    ])
-    /// Intermediate accumulation must stay linear. Using the display/output
-    /// context here would gamma-encode every accumulated frame.
-    private let accumulatorContext = CIContext(options: [
-        .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!,
-        .workingFormat: CIFormat.RGBAh,
-        .outputColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
-    ])
     private nonisolated static let frameContext = CIContext(options: [
         .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!,
         .workingFormat: CIFormat.RGBAh,
@@ -98,14 +85,9 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
         get { deviceSlot.value }
         set { deviceSlot.value = newValue }
     }
-    private var accumulator: CIImage?
-    private var accumulatorBuffer: CVPixelBuffer?
-    private var fusionExtent: CGRect = .zero
-    private var sceneRegistration: AstroSceneRegistration?
-    private var qualityGate = AstroFrameQualityGate()
+    private let processingWorker = AstroSerialImageWorker<AstroTrailFrameProcessor>()
+    private var processingFrame = false
     private var captureDeadline: Task<Void, Never>?
-    private var trailMotion = AstroTrailMotion()
-    private var previousTrail: CIImage?
     private var frameTimes: [TimeInterval] = []
     private var framePTS: [Double] = []
     private let previewExposureGate = AstroPreviewExposureGate()
@@ -116,6 +98,7 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
         get { recoveryIDSlot.value }
         set { recoveryIDSlot.value = newValue }
     }
+    private var finishingCapture = false
     private var capturing = false
     private var acceptedAt: CFTimeInterval = 0
     nonisolated private let startedSlot = LockedCaptureValue<Bool>(false)
@@ -218,7 +201,8 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
                     device.unlockForConfiguration()
                 }
                 self.session.commitConfiguration()
-                self.previewFrames.reset(forDeviceID:device.uniqueID, fastStart:reuseGraph)
+                // Collect the first two route-matched frames promptly; steady-state snapshots stay at 4 Hz.
+                self.previewFrames.reset(forDeviceID:device.uniqueID, fastStart:true)
                 self.device = device
                 DispatchQueue.main.async {
                     guard self.started, self.startRevision == startID else { return }
@@ -339,14 +323,13 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
         recoveryID = recovery
         previewExposureGate.setCaptureActive(true)
         isCapturing = true
+        finishingCapture = false
         result = nil
         capturedCount = 0
-        qualityGate = AstroFrameQualityGate(); trailMotion = AstroTrailMotion(); previousTrail = nil
+        let selectedBlend = blend
+        processingWorker.begin(recovery) { AstroTrailFrameProcessor(blend: selectedBlend) }
+        processingFrame = false
         captureDeadline?.cancel(); captureDeadline = nil
-        self.accumulator = nil
-        self.accumulatorBuffer = nil
-        fusionExtent = .zero
-        sceneRegistration = nil
         frameTimes = []
         framePTS = []
         timingText = ""
@@ -387,12 +370,12 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
     func cancel() {
         guard !isSaving else { return }
         captureDeadline?.cancel(); captureDeadline = nil
-        if let id = recoveryID { AstroRecoveryStore.shared.discard(id); recoveryID = nil }
+        if let id = recoveryID { processingWorker.cancel(id); AstroRecoveryStore.shared.discard(id); recoveryID = nil }
 
         capturing = false
         isCapturing = false
-        self.accumulator = nil
-        self.accumulatorBuffer = nil
+        finishingCapture = false
+        processingFrame = false
         result = nil
         capturedCount = 0
         status = "已取消"
@@ -401,12 +384,8 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
 
     func reset() {
         guard !isSaving else { return }
-        if let id = recoveryID { AstroRecoveryStore.shared.discard(id); recoveryID = nil }
+        if let id = recoveryID { processingWorker.cancel(id); AstroRecoveryStore.shared.discard(id); recoveryID = nil }
 
-        self.accumulator = nil
-        self.accumulatorBuffer = nil
-        fusionExtent = .zero
-        sceneRegistration = nil
         result = nil
         capturedCount = 0
         timingText = ""
@@ -432,10 +411,10 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
         let pts = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
         let colorSpace = (cgImage.colorSpace?.name as String?) ?? "nil"
         let admission = frameAdmission
+        let captureID = recoveryID
         Task { @MainActor [weak self] in
-            defer { admission.end() }
-            guard let self, self.capturing else { return }
-            guard now >= self.acceptedAt else { return }
+            guard let self, self.capturing, let captureID, self.recoveryID == captureID,
+                  now >= self.acceptedAt else { admission.end(); return }
             self.actualBufferSize = "实际buffer=\(bufferWidth)x\(bufferHeight)"
             if self.captureDeadline == nil, let seconds = self.captureDurationSeconds {
                 let id = self.recoveryID
@@ -445,150 +424,67 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
                     self.stopAndSave()
                 }
             }
-            self.fuse(owned, at: pts)
-            self.frameTimes.append(now)
-            self.framePTS.append(pts)
-            if self.colorSpaceText.isEmpty { self.colorSpaceText = "CGImage: \(colorSpace)" }
-            self.exposureText = String(format: "曝光 %.3fs · ISO %.0f", self.captureMetadata.exposureSeconds, self.captureMetadata.iso)
-            if let id = self.recoveryID, let image = self.accumulator {
-                self.captureMetadata.frameCount = self.capturedCount
-                AstroRecoveryStore.shared.checkpoint(id: id, image: image, options: self.captureMetadata)
+            self.processingFrame = true
+            self.processingWorker.perform(id: captureID, operation: { processor in
+                guard processor.append(owned, at: pts) else { return .init(error: "累积失败") }
+                return .init(image: processor.accumulator, count: processor.capturedCount)
+            }) { [weak self] result in
+                Task { @MainActor [weak self] in
+                    defer { admission.end() }
+                    guard let self, self.recoveryID == captureID else { return }
+                    self.processingFrame = false
+                    guard self.capturing else { return }
+                    guard let result, result.error == nil else {
+                        self.error = result?.error ?? "累积失败"; self.cancel(); return
+                    }
+                    let accepted = result.count > self.capturedCount
+                    self.capturedCount = result.count
+                    if accepted { self.frameTimes.append(now); self.framePTS.append(pts) }
+                    if self.colorSpaceText.isEmpty { self.colorSpaceText = "CGImage: \(colorSpace)" }
+                    self.exposureText = String(format: "曝光 %.3fs · ISO %.0f", self.captureMetadata.exposureSeconds, self.captureMetadata.iso)
+                    if let image = result.image {
+                        self.captureMetadata.frameCount = result.count
+                        AstroRecoveryStore.shared.checkpoint(id: captureID, image: image, options: self.captureMetadata)
+                    }
+                    self.status = "正在长曝光 \(self.capturedCount)/\(self.targetFrames)"
+                    if self.capturedCount >= self.targetFrames { self.finish() }
+                }
             }
-            self.status = "正在长曝光 \(self.capturedCount)/\(self.targetFrames)"
-            if self.capturedCount >= self.targetFrames {
-                self.finish()
-            }
         }
-    }
-
-    private func fuse(_ frame: CIImage, at now: CFTimeInterval) {
-        let extent = frame.extent.integral
-        guard extent.width > 0, extent.height > 0 else { return }
-        if fusionExtent == .zero { fusionExtent = CGRect(origin: .zero, size: extent.size) }
-        let raw = frame
-            .cropped(to: extent)
-            .transformed(by: CGAffineTransform(translationX: -extent.minX, y: -extent.minY))
-            .cropped(to: fusionExtent)
-        let statistics = AstroFrameStatistics.measure(raw,context:accumulatorContext)
-        if qualityGate.consider(statistics) == .reject { return }
-        if sceneRegistration == nil { sceneRegistration = AstroSceneRegistration(reference: raw, context: accumulatorContext) }
-        // Register the static ground only; stellar motion is the desired trail.
-        var normalized = sceneRegistration?.stabilizeGround(raw) ?? raw
-        if let sky = sceneRegistration?.matte.image {
-            normalized = AstroTransientTracks.clean(normalized,previous:previousTrail,sky:sky,context:accumulatorContext)
-            trailMotion.observe(normalized,sky:sky,time:now,context:accumulatorContext)
-            previousTrail = AstroSceneRegistration(reference:normalized,context:accumulatorContext,matte:sceneRegistration?.matte).reference
-        }
-        let count = capturedCount + 1
-        let combined: CIImage
-        if let accumulator {
-            switch blend {
-            case .lighten:
-                let sky = normalized.applyingFilter("CILightenBlendMode", parameters: [kCIInputBackgroundImageKey: accumulator])
-                if let matte = sceneRegistration?.matte, matte.confidence > 0.01 {
-                    let a = 1.0/Double(count)
-                    let current = normalized.applyingFilter("CIColorMatrix",parameters:["inputRVector":CIVector(x:a,y:0,z:0,w:0),"inputGVector":CIVector(x:0,y:a,z:0,w:0),"inputBVector":CIVector(x:0,y:0,z:a,w:0)])
-                    let old = accumulator.applyingFilter("CIColorMatrix",parameters:["inputRVector":CIVector(x:1-a,y:0,z:0,w:0),"inputGVector":CIVector(x:0,y:1-a,z:0,w:0),"inputBVector":CIVector(x:0,y:0,z:1-a,w:0)])
-                    let average = current.applyingFilter("CIAdditionCompositing",parameters:[kCIInputBackgroundImageKey:old])
-                    combined = sky.applyingFilter("CIBlendWithMask",parameters:[kCIInputBackgroundImageKey:average,kCIInputMaskImageKey:matte.image])
-                } else { combined = sky }
-            case .sum:
-                combined = normalized.applyingFilter("CIAdditionCompositing", parameters: [
-                    kCIInputBackgroundImageKey: accumulator
-                ])
-            case .average:
-                let alpha = 1.0 / Double(count)
-                let current = normalized.applyingFilter("CIColorMatrix", parameters: [
-                    "inputRVector": CIVector(x: alpha, y: 0, z: 0, w: 0),
-                    "inputGVector": CIVector(x: 0, y: alpha, z: 0, w: 0),
-                    "inputBVector": CIVector(x: 0, y: 0, z: alpha, w: 0),
-                    "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
-                ])
-                let previous = accumulator.applyingFilter("CIColorMatrix", parameters: [
-                    "inputRVector": CIVector(x: 1 - alpha, y: 0, z: 0, w: 0),
-                    "inputGVector": CIVector(x: 0, y: 1 - alpha, z: 0, w: 0),
-                    "inputBVector": CIVector(x: 0, y: 0, z: 1 - alpha, w: 0),
-                    "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1)
-                ])
-                combined = current.applyingFilter("CIAdditionCompositing", parameters: [
-                    kCIInputBackgroundImageKey: previous
-                ])
-            }
-        } else {
-            combined = normalized
-        }
-        guard let next = materialize(combined) else {
-            status = "累积失败"
-            capturing = false
-            isCapturing = false
-            restoreAfterCapture()
-            return
-        }
-        accumulator = next.image
-        accumulatorBuffer = next.buffer
-        capturedCount = count
-        _ = now
-    }
-
-    private func materialize(_ image: CIImage) -> (image: CIImage, buffer: CVPixelBuffer)? {
-        let width = Int(fusionExtent.width.rounded())
-        let height = Int(fusionExtent.height.rounded())
-        guard width > 0, height > 0 else { return nil }
-        var buffer: CVPixelBuffer?
-        let attributes: [String: Any] = [
-            kCVPixelBufferIOSurfacePropertiesKey as String: [:]
-        ]
-        let status = CVPixelBufferCreate(kCFAllocatorDefault, width, height,
-                                         kCVPixelFormatType_64RGBAHalf,
-                                         attributes as CFDictionary, &buffer)
-        guard status == kCVReturnSuccess, let buffer else { return nil }
-        accumulatorContext.render(image, to: buffer,
-                                 bounds: CGRect(x: 0, y: 0, width: width, height: height),
-                                 colorSpace: linearSpace)
-        // The half-float buffer contains linear-light values. Attach the same
-        // color space explicitly; CIImage(cvPixelBuffer:) otherwise has no
-        // reliable linear tag and the next blend treats it as sRGB.
-        let image = CIImage(cvPixelBuffer: buffer, options: [.colorSpace: linearSpace])
-        return (image, buffer)
     }
 
     private func finish() {
         captureDeadline?.cancel(); captureDeadline = nil
-        guard capturing, let accumulator else {
-            if isCapturing || capturing { cancel() }
-            return
-        }
+        guard capturing, let id = recoveryID else { return }
+        guard capturedCount > 0 || processingFrame else { cancel(); return }
         capturing = false
-        isCapturing = false
+        finishingCapture = true
         status = "正在输出 4K"
-        let extent = fusionExtent
-        var finished = AstroPostProcessor.flattenBackground(accumulator, sky:sceneRegistration?.matte.image)
-        finished = AstroSignalProtection.denoise(finished,iso:captureMetadata.iso,context:context,sky:sceneRegistration?.matte.image)
-        if let sky = sceneRegistration?.matte.image { finished = trailMotion.fill(finished,sky:sky) }
-        finished = AstroPostProcessor.enhanceTrails(finished)
-        guard let cgImage = context.createCGImage(finished, from: extent) else {
-            status = "合成失败"
-            restoreAfterCapture()
-            return
+        let iso = captureMetadata.iso
+        processingWorker.perform(id: id, operation: { $0.finish(iso: iso) }) { [weak self] result in
+            Task { @MainActor [weak self] in
+                guard let self, self.recoveryID == id, self.isCapturing else { return }
+                guard let result, let image = result.rendered else {
+                    self.error = result?.error ?? "合成失败"; self.cancel(); return
+                }
+                self.result = UIImage(cgImage: image)
+                self.capturedCount = result.count
+                self.captureMetadata.frameCount = result.count
+                if !self.autoSaveOnFinish, let finished = result.image {
+                    AstroRecoveryStore.shared.checkpoint(id: id, image: finished, options: self.captureMetadata, final: true)
+                }
+                if let first = self.framePTS.first, let last = self.framePTS.last, self.framePTS.count > 1 {
+                    let intervals = zip(self.framePTS.dropFirst(), self.framePTS).map { $0 - $1 }
+                    self.timingText = String(format: "%d 帧 · PTS %.1fs · 间隔 %.3fs / 最大 %.3fs",
+                        self.framePTS.count, last-first, intervals.reduce(0,+)/Double(intervals.count), intervals.max() ?? 0)
+                } else { self.timingText = "\(result.count) 帧" }
+                self.isCapturing = false
+                self.finishingCapture = false
+                self.status = "星轨完成 · \(result.count) 帧"
+                self.restoreAfterCapture()
+                if self.autoSaveOnFinish { self.saveResult() }
+            }
         }
-        result = UIImage(cgImage: cgImage)
-        captureMetadata.frameCount = capturedCount
-        if !autoSaveOnFinish, let id = recoveryID {
-            AstroRecoveryStore.shared.checkpoint(id: id, image: finished, options: captureMetadata, final: true)
-        }
-        self.accumulator = nil
-        self.accumulatorBuffer = nil
-        if let first = framePTS.first, let last = framePTS.last, framePTS.count > 1 {
-            let intervals = zip(framePTS.dropFirst(), framePTS).map { $0 - $1 }
-            let average = intervals.reduce(0, +) / Double(intervals.count)
-            timingText = String(format: "%d 帧 · PTS %.1fs · 间隔 %.3fs / 最大 %.3fs",
-                                framePTS.count, last - first, average, intervals.max() ?? 0)
-        } else {
-            timingText = "\(framePTS.count) 帧"
-        }
-        status = "星轨完成 · \(framePTS.count) 帧"
-        restoreAfterCapture()
-        if autoSaveOnFinish { saveResult() }
     }
 
     func keepResultForRecovery() {
@@ -598,7 +494,7 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
     func stopAndSave() {
         guard isCapturing || capturing else { return }
         if let id = recoveryID { AstroRecoveryStore.shared.protect(id) }
-        guard capturedCount > 0 else { cancel(); return }
+        guard capturedCount > 0 || processingFrame else { cancel(); return }
         finish()
     }
 
@@ -654,6 +550,10 @@ final class AstroTrailsEngine: NSObject, ObservableObject, AVCaptureVideoDataOut
 
     func stop() {
         captureDeadline?.cancel(); captureDeadline = nil
+        if !finishingCapture {
+            if let id = recoveryID { processingWorker.cancel(id) }
+            isCapturing = false
+        }
         switchingLens = false
         startRevision = UUID()
         guard started else { return }

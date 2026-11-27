@@ -167,6 +167,35 @@ final class CameraEngine: NSObject, ObservableObject {
     func setMacroActiveForTesting(_ active: Bool) {
         macroActive = active
     }
+    func noteRecentMacroCaptureForTesting() {
+        queue.async { self.lastMacroCaptureAt = CACurrentMediaTime() }
+    }
+    func prepareConstituentDeliveryForTesting(_ completion: @escaping (Bool) -> Void) {
+        queue.async {
+            let running = self.session.isRunning
+            if running { self.session.stopRunning() }
+            self.session.beginConfiguration()
+            if self.session.canSetSessionPreset(.photo) { self.session.sessionPreset = .photo }
+            if self.photoOutput.isAppleProRAWEnabled { self.photoOutput.isAppleProRAWEnabled = false }
+            if self.photoOutput.isLivePhotoCaptureEnabled { self.photoOutput.isLivePhotoCaptureEnabled = false }
+            if self.photoOutput.isDepthDataDeliveryEnabled { self.photoOutput.isDepthDataDeliveryEnabled = false }
+            if self.photoOutput.isPortraitEffectsMatteDeliveryEnabled { self.photoOutput.isPortraitEffectsMatteDeliveryEnabled = false }
+            if self.photoOutput.isResponsiveCaptureEnabled { self.photoOutput.isResponsiveCaptureEnabled = false }
+            if let dimensions = self.input?.device.activeFormat.supportedMaxPhotoDimensions.first(where: {
+                Int64($0.width) * Int64($0.height) <= 16_000_000
+            }) {
+                self.photoOutput.maxPhotoDimensions = dimensions
+            }
+            if self.photoOutput.isVirtualDeviceConstituentPhotoDeliverySupported {
+                self.photoOutput.isVirtualDeviceConstituentPhotoDeliveryEnabled = true
+            }
+            self.session.commitConfiguration()
+            if running { self.session.startRunning() }
+            let enabled = self.photoOutput.isVirtualDeviceConstituentPhotoDeliveryEnabled
+            print("MACRO-PREPARE enabled=\(enabled) supported=\(self.photoOutput.isVirtualDeviceConstituentPhotoDeliverySupported) virtual=\(self.input?.device.isVirtualDevice ?? false) preset=\(self.session.sessionPreset.rawValue) format=\(self.input?.device.activeFormat.description ?? "none")")
+            DispatchQueue.main.async { completion(enabled) }
+        }
+    }
     #endif
 
     @Published private(set) var dualCaptureEnabled = false
@@ -731,6 +760,7 @@ final class CameraEngine: NSObject, ObservableObject {
     private var runtimeErrorCountForTesting = 0 // session queue only
     private var recentSessionOperationsForTesting: [String] = [] // session queue only
     var onPhotoRequestDimensionsForTesting: ((CMVideoDimensions) -> Void)?
+    var onPhotoConstituentCountForTesting: ((Int) -> Void)?
     var previewFrameTimeForTesting: Double { livePreviewState.snapshot().latestFrameHostTime }
     var nightPreviewHoldForTesting: Bool { livePreviewState.snapshot().nightCapturePreviewHold }
     struct CaptureHardwareState {
@@ -7064,14 +7094,24 @@ final class CameraEngine: NSObject, ObservableObject {
                 DispatchQueue.main.async { callback(dimensions) }
             }
             #endif
-            if macroNow, self.photoOutput.isVirtualDeviceConstituentPhotoDeliveryEnabled,
+            if macroNow, !bayerRAW, !(settings is AVCapturePhotoBracketSettings),
+               self.photoOutput.isVirtualDeviceConstituentPhotoDeliveryEnabled,
                let device = self.input?.device, device.isVirtualDevice,
-               let ultraWide = device.constituentDevices.first(where: { $0.deviceType == .builtInUltraWideCamera }) {
-                // 官方允许指定 constituent 子集；仅交付超广角，避免同时请求主摄。
-                settings.virtualDeviceConstituentPhotoDeliveryEnabledDevices = [ultraWide]
+               let ultraWide = device.constituentDevices.first(where: { $0.deviceType == .builtInUltraWideCamera }),
+               let companion = device.constituentDevices.first(where: { $0.uniqueID != ultraWide.uniqueID }) {
+                // This device rejects a one-device subset at capture time. Request
+                // two constituents; the delegate retains only the ultra-wide result.
+                settings.virtualDeviceConstituentPhotoDeliveryEnabledDevices = [ultraWide, companion]
                 if self.photoOutput.isVirtualDeviceFusionSupported { settings.isAutoVirtualDeviceFusionEnabled = false }
                 context.macroConstituentCapture = true
             }
+            #if DEBUG
+            if let callback = self.onPhotoConstituentCountForTesting {
+                let count = settings.virtualDeviceConstituentPhotoDeliveryEnabledDevices.count
+                print("MACRO-REQUEST count=\(count) macro=\(macroNow) virtual=\(self.input?.device.isVirtualDevice ?? false) enabled=\(self.photoOutput.isVirtualDeviceConstituentPhotoDeliveryEnabled) raw=\(bayerRAW) bracket=\(settings is AVCapturePhotoBracketSettings)")
+                DispatchQueue.main.async { callback(count) }
+            }
+            #endif
             settings.metadata = PhotoMetadata.capture(location: captureLocation, copyright: options.copyright)
             if !(settings is AVCapturePhotoBracketSettings), self.photoOutput.supportedFlashModes.contains(flashMode.avMode) { settings.flashMode = flashMode.avMode }
             if !options.nightMode {

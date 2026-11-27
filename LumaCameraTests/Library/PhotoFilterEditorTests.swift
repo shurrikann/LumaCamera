@@ -6,6 +6,48 @@ import SwiftUI
 @testable import LumaCamera
 
 final class PhotoFilterEditorTests: XCTestCase {
+    @MainActor func testPresentedPhotoEditorUsesScreenBoundsAndFitsWholePhoto() async throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first(where: \.isKeyWindow)
+        let window = UIWindow(windowScene: scene)
+        window.frame = scene.screen.bounds
+        defer { window.rootViewController?.dismiss(animated: false); window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        func zooms(_ view: UIView) -> [PhotoZoomScrollView] {
+            (view as? PhotoZoomScrollView).map { [$0] } ?? view.subviews.flatMap { zooms($0) }
+        }
+        var costs: [Double] = []
+        for size in [CGSize(width: 300, height: 400), CGSize(width: 400, height: 300), CGSize(width: 300, height: 533)] {
+            let input = source.transformed(by: CGAffineTransform(scaleX: size.width/source.extent.width, y: size.height/source.extent.height))
+            let model = PhotoEditorViewModel(session: PhotoEditSession(source: input) { _, _ in }, library: PhotoLibraryViewModel(service: FilterEditLibraryStub()))
+            let probe = PhotoEditorCoverProbe(model: model)
+            window.rootViewController = UIHostingController(rootView: PhotoEditorCoverHarness(probe: probe))
+            window.makeKeyAndVisible()
+            try await Task.sleep(for: .milliseconds(100))
+            PhotoEditorView.present(model.session, selection: Binding(get: { probe.session }, set: { probe.session = $0 }))
+            for _ in 0..<100 {
+                if model.preview != nil, zooms(window).first != nil { break }
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            try await Task.sleep(for: .milliseconds(300))
+            let zoom = try XCTUnwrap(zooms(window).first)
+            zoom.layoutIfNeeded()
+            XCTAssertEqual(zoom.bounds.width, scene.screen.bounds.width, accuracy: 1)
+            XCTAssertEqual(zoom.bounds.height, scene.screen.bounds.height, accuracy: 1)
+            let image = zoom.photoView.convert(zoom.photoView.bounds, to: zoom)
+            XCTAssertTrue(zoom.bounds.insetBy(dx: -1, dy: -1).contains(image))
+            if size.height >= size.width { XCTAssertEqual(image.width, zoom.bounds.width, accuracy: 1) }
+            let began = CACurrentMediaTime()
+            let shot = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+            costs.append((CACurrentMediaTime() - began) * 1000)
+            let attachment = XCTAttachment(image: shot); attachment.name = "Photo-Editor-Fullscreen-\(Int(size.width))x\(Int(size.height))"
+            attachment.lifetime = .keepAlways; add(attachment)
+            var transaction = Transaction(); transaction.disablesAnimations = true
+            withTransaction(transaction) { probe.session = nil }
+            try await Task.sleep(for: .milliseconds(250))
+            model.cancelPreview()
+        }
+        print("PHOTO-EDITOR-PRESENTED samples=3 snapshotMs=\(costs); whole-screen canvas, not FPS")
+    }
     #if targetEnvironment(simulator)
     @MainActor func testPhotoFilterEditorAcrossAllRatiosAndTabs() async throws {
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
@@ -184,7 +226,8 @@ final class PhotoFilterEditorTests: XCTestCase {
                     XCTAssertGreaterThanOrEqual(controls.minX, -1)
                     XCTAssertLessThanOrEqual(controls.maxX, width + 1)
                     XCTAssertLessThanOrEqual(controls.maxY, window.bounds.height)
-                    XCTAssertLessThanOrEqual(model.photoViewportFrameForTesting.maxY, controls.minY + 1)
+                    XCTAssertGreaterThanOrEqual(model.photoViewportFrameForTesting.height, window.bounds.height - 1)
+                    XCTAssertGreaterThan(model.photoViewportFrameForTesting.maxY, controls.maxY)
                     let zoom = try XCTUnwrap(zooms(window).first)
                     zoom.layoutIfNeeded()
                     let photo = zoom.photoView.convert(zoom.photoView.bounds, to: zoom)
@@ -212,7 +255,7 @@ final class PhotoFilterEditorTests: XCTestCase {
                 model.toggleEditorControls(.filters)
                 try await Task.sleep(for: .milliseconds(260))
                 XCTAssertTrue(model.filterPopupVisible)
-                XCTAssertGreaterThan(model.photoViewportFrameForTesting.height, frame.height, "收起调节区后恢复原有照片预览空间")
+                XCTAssertEqual(model.photoViewportFrameForTesting, frame, "浮层切换不改变照片画布")
                 XCTAssertEqual(model.captureButtonFramesForTesting["photo.editor.toolbar"]?.minY ?? -1, toolbar.minY, accuracy: 1)
                 model.closeEditorControls()
                 try await Task.sleep(for: .milliseconds(260))
@@ -382,4 +425,17 @@ final class PhotoFilterEditorTests: XCTestCase {
 private final class FilterEditLibraryStub: PhotoLibraryService {
     func save(_ image: UIImage, completion: @escaping (Result<String, Error>) -> Void) { completion(.success("asset")) }
     func delete(assetID: String, completion: @escaping (Result<Void, Error>) -> Void) { completion(.success(())) }
+}
+
+@MainActor private final class PhotoEditorCoverProbe: ObservableObject {
+    let model: PhotoEditorViewModel
+    @Published var session: PhotoEditSession?
+    init(model: PhotoEditorViewModel) { self.model = model }
+}
+private struct PhotoEditorCoverHarness: View {
+    @ObservedObject var probe: PhotoEditorCoverProbe
+    var body: some View {
+        Color.black.ignoresSafeArea()
+            .fullScreenCover(item: $probe.session) { _ in PhotoEditorView(model: probe.model) }
+    }
 }

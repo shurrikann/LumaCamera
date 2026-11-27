@@ -3,6 +3,38 @@ import XCTest
 @testable import LumaCamera
 
 final class CaptureStatePersistenceTests: XCTestCase {
+    @MainActor private var persistenceModelStorage: CameraViewModel?
+    @MainActor private func settlePersistenceModel(_ model: CameraViewModel, kind: CameraViewModel.CaptureKind) async throws {
+        try await PresetToolbarChecks.wait("设置持久化实际切换 \(kind)") {
+            model.captureKind == kind && model.camera.ready && model.camera.preview != nil
+                && !model.captureKindSwitching && !model.camera.videoConfiguring
+                && !model.startupCaptureRestorationPendingForTesting
+        }
+    }
+    @MainActor private func openPersistenceModel(store: CapturePreferencesStore) async throws -> CameraViewModel {
+        let previous = persistenceModelStorage ?? AppDependencies.runningAppCameraModel
+        if let previous {
+            previous.setCameraActive(false)
+            await Task.yield()
+            await withCheckedContinuation { c in previous.camera.afterPendingSessionTasks { c.resume() } }
+            try await PresetToolbarChecks.wait("旧持久化测试会话停止") { !previous.camera.previewSession.isRunning }
+        }
+        let expected: CameraViewModel.CaptureKind = store.load().saveCaptureSettings && store.loadCaptureState()?.video == true ? .video : .photo
+        let model = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
+        persistenceModelStorage = model
+        addTeardownBlock {
+            let camera = await MainActor.run { model.setCameraActive(false); return model.camera }
+            await withCheckedContinuation { c in camera.afterPendingSessionTasks { c.resume() } }
+        }
+        model.setCameraActive(true)
+        try await settlePersistenceModel(model, kind: expected)
+        return model
+    }
+    @MainActor private func changePersistenceMode(_ model: CameraViewModel, to kind: CameraViewModel.CaptureKind) async throws {
+        model.requestCaptureKind(kind)
+        try await settlePersistenceModel(model, kind: kind)
+    }
+
     @MainActor func testManualEVAtZeroPersistsAndAutoClearsIt() throws {
         let name = "ManualEV-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
@@ -206,56 +238,56 @@ final class CaptureStatePersistenceTests: XCTestCase {
     }
 
     /// 停在照片冷启动也不能丢失视频挡位；旧存档继续按原视频 mode 迁移。
-    @MainActor func testIndependentVideoModePersistsWhilePhotoIsSelected() throws {
+    @MainActor func testIndependentVideoModePersistsWhilePhotoIsSelected() async throws {
         let name = "IndependentModes-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
         let store = CapturePreferencesStore(defaults: defaults)
-        let model = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
-        model.setCaptureKind(.video); model.setMode(.manual)
-        model.setCaptureKind(.photo)
+        let model = try await openPersistenceModel(store: store)
+        try await changePersistenceMode(model, to: .video); model.setMode(.manual)
+        try await changePersistenceMode(model, to: .photo)
         XCTAssertEqual(model.mode, .auto)
         model.flushCaptureSettings()
         XCTAssertEqual(store.loadCaptureState()?.videoMode, "M")
-        let restored = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
-        restored.setCaptureKind(.video)
+        let restored = try await openPersistenceModel(store: store)
+        try await changePersistenceMode(restored, to: .video)
         XCTAssertEqual(restored.mode, .manual)
-        restored.setCaptureKind(.photo)
+        try await changePersistenceMode(restored, to: .photo)
         XCTAssertEqual(restored.mode, .auto)
         var legacy = SavedCaptureState(); legacy.video = true; legacy.mode = "M"
         store.saveCaptureState(legacy)
-        let migrated = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
-        migrated.setCaptureKind(.photo); migrated.setCaptureKind(.video)
+        let migrated = try await openPersistenceModel(store: store)
+        try await changePersistenceMode(migrated, to: .photo); try await changePersistenceMode(migrated, to: .video)
         XCTAssertEqual(migrated.mode, .manual)
     }
 
     /// 冷启动停在视频后返回照片，不能丢失视频帧周期限制之前的长快门与手动标志。
-    @MainActor func testPhotoManualExposureSurvivesVideoClampAndModelRecreation() throws {
+    @MainActor func testPhotoManualExposureSurvivesVideoClampAndModelRecreation() async throws {
         let name = "PhotoManualAcrossVideo-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
         let store = CapturePreferencesStore(defaults: defaults)
-        let model = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
+        let model = try await openPersistenceModel(store: store)
         model.setMode(.manual)
         model.manualExposure = true; model.iso = 200; model.shutter = log2(0.5)
-        model.setCaptureKind(.video); model.setMode(.manual)
+        try await changePersistenceMode(model, to: .video); model.setMode(.manual)
         model.shutter = log2(1.0 / 30)
         model.flushCaptureSettings()
-        let restored = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
+        let restored = try await openPersistenceModel(store: store)
         XCTAssertEqual(restored.shutter, log2(1.0 / 30), accuracy: 0.0001)
-        restored.setCaptureKind(.photo)
+        try await changePersistenceMode(restored, to: .photo)
         XCTAssertEqual(restored.mode, .manual)
         XCTAssertTrue(restored.manualExposure)
         XCTAssertEqual(restored.iso, 200)
         XCTAssertEqual(restored.shutter, log2(0.5), accuracy: 0.0001)
     }
 
-    @MainActor func testAllCaptureChoicesAndManualFlagsSurviveModelRecreation() throws {
+    @MainActor func testAllCaptureChoicesAndManualFlagsSurviveModelRecreation() async throws {
         let name = "CaptureState-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
         let store = CapturePreferencesStore(defaults: defaults)
-        let model = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
+        let model = try await openPersistenceModel(store: store)
         model.setMode(.manual)
         model.manualExposure = true; model.manualWB = true; model.manualFocus = true
         model.iso = 900; model.shutter = -8; model.wb = 6200; model.whiteBalanceTint = 25; model.focus = 0.72; model.ev = -1.2
@@ -266,12 +298,12 @@ final class CaptureStatePersistenceTests: XCTestCase {
         model.showsAudioMeter = true; model.showsRecordingCapacity = true
         model.rotatePreview()
         model.preferences.copyright = "Test Author"
-        model.setCaptureKind(.video); model.setMode(.manual)
+        try await changePersistenceMode(model, to: .video); model.setMode(.manual)
         model.videoResolution = .uhd4K; model.videoFrameRate = .fps60; model.videoRatio = .wide
         model.videoColorSpace = .p3; model.videoCodec = .proRes; model.proResSpecification = .standard
         model.flushCaptureSettings()
         let stored = try XCTUnwrap(store.loadCaptureState())
-        let restored = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
+        let restored = try await openPersistenceModel(store: store)
         XCTAssertEqual(restored.captureKind, .video); XCTAssertEqual(restored.mode, .manual)
         XCTAssertTrue(restored.manualExposure); XCTAssertTrue(restored.manualWB); XCTAssertTrue(restored.manualFocus)
         XCTAssertEqual(restored.iso, 900); XCTAssertEqual(restored.shutter, -8)
@@ -286,12 +318,18 @@ final class CaptureStatePersistenceTests: XCTestCase {
         XCTAssertTrue(restored.showsAudioMeter); XCTAssertTrue(restored.showsRecordingCapacity)
         XCTAssertEqual(restored.previewQuarterTurns, 1)
         XCTAssertFalse(restored.camera.videoRecording); XCTAssertNil(restored.panel); XCTAssertNil(restored.toolbarPanel)
-        XCTAssertEqual(store.loadCaptureState(), stored, "Startup cannot overwrite saved framing before hardware restoration")
-        restored.setCaptureKind(.photo)
+        var actualState = try XCTUnwrap(store.loadCaptureState())
+        XCTAssertEqual(try XCTUnwrap(actualState.dualInsetX), try XCTUnwrap(stored.dualInsetX), accuracy: 0.000001)
+        XCTAssertEqual(try XCTUnwrap(actualState.dualInsetY), try XCTUnwrap(stored.dualInsetY), accuracy: 0.000001)
+        // Normalizing a floating inset position can change its last binary bit.
+        // Every other saved field must still match exactly after hardware restoration.
+        actualState.dualInsetX = stored.dualInsetX; actualState.dualInsetY = stored.dualInsetY
+        XCTAssertEqual(actualState, stored, "Restoration must preserve capture choices and framing")
+        try await changePersistenceMode(restored, to: .photo)
         XCTAssertEqual(restored.mode, .manual); XCTAssertEqual(restored.ratio, .cinema)
     }
 
-    @MainActor func testDisabledUsesRequestedPhotoAndVideoDefaultsAndRetainsPreferences() throws {
+    @MainActor func testDisabledUsesRequestedPhotoAndVideoDefaultsAndRetainsPreferences() async throws {
         let name = "CaptureDefaults-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
         defer { defaults.removePersistentDomain(forName: name) }
@@ -302,7 +340,7 @@ final class CaptureStatePersistenceTests: XCTestCase {
         var stale = SavedCaptureState(); stale.video = true; stale.mode = "M"; stale.photoFormat = "HEIF Pro"
         stale.videoCodec = "ProRes"; stale.videoFrameRate = 120; stale.live = true
         store.saveCaptureState(stale)
-        let model = AppDependencies.makeCameraModel(automaticallySave: false, preferencesStore: store)
+        let model = try await openPersistenceModel(store: store)
         XCTAssertNil(store.loadCaptureState())
         XCTAssertEqual(model.captureKind, .photo); XCTAssertEqual(model.mode, .auto)
         XCTAssertEqual(model.photoFormat, .jpeg); XCTAssertEqual(model.ratio, .standard)
@@ -312,7 +350,7 @@ final class CaptureStatePersistenceTests: XCTestCase {
         XCTAssertEqual(model.videoResolution, .hd1080); XCTAssertEqual(model.videoFrameRate, .fps30)
         XCTAssertEqual(model.videoRatio, .ratio16x9); XCTAssertEqual(model.videoColorSpace, .sdr); XCTAssertEqual(model.videoCodec, .hevc)
         XCTAssertTrue(model.preferences.recordLocation); XCTAssertEqual(model.preferences.copyright, "Keep Me"); XCTAssertTrue(model.preferences.silentShutter)
-        model.setCaptureKind(.video)
+        try await changePersistenceMode(model, to: .video)
         XCTAssertEqual(model.mode, .auto); XCTAssertEqual(model.ratio, .wide)
         model.videoFrameRate = .fps60; model.setMode(.manual); model.style = .leicaM9
         model.flushCaptureSettings()
